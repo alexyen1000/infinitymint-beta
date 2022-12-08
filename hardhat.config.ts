@@ -4,6 +4,7 @@ import fs from "node:fs";
 //imports ethers to be used inside and outside of hardhat scripts
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
+import "hardhat-change-network"; //allows hre.changeNetwork to occur
 
 //default hardhat config file, this is copied into the InfinityMint config file on its initial creation
 const config: HardhatUserConfig = {
