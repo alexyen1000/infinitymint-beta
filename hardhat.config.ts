@@ -1,6 +1,11 @@
 import { HardhatUserConfig } from "hardhat/config";
 import fs from "node:fs";
 
+//require dotenv
+require("dotenv").config({
+	override: false, //will not override already established environment variables
+});
+
 //imports ethers to be used inside and outside of hardhat scripts
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";

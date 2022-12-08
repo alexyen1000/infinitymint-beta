@@ -12,6 +12,5 @@ artifacts
 # InfinityMint files
 infinitymint.config.ts
 
-
-# Lock file
+# Node
 package-lock.json
