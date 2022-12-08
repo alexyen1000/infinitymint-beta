@@ -1,12 +1,32 @@
-import config from "../infinitymint.config";
-import hre from "hardhat";
 import Logging from "./logging";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export interface Vector {
 	x: number;
 	y: number;
 	z: number;
+}
+
+export interface BlessedElement extends Element {
+	focus: Function;
+	render: Function;
+	hide: Function;
+	setFront: Function;
+	setBack: Function;
+	removeLabel: Function;
+	enableKeys: Function;
+	setContent: Function;
+	enableMouse: Function;
+	enableInput: Function;
+	enableDrag: Function;
+	disableDrag: Function;
+	show: Function;
+	toggle: Function;
+	destroy: Function;
+	free: Function;
+	key: FuncDouble<string, Function, Function>;
+	onceKey: FuncDouble<string, Function, Function>;
+	onScreenEvent: FuncDouble<string, Function, Function>;
+	unkey: FuncDouble<string, Function, Function>;
 }
 
 /**
@@ -44,9 +64,6 @@ export const log = (msg: string) => {
 
 export const error = (error: string | Error) => {
 	Logging.log(error.toString());
-};
-export const getHardhatRuntime = (): HardhatRuntimeEnvironment => {
-	return hre;
 };
 
 export const isEnvTrue = (key: string): boolean => {

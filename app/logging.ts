@@ -22,11 +22,11 @@ class LogPipe {
 		this.errors = [];
 		this.created = Date.now();
 		this.logHandler = (str: string) => {
-			console.log(str);
-
+			if (this.listen) console.log(str, false);
 			this.logs.push(str);
 		};
 		this.errorHandler = (str: string) => {
+			if (this.listen) console.error(str);
 			this.errors.push(str);
 		};
 		this.terminationHandler = () => {};
@@ -54,6 +54,7 @@ class LogPipe {
  */
 interface LogPipeOptions {
 	save?: boolean;
+	listen?: boolean;
 	setAsCurrentPipe?: boolean;
 }
 
