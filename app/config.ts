@@ -1,3 +1,4 @@
+import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 
 /**
@@ -7,6 +8,18 @@ export interface InfinityMintConfig {
 	hardhat: HardhatUserConfig;
 	ipfs?: object;
 	settings?: object;
+}
+
+export interface InfinityMintScriptArguments {
+	name: string;
+	validator?: Function;
+}
+
+export interface InfinityMintScript {
+	name?: string;
+	description?: string;
+	execute: Function;
+	arguments?: Dictionary<InfinityMintScriptArguments>;
 }
 
 /**
