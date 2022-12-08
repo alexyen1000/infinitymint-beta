@@ -1,6 +1,11 @@
 import { HardhatUserConfig } from "hardhat/config";
 import fs from "node:fs";
 
+//if there is no temp folder, make it.
+if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
+//copy the .env file from example if there is none
+if (!fs.existsSync("./.env")) fs.copyFileSync("./.env.example", "./.env");
+
 //require dotenv
 require("dotenv").config({
 	override: false, //will not override already established environment variables

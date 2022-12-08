@@ -1,12 +1,15 @@
 import config from "../infinitymint.config";
 import hre from "hardhat";
-import { InfinityMintConfig } from "./config";
+import Logging from "./logging";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export const getConfig = (): InfinityMintConfig => {
-	return config;
+export const log = (msg: string) => {
+	Logging.log(msg);
 };
 
+export const error = (error: string | Error) => {
+	Logging.log(error.toString());
+};
 export const getHardhatRuntime = (): HardhatRuntimeEnvironment => {
 	return hre;
 };
