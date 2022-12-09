@@ -69,6 +69,7 @@ export default class Console {
 		if (this.currentWindow === undefined) return;
 		//when the window is destroyed, rebuild the items list
 
+		//so we only fire once
 		if (this.currentWindow.options.destroy)
 			this.currentWindow.off(
 				"destroy",
@@ -80,6 +81,8 @@ export default class Console {
 				this.setListItems();
 			}
 		);
+
+		//so we only fire once
 		if (this.currentWindow.options.hide)
 			this.currentWindow.off("hude", this.currentWindow.options.hude);
 		//when the current window is hiden, rebuild the item

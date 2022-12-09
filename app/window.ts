@@ -193,11 +193,15 @@ export class InfinityMintWindow {
 	}
 
 	public on(event: string, listener: Function): Function {
+		if (this.getElement("frame") === undefined)
+			throw new Error("frame has not been created");
+
 		return this.getElement("frame").on(event, listener);
 	}
 
-	public off(event: string, listener?: Function): Function {
-		return this.getElement("frame").off(event, listener);
+	public off(event: string, listener?: Function) {
+		if (this.getElement("frame") === undefined) return;
+		this.getElement("frame").off(event, listener);
 	}
 
 	public isVisible() {
