@@ -37,7 +37,7 @@ Logs.think = (window, frame, blessed) => {
 			(line, index) =>
 				(content =
 					content +
-					`[${index.toString().padEnd(8, "0")}]: ` +
+					`[${index.toString().padEnd(8, "0")}] ` +
 					line.toString() +
 					"\n")
 		);
@@ -282,6 +282,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		changePipe.setContent(
 			"Change Pipe (current: " + window.options.pipe + ")"
 		);
+		console.setScroll(0);
 		form.hide();
 	});
 	form.focus();

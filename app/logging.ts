@@ -31,7 +31,7 @@ class LogPipe {
 		this.logHandler = (str: string) => {
 			if (this.listen) console.log(str, false);
 			if (this.appendDate)
-				str = `<${new Date(Date.now()).toTimeString()}> ` + str;
+				str = `${new Date(Date.now()).toLocaleTimeString()} ` + str;
 			this.logs.push(str);
 		};
 		this.errorHandler = (str: string) => {
