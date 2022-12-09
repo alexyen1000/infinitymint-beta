@@ -2,6 +2,7 @@ import { Dictionary } from "form-data";
 import { Rectangle, Vector, FuncTripple, log, debugLog } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
+import InfinityConsole from "./console";
 
 const blessed = require("blessed");
 export class InfinityMintWindow {
@@ -33,6 +34,8 @@ export class InfinityMintWindow {
 	private destroyed: boolean;
 	private scrollbar: any;
 	private initialized: boolean;
+	private container?: InfinityConsole;
+
 	constructor(
 		name?: string,
 		style?: any,
@@ -59,6 +62,14 @@ export class InfinityMintWindow {
 
 	public setScreen(screen: any) {
 		this.screen = screen;
+	}
+
+	public setContainer(container: InfinityConsole) {
+		this.container = container;
+	}
+
+	public async openWindow(name: string) {
+		this.container?.setWindow(name);
 	}
 
 	public setBorder(border: any) {

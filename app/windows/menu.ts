@@ -41,7 +41,7 @@ Menu.initialize = async (window, frame, blessed) => {
 	);
 	background.setBack();
 
-	window.registerElement(
+	let deploy = window.registerElement(
 		"deploy",
 		blessed.box({
 			bottom: 0,
@@ -67,6 +67,9 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+	deploy.on("click", async () => {
+		await window.openWindow("Deploy");
+	});
 
 	window.registerElement(
 		"test",

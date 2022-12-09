@@ -4,7 +4,6 @@ import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
 //windows
 import Logs from "./windows/logs";
 import Menu from "./windows/menu";
@@ -20,7 +19,7 @@ import Tutorial from "./windows/tutorial";
 import Projects from "./windows/projects";
 
 const blessed = require("blessed");
-export default class Console {
+export default class InfinityConsole {
 	private screen: any;
 	private options?: InfinityMintConsole;
 
@@ -80,7 +79,7 @@ export default class Console {
 			"destroy",
 			() => {
 				debugLog("destroyed window " + this.currentWindow?.name);
-				this.setWindows();
+				this.updateWindowsList();
 			}
 		);
 
@@ -89,11 +88,32 @@ export default class Console {
 			this.currentWindow.off("hude", this.currentWindow.options.hude);
 		//when the current window is hiden, rebuild the item
 		this.currentWindow.options.hide = this.currentWindow.on("hide", () => {
-			this.setWindows();
+			this.updateWindowsList();
 		});
 	}
 
-	public setWindows() {
+	public async setWindow(thatWindow: string | Window) {
+		if (this.currentWindow) this.currentWindow.hide();
+
+		for (let i = 0; i < this.windows.length; i++) {
+			let window = this.windows[i];
+			if (window.name !== thatWindow.toString()) {
+				if (window.isAlive()) window.hide();
+				continue;
+			}
+
+			this.currentWindow = window;
+			if (!this.currentWindow.hasInitialized()) {
+				this.currentWindow.setScreen(this.screen);
+				this.currentWindow.setContainer(this);
+				await this.currentWindow.create();
+				this.registerEvents();
+			}
+			this.currentWindow.show();
+		}
+	}
+
+	public updateWindowsList() {
 		this.windowManager.setItems(
 			[...this.windows].map(
 				(window) =>
@@ -124,6 +144,7 @@ export default class Console {
 			Deploy,
 		];
 		this.currentWindow = this.windows[0];
+		this.currentWindow.setContainer(this);
 		this.currentWindow.setScreen(this.screen);
 
 		log(
@@ -182,6 +203,7 @@ export default class Console {
 			this.currentWindow = this.windows[selected];
 			if (!this.currentWindow.hasInitialized()) {
 				this.currentWindow.setScreen(this.screen);
+				this.currentWindow.setContainer(this);
 				await this.windows[selected].create();
 				this.registerEvents();
 			} else if (!this.currentWindow.isVisible())
@@ -190,7 +212,7 @@ export default class Console {
 			await this.currentWindow.setFrameContent();
 		});
 
-		this.setWindows();
+		this.updateWindowsList();
 
 		//append list
 		this.screen.append(this.windowManager);
@@ -215,13 +237,13 @@ export default class Console {
 		});
 		//shows the list
 		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {
-			this.setWindows();
+			this.updateWindowsList();
 			this.currentWindow?.hide();
 			this.windowManager.show();
 		});
 		//restores the current window
 		this.screen.key(["restore", "C-r"], (ch: string, key: string) => {
-			this.setWindows();
+			this.updateWindowsList();
 			if (this.windowManager?.hidden === false)
 				this.currentWindow?.show();
 		});
