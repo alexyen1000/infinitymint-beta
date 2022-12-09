@@ -14,7 +14,7 @@ const Gems = new InfinityMintWindow(
 	}
 );
 
-Gems.initialize = (window, frame, blessed) => {
+Gems.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
 		"console",
 		blessed.box({

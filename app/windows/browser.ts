@@ -13,7 +13,7 @@ const Browser = new InfinityMintWindow(
 		type: "line",
 	}
 );
-Browser.initialize = (window, frame, blessed) => {
+Browser.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
 		"console",
 		blessed.box({

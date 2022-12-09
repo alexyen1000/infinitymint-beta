@@ -9,7 +9,7 @@ export class InfinityMintWindow {
 		InfinityMintWindow,
 		BlessedElement,
 		Blessed,
-		void
+		Promise<void>
 	>;
 	public think: FuncTripple<
 		InfinityMintWindow,
@@ -53,7 +53,7 @@ export class InfinityMintWindow {
 		this.initialized = false;
 		this.options = options || {};
 		this.elements = {};
-		this.initialize = () => {};
+		this.initialize = async () => {};
 		this.think = () => {};
 	}
 

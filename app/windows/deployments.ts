@@ -13,7 +13,7 @@ const Deployments = new InfinityMintWindow(
 		type: "line",
 	}
 );
-Deployments.initialize = (window, frame, blessed) => {
+Deployments.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
 		"console",
 		blessed.box({

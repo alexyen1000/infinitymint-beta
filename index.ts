@@ -1,5 +1,5 @@
 import * as Helpers from "./app/helpers";
-import Console from "./app/console";
+import InfinityConsole from "./app/console";
 import hre, { ethers } from "hardhat";
 import Logging from "./app/logging";
 
@@ -26,8 +26,8 @@ async function main() {
 	});
 
 	//initialize console
-	let console = new Console();
-	console.initialize();
+	let infinityConsole = new InfinityConsole();
+	await infinityConsole.initialize();
 }
 
 main().catch((error) => {

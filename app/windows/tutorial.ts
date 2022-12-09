@@ -13,7 +13,7 @@ const Tutorial = new InfinityMintWindow(
 		type: "line",
 	}
 );
-Tutorial.initialize = (window, frame, blessed) => {
+Tutorial.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
 		"console",
 		blessed.box({

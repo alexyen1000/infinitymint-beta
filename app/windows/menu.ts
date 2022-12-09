@@ -15,7 +15,7 @@ const Menu = new InfinityMintWindow(
 	}
 );
 
-Menu.initialize = (window, frame, blessed) => {
+Menu.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
 		"console",
 		blessed.box({
@@ -45,8 +45,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"deploy",
 		blessed.box({
-			top: "center",
-			left: 2,
+			bottom: 0,
+			left: 0,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -72,8 +72,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"test",
 		blessed.box({
-			top: "center",
-			left: 2 + 10,
+			bottom: 0,
+			left: 11,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -99,8 +99,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"export",
 		blessed.box({
-			top: "center",
-			left: 2 + 10 + 8,
+			bottom: 0,
+			left: 10 + 10,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -126,8 +126,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"scripts",
 		blessed.box({
-			top: "center",
-			left: 2 + 10 + 8 + 10,
+			bottom: 0,
+			left: 10 + 8 + 13,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -153,8 +153,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"projects",
 		blessed.box({
-			top: "center",
-			left: 2 + 10 + 8 + 8 + 13,
+			bottom: 0,
+			left: 10 + 8 + 8 + 17,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -180,8 +180,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"deployments",
 		blessed.box({
-			top: "center",
-			left: 2 + 10 + 8 + 8 + 8 + 17,
+			bottom: 0,
+			left: 10 + 8 + 8 + 8 + 22,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -207,8 +207,8 @@ Menu.initialize = (window, frame, blessed) => {
 	window.registerElement(
 		"networks",
 		blessed.box({
-			top: "center",
-			left: 2 + 10 + 8 + 8 + 8 + 10 + 22,
+			bottom: 0,
+			left: 10 + 8 + 8 + 8 + 10 + 28,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
