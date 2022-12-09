@@ -11,6 +11,7 @@ export interface Blessed {
 	box: any;
 	button: any;
 	list: any;
+	image: any;
 	form: any;
 }
 
@@ -20,6 +21,7 @@ export interface BlessedElement extends Element {
 	hide: Function;
 	setFront: Function;
 	on: Function;
+	off: Function;
 	setBack: Function;
 	setScroll: Function;
 	removeLabel: Function;

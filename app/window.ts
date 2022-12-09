@@ -177,12 +177,11 @@ export class InfinityMintWindow {
 	}
 
 	public destroy() {
+		this.destroyed = true;
 		Object.keys(this.elements).forEach((index) => {
 			this.elements[index].destroy();
 			delete this.elements[index];
 		});
-
-		this.destroyed = true;
 	}
 
 	public isAlive() {
@@ -191,6 +190,14 @@ export class InfinityMintWindow {
 
 	public hasInitialized() {
 		return this.initialized;
+	}
+
+	public on(event: string, listener: Function): Function {
+		return this.getElement("frame").on(event, listener);
+	}
+
+	public off(event: string, listener?: Function): Function {
+		return this.getElement("frame").off(event, listener);
 	}
 
 	public isVisible() {

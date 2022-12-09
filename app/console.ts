@@ -31,6 +31,7 @@ export default class Console {
 	private interval?: any;
 	private network?: HardhatRuntimeEnvironment["network"];
 	private signers?: SignerWithAddress[];
+	private windowManager?: any;
 
 	constructor(options?: InfinityMintConsole) {
 		this.screen = blessed.screen(
@@ -62,6 +63,40 @@ export default class Console {
 			);
 
 		return this.signers;
+	}
+
+	public registerEvents() {
+		if (this.currentWindow === undefined) return;
+		//when the window is destroyed, rebuild the items list
+
+		if (this.currentWindow.options.destroy)
+			this.currentWindow.off(
+				"destroy",
+				this.currentWindow.options.destroy
+			);
+		this.currentWindow.options.destroy = this.currentWindow.on(
+			"destroy",
+			() => {
+				this.setListItems();
+			}
+		);
+		if (this.currentWindow.options.hide)
+			this.currentWindow.off("hude", this.currentWindow.options.hude);
+		//when the current window is hiden, rebuild the item
+		this.currentWindow.options.hide = this.currentWindow.on("hide", () => {
+			this.setListItems();
+		});
+	}
+
+	public setListItems() {
+		this.windowManager.setItems(
+			[...this.windows].map(
+				(window) =>
+					window.name +
+					" " +
+					(window.isAlive() ? "(alive)" : "(dead)")
+			)
+		);
 	}
 
 	public async initialize() {
@@ -101,16 +136,9 @@ export default class Console {
 		});
 		log("default account: " + this.signers[0].address);
 
-		//register escape key
-		this.screen.key(["escape", "q", "C-c"], (ch: string, key: string) => {
-			if (this.canExit) return process.exit(0);
-			else debugLog("not allowed to exit but user wants to exit");
-		});
-
 		//creating window manager
-
-		let list = blessed.list({
-			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
+		this.windowManager = blessed.list({
+			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show, press Z to refresh){/bold}",
 			tags: true,
 			top: "center",
 			left: "center",
@@ -143,30 +171,8 @@ export default class Console {
 				},
 			},
 		});
-		this.screen.append(list);
-		await this.currentWindow.create();
 
-		this.screen.render();
-
-		this.interval = setInterval(() => {
-			if (this.currentWindow) this.currentWindow.update();
-			this.screen.render();
-			list.setItems(
-				[...this.windows].map(
-					(window) =>
-						window.name +
-						(this.currentWindow?.name === window.name
-							? " (current)"
-							: "") +
-						(window.isAlive()
-							? ` [${window.isVisible() ? "VISIBLE" : "HIDDEN"}]`
-							: ` (dead)`)
-				)
-			);
-			this.screen.render();
-		}, 33);
-
-		list.on("select", async (el: Element, selected: any) => {
+		this.windowManager.on("select", async (el: Element, selected: any) => {
 			//disable the select if the current window is visible
 			if (this.currentWindow?.isVisible()) return;
 			if (!this.windows[selected].isAlive()) {
@@ -177,24 +183,48 @@ export default class Console {
 				return;
 			}
 			this.currentWindow = this.windows[selected];
-
 			if (!this.currentWindow.hasInitialized()) {
 				this.currentWindow.setScreen(this.screen);
 				await this.windows[selected].create();
+				this.registerEvents();
 			} else if (!this.currentWindow.isVisible())
 				this.currentWindow.show();
 			else this.currentWindow.hide();
+		});
 
+		this.setListItems();
+
+		//append list
+		this.screen.append(this.windowManager);
+		//create window
+		await this.currentWindow.create();
+		//render
+		this.screen.render();
+		//register events
+		this.registerEvents();
+
+		//update interval
+		this.interval = setInterval(() => {
+			if (this.currentWindow) this.currentWindow.update();
 			this.screen.render();
+		}, 33);
+
+		//register escape key
+		this.screen.key(["escape", "q", "C-c"], (ch: string, key: string) => {
+			if (this.canExit) return process.exit(0);
+			else debugLog("not allowed to exit but user wants to exit");
 		});
 		//shows the list
 		this.screen.key(["windows", "z"], (ch: string, key: string) => {
+			this.setListItems();
 			this.currentWindow?.hide();
-			list.show();
+			this.windowManager.show();
 		});
 		//restores the current window
 		this.screen.key(["restore", "r"], (ch: string, key: string) => {
-			if (list?.hidden === false) this.currentWindow?.show();
+			this.setListItems();
+			if (this.windowManager?.hidden === false)
+				this.currentWindow?.show();
 		});
 	}
 }
