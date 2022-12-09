@@ -45,8 +45,6 @@ export default class InfinityConsole {
 		this.options = options;
 	}
 
-	public changeNetwork() {}
-
 	public getSigner(): SignerWithAddress {
 		if (this.signers === undefined)
 			throw new Error(
@@ -195,13 +193,6 @@ export default class InfinityConsole {
 		this.windowManager.on("select", async (el: Element, selected: any) => {
 			//disable the select if the current window is visible
 			if (this.currentWindow?.isVisible()) return;
-			if (!this.windows[selected].isAlive()) {
-				debugLog(
-					"tried to select a dead window: " +
-						this.windows[selected].name
-				);
-				return;
-			}
 			this.currentWindow = this.windows[selected];
 			if (!this.currentWindow.hasInitialized()) {
 				this.currentWindow.setScreen(this.screen);

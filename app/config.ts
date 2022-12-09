@@ -5,6 +5,7 @@ import { HardhatUserConfig } from "hardhat/types";
  * Interface for the InfinityMint configuration file
  */
 export interface InfinityMintConfig {
+	project?: string;
 	hardhat: HardhatUserConfig;
 	ipfs?: object;
 	settings?: object;

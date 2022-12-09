@@ -200,10 +200,18 @@ export class InfinityMintWindow {
 	public destroy() {
 		this.destroyed = true;
 		Object.keys(this.elements).forEach((index) => {
+			debugLog(
+				"destroying element " +
+					this.elements[index].constructor.name +
+					" for window " +
+					this.name
+			);
 			this.elements[index].free(); //unsubscribes to events saving memory
 			this.elements[index].destroy();
 			delete this.elements[index];
 		});
+
+		this.elements = {};
 	}
 
 	public registerKey() {}
@@ -213,7 +221,7 @@ export class InfinityMintWindow {
 	}
 
 	public hasInitialized() {
-		return this.initialized;
+		return this.initialized && this.destroyed === false;
 	}
 
 	public on(event: string, listener: Function): Function {
@@ -250,13 +258,14 @@ export class InfinityMintWindow {
 				balance
 			)} ETH{/green-fg}`
 		);
-		debugLog("initializing " + this.name);
+		debugLog("initializing window " + this.name);
 	}
 
 	public async create() {
 		debugLog("creating initial window: " + this.name);
 
-		if (this.initialized) throw new Error("already initialized");
+		if (this.initialized && this.destroyed === false)
+			throw new Error("already initialized");
 		if (this.screen === undefined)
 			throw new Error("cannot create window with undefined screen");
 
@@ -329,6 +338,7 @@ export class InfinityMintWindow {
 
 		await this.initialize(this, frame, blessed);
 		this.initialized = true;
+		this.destroyed = false;
 
 		//append each element
 		Object.values(this.elements).forEach((element) => {
