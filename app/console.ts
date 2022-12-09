@@ -69,6 +69,7 @@ export default class Console {
 		if (this.currentWindow === undefined) return;
 		//when the window is destroyed, rebuild the items list
 
+		debugLog("registering events for " + this.currentWindow.name);
 		//so we only fire once
 		if (this.currentWindow.options.destroy)
 			this.currentWindow.off(
