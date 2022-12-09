@@ -165,23 +165,23 @@ export default class Console {
 		list.on("select", async (el: Element, selected: any) => {
 			//disable the select if the current window is visible
 			if (this.currentWindow?.isVisible()) return;
-			this.currentWindow = this.windows[selected];
-
-			if (!this.currentWindow.isAlive()) {
+			if (!this.windows[selected].isAlive()) {
 				debugLog(
-					"tried to select a dead window: " + this.currentWindow.name
+					"tried to select a dead window: " +
+						this.windows[selected].name
 				);
 				return;
 			}
+			this.currentWindow = this.windows[selected];
 
 			if (!this.currentWindow.hasInitialized()) {
 				this.currentWindow.setScreen(this.screen);
 				await this.windows[selected].create();
-			} else {
-				if (!this.currentWindow.isVisible()) this.currentWindow.show();
-				else this.currentWindow.hide();
-				this.screen.render();
-			}
+			} else if (!this.currentWindow.isVisible())
+				this.currentWindow.show();
+			else this.currentWindow.hide();
+
+			this.screen.render();
 		});
 
 		this.screen.key(["show", "s"], (ch: string, key: string) => {
