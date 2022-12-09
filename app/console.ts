@@ -16,6 +16,7 @@ import Scaffold from "./windows/scaffold";
 import Scripts from "./windows/scripts";
 import Settings from "./windows/settings";
 import Deploy from "./windows/deploy";
+import Tutorial from "./windows/tutorial";
 
 const blessed = require("blessed");
 export default class Console {
@@ -69,6 +70,7 @@ export default class Console {
 		this.network = hre.network;
 		this.windows = [
 			Menu,
+			Tutorial,
 			Logs,
 			Browser,
 			Deployments,
@@ -183,9 +185,14 @@ export default class Console {
 
 			this.screen.render();
 		});
-
-		this.screen.key(["show", "s"], (ch: string, key: string) => {
+		//shows the list
+		this.screen.key(["windows", "z"], (ch: string, key: string) => {
+			this.currentWindow?.hide();
 			list.show();
+		});
+		//restores the current window
+		this.screen.key(["restore", "r"], (ch: string, key: string) => {
+			if (list?.hidden === false) this.currentWindow?.show();
 		});
 	}
 }
