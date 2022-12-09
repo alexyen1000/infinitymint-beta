@@ -1,13 +1,10 @@
 import { InfinityMintConsole } from "./config";
-import { log } from "./helpers";
 import { InfinityMintWindow } from "./window";
 
 //windows
-import Menu from "./windows/menu";
 import ConsoleWindow from "./windows/logs";
 
 const blessed = require("blessed");
-
 export default class Console {
 	private screen: any;
 	private options?: InfinityMintConsole;
@@ -21,6 +18,7 @@ export default class Console {
 		this.screen = blessed.screen(
 			options?.blessed || {
 				smartCRS: true,
+				dockBorders: true,
 			}
 		);
 		this.canExit = true;

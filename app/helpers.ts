@@ -24,6 +24,8 @@ export interface BlessedElement extends Element {
 	setScroll: Function;
 	removeLabel: Function;
 	pushLine: Function;
+	setItems: Function;
+	enterSelected: Function;
 	enableKeys: Function;
 	width: number;
 	height: number;

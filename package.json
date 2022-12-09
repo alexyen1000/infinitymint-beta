@@ -444,7 +444,7 @@
 	},
 	"scripts": {
 		"test": "mocha",
-		"start": "npx ts-node index.ts"
+		"start": "npx hardhat compile && npx ts-node index.ts"
 	},
 	"repository": {
 		"type": "git",

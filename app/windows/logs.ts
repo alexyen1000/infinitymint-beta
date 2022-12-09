@@ -61,6 +61,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			height: "100%-8",
 			padding: 1,
 			top: 4,
+			label: " {bold}{white-fg}Output{/white-fg}{/bold}",
 			left: "center",
 			keys: true,
 			tags: true,
@@ -238,18 +239,52 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let form = window.registerElement(
 		"form",
-		blessed.form({
-			keys: true,
-			left: "center",
+		blessed.list({
+			label: " {bold}{white-fg}Pipes{/white-fg} (Enter/Double-Click to select){/bold}",
+			tags: true,
 			top: "center",
-			width: "shrink",
+			left: "center",
+			width: "95%",
 			height: "shrink",
-			padding: 2,
+			padding: 3,
+			keys: true,
+			vi: true,
+			mouse: true,
 			border: "line",
-			bg: "black",
-			content: "Please Select Pipe",
+			scrollbar: {
+				ch: " ",
+				track: {
+					bg: "black",
+				},
+				style: {
+					inverse: true,
+				},
+			},
+			style: {
+				bg: "grey",
+				fg: "white",
+				item: {
+					hover: {
+						bg: "white",
+					},
+				},
+				selected: {
+					bg: "white",
+					bold: true,
+				},
+			},
 		})
 	);
+	let keys = Object.keys(Logging.logs);
+	form.setItems(keys);
+	form.on("select", (el: any, selected: any) => {
+		window.options.pipe = keys[selected];
+		changePipe.setContent(
+			"Change Pipe (current: " + window.options.pipe + ")"
+		);
+		form.hide();
+	});
+	form.focus();
 	form.hide();
 
 	//create buttons
@@ -268,8 +303,8 @@ Logs.initialize = async (window, frame, blessed) => {
 				type: "line",
 			},
 			style: {
-				fg: "white",
-				bg: "blue",
+				fg: "black",
+				bg: "white",
 				border: {
 					fg: "#ffffff",
 				},
@@ -283,10 +318,6 @@ Logs.initialize = async (window, frame, blessed) => {
 	changePipe.on("click", () => {
 		form.setFront();
 		form.toggle();
-		window.options.pipe = "debug";
-		changePipe.setContent(
-			"Change Pipe (current: " + window.options.pipe + ")"
-		);
 	});
 
 	//always scroll

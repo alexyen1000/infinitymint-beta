@@ -12,6 +12,7 @@ export interface InfinityMintConfig {
 
 export interface InfinityMintScriptArguments {
 	name: string;
+	optional?: boolean;
 	validator?: Function;
 }
 
@@ -23,7 +24,7 @@ export interface InfinityMintScript {
 	name?: string;
 	description?: string;
 	execute: Function;
-	arguments?: Dictionary<InfinityMintScriptArguments>;
+	arguments?: InfinityMintScriptArguments[];
 }
 
 /**
