@@ -30,7 +30,9 @@ export class InfinityMintWindow {
 	private screen: any;
 	private style: any;
 	private border: any;
+	private destroyed: boolean;
 	private scrollbar: any;
+	private initialized: boolean;
 	constructor(
 		name?: string,
 		style?: any,
@@ -43,10 +45,12 @@ export class InfinityMintWindow {
 		this.height = 100;
 		this.x = 1;
 		this.y = 1;
+		this.destroyed = false;
 		this.z = 0;
 		this.style = style;
 		this.border = border;
 		this.scrollbar = scrollbar;
+		this.initialized = false;
 		this.options = options || {};
 		this.elements = {};
 		this.initialize = () => {};
@@ -113,6 +117,26 @@ export class InfinityMintWindow {
 		return this.height;
 	}
 
+	public hide() {
+		debugLog("hiding " + this.name);
+		Object.values(this.elements).forEach((element) => {
+			if (!element.hidden) {
+				element.shouldUnhide = true;
+				element.hide();
+			}
+		});
+	}
+
+	public show() {
+		debugLog("showing " + this.name);
+		Object.values(this.elements).forEach((element) => {
+			if (element.shouldUnhide) {
+				element.shouldUnhide = false;
+				element.show();
+			}
+		});
+	}
+
 	public setSize(width: number, height: number) {
 		this.width = width;
 		this.height = height;
@@ -152,7 +176,31 @@ export class InfinityMintWindow {
 		return this.screen;
 	}
 
+	public destroy() {
+		Object.keys(this.elements).forEach((index) => {
+			this.elements[index].destroy();
+			delete this.elements[index];
+		});
+
+		this.destroyed = true;
+	}
+
+	public isAlive() {
+		return this.destroyed === false;
+	}
+
+	public hasInitialized() {
+		return this.initialized;
+	}
+
+	public isVisible() {
+		return this.getElement("frame")?.hidden === false;
+	}
+
 	public async create() {
+		debugLog("creating initial window: " + this.name);
+
+		if (this.initialized) throw new Error("already initialized");
 		if (this.screen === undefined)
 			throw new Error("cannot create window with undefined screen");
 
@@ -175,12 +223,54 @@ export class InfinityMintWindow {
 		);
 		frame.setBack();
 
+		let close = this.registerElement(
+			"closeButton",
+			blessed.box({
+				top: 0,
+				right: 0,
+				width: "shrink",
+				height: "shrink",
+				tags: true,
+				padding: 1,
+				content: "[x]",
+				border: this.border || {},
+				style: {
+					bg: "red",
+					fg: "white",
+				},
+			})
+		);
+		close.on("click", () => {
+			this.destroy();
+		});
+		let hide = this.registerElement(
+			"hideButton",
+			blessed.box({
+				top: 0,
+				right: 6,
+				width: "shrink",
+				height: "shrink",
+				tags: true,
+				padding: 1,
+				content: "[-]",
+				border: this.border || {},
+				style: {
+					bg: "yellow",
+					fg: "white",
+				},
+			})
+		);
+		hide.on("click", () => {
+			this.hide();
+		});
+
 		let signers = await ethers.getSigners();
 		frame.setContent(
 			` > {bold}${this.name}{/bold} | wallet: ${signers[0].address} | network: ${hre.network.name}`
 		);
 		debugLog("initializing " + this.name);
 		await this.initialize(this, frame, blessed);
+		this.initialized = true;
 
 		//append each element
 		Object.values(this.elements).forEach((element) => {

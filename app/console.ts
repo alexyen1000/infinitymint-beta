@@ -7,6 +7,7 @@ import hre, { ethers } from "hardhat";
 import ConsoleWindow from "./windows/logs";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import Menu from "./windows/menu";
 
 const blessed = require("blessed");
 export default class Console {
@@ -14,6 +15,7 @@ export default class Console {
 	private options?: InfinityMintConsole;
 
 	protected currentWindow?: InfinityMintWindow;
+	protected windows: InfinityMintWindow[];
 	protected canExit: boolean;
 
 	private interval?: any;
@@ -27,6 +29,7 @@ export default class Console {
 				dockBorders: true,
 			}
 		);
+		this.windows = [];
 		this.canExit = true;
 		this.options = options;
 	}
@@ -56,6 +59,10 @@ export default class Console {
 			throw new Error("console already initialized");
 
 		this.network = hre.network;
+		this.windows = [ConsoleWindow, Menu];
+		this.currentWindow = this.windows[0];
+		this.currentWindow.setScreen(this.screen);
+
 		log(
 			"initializing InfinityConsole chainId " +
 				this.network.config.chainId +
@@ -77,9 +84,52 @@ export default class Console {
 			else debugLog("not allowed to exit but user wants to exit");
 		});
 
-		this.currentWindow = ConsoleWindow;
-		this.currentWindow.setScreen(this.screen);
-		debugLog("creating initial window: " + this.currentWindow.name);
+		this.screen.key(["show", "s"], (ch: string, key: string) => {
+			this.currentWindow?.show();
+		});
+		this.screen.key(["hide", "h"], (ch: string, key: string) => {
+			this.currentWindow?.hide();
+		});
+
+		//creating window manager
+
+		let list = blessed.list({
+			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
+			tags: true,
+			top: "center",
+			left: "center",
+			width: "95%",
+			height: "shrink",
+			padding: 3,
+			keys: true,
+			vi: true,
+			mouse: true,
+			border: "line",
+			scrollbar: {
+				ch: " ",
+				track: {
+					bg: "black",
+				},
+				style: {
+					inverse: true,
+				},
+			},
+			style: {
+				bg: "grey",
+				fg: "white",
+				item: {
+					hover: {
+						bg: "white",
+					},
+				},
+				selected: {
+					bg: "white",
+					bold: true,
+				},
+			},
+		});
+
+		this.screen.append(list);
 		await this.currentWindow.create();
 
 		this.screen.render();
@@ -87,6 +137,36 @@ export default class Console {
 		this.interval = setInterval(() => {
 			if (this.currentWindow) this.currentWindow.update();
 			this.screen.render();
+			list.setItems(
+				[...this.windows].map(
+					(window) =>
+						window.name +
+						(window.isAlive()
+							? ` [${window.isVisible() ? "VISIBLE" : "HIDDEN"}]`
+							: ` (dead)`)
+				)
+			);
+			this.screen.render();
 		}, 33);
+
+		list.on("select", async (el: Element, selected: any) => {
+			if (!this.windows[selected].isAlive()) {
+				debugLog(
+					"tried to select a dead window: " +
+						this.windows[selected].name
+				);
+				return;
+			}
+			if (!this.windows[selected].hasInitialized()) {
+				this.windows[selected].setScreen(this.screen);
+				await this.windows[selected].create();
+			}
+
+			if (!this.windows[selected].isVisible())
+				this.windows[selected].show();
+			else this.windows[selected].hide();
+			this.currentWindow = this.windows[selected];
+			this.screen.render();
+		});
 	}
 }

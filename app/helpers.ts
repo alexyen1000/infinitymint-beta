@@ -28,7 +28,9 @@ export interface BlessedElement extends Element {
 	enterSelected: Function;
 	enableKeys: Function;
 	width: number;
+	hidden: boolean;
 	height: number;
+	shouldUnhide: boolean;
 	style: any;
 	setContent: Function;
 	enableMouse: Function;
