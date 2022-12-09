@@ -221,8 +221,8 @@ export default class InfinityConsole {
 			this.windows.forEach((window) => {
 				if (
 					window.isAlive() &&
-					(!window.hasNoBackgroundThink() ||
-						(window.hasNoBackgroundThink() && window.isVisible()))
+					(window.shouldBackgroundThink() ||
+						(!window.shouldBackgroundThink() && window.isVisible()))
 				)
 					window.update();
 			});

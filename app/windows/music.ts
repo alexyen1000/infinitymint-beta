@@ -13,4 +13,6 @@ const Music = new InfinityMintWindow(
 		type: "line",
 	}
 );
+Music.setBackgroundThink(true);
+
 export default Music;

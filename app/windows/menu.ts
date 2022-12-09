@@ -16,7 +16,6 @@ const Menu = new InfinityMintWindow(
 );
 
 Menu.think = (window, frame, blessed) => {};
-Menu.setNoBackgroundThink(false); //allow this window to think when it is not shown
 
 Menu.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(

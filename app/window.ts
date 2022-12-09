@@ -32,7 +32,7 @@ export class InfinityMintWindow {
 	private style: any;
 	private border: any;
 	private destroyed: boolean;
-	private noBackgroundThink: boolean;
+	private backgroundThink: boolean;
 	private scrollbar: any;
 	private initialized: boolean;
 	private container?: InfinityConsole;
@@ -54,7 +54,7 @@ export class InfinityMintWindow {
 		this.style = style;
 		this.border = border;
 		this.scrollbar = scrollbar;
-		this.noBackgroundThink = true;
+		this.backgroundThink = false;
 		this.initialized = false;
 		this.options = options || {};
 		this.elements = {};
@@ -66,12 +66,12 @@ export class InfinityMintWindow {
 		this.screen = screen;
 	}
 
-	public setNoBackgroundThink(noBackgroundThink: boolean) {
-		this.noBackgroundThink = noBackgroundThink;
+	public setBackgroundThink(backgroundThink: boolean) {
+		this.backgroundThink = backgroundThink;
 	}
 
-	public hasNoBackgroundThink(): boolean {
-		return this.noBackgroundThink;
+	public shouldBackgroundThink(): boolean {
+		return this.backgroundThink;
 	}
 
 	public setContainer(container: InfinityConsole) {
