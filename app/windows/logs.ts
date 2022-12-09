@@ -182,6 +182,60 @@ Logs.initialize = async (window, frame, blessed) => {
 		console.setScroll(0);
 	});
 
+	let save = window.registerElement(
+		"save",
+		blessed.box({
+			bottom: 0,
+			left: 22 + 18 + 20,
+			shrink: true,
+			width: "shrink",
+			height: "shrink",
+			padding: 1,
+			content: "Save Pipe",
+			tags: true,
+			border: {
+				type: "line",
+			},
+			style: {
+				fg: "white",
+				bg: "magenta",
+				border: {
+					fg: "#ffffff",
+				},
+				hover: {
+					bg: "grey",
+				},
+			},
+		})
+	);
+
+	let load = window.registerElement(
+		"load",
+		blessed.box({
+			bottom: 0,
+			left: 22 + 18 + 20 + 14,
+			shrink: true,
+			width: "shrink",
+			height: "shrink",
+			padding: 1,
+			content: "Load Pipe",
+			tags: true,
+			border: {
+				type: "line",
+			},
+			style: {
+				fg: "white",
+				bg: "magenta",
+				border: {
+					fg: "#ffffff",
+				},
+				hover: {
+					bg: "grey",
+				},
+			},
+		})
+	);
+
 	let form = window.registerElement(
 		"form",
 		blessed.form({
