@@ -1,10 +1,11 @@
 import { log } from "../helpers";
 import Logging from "../logging";
 import { InfinityMintWindow } from "../window";
+import hre, { ethers } from "hardhat";
 
 let lastLength = 0;
-const Console = new InfinityMintWindow(
-	"Console",
+const Logs = new InfinityMintWindow(
+	"Logs",
 	{
 		fg: "white",
 		bg: "grey",
@@ -26,43 +27,41 @@ const Console = new InfinityMintWindow(
 	}
 );
 
-Console.think = (window, frame, blessed) => {
-	log("test " + Math.random());
+Logs.think = (window, frame, blessed) => {
 	let element = window.getElement("console");
 	let lines = Logging.getPipe(window.options.pipe).logs;
 	//bleseed push line doesnt work for some reason so we have to do it this way
 	if (lastLength !== lines.length) {
 		let content = ``;
-		lines.forEach((line) => (content = content + line.toString() + "\n"));
+		lines.forEach(
+			(line, index) =>
+				(content =
+					content +
+					`[${index.toString().padEnd(8, "0")}]: ` +
+					line.toString() +
+					"\n")
+		);
 		element.setContent(content);
 		element.focus();
 		lastLength = lines.length;
 		if (window.options.alwaysScroll === true) element.setScroll(lastLength);
 	}
-
-	window
-		.getElement("gotoEnd")
-		.setContent("Goto End [" + lastLength + " lines]");
 };
 
 //initializes the console
-Console.initialize = (window, frame, blessed) => {
+Logs.initialize = async (window, frame, blessed) => {
 	//initial settings
 	window.options.alwaysScroll = true;
 	window.options.pipe = "default";
-	frame.setContent(
-		" {bold}InfinityMint - Console{/bold} | current pipe: default"
-	);
 
 	let console = window.registerElement(
 		"console",
 		blessed.box({
-			width: "95%",
-			height: "65%",
+			width: "100%",
+			height: "100%-8",
 			padding: 1,
-			left: "center",
-			draggable: true,
 			top: 4,
+			left: "center",
 			keys: true,
 			tags: true,
 			scrollable: true,
@@ -130,7 +129,7 @@ Console.initialize = (window, frame, blessed) => {
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content: "Goto End [" + 0 + " lines]",
+			content: "Scroll To End",
 			tags: true,
 			border: {
 				type: "line",
@@ -148,6 +147,40 @@ Console.initialize = (window, frame, blessed) => {
 		})
 	);
 	gotoEnd.setFront();
+	gotoEnd.on("click", () => {
+		console.setScroll(lastLength);
+	});
+
+	let gotoTop = window.registerElement(
+		"gotoTop",
+		blessed.box({
+			bottom: 0,
+			left: 22 + 18,
+			shrink: true,
+			width: "shrink",
+			height: "shrink",
+			padding: 1,
+			content: "Scroll To Start",
+			tags: true,
+			border: {
+				type: "line",
+			},
+			style: {
+				fg: "white",
+				bg: "blue",
+				border: {
+					fg: "#ffffff",
+				},
+				hover: {
+					bg: "grey",
+				},
+			},
+		})
+	);
+	gotoTop.setFront();
+	gotoTop.on("click", () => {
+		console.setScroll(0);
+	});
 
 	let form = window.registerElement(
 		"form",
@@ -196,10 +229,14 @@ Console.initialize = (window, frame, blessed) => {
 	changePipe.on("click", () => {
 		form.setFront();
 		form.toggle();
+		window.options.pipe = "debug";
+		changePipe.setContent(
+			"Change Pipe (current: " + window.options.pipe + ")"
+		);
 	});
 
 	//always scroll
 	window.think(window, frame, blessed); //do think once
 };
 
-export default Console;
+export default Logs;

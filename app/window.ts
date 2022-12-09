@@ -1,6 +1,7 @@
 import { Dictionary } from "form-data";
-import { Rectangle, Vector, FuncTripple, log } from "./helpers";
+import { Rectangle, Vector, FuncTripple, log, debugLog } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
+import hre, { ethers } from "hardhat";
 
 const blessed = require("blessed");
 export class InfinityMintWindow {
@@ -123,7 +124,14 @@ export class InfinityMintWindow {
 	): BlessedElement {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
-
+		debugLog(
+			"registering element key " +
+				key +
+				" for window " +
+				this.name +
+				" typeof " +
+				element.constructor.name
+		);
 		this.elements[key] = element;
 		return this.elements[key];
 	}
@@ -144,14 +152,14 @@ export class InfinityMintWindow {
 		return this.screen;
 	}
 
-	public create() {
+	public async create() {
 		if (this.screen === undefined)
 			throw new Error("cannot create window with undefined screen");
 
 		//set the title
 		this.screen.title = this.name;
 		// Create the frame which all other components go into
-		this.registerElement(
+		let frame = this.registerElement(
 			"frame",
 			blessed.box({
 				top: "center",
@@ -159,22 +167,26 @@ export class InfinityMintWindow {
 				width: "100%",
 				height: "100%",
 				tags: true,
-				padding: 0,
-				scrollable: true,
-				mouse: true,
+				padding: 1,
 				scrollbar: this.scrollbar || {},
 				border: this.border || {},
 				style: this.style || {},
 			})
 		);
+		frame.setBack();
 
-		//call initialize method
-		if (this.initialize)
-			this.initialize(this, this.getElement("frame"), blessed);
+		let signers = await ethers.getSigners();
+		frame.setContent(
+			` > {bold}${this.name}{/bold} | wallet: ${signers[0].address} | network: ${hre.network.name}`
+		);
+		debugLog("initializing " + this.name);
+		await this.initialize(this, frame, blessed);
 
 		//append each element
 		Object.values(this.elements).forEach((element) => {
-			log("append element to screen: " + element.constructor.name);
+			debugLog(
+				"appending element to screen: " + element.constructor.name
+			);
 			this.screen.append(element);
 		});
 	}

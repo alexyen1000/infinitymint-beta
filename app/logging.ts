@@ -8,6 +8,7 @@ class LogPipe {
 	public logs: String[];
 	public listen: boolean;
 	public save: boolean;
+	public appendDate?: boolean;
 	private pipe: string;
 	private errors: String[];
 	private created: number;
@@ -25,9 +26,12 @@ class LogPipe {
 		this.save = true;
 		this.listen = false;
 		this.errors = [];
+		this.appendDate = false;
 		this.created = Date.now();
 		this.logHandler = (str: string) => {
 			if (this.listen) console.log(str, false);
+			if (this.appendDate)
+				str = `<${new Date(Date.now()).toTimeString()}> ` + str;
 			this.logs.push(str);
 		};
 		this.errorHandler = (str: string) => {
@@ -61,6 +65,7 @@ interface LogPipeOptions {
 	save?: boolean;
 	listen?: boolean;
 	setAsCurrentPipe?: boolean;
+	appendDate?: boolean;
 }
 
 /**
@@ -139,6 +144,8 @@ const Logging = new (class {
 	public createPipe(key: string, options?: LogPipeOptions): LogPipe {
 		this.logs[key] = new LogPipe(key);
 		this.logs[key].save = options?.save || true;
+		this.logs[key].listen = options?.listen || false;
+		this.logs[key].appendDate = options?.appendDate || true;
 
 		if (this.currentPipe === "" || options?.setAsCurrentPipe)
 			this.currentPipe = key;

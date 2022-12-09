@@ -4,7 +4,7 @@ import { InfinityMintWindow } from "./window";
 
 //windows
 import Menu from "./windows/menu";
-import ConsoleWindow from "./windows/console";
+import ConsoleWindow from "./windows/logs";
 
 const blessed = require("blessed");
 
@@ -27,7 +27,7 @@ export default class Console {
 		this.options = options;
 	}
 
-	public initialize() {
+	public async initialize() {
 		//register escape key
 		this.screen.key(["escape", "q", "C-c"], (ch: string, key: string) => {
 			if (this.canExit) return process.exit(0);
@@ -36,7 +36,7 @@ export default class Console {
 
 		this.currentWindow = ConsoleWindow;
 		this.currentWindow.setScreen(this.screen);
-		this.currentWindow.create();
+		await this.currentWindow.create();
 
 		this.screen.render();
 

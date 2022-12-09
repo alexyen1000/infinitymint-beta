@@ -74,8 +74,12 @@ export interface Rectangle {
 	height: number;
 	z: number;
 }
-export const log = (msg: string) => {
-	Logging.log(msg);
+export const log = (msg: string, pipe?: string) => {
+	Logging.log(msg, pipe);
+};
+
+export const debugLog = (msg: string) => {
+	log(msg, "debug");
 };
 
 export const error = (error: string | Error) => {
