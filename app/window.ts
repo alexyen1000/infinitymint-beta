@@ -1,14 +1,24 @@
 import { Dictionary } from "form-data";
-import { Rectangle, Vector, FuncSingle, FuncDouble, log } from "./helpers";
-import { BlessedElement } from "./helpers";
-import Logging from "./logging";
+import { Rectangle, Vector, FuncTripple, log } from "./helpers";
+import { BlessedElement, Blessed } from "./helpers";
 
 const blessed = require("blessed");
 export class InfinityMintWindow {
-	public initialize: FuncDouble<InfinityMintWindow, BlessedElement, void>;
-	public think: FuncSingle<InfinityMintWindow, void>;
+	public initialize: FuncTripple<
+		InfinityMintWindow,
+		BlessedElement,
+		Blessed,
+		void
+	>;
+	public think: FuncTripple<
+		InfinityMintWindow,
+		BlessedElement,
+		Blessed,
+		void
+	>;
 	public name: string;
 	public elements: Dictionary<BlessedElement>;
+	public options: any;
 
 	protected width: number;
 	protected height: number;
@@ -19,7 +29,14 @@ export class InfinityMintWindow {
 	private screen: any;
 	private style: any;
 	private border: any;
-	constructor(name?: string, style?: any, border?: any) {
+	private scrollbar: any;
+	constructor(
+		name?: string,
+		style?: any,
+		border?: any,
+		scrollbar?: any,
+		options?: any
+	) {
 		this.name = name || this.constructor.name;
 		this.width = 100;
 		this.height = 100;
@@ -28,32 +45,34 @@ export class InfinityMintWindow {
 		this.z = 0;
 		this.style = style;
 		this.border = border;
+		this.scrollbar = scrollbar;
+		this.options = options || {};
 		this.elements = {};
 		this.initialize = () => {};
 		this.think = () => {};
 	}
 
-	setScreen(screen: any) {
+	public setScreen(screen: any) {
 		this.screen = screen;
 	}
 
-	setBorder(border: any) {
+	public setBorder(border: any) {
 		this.border = border;
 	}
 
-	getBorder(): object {
+	public getBorder(): object {
 		return this.border;
 	}
 
-	setWidth(num: number) {
+	public setWidth(num: number) {
 		this.width = num;
 	}
 
-	setHeight(num: number) {
+	public setHeight(num: number) {
 		this.height = num;
 	}
 
-	getRectangle(): Rectangle {
+	public getRectangle(): Rectangle {
 		return {
 			startX: this.x,
 			endX: this.x + this.width,
@@ -65,40 +84,43 @@ export class InfinityMintWindow {
 		};
 	}
 
-	getStyle(): object {
+	public getStyle(): object {
 		return this.style;
 	}
 
-	setStyle(style: any) {
+	public setStyle(style: any) {
 		this.style = style;
 	}
 
-	getWidth() {
+	public getWidth() {
 		return this.width;
 	}
 
-	getX() {
+	public etX() {
 		return this.x;
 	}
 
-	get(): Vector {
+	public get(): Vector {
 		return { x: this.y, y: this.y, z: this.z };
 	}
 
-	getY() {
+	public getY() {
 		return this.y;
 	}
 
-	getHeight() {
+	public getHeight() {
 		return this.height;
 	}
 
-	setSize(width: number, height: number) {
+	public setSize(width: number, height: number) {
 		this.width = width;
 		this.height = height;
 	}
 
-	registerElement(key: string, element: BlessedElement): BlessedElement {
+	public registerElement(
+		key: string,
+		element: BlessedElement
+	): BlessedElement {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
 
@@ -106,11 +128,23 @@ export class InfinityMintWindow {
 		return this.elements[key];
 	}
 
-	getElement(key: string): BlessedElement {
+	public getElement(key: string): BlessedElement {
 		return this.elements[key];
 	}
 
-	create() {
+	public getScrollbar() {
+		return this.scrollbar;
+	}
+
+	public update() {
+		if (this.think) this.think(this, this.getElement("frame"), blessed);
+	}
+
+	public getScreen() {
+		return this.screen;
+	}
+
+	public create() {
 		if (this.screen === undefined)
 			throw new Error("cannot create window with undefined screen");
 
@@ -125,13 +159,18 @@ export class InfinityMintWindow {
 				width: "100%",
 				height: "100%",
 				tags: true,
+				padding: 0,
+				scrollable: true,
+				mouse: true,
+				scrollbar: this.scrollbar || {},
 				border: this.border || {},
 				style: this.style || {},
 			})
-		).focus(); //then focus it
+		);
 
 		//call initialize method
-		this.initialize(this, this.getElement("frame"));
+		if (this.initialize)
+			this.initialize(this, this.getElement("frame"), blessed);
 
 		//append each element
 		Object.values(this.elements).forEach((element) => {

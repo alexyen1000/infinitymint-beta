@@ -6,14 +6,28 @@ export interface Vector {
 	z: number;
 }
 
+export interface Blessed {
+	screen: any;
+	box: any;
+	button: any;
+	list: any;
+	form: any;
+}
+
 export interface BlessedElement extends Element {
 	focus: Function;
 	render: Function;
 	hide: Function;
 	setFront: Function;
+	on: Function;
 	setBack: Function;
+	setScroll: Function;
 	removeLabel: Function;
+	pushLine: Function;
 	enableKeys: Function;
+	width: number;
+	height: number;
+	style: any;
 	setContent: Function;
 	enableMouse: Function;
 	enableInput: Function;
@@ -23,6 +37,8 @@ export interface BlessedElement extends Element {
 	toggle: Function;
 	destroy: Function;
 	free: Function;
+	setLine: FuncDouble<number, string, Function>;
+	insertLine: FuncDouble<number, string, Function>;
 	key: FuncDouble<string, Function, Function>;
 	onceKey: FuncDouble<string, Function, Function>;
 	onScreenEvent: FuncDouble<string, Function, Function>;

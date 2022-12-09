@@ -15,6 +15,10 @@ export interface InfinityMintScriptArguments {
 	validator?: Function;
 }
 
+export interface InfinityMintConsole {
+	blessed?: Dictionary<any>;
+}
+
 export interface InfinityMintScript {
 	name?: string;
 	description?: string;

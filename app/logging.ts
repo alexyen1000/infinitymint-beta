@@ -14,6 +14,11 @@ class LogPipe {
 	public logHandler: Function;
 	public errorHandler: Function;
 	public terminationHandler: Function;
+
+	/**
+	 *
+	 * @param pipe
+	 */
 	constructor(pipe: string) {
 		this.logs = [];
 		this.pipe = pipe;
@@ -62,8 +67,8 @@ interface LogPipeOptions {
  * Logging factory class
  */
 const Logging = new (class {
-	private logs: Dictionary<LogPipe>;
-	private currentPipe: string;
+	public logs: Dictionary<LogPipe>;
+	public currentPipe: string;
 	constructor() {
 		this.logs = {};
 		this.currentPipe = "default";
@@ -131,7 +136,7 @@ const Logging = new (class {
 		return pipe;
 	}
 
-	private createPipe(key: string, options?: LogPipeOptions): LogPipe {
+	public createPipe(key: string, options?: LogPipeOptions): LogPipe {
 		this.logs[key] = new LogPipe(key);
 		this.logs[key].save = options?.save || true;
 

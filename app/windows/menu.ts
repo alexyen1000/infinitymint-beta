@@ -1,10 +1,11 @@
+import Logging from "../logging";
 import { InfinityMintWindow } from "../window";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
 	{
 		fg: "white",
-		bg: "blue",
+		bg: "yellow",
 		border: {
 			fg: "#f0f0f0",
 		},
@@ -13,5 +14,5 @@ const Menu = new InfinityMintWindow(
 		type: "line",
 	}
 );
-Menu.initialize = (window, frame) => {};
+
 export default Menu;
