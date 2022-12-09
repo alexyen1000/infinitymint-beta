@@ -1,7 +1,7 @@
 import * as Helpers from "./app/helpers";
 import InfinityConsole from "./app/console";
 import hre, { ethers } from "hardhat";
-import Logging from "./app/logging";
+import Pipes from "./app/pipes";
 
 async function main() {
 	let artifacts = hre.artifacts;
@@ -13,7 +13,7 @@ async function main() {
 
 	//TODO: Move somewhee else?
 	//create a pipe for the provider/network name so we can log stuff there for that network
-	Logging.registerSimplePipe(hre.network.name);
+	Pipes.registerSimplePipe(hre.network.name);
 	//register events
 	ethers.provider.on("block", (blockNumber) => {
 		Helpers.log("new block: #" + blockNumber, hre.network.name);

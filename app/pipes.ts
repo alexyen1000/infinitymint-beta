@@ -4,7 +4,7 @@ import { Dictionary } from "form-data";
 /**
  * The log pipe class
  */
-class LogPipe {
+class Pipe {
 	public logs: String[];
 	public listen: boolean;
 	public save: boolean;
@@ -71,8 +71,8 @@ interface LogPipeOptions {
 /**
  * Logging factory class
  */
-const Logging = new (class {
-	public logs: Dictionary<LogPipe>;
+const Pipes = new (class {
+	public logs: Dictionary<Pipe>;
 	public currentPipe: string;
 	constructor() {
 		this.logs = {};
@@ -111,12 +111,12 @@ const Logging = new (class {
 		return this.logs[key];
 	}
 
-	public registerSimplePipe(key: string, options?: LogPipeOptions): LogPipe {
+	public registerSimplePipe(key: string, options?: LogPipeOptions): Pipe {
 		let pipe = this.createPipe(key, options);
 		return pipe;
 	}
 
-	public closePipe(pipe: string | LogPipe) {
+	public closePipe(pipe: string | Pipe) {
 		delete this.logs[pipe.toString()];
 	}
 
@@ -124,7 +124,7 @@ const Logging = new (class {
 		key: string,
 		process: ChildProcess,
 		options?: LogPipeOptions
-	): LogPipe {
+	): Pipe {
 		let pipe = this.createPipe(key, options);
 
 		process.stdout?.on("data", (str: string) => {
@@ -141,8 +141,8 @@ const Logging = new (class {
 		return pipe;
 	}
 
-	public createPipe(key: string, options?: LogPipeOptions): LogPipe {
-		this.logs[key] = new LogPipe(key);
+	public createPipe(key: string, options?: LogPipeOptions): Pipe {
+		this.logs[key] = new Pipe(key);
 		this.logs[key].save = options?.save || true;
 		this.logs[key].listen = options?.listen || false;
 		this.logs[key].appendDate = options?.appendDate || true;
@@ -153,4 +153,4 @@ const Logging = new (class {
 		return this.logs[key];
 	}
 })();
-export default Logging;
+export default Pipes;

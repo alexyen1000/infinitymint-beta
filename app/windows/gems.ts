@@ -22,7 +22,7 @@ Gems.initialize = async (window, frame, blessed) => {
 			height: "100%-8",
 			padding: 1,
 			top: 4,
-			label: " {bold}{white-fg}Gem{/white-fg}{/bold}",
+			label: "{bold}{white-fg}Gem{/white-fg}{/bold}",
 			left: "center",
 			keys: true,
 			tags: true,

@@ -1,4 +1,4 @@
-import Logging from "./logging";
+import Pipes from "./pipes";
 
 export interface Vector {
 	x: number;
@@ -82,7 +82,7 @@ export interface Rectangle {
 	z: number;
 }
 export const log = (msg: string, pipe?: string) => {
-	Logging.log(msg, pipe);
+	Pipes.log(msg, pipe);
 };
 
 export const debugLog = (msg: string) => {
@@ -90,7 +90,7 @@ export const debugLog = (msg: string) => {
 };
 
 export const error = (error: string | Error) => {
-	Logging.log(error.toString());
+	Pipes.log(error.toString());
 };
 
 export const isEnvTrue = (key: string): boolean => {

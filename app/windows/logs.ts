@@ -1,7 +1,5 @@
-import { log } from "../helpers";
-import Logging from "../logging";
+import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
-import hre, { ethers } from "hardhat";
 
 let lastLength = 0;
 const Logs = new InfinityMintWindow(
@@ -29,7 +27,7 @@ const Logs = new InfinityMintWindow(
 
 Logs.think = (window, frame, blessed) => {
 	let element = window.getElement("console");
-	let lines = Logging.getPipe(window.options.pipe).logs;
+	let lines = Pipes.getPipe(window.options.pipe).logs;
 	//bleseed push line doesnt work for some reason so we have to do it this way
 	if (lastLength !== lines.length) {
 		let content = ``;
@@ -43,6 +41,11 @@ Logs.think = (window, frame, blessed) => {
 		);
 		element.setContent(content);
 		element.focus();
+		element.setLabel(
+			"{bold}{white-fg}Pipe: {/white-fg}" +
+				window.options.pipe +
+				"{/bold}"
+		);
 		lastLength = lines.length;
 		if (window.options.alwaysScroll === true) element.setScroll(lastLength);
 	}
@@ -61,7 +64,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			height: "100%-8",
 			padding: 1,
 			top: 4,
-			label: " {bold}{white-fg}Output{/white-fg}{/bold}",
+			label: "{bold}{white-fg}Pipe: {/white-fg}undefined{/bold}",
 			left: "center",
 			keys: true,
 			tags: true,
@@ -275,7 +278,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
-	let keys = Object.keys(Logging.logs);
+	let keys = Object.keys(Pipes.logs);
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
 		window.options.pipe = keys[selected];
