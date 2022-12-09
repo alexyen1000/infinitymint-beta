@@ -245,7 +245,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			top: "center",
 			left: "center",
 			width: "95%",
-			height: "shrink",
+			height: "50%",
 			padding: 3,
 			keys: true,
 			vi: true,

@@ -34,7 +34,7 @@ const config: HardhatUserConfig = {
 
 //check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
 if (!fs.existsSync("./infinitymint.config.ts")) {
-	let stub = `
+	let stub = `\n
 		import { InfinityMintConfig } from "./app/config";
 		import { isEnvTrue, log } from "./app/helpers";
 		import Logging from "./app/logging";
@@ -52,13 +52,14 @@ if (!fs.existsSync("./infinitymint.config.ts")) {
 			listen: isEnvTrue("PIPE_ECHO_DEBUG"),
 			save: true,
 		});
+
+		//please visit docs.infinitymint.app
+		const config: InfinityMintConfig = {
+			hardhat: ${JSON.stringify(config, null, 2)}
+		}
+		export default config;
 	`;
-	let file = `${stub}\n\n//please visit docs.infinitymint.app\n\nconst config: InfinityMintConfig = {\n\thardhat:${JSON.stringify(
-		config,
-		null,
-		2
-	)}};\nlog("Valid InfinityMint Configuration File");\nexport default config;`;
-	fs.writeFileSync("./infinitymint.config.ts", file);
+	fs.writeFileSync("./infinitymint.config.ts", stub);
 }
 
 //else, import the InfinityMint config
