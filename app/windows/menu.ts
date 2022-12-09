@@ -16,14 +16,14 @@ const Menu = new InfinityMintWindow(
 );
 
 Menu.initialize = (window, frame, blessed) => {
-	let console = window.registerElement(
+	let background = window.registerElement(
 		"console",
 		blessed.box({
 			width: "100%",
 			height: "100%-8",
 			padding: 1,
 			top: 4,
-			label: " {bold}{white-fg}Output{/white-fg}{/bold}",
+			label: " {bold}{white-fg}Menu{/white-fg}{/bold}",
 			left: "center",
 			keys: true,
 			tags: true,
@@ -40,7 +40,7 @@ Menu.initialize = (window, frame, blessed) => {
 			},
 		})
 	);
-	console.setBack();
+	background.setBack();
 };
 
 export default Menu;

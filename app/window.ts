@@ -237,6 +237,9 @@ export class InfinityMintWindow {
 				style: {
 					bg: "red",
 					fg: "white",
+					hover: {
+						bg: "grey",
+					},
 				},
 			})
 		);
@@ -257,6 +260,9 @@ export class InfinityMintWindow {
 				style: {
 					bg: "yellow",
 					fg: "white",
+					hover: {
+						bg: "grey",
+					},
 				},
 			})
 		);
