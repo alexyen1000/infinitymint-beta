@@ -17,6 +17,7 @@ import Scripts from "./windows/scripts";
 import Settings from "./windows/settings";
 import Deploy from "./windows/deploy";
 import Tutorial from "./windows/tutorial";
+import Projects from "./windows/projects";
 
 const blessed = require("blessed");
 export default class Console {
@@ -71,6 +72,7 @@ export default class Console {
 		this.windows = [
 			Menu,
 			Tutorial,
+			Projects,
 			Logs,
 			Browser,
 			Deployments,
@@ -114,7 +116,7 @@ export default class Console {
 			left: "center",
 			width: "95%",
 			height: "95%",
-			padding: 3,
+			padding: 2,
 			keys: true,
 			mouse: true,
 			border: "line",
