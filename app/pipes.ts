@@ -61,7 +61,7 @@ class Pipe {
 /**
  * Interface for the log pipe options
  */
-interface LogPipeOptions {
+interface PipeOptions {
 	save?: boolean;
 	listen?: boolean;
 	setAsCurrentPipe?: boolean;
@@ -111,7 +111,7 @@ const Pipes = new (class {
 		return this.logs[key];
 	}
 
-	public registerSimplePipe(key: string, options?: LogPipeOptions): Pipe {
+	public registerSimplePipe(key: string, options?: PipeOptions): Pipe {
 		let pipe = this.createPipe(key, options);
 		return pipe;
 	}
@@ -123,7 +123,7 @@ const Pipes = new (class {
 	public registerPipe(
 		key: string,
 		process: ChildProcess,
-		options?: LogPipeOptions
+		options?: PipeOptions
 	): Pipe {
 		let pipe = this.createPipe(key, options);
 
@@ -141,7 +141,7 @@ const Pipes = new (class {
 		return pipe;
 	}
 
-	public createPipe(key: string, options?: LogPipeOptions): Pipe {
+	public createPipe(key: string, options?: PipeOptions): Pipe {
 		this.logs[key] = new Pipe(key);
 		this.logs[key].save = options?.save || true;
 		this.logs[key].listen = options?.listen || false;

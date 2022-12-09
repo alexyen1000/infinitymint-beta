@@ -71,7 +71,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		await window.openWindow("Deploy");
 	});
 
-	window.registerElement(
+	let test = window.registerElement(
 		"test",
 		blessed.box({
 			bottom: 0,
@@ -97,6 +97,9 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+	test.on("click", async () => {
+		await window.openWindow("Test");
+	});
 
 	window.registerElement(
 		"export",
@@ -125,7 +128,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		})
 	);
 
-	window.registerElement(
+	let scripts = window.registerElement(
 		"scripts",
 		blessed.box({
 			bottom: 0,
@@ -151,8 +154,11 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+	scripts.on("click", async () => {
+		await window.openWindow("Scripts");
+	});
 
-	window.registerElement(
+	let projects = window.registerElement(
 		"projects",
 		blessed.box({
 			bottom: 0,
@@ -178,8 +184,11 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+	projects.on("click", async () => {
+		await window.openWindow("Projects");
+	});
 
-	window.registerElement(
+	let deployments = window.registerElement(
 		"deployments",
 		blessed.box({
 			bottom: 0,
@@ -205,8 +214,11 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+	deployments.on("click", async () => {
+		await window.openWindow("Deployments");
+	});
 
-	window.registerElement(
+	let networks = window.registerElement(
 		"networks",
 		blessed.box({
 			bottom: 0,
@@ -232,6 +244,9 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+	networks.on("click", async () => {
+		await window.openWindow("Networks");
+	});
 };
 
 export default Menu;
