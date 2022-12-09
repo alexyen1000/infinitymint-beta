@@ -2,11 +2,11 @@ import { InfinityMintConsole } from "./config";
 import { debugLog, log } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 //windows
 import Logs from "./windows/logs";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import Menu from "./windows/menu";
 import Browser from "./windows/browser";
 import Deployments from "./windows/deployments";
@@ -79,7 +79,8 @@ export default class Console {
 		this.currentWindow.options.destroy = this.currentWindow.on(
 			"destroy",
 			() => {
-				this.setListItems();
+				debugLog("destroyed window " + this.currentWindow?.name);
+				this.setWindows();
 			}
 		);
 
@@ -88,11 +89,11 @@ export default class Console {
 			this.currentWindow.off("hude", this.currentWindow.options.hude);
 		//when the current window is hiden, rebuild the item
 		this.currentWindow.options.hide = this.currentWindow.on("hide", () => {
-			this.setListItems();
+			this.setWindows();
 		});
 	}
 
-	public setListItems() {
+	public setWindows() {
 		this.windowManager.setItems(
 			[...this.windows].map(
 				(window) =>
@@ -142,7 +143,7 @@ export default class Console {
 
 		//creating window manager
 		this.windowManager = blessed.list({
-			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show, press Z to refresh){/bold}",
+			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show, press Control-Z to show windows){/bold}",
 			tags: true,
 			top: "center",
 			left: "center",
@@ -175,7 +176,7 @@ export default class Console {
 				},
 			},
 		});
-
+		//when an item is selected form the list box, attempt to show or hide that Windoiw.
 		this.windowManager.on("select", async (el: Element, selected: any) => {
 			//disable the select if the current window is visible
 			if (this.currentWindow?.isVisible()) return;
@@ -196,7 +197,7 @@ export default class Console {
 			else this.currentWindow.hide();
 		});
 
-		this.setListItems();
+		this.setWindows();
 
 		//append list
 		this.screen.append(this.windowManager);
@@ -209,7 +210,8 @@ export default class Console {
 
 		//update interval
 		this.interval = setInterval(() => {
-			if (this.currentWindow) this.currentWindow.update();
+			if (this.currentWindow && this.currentWindow.isAlive())
+				this.currentWindow.update();
 			this.screen.render();
 		}, 33);
 
@@ -219,14 +221,14 @@ export default class Console {
 			else debugLog("not allowed to exit but user wants to exit");
 		});
 		//shows the list
-		this.screen.key(["windows", "z"], (ch: string, key: string) => {
-			this.setListItems();
+		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {
+			this.setWindows();
 			this.currentWindow?.hide();
 			this.windowManager.show();
 		});
 		//restores the current window
-		this.screen.key(["restore", "r"], (ch: string, key: string) => {
-			this.setListItems();
+		this.screen.key(["restore", "C-r"], (ch: string, key: string) => {
+			this.setWindows();
 			if (this.windowManager?.hidden === false)
 				this.currentWindow?.show();
 		});

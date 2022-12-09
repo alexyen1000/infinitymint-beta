@@ -35,6 +35,7 @@ export interface BlessedElement extends Element {
 	shouldUnhide: boolean;
 	style: any;
 	setContent: Function;
+	setLabel: Function;
 	enableMouse: Function;
 	enableInput: Function;
 	enableDrag: Function;

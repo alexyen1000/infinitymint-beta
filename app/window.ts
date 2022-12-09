@@ -179,10 +179,13 @@ export class InfinityMintWindow {
 	public destroy() {
 		this.destroyed = true;
 		Object.keys(this.elements).forEach((index) => {
+			this.elements[index].free(); //unsubscribes to events saving memory
 			this.elements[index].destroy();
 			delete this.elements[index];
 		});
 	}
+
+	public registerKey() {}
 
 	public isAlive() {
 		return this.destroyed === false;

@@ -10,8 +10,9 @@ async function main() {
 	contracts.forEach((contract) =>
 		Helpers.debugLog("found contract: " + contract)
 	);
+
 	//TODO: Move somewhee else?
-	//create a pipe for the provider so we can log stuff there
+	//create a pipe for the provider/network name so we can log stuff there for that network
 	Logging.registerSimplePipe(hre.network.name);
 	//register events
 	ethers.provider.on("block", (blockNumber) => {
@@ -20,7 +21,6 @@ async function main() {
 	ethers.provider.on("pending", (tx) => {
 		Helpers.log("new transaction pending: " + tx.toString());
 	});
-
 	ethers.provider.on("error", (tx) => {
 		Helpers.log("tx error: " + tx.toString());
 	});
