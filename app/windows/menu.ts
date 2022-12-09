@@ -1,3 +1,4 @@
+import { debugLog } from "../helpers";
 import { InfinityMintWindow } from "../window";
 
 const Menu = new InfinityMintWindow(
@@ -13,6 +14,9 @@ const Menu = new InfinityMintWindow(
 		type: "line",
 	}
 );
+
+Menu.think = (window, frame, blessed) => {};
+Menu.setNoBackgroundThink(false); //allow this window to think when it is not shown
 
 Menu.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(

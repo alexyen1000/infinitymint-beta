@@ -218,8 +218,15 @@ export default class InfinityConsole {
 
 		//update interval
 		this.interval = setInterval(() => {
-			if (this.currentWindow && this.currentWindow.isAlive())
-				this.currentWindow.update();
+			this.windows.forEach((window) => {
+				if (
+					window.isAlive() &&
+					(!window.hasNoBackgroundThink() ||
+						(window.hasNoBackgroundThink() && window.isVisible()))
+				)
+					window.update();
+			});
+
 			this.screen.render();
 		}, 33);
 
