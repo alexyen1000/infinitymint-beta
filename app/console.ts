@@ -133,17 +133,9 @@ export default class Console {
 				this.network.name
 		);
 
-		debugLog("getting signers");
-		this.signers = await ethers.getSigners();
-		debugLog("found " + this.signers.length + " signers");
-		this.signers.forEach((signer, index) => {
-			debugLog(`${index} => ${signer.address}`);
-		});
-		log("default account: " + this.signers[0].address);
-
 		//creating window manager
 		this.windowManager = blessed.list({
-			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show, press Control-Z to show windows){/bold}",
+			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
 			tags: true,
 			top: "center",
 			left: "center",
@@ -195,6 +187,7 @@ export default class Console {
 			} else if (!this.currentWindow.isVisible())
 				this.currentWindow.show();
 			else this.currentWindow.hide();
+			await this.currentWindow.setFrameContent();
 		});
 
 		this.setWindows();
@@ -216,7 +209,7 @@ export default class Console {
 		}, 33);
 
 		//register escape key
-		this.screen.key(["escape", "q", "C-c"], (ch: string, key: string) => {
+		this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
 			if (this.canExit) return process.exit(0);
 			else debugLog("not allowed to exit but user wants to exit");
 		});

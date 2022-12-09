@@ -282,9 +282,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
 		window.options.pipe = keys[selected];
-		changePipe.setContent(
-			"Change Pipe (current: " + window.options.pipe + ")"
-		);
+		changePipe.setContent("Change Pipe (" + window.options.pipe + ")");
 		console.setScroll(0);
 		form.hide();
 	});
@@ -301,7 +299,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content: "Change Pipe (current: " + window.options.pipe + ")",
+			content: "Change Pipe (" + window.options.pipe + ")",
 			tags: true,
 			border: {
 				type: "line",

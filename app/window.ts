@@ -124,6 +124,11 @@ export class InfinityMintWindow {
 				element.shouldUnhide = true;
 				element.hide();
 			}
+			try {
+				element.disableMouse();
+			} catch (error) {
+				//element might not have disable mouse method
+			}
 		});
 	}
 
@@ -133,6 +138,11 @@ export class InfinityMintWindow {
 			if (element.shouldUnhide) {
 				element.shouldUnhide = false;
 				element.show();
+			}
+			try {
+				element.enableMouse();
+			} catch (error) {
+				//element might not have enable mouse method so
 			}
 		});
 	}
@@ -211,6 +221,27 @@ export class InfinityMintWindow {
 		return this.getElement("frame")?.hidden === false;
 	}
 
+	public async setFrameContent() {
+		let signers = await ethers.getSigners();
+		debugLog("found " + signers.length + " signers");
+		signers.forEach((signer, index) => {
+			debugLog(`[${index}] => ${signer.address}`);
+		});
+		let balance = await signers[0].getBalance();
+		debugLog("main account: " + signers[0].address);
+		debugLog("balance of account: " + balance);
+		this.getElement("frame").setContent(
+			` > {bold}${this.name}{/bold} | 0 => {underline}${
+				signers[0].address
+			}{/underline} {magenta-bg}${
+				hre.network.name
+			}{/magenta-bg} {green-fg}balance: ${ethers.utils.formatEther(
+				balance
+			)} ETH{/green-fg}`
+		);
+		debugLog("initializing " + this.name);
+	}
+
 	public async create() {
 		debugLog("creating initial window: " + this.name);
 
@@ -236,6 +267,7 @@ export class InfinityMintWindow {
 			})
 		);
 		frame.setBack();
+		await this.setFrameContent();
 
 		let close = this.registerElement(
 			"closeButton",
@@ -284,11 +316,6 @@ export class InfinityMintWindow {
 			this.hide();
 		});
 
-		let signers = await ethers.getSigners();
-		frame.setContent(
-			` > {bold}${this.name}{/bold} | wallet: ${signers[0].address} | network: ${hre.network.name}`
-		);
-		debugLog("initializing " + this.name);
 		await this.initialize(this, frame, blessed);
 		this.initialized = true;
 
