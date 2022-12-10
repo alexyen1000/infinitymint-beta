@@ -16,7 +16,7 @@ require("dotenv").config({
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-change-network"; //allows hre.changeNetwork to occur
-import { debugLog, isEnvTrue, readSession } from "./app/helpers";
+import { debugLog, isEnvTrue, readSession, saveSession } from "./app/helpers";
 
 //default hardhat config file, this is copied into the InfinityMint config file on its initial creation
 const config: HardhatUserConfig = {
@@ -67,6 +67,7 @@ Pipes.registerSimplePipe("debug", {
 //read the session
 let session = readSession();
 if (!isEnvTrue("GANACHE_EXTERNAL")) {
+	//ask if they want to start ganache
 	//start ganache here
 } else {
 	//check for ganache and mnemonic here
@@ -74,4 +75,6 @@ if (!isEnvTrue("GANACHE_EXTERNAL")) {
 //else, import the InfinityMint config
 const infinityMintConfig = require("./infinitymint.config").default;
 debugLog("loaded hardhat.config.ts");
+debugLog("saving .session");
+saveSession(session);
 export default infinityMintConfig.hardhat; //export the infinity mint configuration file

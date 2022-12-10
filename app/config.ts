@@ -19,6 +19,7 @@ export interface InfinityMintConfigNetworkSettings {
 
 export interface InfinityMintSession {
 	environment?: any;
+	created: number;
 }
 
 export interface InfinityMintConfigSettings {

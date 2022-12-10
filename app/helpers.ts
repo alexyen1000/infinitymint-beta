@@ -94,11 +94,11 @@ export const debugLog = (msg: string) => {
 };
 
 export const readSession = (): InfinityMintSession => {
-	if (!fs.existsSync("./session")) return {};
+	if (!fs.existsSync("./.session")) return { created: Date.now() };
 
 	try {
 		return JSON.parse(
-			fs.readFileSync("./../.session", {
+			fs.readFileSync("./.session", {
 				encoding: "utf-8",
 			})
 		);
@@ -106,7 +106,13 @@ export const readSession = (): InfinityMintSession => {
 		Pipes.error(error);
 	}
 
-	return {};
+	return {
+		created: Date.now(),
+	};
+};
+
+export const saveSession = (session: InfinityMintSession) => {
+	fs.writeFileSync("./.session", JSON.stringify(session));
 };
 
 export const error = (error: string | Error) => {

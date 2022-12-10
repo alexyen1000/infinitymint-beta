@@ -18,6 +18,7 @@ import Deploy from "./windows/deploy";
 import Tutorial from "./windows/tutorial";
 import Projects from "./windows/projects";
 import Music from "./windows/music";
+import Ganache from "./windows/ganache";
 
 const blessed = require("blessed");
 export default class InfinityConsole {
@@ -134,6 +135,7 @@ export default class InfinityConsole {
 			Projects,
 			Logs,
 			Browser,
+			Ganache,
 			Deployments,
 			Gems,
 			Networks,
