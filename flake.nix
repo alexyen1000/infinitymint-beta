@@ -1,6 +1,6 @@
 {
   # thanks winter, you rock
-  description = "Kaeforest - a mind journal & wiki for Kae.";
+  description = "InfinityMint Nix Flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -19,8 +19,8 @@
       npmPkg = npmlock2nix.node_modules { src = self; };
     in
     {
-      packages.kaeforest = npmPkg;
-      packages.default = self.packages.${system}.kaeforest;
+      packages.infinitymint-beta = npmPkg;
+      packages.default = self.packages.${system}.infinitymint-beta;
 
       devShells.default = npmlock2nix.shell { src = self; };
     });
