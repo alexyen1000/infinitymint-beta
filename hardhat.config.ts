@@ -16,7 +16,7 @@ require("dotenv").config({
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-change-network"; //allows hre.changeNetwork to occur
-import { isEnvTrue, readSession } from "./app/helpers";
+import { debugLog, isEnvTrue, readSession } from "./app/helpers";
 
 //default hardhat config file, this is copied into the InfinityMint config file on its initial creation
 const config: HardhatUserConfig = {
@@ -73,4 +73,5 @@ if (!isEnvTrue("GANACHE_EXTERNAL")) {
 }
 //else, import the InfinityMint config
 const infinityMintConfig = require("./infinitymint.config").default;
+debugLog("loaded hardhat.config.ts");
 export default infinityMintConfig.hardhat; //export the infinity mint configuration file
