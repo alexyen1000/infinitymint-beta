@@ -3,6 +3,7 @@ import { Rectangle, Vector, FuncTripple, log, debugLog } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
+import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const blessed = require("blessed");
 export class InfinityMintWindow {
@@ -251,17 +252,16 @@ export class InfinityMintWindow {
 	}
 
 	public async setFrameContent() {
-		let signers = await ethers.getSigners();
-		debugLog("found " + signers.length + " signers");
-		signers.forEach((signer, index) => {
-			debugLog(`[${index}] => ${signer.address}`);
-		});
-		let balance = await signers[0].getBalance();
-		debugLog("main account: " + signers[0].address);
+		let defaultSigner = await getDefaultSigner();
+		let balance = await defaultSigner.getBalance();
+		let getAccountIndex = getDefaultAccountIndex();
+		debugLog(
+			"main account: " + getAccountIndex + " => " + defaultSigner.address
+		);
 		debugLog("balance of account: " + balance);
 		this.getElement("frame").setContent(
-			` > {bold}${this.name}{/bold} | 0 => {underline}${
-				signers[0].address
+			` > {bold}${this.name}{/bold} | ${getAccountIndex} => {underline}${
+				defaultSigner.address
 			}{/underline} {magenta-bg}${
 				hre.network.name
 			}{/magenta-bg} {green-fg}balance: ${ethers.utils.formatEther(

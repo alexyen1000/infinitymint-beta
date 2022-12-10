@@ -6,9 +6,15 @@ import { HardhatUserConfig } from "hardhat/types";
  */
 export interface InfinityMintConfig {
 	project?: string;
+	networks?: any;
 	hardhat: HardhatUserConfig;
-	ipfs?: object;
-	settings?: object;
+	ipfs?: any;
+	settings?: InfinityMintConfigSetings;
+}
+
+export interface InfinityMintConfigSetings {
+	networks?: any;
+	values?: any;
 }
 
 export interface InfinityMintScriptArguments {
