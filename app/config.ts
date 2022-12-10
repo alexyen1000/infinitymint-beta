@@ -17,6 +17,10 @@ export interface InfinityMintConfigNetworkSettings {
 	useDefaultPipe?: boolean;
 }
 
+export interface InfinityMintSession {
+	environment?: any;
+}
+
 export interface InfinityMintConfigSettings {
 	networks: Dictionary<InfinityMintConfigNetworkSettings>;
 	values?: any;

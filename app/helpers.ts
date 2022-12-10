@@ -1,4 +1,6 @@
 import Pipes from "./pipes";
+import fs from "fs";
+import { InfinityMintSession } from "./config";
 
 export interface Vector {
 	x: number;
@@ -89,6 +91,22 @@ export const log = (msg: string, pipe?: string) => {
 
 export const debugLog = (msg: string) => {
 	log(msg, "debug");
+};
+
+export const readSession = (): InfinityMintSession => {
+	if (!fs.existsSync("./session")) return {};
+
+	try {
+		return JSON.parse(
+			fs.readFileSync("./../.session", {
+				encoding: "utf-8",
+			})
+		);
+	} catch (error) {
+		Pipes.error(error);
+	}
+
+	return {};
 };
 
 export const error = (error: string | Error) => {

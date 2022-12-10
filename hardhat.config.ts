@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import fs from "node:fs";
+import Pipes from "./app/pipes";
 
 //if there is no temp folder, make it.
 if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
@@ -15,6 +16,7 @@ require("dotenv").config({
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-change-network"; //allows hre.changeNetwork to occur
+import { isEnvTrue, readSession } from "./app/helpers";
 
 //default hardhat config file, this is copied into the InfinityMint config file on its initial creation
 const config: HardhatUserConfig = {
@@ -36,24 +38,8 @@ const config: HardhatUserConfig = {
 if (!fs.existsSync("./infinitymint.config.ts")) {
 	let stub = `\n
 		import { InfinityMintConfig } from "./app/config";
-		import { isEnvTrue, log } from "./app/helpers";
-		import Logging from "./app/logging";
 
-		let consoleLog = console.log;
-		console.log = (msg, setPipe = true) => {
-			if (setPipe) Logging.getPipe("default").logs.push(msg);
-			consoleLog(msg);
-		};
-
-		//will log console.log output to the default pipe
-		if (isEnvTrue("PIPE_ECHO_DEFAULT")) Logging.getPipe("default").listen = true;
-		//create the debug pipe
-		Logging.registerSimplePipe("debug", {
-			listen: isEnvTrue("PIPE_ECHO_DEBUG"),
-			save: true,
-		});
-
-		//please visit docs.infinitymint.app
+		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config: InfinityMintConfig = {
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
@@ -62,6 +48,29 @@ if (!fs.existsSync("./infinitymint.config.ts")) {
 	fs.writeFileSync("./infinitymint.config.ts", stub);
 }
 
+//overwrite console log
+let consoleLog = console.log;
+console.log = (msg, setPipe = true) => {
+	if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
+		Pipes.getPipe(Pipes.currentPipe).logs.push(msg);
+	consoleLog(msg);
+};
+
+//will log console.log output to the default pipe
+if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
+//create the debug pipe
+Pipes.registerSimplePipe("debug", {
+	listen: isEnvTrue("PIPE_ECHO_DEBUG"),
+	save: true,
+});
+
+//read the session
+let session = readSession();
+if (!isEnvTrue("GANACHE_EXTERNAL")) {
+	//start ganache here
+} else {
+	//check for ganache and mnemonic here
+}
 //else, import the InfinityMint config
 const infinityMintConfig = require("./infinitymint.config").default;
 export default infinityMintConfig.hardhat; //export the infinity mint configuration file

@@ -88,7 +88,7 @@ const Pipes = new (class {
 		this.currentPipe = key;
 	}
 
-	public error(error: string) {
+	public error(error: any) {
 		//go back to the default pipe
 		if (
 			this.currentPipe === undefined ||
@@ -96,7 +96,7 @@ const Pipes = new (class {
 		)
 			this.currentPipe = "default";
 
-		this.logs[this.currentPipe].error(error);
+		this.logs[this.currentPipe].error(error.toString());
 	}
 
 	public log(msg: string, pipe?: string) {

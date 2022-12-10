@@ -4,8 +4,7 @@ import { debugLog, log } from "./helpers";
 import Pipes from "./pipes";
 
 export const getDefaultSigner = async () => {
-	let defaultAccount =
-		config?.settings?.networks[hre.network.name]?.defaultAccount || 0;
+	let defaultAccount = getDefaultAccountIndex();
 	let signers = await ethers.getSigners();
 
 	if (signers[defaultAccount] === undefined)
