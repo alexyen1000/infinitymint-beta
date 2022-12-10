@@ -9,11 +9,16 @@ export interface InfinityMintConfig {
 	networks?: any;
 	hardhat: HardhatUserConfig;
 	ipfs?: any;
-	settings?: InfinityMintConfigSetings;
+	settings?: InfinityMintConfigSettings;
 }
 
-export interface InfinityMintConfigSetings {
-	networks?: any;
+export interface InfinityMintConfigNetworkSettings {
+	defaultAccount?: number;
+	useDefaultPipe?: boolean;
+}
+
+export interface InfinityMintConfigSettings {
+	networks: Dictionary<InfinityMintConfigNetworkSettings>;
 	values?: any;
 }
 
