@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 import config from "../infinitymint.config";
-import { log } from "./helpers";
+import { debugLog, log } from "./helpers";
 import Pipes from "./pipes";
 
 export const getDefaultSigner = async () => {
@@ -34,7 +34,7 @@ export const registerNetworkPipes = () => {
 	networks.forEach((network) => {
 		let settings = config?.settings?.networks[network] || {};
 		if (settings.useDefaultPipe) return;
-		log("registered pipe for " + network);
+		debugLog("registered pipe for " + network);
 		Pipes.registerSimplePipe(network);
 	});
 };
@@ -57,4 +57,5 @@ export const startNetworkPipe = () => {
 	ethers.provider.on("error", (tx) => {
 		log("tx error: " + tx.toString());
 	});
+	debugLog("registered provider event hooks for " + hre.network.name);
 };
