@@ -75,6 +75,6 @@ if (!isEnvTrue("GANACHE_EXTERNAL")) {
 //else, import the InfinityMint config
 const infinityMintConfig = require("./infinitymint.config").default;
 debugLog("loaded hardhat.config.ts");
-debugLog("saving .session");
+debugLog("saving .session file");
 saveSession(session);
 export default infinityMintConfig.hardhat; //export the infinity mint configuration file
