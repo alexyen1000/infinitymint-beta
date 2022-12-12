@@ -32,10 +32,14 @@ export class InfinityMintWindow {
 	private screen: any;
 	private style: any;
 	private border: any;
+	private id: any;
 	private destroyed: boolean;
 	private backgroundThink: boolean;
+	private destroyId: boolean;
 	private scrollbar: any;
 	private initialized: boolean;
+	private creation: any;
+	private initialCreation: any;
 	private container?: InfinityConsole;
 
 	constructor(
@@ -57,10 +61,20 @@ export class InfinityMintWindow {
 		this.scrollbar = scrollbar;
 		this.backgroundThink = false;
 		this.initialized = false;
+		this.destroyId = true;
 		this.options = options || {};
+		this.initialCreation = Date.now();
 		this.elements = {};
+		//replace with GUID
+		this.id = this.generateId();
 		this.initialize = async () => {};
 		this.think = () => {};
+	}
+
+	private generateId() {
+		return Math.floor(Math.random() * 100000)
+			.toString()
+			.padEnd(8, "0");
 	}
 
 	public setScreen(screen: any) {
@@ -75,12 +89,31 @@ export class InfinityMintWindow {
 		return this.backgroundThink;
 	}
 
+	public setDestroyId(shouldDestroyId: boolean) {
+		this.destroyId = shouldDestroyId;
+	}
+
 	public setContainer(container: InfinityConsole) {
 		this.container = container;
 	}
 
 	public async openWindow(name: string) {
 		this.container?.setWindow(name);
+	}
+
+	public getCreation() {
+		return this.creation;
+	}
+
+	public getInitialCreation() {
+		return this.initialCreation;
+	}
+
+	public getContainer() {
+		if (this.container === undefined)
+			throw new Error("container is undefined");
+
+		return this.container;
 	}
 
 	public setBorder(border: any) {
@@ -93,6 +126,18 @@ export class InfinityMintWindow {
 
 	public setWidth(num: number) {
 		this.width = num;
+	}
+
+	public getId() {
+		return this.id;
+	}
+
+	public isEqual(thatWindow: InfinityMintWindow) {
+		return this.id === thatWindow.id;
+	}
+
+	public toString() {
+		return this.id;
 	}
 
 	public setHeight(num: number) {
@@ -181,12 +226,10 @@ export class InfinityMintWindow {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
 		debugLog(
-			"registering element key " +
-				key +
-				" for window " +
-				this.name +
-				" typeof " +
-				element.constructor.name
+			"registering element " +
+				element.constructor.name +
+				" for " +
+				`${this.name}[${this.id}]`
 		);
 		this.elements[key] = element;
 		return this.elements[key];
@@ -209,13 +252,14 @@ export class InfinityMintWindow {
 	}
 
 	public destroy() {
-		this.destroyed = true;
+		debugLog(`destroying ${this.name}[${this.id}]`);
+		this.destroyed = true; //window needs to be set as destroyed
 		Object.keys(this.elements).forEach((index) => {
 			debugLog(
 				"destroying element " +
 					this.elements[index].constructor.name +
-					" for window " +
-					this.name
+					" for " +
+					`${this.name}[${this.id}]`
 			);
 			this.elements[index].free(); //unsubscribes to events saving memory
 			this.elements[index].destroy();
@@ -228,7 +272,7 @@ export class InfinityMintWindow {
 	public registerKey() {}
 
 	public isAlive() {
-		return this.destroyed === false;
+		return this.destroyed === false && this.initialized;
 	}
 
 	public hasInitialized() {
@@ -268,16 +312,21 @@ export class InfinityMintWindow {
 				balance
 			)} ETH{/green-fg}`
 		);
-		debugLog("initializing window " + this.name);
 	}
 
 	public async create() {
-		debugLog("creating initial window: " + this.name);
-
 		if (this.initialized && this.destroyed === false)
 			throw new Error("already initialized");
 		if (this.screen === undefined)
 			throw new Error("cannot create window with undefined screen");
+
+		if (this.initialized && this.destroyed && this.destroyId) {
+			let oldId = this.id;
+			this.id = this.generateId();
+			debugLog(`old id ${this.name}[${oldId}] destroyed`);
+		}
+		this.creation = Date.now();
+		debugLog(`creating ${this.name}[${this.id}]`);
 
 		//set the title
 		this.screen.title = this.name;
@@ -346,6 +395,7 @@ export class InfinityMintWindow {
 			this.hide();
 		});
 
+		debugLog(`calling initialize on ${this.name}[${this.id}]`);
 		await this.initialize(this, frame, blessed);
 		this.initialized = true;
 		this.destroyed = false;
@@ -353,7 +403,8 @@ export class InfinityMintWindow {
 		//append each element
 		Object.values(this.elements).forEach((element) => {
 			debugLog(
-				"appending element to screen: " + element.constructor.name
+				`appending element to screen of ${this.name}[${this.id}]: ` +
+					element.constructor.name
 			);
 			this.screen.append(element);
 		});

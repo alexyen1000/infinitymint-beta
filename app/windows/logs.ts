@@ -1,3 +1,4 @@
+import { readSession, saveSession, saveSessionVariable } from "../helpers";
 import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
 
@@ -53,9 +54,10 @@ Logs.think = (window, frame, blessed) => {
 
 //initializes the console
 Logs.initialize = async (window, frame, blessed) => {
+	let session = readSession();
 	//initial settings
 	window.options.alwaysScroll = true;
-	window.options.pipe = "default";
+	window.options.pipe = session?.environment?.pipe || "default";
 
 	let console = window.registerElement(
 		"console",
@@ -282,6 +284,8 @@ Logs.initialize = async (window, frame, blessed) => {
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
 		window.options.pipe = keys[selected];
+		//save the state of this option to the .session file so when the user relaunches infinity mint it goes to this pipe
+		session = saveSessionVariable(session, "pipe", window.options.pipe);
 		changePipe.setContent("Change Pipe (" + window.options.pipe + ")");
 		console.setScroll(0);
 		form.hide();

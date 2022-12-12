@@ -1,3 +1,4 @@
+import { debugLog } from "../helpers";
 import { InfinityMintWindow } from "../window";
 
 const Music = new InfinityMintWindow(

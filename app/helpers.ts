@@ -111,6 +111,18 @@ export const readSession = (): InfinityMintSession => {
 	};
 };
 
+export const saveSessionVariable = (
+	session: InfinityMintSession,
+	key: string,
+	value: any
+) => {
+	if (session.environment === undefined) session.environment = {};
+
+	session.environment[key] = value;
+	saveSession(session);
+	return session;
+};
+
 export const saveSession = (session: InfinityMintSession) => {
 	fs.writeFileSync("./.session", JSON.stringify(session));
 };

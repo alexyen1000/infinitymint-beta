@@ -113,13 +113,62 @@ export default class InfinityConsole {
 		}
 	}
 
+	public getWindows() {
+		return [...this.windows];
+	}
+
+	public getWindowById(id: string | Window) {
+		return this.windows
+			.filter((thatWindow) => thatWindow.getId() === id.toString())
+			.pop();
+	}
+
+	public getWindowByAge(name: string, oldest: boolean) {
+		return this.windows
+			.filter((thatWindow) => thatWindow.name === name)
+			.sort((a, b) =>
+				oldest
+					? a.getCreation() - b.getCreation()
+					: b.getCreation() - a.getCreation()
+			)
+			.pop();
+	}
+
+	public getWindowsByName(name: string) {
+		return this.windows.filter((thatWindow) => thatWindow.name === name);
+	}
+
+	public addWindow(window: InfinityMintWindow) {
+		if (this.hasWindow(window))
+			throw new Error(
+				"window with that id is already inside of the console"
+			);
+
+		this.windows.push(window);
+	}
+
+	public hasWindow(window: InfinityMintWindow) {
+		return (
+			this.windows.filter(
+				(thatWindow) => thatWindow.getId() === window.getId()
+			).length !== 0
+		);
+	}
+
 	public updateWindowsList() {
 		this.windowManager.setItems(
 			[...this.windows].map(
 				(window) =>
-					window.name +
-					" " +
-					(window.isAlive() ? "(alive)" : "(dead)")
+					(
+						window.name +
+						" " +
+						`[${window.getId()}]` +
+						(window.isAlive() ? "(alive)" : "(dead)")
+					).padEnd(36, " ") +
+					(!window.hasInitialized() ? " ! NOT INITIALIZED !" : "") +
+					(window.isAlive() && window.shouldBackgroundThink()
+						? " * RUNNING IN BACK *"
+						: "")
 			)
 		);
 	}
