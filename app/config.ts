@@ -154,6 +154,7 @@ export interface InfinityMintConfig {
 	networks?: any;
 	hardhat: HardhatUserConfig;
 	ipfs?: any;
+	imports?: Array<string>;
 	settings?: InfinityMintConfigSettings;
 }
 
@@ -167,9 +168,17 @@ export interface InfinityMintSession {
 	created: number;
 }
 
-export interface InfinityMintConfigSettings {
+export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {}
+
+export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
+
+export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
+
+export interface InfinityMintConfigSettings extends Dictionary<any> {
 	networks: Dictionary<InfinityMintConfigNetworkSettings>;
-	values?: any;
+	deploy?: InfinityMintConfigSettingsDeploy;
+	build?: InfinityMintConfigSettingsBuild;
+	export?: InfinityMintConfigSettingsExport;
 }
 
 export interface InfinityMintScriptArguments {
