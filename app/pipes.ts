@@ -31,7 +31,10 @@ class Pipe {
 		this.logHandler = (str: string) => {
 			if (this.listen) console.log(str, false);
 			if (this.appendDate)
-				str = `${new Date(Date.now()).toLocaleTimeString()} ` + str;
+				str =
+					`{underline}${new Date(
+						Date.now()
+					).toLocaleTimeString()}{/underline} ` + str;
 			this.logs.push(str);
 		};
 		this.errorHandler = (str: string) => {

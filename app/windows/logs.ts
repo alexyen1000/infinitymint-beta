@@ -51,7 +51,8 @@ Logs.think = (window, frame, blessed) => {
 				"{/bold}"
 		);
 		lastLength = lines.length;
-		if (window.options.alwaysScroll === true) element.setScroll(lastLength);
+		if (window.options.alwaysScroll === true)
+			element.setScroll(content.split("\n").length);
 	}
 };
 

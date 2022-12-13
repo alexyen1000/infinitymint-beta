@@ -1,9 +1,14 @@
 import * as Helpers from "./app/helpers";
 import InfinityConsole from "./app/console";
 import hre, { ethers } from "hardhat";
-import { registerNetworkPipes, startNetworkPipe } from "./app/web3";
+import {
+	getPrivateKeys,
+	registerNetworkPipes,
+	startNetworkPipe,
+} from "./app/web3";
 import GanacheServer from "./app/ganacheServer";
 import config from "./infinitymint.config";
+import { Web3Provider } from "@ethersproject/providers";
 
 async function main() {
 	let artifacts = hre.artifacts;
@@ -16,13 +21,10 @@ async function main() {
 		Helpers.debugLog("found contract: " + contract)
 	);
 
-	let signers = await ethers.getSigners();
-	Helpers.debugLog("found " + signers.length + " signers");
-	signers.forEach((signer, index) => {
-		Helpers.debugLog(`[${index}] => ${signer.address}`);
-	});
-	registerNetworkPipes(); //reads the hardhat configuration networks object and creates pipes for all of them
+	//register current network pipes
+	registerNetworkPipes();
 
+	//start ganache
 	if (
 		hre.config.networks?.ganache !== undefined &&
 		Helpers.isEnvTrue("GANACHE_EXTERNAL")
@@ -31,20 +33,41 @@ async function main() {
 	} else if (hre.config.networks?.ganache !== undefined) {
 		//ask if they want to start ganache
 		//start ganache here
-		let obj = { ...config.ganache };
-
+		let obj = { ...config.ganache } as any;
 		if (obj.wallet === undefined) obj.wallet = {};
+		if (session.environment.ganacheMnemomic === undefined)
+			throw new Error("no ganache mnemonic");
 
 		obj.wallet.mnemonic = session.environment.ganacheMnemomic;
+		Helpers.saveSession(session);
 		Helpers.debugLog(
-			"starting ganache with menomic of" + obj.wallet.mnemonic
+			"starting ganache with menomic of: " + obj.wallet.mnemonic
 		);
-		GanacheServer.start(obj);
+
+		//get private keys and save them to file
+		let keys = getPrivateKeys(session.environment.ganacheMnemomic);
+		Helpers.debugLog(
+			"found " +
+				keys.length +
+				" private keys for mnemonic: " +
+				session.environment.ganacheMnemomic
+		);
+		keys.forEach((key, index) => {
+			Helpers.debugLog(`[${index}] => ${key}`);
+		});
+		session.environment.ganachePrivateKeys = keys;
+		Helpers.saveSession(session);
+
+		let provider = await GanacheServer.start(obj);
+		startNetworkPipe(provider as Web3Provider, "ganache");
 	} else {
 		Helpers.debugLog("! WARNING ! no ganache network found");
 	}
 
-	startNetworkPipe(); //starts listening on the provider for events on the current network and feeds it to the pipe
+	//start a network pipe if we aren't ganache as we do something different if we are
+	if (hre.network.name !== "ganache") startNetworkPipe();
+
+	//starts listening on the provider for events on the current network and feeds it to the pipe
 
 	//initialize console
 	let infinityConsole = new InfinityConsole();

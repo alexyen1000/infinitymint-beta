@@ -3,6 +3,11 @@ import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 import { FuncSingle } from "./helpers";
 import { Server, ServerOptions } from "ganache";
+
+export interface InfinityMintApplicationConfig {
+	productionChains: string[];
+}
+
 export interface InfinityMintProject {
 	name: string;
 	infinityLinks?: Array<InfinityMintProjectSettingsLink>;
@@ -147,14 +152,6 @@ export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
 	section?: string;
 }
 
-export interface InfinityMintConfigGanache {
-	wallet?: any;
-	server?: any;
-	fork?: any;
-	flavour?: "ethereum";
-	logging?: any;
-	port?: number;
-}
 /**
  * Interface for the InfinityMint configuration file
  */
@@ -163,7 +160,7 @@ export interface InfinityMintConfig {
 	networks?: any;
 	hardhat: HardhatUserConfig;
 	ipfs?: any;
-	ganache?: InfinityMintConfigGanache;
+	ganache?: ServerOptions;
 	imports?: Array<string>;
 	settings?: InfinityMintConfigSettings;
 }

@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import fs from "node:fs";
 import Pipes from "./app/pipes";
 import { debugLog, isEnvTrue, readSession, saveSession } from "./app/helpers";
+import { generateMnemonic } from "bip39";
 
 //if there is no temp folder, make it.
 if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
@@ -72,12 +73,25 @@ if (
 	isEnvTrue("GANACHE_EXTERNAL") === false &&
 	session.environment?.ganacheMnemomic === undefined
 )
-	session.environment.ganacheMnemomic = "black";
+	session.environment.ganacheMnemomic = generateMnemonic();
 
 debugLog("saving .session file");
 saveSession(session);
 //else, import the InfinityMint config
 const infinityMintConfig = require("./infinitymint.config").default;
+
+//set the default network
+session = readSession();
+infinityMintConfig.hardhat.defaultNetwork =
+	infinityMintConfig.hardhat?.defaultNetwork ||
+	session.environment?.defaultNetwork;
+
+if (
+	infinityMintConfig.hardhat.networks.localhost === undefined &&
+	infinityMintConfig.hardhat.networks.ganache !== undefined
+)
+	infinityMintConfig.hardhat.networks.localhost =
+		infinityMintConfig.hardhat.networks.ganache;
 
 debugLog("loaded hardhat.config.ts");
 export default infinityMintConfig.hardhat; //export the infinity mint configuration file

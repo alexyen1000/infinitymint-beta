@@ -113,6 +113,17 @@ export default class InfinityConsole {
 		}
 	}
 
+	public async reload() {
+		this.windows.forEach((window) => window.destroy());
+		this.windowManager.destroy();
+		//render
+		this.screen.render();
+		this.network = undefined;
+		this.windowManager = undefined;
+		await this.initialize();
+		this.updateWindowsList();
+	}
+
 	public getWindows() {
 		return [...this.windows];
 	}
@@ -178,10 +189,10 @@ export default class InfinityConsole {
 			throw new Error("console already initialized");
 
 		this.network = hre.network;
-
+		let chainId = (await ethers.provider.getNetwork()).chainId;
 		log(
 			"initializing InfinityConsole chainId " +
-				this.network.config.chainId +
+				(this.network.config?.chainId || chainId) +
 				" network name " +
 				this.network.name
 		);
