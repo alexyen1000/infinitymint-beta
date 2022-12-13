@@ -40,6 +40,7 @@ export class InfinityMintWindow {
 	private initialized: boolean;
 	private creation: any;
 	private initialCreation: any;
+	private autoInstantiate: boolean;
 	private container?: InfinityConsole;
 
 	constructor(
@@ -62,6 +63,7 @@ export class InfinityMintWindow {
 		this.backgroundThink = false;
 		this.initialized = false;
 		this.destroyId = true;
+		this.autoInstantiate = false;
 		this.options = options || {};
 		this.initialCreation = Date.now();
 		this.elements = {};
@@ -83,6 +85,19 @@ export class InfinityMintWindow {
 
 	public setBackgroundThink(backgroundThink: boolean) {
 		this.backgroundThink = backgroundThink;
+	}
+
+	public setShouldInstantiate(instantiateInstantly: boolean) {
+		this.autoInstantiate = instantiateInstantly;
+	}
+
+	///TODO: needs to be stricter
+	public hasContainer() {
+		return this.container !== undefined;
+	}
+
+	public shouldInstantiate(): boolean {
+		return this.autoInstantiate;
 	}
 
 	public shouldBackgroundThink(): boolean {
@@ -302,15 +317,10 @@ export class InfinityMintWindow {
 		debugLog(
 			"main account: " + getAccountIndex + " => " + defaultSigner.address
 		);
-		debugLog("balance of account: " + balance);
+		let etherBalance = ethers.utils.formatEther(balance);
+		debugLog("balance of account: " + etherBalance);
 		this.getElement("frame").setContent(
-			` > {bold}${this.name}{/bold} | ${getAccountIndex} => {underline}${
-				defaultSigner.address
-			}{/underline} {magenta-bg}${
-				hre.network.name
-			}{/magenta-bg} {green-fg}balance: ${ethers.utils.formatEther(
-				balance
-			)} ETH{/green-fg}`
+			` > {bold}${this.name}{/bold} | ${getAccountIndex} => {underline}${defaultSigner.address}{/underline} {magenta-bg}${hre.network.name}{/magenta-bg} {green-fg}balance: ${etherBalance} ETH{/green-fg}`
 		);
 	}
 

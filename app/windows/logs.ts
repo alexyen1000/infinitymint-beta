@@ -330,4 +330,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.think(window, frame, blessed); //do think once
 };
 
+Logs.setShouldInstantiate(true);
+Logs.setBackgroundThink(true);
+
 export default Logs;

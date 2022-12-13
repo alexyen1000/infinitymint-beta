@@ -14,5 +14,5 @@ const Ganache = new InfinityMintWindow(
 	}
 );
 Ganache.setBackgroundThink(true);
-
+Ganache.setShouldInstantiate(true);
 export default Ganache;

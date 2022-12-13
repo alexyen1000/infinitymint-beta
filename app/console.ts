@@ -178,6 +178,14 @@ export default class InfinityConsole {
 			throw new Error("console already initialized");
 
 		this.network = hre.network;
+
+		log(
+			"initializing InfinityConsole chainId " +
+				this.network.config.chainId +
+				" network name " +
+				this.network.name
+		);
+
 		this.windows = [
 			Menu,
 			Tutorial,
@@ -195,15 +203,25 @@ export default class InfinityConsole {
 			Deploy,
 		];
 		this.currentWindow = this.windows[0];
-		this.currentWindow.setContainer(this);
-		this.currentWindow.setScreen(this.screen);
 
-		log(
-			"initializing InfinityConsole chainId " +
-				this.network.config.chainId +
-				" network name " +
-				this.network.name
+		let instantInstantiate = this.windows.filter((thatWindow) =>
+			thatWindow.shouldInstantiate()
 		);
+
+		for (let i = 0; i < instantInstantiate.length; i++) {
+			debugLog(
+				"initializing " +
+					instantInstantiate[i].name +
+					`[${instantInstantiate[i].getId()}]`
+			);
+
+			if (!instantInstantiate[i].hasContainer())
+				instantInstantiate[i].setContainer(this);
+
+			instantInstantiate[i].setScreen(this.screen);
+			await instantInstantiate[i].create();
+			instantInstantiate[i].hide();
+		}
 
 		//creating window manager
 		this.windowManager = blessed.list({
@@ -254,19 +272,27 @@ export default class InfinityConsole {
 				this.currentWindow.show();
 			else this.currentWindow.hide();
 			await this.currentWindow.setFrameContent();
+			this.windowManager.setBack();
 		});
-
-		this.updateWindowsList();
 
 		//append list
 		this.screen.append(this.windowManager);
-		//create window
-		await this.currentWindow.create();
+
+		//if it hasn't been initialized
+		if (!this.currentWindow.hasInitialized()) {
+			this.currentWindow.setContainer(this);
+			this.currentWindow.setScreen(this.screen);
+			//create window
+			await this.currentWindow.create();
+		}
+
+		this.updateWindowsList();
 		//render
 		this.screen.render();
 		//register events
 		this.registerEvents();
-
+		//show the current window
+		this.currentWindow.show();
 		//update interval
 		this.interval = setInterval(() => {
 			this.windows.forEach((window) => {

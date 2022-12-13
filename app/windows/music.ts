@@ -15,5 +15,5 @@ const Music = new InfinityMintWindow(
 	}
 );
 Music.setBackgroundThink(true);
-
+Music.setShouldInstantiate(true);
 export default Music;
