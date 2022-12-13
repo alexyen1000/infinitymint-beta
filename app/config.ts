@@ -153,6 +153,7 @@ export interface InfinityMintConfigGanache {
 	fork?: any;
 	flavour?: "ethereum";
 	logging?: any;
+	port?: number;
 }
 /**
  * Interface for the InfinityMint configuration file

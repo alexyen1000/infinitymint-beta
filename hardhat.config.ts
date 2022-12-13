@@ -53,7 +53,8 @@ let consoleLog = console.log;
 console.log = (msg, setPipe = true) => {
 	if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
 		Pipes.getPipe(Pipes.currentPipe).logs.push(msg);
-	consoleLog(msg);
+
+	if (isEnvTrue("PIPE_ECHO_DEFAULT")) consoleLog(msg);
 };
 
 //will log console.log output to the default pipe
@@ -69,7 +70,7 @@ let session = readSession();
 //if the ganache is not external and no mnemonic for ganache in the environment file then set one
 if (
 	isEnvTrue("GANACHE_EXTERNAL") === false &&
-	session.environment.ganacheMnemomic === undefined
+	session.environment?.ganacheMnemomic === undefined
 )
 	session.environment.ganacheMnemomic = "black";
 

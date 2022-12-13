@@ -1,5 +1,13 @@
 import { Dictionary } from "form-data";
-import { Rectangle, Vector, FuncTripple, log, debugLog } from "./helpers";
+import {
+	Rectangle,
+	Vector,
+	FuncTripple,
+	log,
+	debugLog,
+	readSession,
+	saveSession,
+} from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
@@ -122,6 +130,25 @@ export class InfinityMintWindow {
 
 	public getInitialCreation() {
 		return this.initialCreation;
+	}
+
+	public loadOptions(defaultOptions: Dictionary<any>) {
+		let session = readSession();
+		this.options = session.environment["Window_" + this.name] || {};
+
+		Object.keys(defaultOptions).forEach((key) => {
+			if (this.options[key] === undefined)
+				this.options[key] = defaultOptions[key];
+		});
+	}
+
+	public saveOptions() {
+		let session = readSession();
+		session.environment["Window_" + this.name] = this.options;
+		debugLog(
+			"saving settings to session for " + `${this.name}[${this.id}]`
+		);
+		saveSession(session);
 	}
 
 	public getContainer() {

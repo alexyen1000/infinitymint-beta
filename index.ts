@@ -27,6 +27,9 @@ async function main() {
 		//ask if they want to start ganache
 		//start ganache here
 		let obj = { ...config.ganache };
+
+		if (obj.wallet === undefined) obj.wallet = {};
+
 		obj.wallet.mnemonic = session.environment.ganacheMnemonic;
 		GanacheServer.start(obj);
 	} else {

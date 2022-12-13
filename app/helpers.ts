@@ -95,7 +95,8 @@ export const debugLog = (msg: string) => {
 };
 
 export const readSession = (): InfinityMintSession => {
-	if (!fs.existsSync("./.session")) return { created: Date.now() };
+	if (!fs.existsSync("./.session"))
+		return { created: Date.now(), environment: {} };
 
 	try {
 		return JSON.parse(
@@ -109,6 +110,7 @@ export const readSession = (): InfinityMintSession => {
 
 	return {
 		created: Date.now(),
+		environment: {},
 	};
 };
 
@@ -120,6 +122,7 @@ export const saveSessionVariable = (
 	if (session.environment === undefined) session.environment = {};
 
 	session.environment[key] = value;
+	return session;
 };
 
 export const saveSession = (session: InfinityMintSession) => {

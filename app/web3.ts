@@ -2,6 +2,7 @@ import hre, { ethers } from "hardhat";
 import config from "../infinitymint.config";
 import { debugLog, log } from "./helpers";
 import Pipes from "./pipes";
+import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
 
 export const getDefaultSigner = async () => {
 	let defaultAccount = getDefaultAccountIndex();
@@ -38,23 +39,27 @@ export const registerNetworkPipes = () => {
 	});
 };
 
-export const startNetworkPipe = () => {
+export const startNetworkPipe = (
+	provider?: Web3Provider | JsonRpcProvider,
+	network?: any
+) => {
 	let settings = getNetworkSettings(hre.network.name);
+	if (network === undefined) network = hre.network.name;
+	if (provider === undefined) provider = ethers.provider;
 	//register events
-	ethers.provider.off("block");
-	ethers.provider.on("block", (blockNumber) => {
+	provider.on("block", (blockNumber: any) => {
 		log(
 			"new block: #" + blockNumber,
-			settings.useDefaultPipe ? "default" : hre.network.name
+			settings.useDefaultPipe ? "default" : network
 		);
 	});
-	ethers.provider.off("pending");
-	ethers.provider.on("pending", (tx) => {
+
+	provider.on("pending", (tx: any) => {
 		log("new transaction pending: " + tx.toString());
 	});
-	ethers.provider.off("error");
-	ethers.provider.on("error", (tx) => {
+
+	provider.on("error", (tx: any) => {
 		log("tx error: " + tx.toString());
 	});
-	debugLog("registered provider event hooks for " + hre.network.name);
+	debugLog("registered provider event hooks for " + network);
 };
