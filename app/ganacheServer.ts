@@ -14,30 +14,32 @@ const GanacheServer = new (class {
 	public ethersProvider?: Web3Provider;
 
 	start(options: InfinityMintConfigGanache) {
-		if (options.logging == undefined) options.logging = {};
-
-		options.logging.quiet = true;
-		this.server = ganache.server({
-			logging: {
-				quiet: true,
-			},
-		});
+		this.server = ganache.server(options);
 		this.options = options;
 		this.port = parseInt(
 			(options?.port || process.env.GANACHE_PORT || 8545).toString()
 		);
-		debugLog("starting ganache server on https://localhost:" + this.port);
+		debugLog("starting ganache server on http://localhost:" + this.port);
 		//start the listen server on that port
 		this.server.listen(this.port, async (err: any) => {
 			if (err) throw err;
 
+			//creates a new ethers provider with the logger piping to ganache
 			this.ethersProvider = new ethers.providers.Web3Provider(
 				ganache.provider({
 					logging: {
 						logger: {
-							log: (msg: any) => {
+							log: (msg: any, ...params) => {
 								Pipes.log(msg, "ganache");
-							}, // don't do anything
+								if (
+									params !== undefined &&
+									Object.values(params).length !== 0
+								)
+									Pipes.log(
+										JSON.stringify(params, null, 2),
+										"ganache"
+									);
+							},
 						},
 					},
 				}) as any

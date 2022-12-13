@@ -54,7 +54,7 @@ console.log = (msg, setPipe = true) => {
 	if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
 		Pipes.getPipe(Pipes.currentPipe).logs.push(msg);
 
-	if (isEnvTrue("PIPE_ECHO_DEFAULT")) consoleLog(msg);
+	if (isEnvTrue("PIPE_CALL_DEFAULT_LOG")) consoleLog(msg);
 };
 
 //will log console.log output to the default pipe

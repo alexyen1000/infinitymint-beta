@@ -16,6 +16,11 @@ async function main() {
 		Helpers.debugLog("found contract: " + contract)
 	);
 
+	let signers = await ethers.getSigners();
+	Helpers.debugLog("found " + signers.length + " signers");
+	signers.forEach((signer, index) => {
+		Helpers.debugLog(`[${index}] => ${signer.address}`);
+	});
 	registerNetworkPipes(); //reads the hardhat configuration networks object and creates pipes for all of them
 
 	if (
@@ -30,7 +35,10 @@ async function main() {
 
 		if (obj.wallet === undefined) obj.wallet = {};
 
-		obj.wallet.mnemonic = session.environment.ganacheMnemonic;
+		obj.wallet.mnemonic = session.environment.ganacheMnemomic;
+		Helpers.debugLog(
+			"starting ganache with menomic of" + obj.wallet.mnemonic
+		);
 		GanacheServer.start(obj);
 	} else {
 		Helpers.debugLog("! WARNING ! no ganache network found");

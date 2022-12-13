@@ -32,14 +32,17 @@ Logs.think = (window, frame, blessed) => {
 	//bleseed push line doesnt work for some reason so we have to do it this way
 	if (lastLength !== lines.length) {
 		let content = ``;
-		lines.forEach(
-			(line, index) =>
-				(content =
-					content +
-					`[${index.toString().padEnd(8, "0")}] ` +
-					line.toString() +
-					"\n")
-		);
+		lines.forEach((line, index) => {
+			let finalLine =
+				`{white-bg}${index.toString().padEnd(6, " ")}{/white-bg} ` +
+				line.toString() +
+				"\n";
+			content =
+				content +
+				(index % 2 === 0
+					? `{white-fg}${finalLine}{/white-fg}`
+					: `{black-bg}${finalLine}{/black-bg}`);
+		});
 		element.setContent(content);
 		element.focus();
 		element.setLabel(
@@ -69,7 +72,9 @@ Logs.initialize = async (window, frame, blessed) => {
 			height: "100%-8",
 			padding: 1,
 			top: 4,
-			label: "{bold}{white-fg}Pipe: {/white-fg}undefined{/bold}",
+			label: `{bold}{white-fg}Pipe: {/white-fg}${
+				window.options?.pipe || "undefined"
+			}{/bold}`,
 			left: "center",
 			keys: true,
 			tags: true,
@@ -332,7 +337,6 @@ Logs.initialize = async (window, frame, blessed) => {
 		form.toggle();
 	});
 
-	//always scroll
 	window.think(window, frame, blessed); //do think once
 };
 
