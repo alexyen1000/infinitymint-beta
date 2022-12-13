@@ -167,6 +167,7 @@
 		"function.prototype.name": "^1.1.5",
 		"functional-red-black-tree": "^1.0.1",
 		"functions-have-names": "^1.2.3",
+		"ganache": "^7.6.0",
 		"get-caller-file": "^2.0.5",
 		"get-func-name": "^2.0.0",
 		"get-intrinsic": "^1.1.3",

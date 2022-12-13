@@ -1,6 +1,7 @@
 import Pipes from "./pipes";
 import fs from "fs";
 import { InfinityMintSession } from "./config";
+import { ServerOptions } from "ganache";
 
 export interface Vector {
 	x: number;
@@ -119,8 +120,6 @@ export const saveSessionVariable = (
 	if (session.environment === undefined) session.environment = {};
 
 	session.environment[key] = value;
-	saveSession(session);
-	return session;
 };
 
 export const saveSession = (session: InfinityMintSession) => {
