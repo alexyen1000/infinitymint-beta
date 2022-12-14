@@ -16,10 +16,11 @@ async function main() {
 	let session = Helpers.readSession();
 
 	//only purpose of this code is to pull in the hre first so its already loaded, typescript won't execute unused imports
-	Helpers.log("found " + contracts.length + " compiled contracts");
-	contracts.forEach((contract) =>
-		Helpers.debugLog("found contract: " + contract)
-	);
+	Helpers.debugLog("found " + contracts.length + " compiled contracts");
+	contracts.forEach((contract, index) => {
+		let split = contract.split(":");
+		Helpers.debugLog(`[${index}] => (${split[1]}) => ${split[0]}`);
+	});
 
 	//register current network pipes
 	registerNetworkPipes();

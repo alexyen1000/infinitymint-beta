@@ -34,7 +34,9 @@ Logs.think = (window, frame, blessed) => {
 		let content = ``;
 		lines.forEach((line, index) => {
 			let finalLine =
-				`{white-bg}${index.toString().padEnd(6, " ")}{/white-bg} ` +
+				`{white-bg}{black-fg}${index
+					.toString()
+					.padEnd(6, " ")}{/black-fg}{/white-bg} ` +
 				line.toString() +
 				"\n";
 			content =

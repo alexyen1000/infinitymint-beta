@@ -74,7 +74,7 @@ export default class InfinityConsole {
 		//when the window is destroyed, rebuild the items list
 
 		debugLog(
-			"registering events for " + window.name + `[${window.getId()}]`
+			"registering events for <" + window.name + `>[${window.getId()}]`
 		);
 		//so we only fire once
 		if (window.options.destroy)
@@ -328,7 +328,11 @@ export default class InfinityConsole {
 				if (windows.length !== 0)
 					windows[0].options.currentWindow = this.currentWindow?.name;
 				this.currentWindow?.openWindow("CloseBox");
-			} else if (this.currentWindow.isVisible()) process.exit(0);
+				//if the closeBox aka the current window is visible and we press control-c again just exit
+			} else {
+				if (this.currentWindow.isVisible()) process.exit(0);
+				else this.currentWindow.show();
+			}
 		});
 		//shows the list
 		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {
