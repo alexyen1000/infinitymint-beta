@@ -19,6 +19,7 @@ import Tutorial from "./windows/tutorial";
 import Projects from "./windows/projects";
 import Music from "./windows/music";
 import Ganache from "./windows/ganache";
+import CloseBox from "./windows/closeBox";
 
 const blessed = require("blessed");
 export default class InfinityConsole {
@@ -185,99 +186,6 @@ export default class InfinityConsole {
 		);
 	}
 
-	private reallyClose() {
-		this.optionsBox = blessed.box({
-			label: 'Close InfinityMint???',
-			top: "center",
-			left: "center",
-			width: "95%",
-			height: "95%",
-			padding: 2,
-			border: {
-				type: "line",
-			},
-			style: {
-				fg: "white",
-				bg: "grey",
-				border: {
-					fg: "#ffffff",
-				},
-				hover: {
-					bg: "grey",
-				},
-			},
-		});
-
-		let left = blessed.box({
-			top: 'center',
-			content: "YAH",
-			left: "5%",
-			width: "shrink",
-			padding: 2,
-			style: {
-				bg: "red",
-				fg: "white",
-
-				hover: {
-					bg: "white",
-				},
-			},
-		});
-
-		let right = blessed.box({
-			top: 'center',
-			content: "NAH",
-			left: "5%+26",
-			width: "shrink",
-			padding: 2,
-			style: {
-				bg: "green",
-				fg: "white",
-
-				hover: {
-					bg: "white",
-				},
-			},
-		});
-
-		left.on('click', (_data: any) => {
-		  kill();
-		});
-		
-		right.on('click', (_data: any) => {
-			if (this.canExit) {
-				this.optionsBox.destroy();
-				process.exit(0);
-			}
-		});
-
-		let kill = () => {
-			this.optionsBox.hide();
-			this.screen.render();
-			this.optionsBox.destroy();
-		};
-
-		this.screen.append(this.optionsBox);
-		this.screen.append(left);
-		this.screen.append(right);
-		this.optionsBox.focus();
-
-		this.optionsBox.key("escape", (_ch: any, _key: any): void => {
-			if (this.canExit) {
-				this.optionsBox.destroy();
-				process.exit(0);
-			}
-
-			debugLog("not allowed to exit but user wants to exit");
-		});
-
-		this.optionsBox.key("enter", (_ch: any, _key: any): void => {
-			kill();
-		});
-
-		this.screen.render();
-	}
-
 	public async initialize() {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
@@ -306,6 +214,7 @@ export default class InfinityConsole {
 			Scripts,
 			Settings,
 			Deploy,
+			CloseBox,
 		];
 		this.currentWindow = this.windows[0];
 
@@ -413,9 +322,11 @@ export default class InfinityConsole {
 
 		//register escape key
 		this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
-			if (this.canExit) {
-				this.reallyClose();
-			}
+			this.windowManager.setBack();
+			if (this.currentWindow?.name !== "CloseBox")
+				this.getWindowsByName("CloseBox")[0].options.currentWindow =
+					this.currentWindow?.name;
+			this.currentWindow?.openWindow("CloseBox");
 		});
 		//shows the list
 		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {
