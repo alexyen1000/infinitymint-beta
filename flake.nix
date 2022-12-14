@@ -1,27 +1,53 @@
 {
-  # thanks winter, you rock
   description = "InfinityMint Nix Flake";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     npmlock2nix = {
-      url = "github:nix-community/npmlock2nix";
+      url = "github:nix-community/npmlock2nix/master";
       flake = false;
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    npmlock2nix,
+  }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages."${system}";
+      nl2nix = import npmlock2nix {inherit pkgs;};
+      node = pkgs.nodejs-16_x;
+      nodeModules = nl2nix.node_modules {
+        src = ./.;
+        nodejs = node;
+      };
+    in rec {
+      defaultPackage = package.nodenix;
+      package.nodenix = nl2nix.build {
+        src = ./.;
+        buildCommands = ["npm run build"];
+        installPhase = ''
+        npm i
+        '';
+        # Use this specific node version.
+        node_modules_attrs = {
+          nodejs = node;
+        };
+      };
 
-  outputs = inputs@{ self, nixpkgs, flake-utils, ... }: flake-utils.lib.eachDefaultSystem (system:
-    let
-      pkgs = nixpkgs.legacyPackages.${system};
-      npmlock2nix = import inputs.npmlock2nix { inherit pkgs; };
-      npmPkg = npmlock2nix.node_modules { src = self; };
-    in
-    {
-      packages.infinitymint-beta = npmPkg;
-      packages.default = self.packages.${system}.infinitymint-beta;
-
-      devShells.default = npmlock2nix.shell { src = self; };
+      devShell = nl2nix.shell {
+        src = ./.;
+        node_modules_attrs = {
+          nodejs = node;
+        };
+        nativeBuildInputs =
+          (with pkgs; ([
+            # Alejandra is used for nix file formatting
+            alejandra
+          ]
+        ));
+      };
     });
 }
