@@ -172,16 +172,15 @@ export default class InfinityConsole {
 		this.windowManager.setItems(
 			[...this.windows].map(
 				(window) =>
-					(
-						window.name +
-						" " +
-						`[${window.getId()}] ` +
-						(window.isAlive() ? "(alive)" : "(dead)")
-					).padEnd(60, " ") +
-					(!window.hasInitialized() ? " ! NOT INITIALIZED !" : "") +
+					(window.name + " " + `[${window.getId()}] `).padEnd(
+						56,
+						" "
+					) +
+					(!window.hasInitialized() ? " [!] NOT INITIALIZED" : "") +
 					(window.isAlive() && window.shouldBackgroundThink()
-						? " * RUNNING IN BACK *"
-						: "")
+						? " [?] RUNNING IN BACK"
+						: "") +
+					(window.isAlive() ? " (alive)" : " (dead)")
 			)
 		);
 	}
@@ -323,12 +322,13 @@ export default class InfinityConsole {
 		//register escape key
 		this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
 			this.windowManager.setBack();
+
 			if (this.currentWindow?.name !== "CloseBox") {
 				let windows = this.getWindowsByName("CloseBox");
 				if (windows.length !== 0)
 					windows[0].options.currentWindow = this.currentWindow?.name;
-			}
-			this.currentWindow?.openWindow("CloseBox");
+				this.currentWindow?.openWindow("CloseBox");
+			} else process.exit(0);
 		});
 		//shows the list
 		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {

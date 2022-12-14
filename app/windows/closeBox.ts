@@ -16,7 +16,10 @@ const CloseBox = new InfinityMintWindow(
 );
 
 CloseBox.initialize = async (window, frame, blessed) => {
-	let text = window.registerElement(
+	let content =
+		"{red-bg}ARE YOU SURE YOU WANT TO CLOSE INFINITYMINT?{/red-bg}\nMake sure that you are done with your current ganache deployments as they could be lost when this window is closed.";
+
+	window.registerElement(
 		"text",
 		blessed.box({
 			left: "center",
@@ -24,7 +27,8 @@ CloseBox.initialize = async (window, frame, blessed) => {
 			width: "shrink",
 			height: "shrink",
 			padding: 2,
-			content: "Are You Sure You Would You Like To Close InfinityMint?",
+			tags: true,
+			content: content,
 		})
 	);
 
@@ -32,8 +36,8 @@ CloseBox.initialize = async (window, frame, blessed) => {
 	let closeInfinityMint = window.registerElement(
 		"close",
 		blessed.box({
-			bottom: 0,
-			left: 0,
+			bottom: 2,
+			left: 2,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
@@ -62,8 +66,8 @@ CloseBox.initialize = async (window, frame, blessed) => {
 	let keepInfinityMint = window.registerElement(
 		"keepOpen",
 		blessed.box({
-			bottom: 0,
-			right: 0,
+			bottom: 2,
+			right: 2,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
