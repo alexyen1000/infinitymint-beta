@@ -177,11 +177,13 @@ export default class InfinityConsole {
 						56,
 						" "
 					) +
+					(window.isAlive()
+						? " {green-fg}(alive){/green-fg}"
+						: " {red-fg}(dead){/red-fg}") +
 					(!window.hasInitialized() ? " [!] NOT INITIALIZED" : "") +
 					(window.isAlive() && window.shouldBackgroundThink()
 						? " [?] RUNNING IN BACK"
-						: "") +
-					(window.isAlive() ? " (alive)" : " (dead)")
+						: "")
 			)
 		);
 	}

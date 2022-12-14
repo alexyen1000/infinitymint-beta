@@ -69,7 +69,7 @@ interface PipeOptions {
 	listen?: boolean;
 	setAsCurrentPipe?: boolean;
 	appendDate?: boolean;
-	autoClose: boolean;
+	autoClose?: boolean;
 }
 
 /**
