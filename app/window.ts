@@ -13,6 +13,7 @@ import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
 import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
+const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed");
 export class InfinityMintWindow {
 	public initialize: FuncTripple<
@@ -82,9 +83,7 @@ export class InfinityMintWindow {
 	}
 
 	private generateId() {
-		return Math.floor(Math.random() * 100000)
-			.toString()
-			.padEnd(8, "0");
+		return uuidv4();
 	}
 
 	public setScreen(screen: any) {
