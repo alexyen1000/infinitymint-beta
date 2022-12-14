@@ -86,6 +86,9 @@ infinityMintConfig.hardhat.defaultNetwork =
 	infinityMintConfig.hardhat?.defaultNetwork ||
 	session.environment?.defaultNetwork;
 
+if (infinityMintConfig.hardhat.networks === undefined)
+	infinityMintConfig.hardhat.networks = {};
+
 if (
 	infinityMintConfig.hardhat.networks.localhost === undefined &&
 	infinityMintConfig.hardhat.networks.ganache !== undefined
