@@ -145,7 +145,7 @@ export class InfinityMintWindow {
 		let session = readSession();
 		session.environment["Window_" + this.name] = this.options;
 		debugLog(
-			"saving settings to session for " + `${this.name}[${this.id}]`
+			"saving settings to session for " + `<${this.name}>[${this.id}]`
 		);
 		saveSession(session);
 	}
@@ -226,7 +226,7 @@ export class InfinityMintWindow {
 	}
 
 	public hide() {
-		debugLog("hiding " + this.name);
+		debugLog(`hiding <${this.name}>[${this.id}]`);
 		Object.values(this.elements).forEach((element) => {
 			if (!element.hidden) {
 				element.shouldUnhide = true;
@@ -241,7 +241,7 @@ export class InfinityMintWindow {
 	}
 
 	public show() {
-		debugLog("showing " + this.name);
+		debugLog(`showing <${this.name}>[${this.id}]`);
 		Object.values(this.elements).forEach((element) => {
 			if (element.shouldUnhide) {
 				element.shouldUnhide = false;
@@ -267,10 +267,10 @@ export class InfinityMintWindow {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
 		debugLog(
-			"registering element " +
+			"registering element (" +
 				element.constructor.name +
-				" for " +
-				`${this.name}[${this.id}]`
+				") for " +
+				`<${this.name}>[${this.id}]`
 		);
 		this.elements[key] = element;
 		return this.elements[key];
@@ -293,14 +293,14 @@ export class InfinityMintWindow {
 	}
 
 	public destroy() {
-		debugLog(`destroying ${this.name}[${this.id}]`);
+		debugLog(`destroying <${this.name}>[${this.id}]`);
 		this.destroyed = true; //window needs to be set as destroyed
 		Object.keys(this.elements).forEach((index) => {
 			debugLog(
-				"destroying element " +
+				"destroying element (" +
 					this.elements[index].constructor.name +
-					" for " +
-					`${this.name}[${this.id}]`
+					") for " +
+					`<${this.name}>[${this.id}]`
 			);
 
 			try {
@@ -346,7 +346,10 @@ export class InfinityMintWindow {
 		let balance = await defaultSigner.getBalance();
 		let getAccountIndex = getDefaultAccountIndex();
 		debugLog(
-			"main account: " + getAccountIndex + " => " + defaultSigner.address
+			"main account: [" +
+				getAccountIndex +
+				"] => " +
+				defaultSigner.address
 		);
 		let etherBalance = ethers.utils.formatEther(balance);
 		debugLog("balance of account: " + etherBalance);
@@ -364,10 +367,10 @@ export class InfinityMintWindow {
 		if (this.initialized && this.destroyed && this.destroyId) {
 			let oldId = this.id;
 			this.id = this.generateId();
-			debugLog(`old id ${this.name}[${oldId}] destroyed`);
+			debugLog(`old id <${this.name}>[${oldId}] destroyed`);
 		}
 		this.creation = Date.now();
-		debugLog(`creating ${this.name}[${this.id}]`);
+		debugLog(`creating <${this.name}>[${this.id}]`);
 
 		//set the title
 		this.screen.title = this.name;
@@ -436,7 +439,7 @@ export class InfinityMintWindow {
 			this.hide();
 		});
 
-		debugLog(`calling initialize on ${this.name}[${this.id}]`);
+		debugLog(`calling initialize on <${this.name}>[${this.id}]`);
 		await this.initialize(this, frame, blessed);
 		this.initialized = true;
 		this.destroyed = false;
@@ -444,7 +447,7 @@ export class InfinityMintWindow {
 		//append each element
 		Object.values(this.elements).forEach((element) => {
 			debugLog(
-				`appending element to screen of ${this.name}[${this.id}]: ` +
+				`appending element to screen of <${this.name}>[${this.id}]: ` +
 					element.constructor.name
 			);
 			this.screen.append(element);

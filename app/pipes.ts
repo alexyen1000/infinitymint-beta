@@ -111,10 +111,11 @@ const Pipes = new (class {
 			msg = msg
 				.replace(/\[/g, "{yellow-fg}[")
 				.replace(/\]/g, "]{/yellow-fg}")
-				.replace(/\</g, "{grey-fg}<")
-				.replace(/\>/g, ">{/grey-fg}")
-				.replace(/\(/g, "{magenta-fg}(")
-				.replace(/\)/g, "){/magenta-fg}");
+				.replace(/\</g, "{cyan-fg}<")
+				.replace(/\>/g, ">{/cyan-fg}")
+				.replace(/\(/g, "{cyan-fg}(")
+				.replace(/\)/g, "){/cyan-fg}")
+				.replace(/=>/g, "{magenta-fg}=>{/magenta-fg}");
 
 		this.logs[actualPipe].log(msg);
 	}
