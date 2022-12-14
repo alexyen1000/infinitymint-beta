@@ -95,8 +95,15 @@ export const startNetworkPipe = (
 	ProviderListeners[network] = ProviderListeners[network] || {};
 
 	//register events
-	if (ProviderListeners[network].block)
-		provider.off("block", ProviderListeners[network].block);
+	try {
+		if (ProviderListeners[network].block)
+			provider.off("block", ProviderListeners[network].block);
+	} catch (error: any | Error) {
+		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
+			error
+		);
+	}
+
 	ProviderListeners[network].block = provider.on(
 		"block",
 		(blockNumber: any) => {
@@ -107,8 +114,14 @@ export const startNetworkPipe = (
 		}
 	);
 
-	if (ProviderListeners[network].pending)
-		provider.off("block", ProviderListeners[network].pending);
+	try {
+		if (ProviderListeners[network].pending)
+			provider.off("pending", ProviderListeners[network].pending);
+	} catch (error: any | Error) {
+		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
+			error
+		);
+	}
 
 	ProviderListeners[network].pending = provider.on("pending", (tx: any) => {
 		log(
@@ -117,13 +130,18 @@ export const startNetworkPipe = (
 		);
 	});
 
-	if (ProviderListeners[network].error)
-		provider.off("error", ProviderListeners[network].error);
+	try {
+		if (ProviderListeners[network].error)
+			provider.off("error", ProviderListeners[network].error);
+	} catch (error: any | Error) {
+		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
+			error
+		);
+	}
 
 	ProviderListeners[network].error = provider.on("error", (tx: any) => {
-		log(
-			"{red-fg}tx error:{/reg-fg} \n" + tx.toString(),
-			settings.useDefaultPipe ? "default" : network
+		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
+			"{red-fg}tx error:{/reg-fg} \n" + tx.toString()
 		);
 	});
 
