@@ -69,6 +69,7 @@ interface PipeOptions {
 	listen?: boolean;
 	setAsCurrentPipe?: boolean;
 	appendDate?: boolean;
+	autoClose: boolean;
 }
 
 /**
@@ -149,7 +150,10 @@ const Pipes = new (class {
 		});
 
 		process.stdout?.on("end", (code: number) => {
-			this.closePipe(pipe);
+			if (code === 1) pipe.error("exited with code 1 probably error");
+
+			pipe.log("execited with code: " + code);
+			if (options?.autoClose) this.closePipe(pipe);
 		});
 		return pipe;
 	}
