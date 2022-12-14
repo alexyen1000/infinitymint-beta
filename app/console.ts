@@ -323,9 +323,11 @@ export default class InfinityConsole {
 		//register escape key
 		this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
 			this.windowManager.setBack();
-			if (this.currentWindow?.name !== "CloseBox")
-				this.getWindowsByName("CloseBox")[0].options.currentWindow =
-					this.currentWindow?.name;
+			if (this.currentWindow?.name !== "CloseBox") {
+				let windows = this.getWindowsByName("CloseBox");
+				if (windows.length !== 0)
+					windows[0].options.currentWindow = this.currentWindow?.name;
+			}
 			this.currentWindow?.openWindow("CloseBox");
 		});
 		//shows the list
