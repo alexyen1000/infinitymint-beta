@@ -3,6 +3,7 @@ import config from "../infinitymint.config";
 import { debugLog, isEnvTrue, log } from "./helpers";
 import Pipes from "./pipes";
 import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
+import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
 import GanacheServer from "./ganacheServer";
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -43,6 +44,15 @@ export const changeNetwork = (network: string) => {
 	if (network !== "ganache") startNetworkPipe(hre.network.provider, network);
 };
 
+/**
+ * Returns the current provider to use for web3 interaction.
+ * Used to ensure that output from the ganache chain is piped correctly into the logger.
+ * Since ganache is ran inside of this instance we use the EIP-1199 provider
+ * and return that, if we aren't then we will assume hardhat has managed our provider for us and return what ever ethers uses, use this
+ * over ethers.provider or hre.network.provider
+ *
+ * @returns
+ */
 export const getProvider = () => {
 	if (
 		hre.network.name === "ganache" &&
@@ -50,7 +60,7 @@ export const getProvider = () => {
 	)
 		return GanacheServer.getProvider();
 
-	return hre.network.provider;
+	return ethers.provider;
 };
 
 export const getNetworkSettings = (network: string) => {

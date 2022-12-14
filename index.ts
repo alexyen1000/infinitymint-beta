@@ -11,20 +11,9 @@ import config from "./infinitymint.config";
 import { Web3Provider } from "@ethersproject/providers";
 
 async function main() {
-	let artifacts = hre.artifacts;
-	let contracts = await artifacts.getAllFullyQualifiedNames();
 	let session = Helpers.readSession();
-
-	//only purpose of this code is to pull in the hre first so its already loaded, typescript won't execute unused imports
-	Helpers.debugLog("found " + contracts.length + " compiled contracts");
-	contracts.forEach((contract, index) => {
-		let split = contract.split(":");
-		Helpers.debugLog(`[${index}] => (${split[1]}) => ${split[0]}`);
-	});
-
 	//register current network pipes
 	registerNetworkPipes();
-
 	//start ganache
 	if (
 		hre.config.networks?.ganache !== undefined &&
@@ -65,12 +54,20 @@ async function main() {
 		Helpers.debugLog("! WARNING ! no ganache network found");
 	}
 
+	let artifacts = hre.artifacts;
+	let contracts = await artifacts.getAllFullyQualifiedNames();
+
+	Helpers.debugLog("found " + contracts.length + " compiled contracts");
+	contracts.forEach((contract, index) => {
+		let split = contract.split(":");
+		Helpers.debugLog(`[${index}] => (${split[1]}) => ${split[0]}`);
+	});
+
 	//start a network pipe if we aren't ganache as we do something different if we are
 	if (hre.network.name !== "ganache") startNetworkPipe();
-
-	//starts listening on the provider for events on the current network and feeds it to the pipe
-
 	//initialize console
+
+	Helpers.debugLog("starting InfinityConsole");
 	let infinityConsole = new InfinityConsole();
 	await infinityConsole.initialize();
 }

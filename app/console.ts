@@ -20,6 +20,7 @@ import Projects from "./windows/projects";
 import Music from "./windows/music";
 import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
+import { getProvider } from "./web3";
 
 const blessed = require("blessed");
 export default class InfinityConsole {
@@ -190,7 +191,7 @@ export default class InfinityConsole {
 			throw new Error("console already initialized");
 
 		this.network = hre.network;
-		let chainId = (await ethers.provider.getNetwork()).chainId;
+		let chainId = (await getProvider().getNetwork()).chainId;
 		log(
 			"initializing InfinityConsole chainId " +
 				(this.network.config?.chainId || chainId) +
