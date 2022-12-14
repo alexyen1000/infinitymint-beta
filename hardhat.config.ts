@@ -58,6 +58,13 @@ console.log = (msg, setPipe = true) => {
 	if (isEnvTrue("PIPE_CALL_DEFAULT_LOG")) consoleLog(msg);
 };
 
+let consoleError = console.error;
+console.error = (error: any | Error) => {
+	Pipes.getPipe(Pipes.currentPipe).error(error);
+
+	if (isEnvTrue("PIPE_CALL_DEFAULT_ERROR")) consoleError(error);
+};
+
 //will log console.log output to the default pipe
 if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
 //create the debug pipe

@@ -302,8 +302,13 @@ export class InfinityMintWindow {
 					" for " +
 					`${this.name}[${this.id}]`
 			);
-			this.elements[index].free(); //unsubscribes to events saving memory
-			this.elements[index].destroy();
+
+			try {
+				this.elements[index].free(); //unsubscribes to events saving memory
+			} catch (error) {}
+			try {
+				this.elements[index].destroy();
+			} catch (error) {}
 			delete this.elements[index];
 		});
 

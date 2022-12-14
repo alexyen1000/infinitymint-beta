@@ -65,30 +65,29 @@ export default class InfinityConsole {
 		return this.signers;
 	}
 
-	public registerEvents() {
-		if (this.currentWindow === undefined) return;
+	public registerEvents(window?: InfinityMintWindow) {
+		if (this.currentWindow === undefined && window === undefined) return;
+		window = window || this.currentWindow;
+
+		if (window === undefined) return;
 		//when the window is destroyed, rebuild the items list
 
-		debugLog("registering events for " + this.currentWindow.name);
-		//so we only fire once
-		if (this.currentWindow.options.destroy)
-			this.currentWindow.off(
-				"destroy",
-				this.currentWindow.options.destroy
-			);
-		this.currentWindow.options.destroy = this.currentWindow.on(
-			"destroy",
-			() => {
-				debugLog("destroyed window " + this.currentWindow?.name);
-				this.updateWindowsList();
-			}
+		debugLog(
+			"registering events for " + window.name + `[${window.getId()}]`
 		);
+		//so we only fire once
+		if (window.options.destroy)
+			window.off("destroy", window.options.destroy);
+
+		window.options.destroy = window.on("destroy", () => {
+			debugLog("destroyed window " + window?.name);
+			this.updateWindowsList();
+		});
 
 		//so we only fire once
-		if (this.currentWindow.options.hide)
-			this.currentWindow.off("hude", this.currentWindow.options.hude);
+		if (window.options.hide) window.off("hide", window.options.hude);
 		//when the current window is hiden, rebuild the item
-		this.currentWindow.options.hide = this.currentWindow.on("hide", () => {
+		window.options.hide = window.on("hide", () => {
 			this.updateWindowsList();
 		});
 	}
@@ -115,6 +114,7 @@ export default class InfinityConsole {
 	}
 
 	public async reload() {
+		this.currentWindow = undefined;
 		this.windows.forEach((window) => window.destroy());
 		this.windowManager.destroy();
 		//render
@@ -326,6 +326,8 @@ export default class InfinityConsole {
 			instantInstantiate[i].setScreen(this.screen);
 			await instantInstantiate[i].create();
 			instantInstantiate[i].hide();
+			//register events
+			this.registerEvents(instantInstantiate[i]);
 		}
 
 		//creating window manager
@@ -371,7 +373,7 @@ export default class InfinityConsole {
 			if (!this.currentWindow.hasInitialized()) {
 				this.currentWindow.setScreen(this.screen);
 				this.currentWindow.setContainer(this);
-				await this.windows[selected].create();
+				await this.currentWindow.create();
 				this.registerEvents();
 			} else if (!this.currentWindow.isVisible())
 				this.currentWindow.show();
@@ -389,15 +391,12 @@ export default class InfinityConsole {
 			this.currentWindow.setScreen(this.screen);
 			//create window
 			await this.currentWindow.create();
+			//register events
+			this.registerEvents();
 		}
 
 		this.updateWindowsList();
-		//render
-		this.screen.render();
-		//register events
-		this.registerEvents();
-		//show the current window
-		this.currentWindow.show();
+
 		//update interval
 		this.interval = setInterval(() => {
 			this.windows.forEach((window) => {
@@ -430,5 +429,9 @@ export default class InfinityConsole {
 			if (this.windowManager?.hidden === false)
 				this.currentWindow?.show();
 		});
+		//render
+		this.screen.render();
+		//show the current window
+		this.currentWindow.show();
 	}
 }
