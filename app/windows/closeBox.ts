@@ -86,7 +86,7 @@ CloseBox.initialize = async (window, frame, blessed) => {
 		})
 	);
 	keepInfinityMint.on("click", async () => {
-		await window.openWindow(window.options.lastWindow || "Menu");
+		await window.openWindow(window.options.currentWindow || "Menu");
 	});
 };
 
