@@ -102,10 +102,19 @@ const Pipes = new (class {
 		this.logs[this.currentPipe].error(error.toString());
 	}
 
-	public log(msg: string, pipe?: string) {
+	public log(msg: string, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipe;
 		if (this.logs[actualPipe] == undefined)
 			throw new Error("bad pipe: " + actualPipe);
+
+		if (dontHighlight !== true)
+			msg = msg
+				.replace(/\[/g, "{yellow-fg}[")
+				.replace(/\]/g, "]{/yellow-fg}")
+				.replace(/\</g, "{grey-fg}<")
+				.replace(/\>/g, ">{/grey-fg}")
+				.replace(/\(/g, "{magenta-fg}(")
+				.replace(/\)/g, "){/magenta-fg}");
 
 		this.logs[actualPipe].log(msg);
 	}

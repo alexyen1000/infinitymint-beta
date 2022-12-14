@@ -329,7 +329,10 @@ export default class InfinityConsole {
 					windows[0].options.currentWindow = this.currentWindow?.name;
 				this.currentWindow?.openWindow("CloseBox");
 				//if the closeBox aka the current window is visible and we press control-c again just exit
-			} else if (this.currentWindow.isVisible()) process.exit(0);
+			} else {
+				if (this.currentWindow.isVisible()) process.exit(0);
+				else this.currentWindow.show();
+			}
 		});
 		//shows the list
 		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {
