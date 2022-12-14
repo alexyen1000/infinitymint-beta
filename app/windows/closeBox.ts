@@ -15,17 +15,19 @@ const CloseBox = new InfinityMintWindow(
 	}
 );
 
-CloseBox.initialize = async(window, frame, blessed) => {
+CloseBox.initialize = async (window, frame, blessed) => {
+	let text = window.registerElement(
+		"text",
+		blessed.box({
+			left: "center",
+			top: "center",
+			width: "shrink",
+			height: "shrink",
+			padding: 2,
+			content: "Would You Like To Close InfinityMint",
+		})
+	);
 
-	let text = window.registerElement('text', blessed.box({
-		left: 'center',
-		top: 'center',
-		width: 'shrink',
-		height: "shrink",
-		padding: 2,
-		content: 'Would You Like To Close InfinityMint'
-	}));
-	
 	//create buttons
 	let closeInfinityMint = window.registerElement(
 		"close",
@@ -36,8 +38,7 @@ CloseBox.initialize = async(window, frame, blessed) => {
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content:
-				"Close InfinityMint",
+			content: "Close InfinityMint",
 			tags: true,
 			border: {
 				type: "line",
@@ -54,21 +55,20 @@ CloseBox.initialize = async(window, frame, blessed) => {
 			},
 		})
 	);
-	closeInfinityMint.on('click', () => {
+	closeInfinityMint.on("click", () => {
 		process.exit(0);
-	})
+	});
 
 	let keepInfinityMint = window.registerElement(
 		"keepOpen",
 		blessed.box({
 			bottom: 0,
-			left: 23,
+			right: 0,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content:
-			 "Keep InfinityMint Open",
+			content: "Keep InfinityMint Open",
 			tags: true,
 			border: {
 				type: "line",
@@ -85,8 +85,8 @@ CloseBox.initialize = async(window, frame, blessed) => {
 			},
 		})
 	);
-	keepInfinityMint.on('click', async () => {
-		await window.openWindow(window.options.lastWindow || 'Menu');
+	keepInfinityMint.on("click", async () => {
+		await window.openWindow(window.options.lastWindow || "Menu");
 	});
 };
 
