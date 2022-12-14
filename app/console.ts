@@ -173,9 +173,9 @@ export default class InfinityConsole {
 					(
 						window.name +
 						" " +
-						`[${window.getId()}]` +
+						`[${window.getId()}] ` +
 						(window.isAlive() ? "(alive)" : "(dead)")
-					).padEnd(36, " ") +
+					).padEnd(60, " ") +
 					(!window.hasInitialized() ? " ! NOT INITIALIZED !" : "") +
 					(window.isAlive() && window.shouldBackgroundThink()
 						? " * RUNNING IN BACK *"
