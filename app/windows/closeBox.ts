@@ -24,7 +24,7 @@ CloseBox.initialize = async (window, frame, blessed) => {
 			width: "shrink",
 			height: "shrink",
 			padding: 2,
-			content: "Would You Like To Close InfinityMint",
+			content: "Are You Sure You Would You Like To Close InfinityMint?",
 		})
 	);
 
