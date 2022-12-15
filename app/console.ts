@@ -254,6 +254,7 @@ export default class InfinityConsole {
 			padding: 2,
 			keys: true,
 			mouse: true,
+			vi: true,
 			border: "line",
 			scrollbar: {
 				ch: " ",
@@ -339,14 +340,30 @@ export default class InfinityConsole {
 				else this.currentWindow.show();
 			}
 		});
+
+		//shows the logs
+		this.screen.key(["C-l"], (ch: string, key: string) => {
+			if (this.currentWindow?.name !== "Logs")
+				this.screen.lastWindow = this.currentWindow;
+
+			this.currentWindow?.openWindow("Logs");
+			this.windowManager.setBack();
+		});
+
 		//shows the list
-		this.screen.key(["windows", "C-z"], (ch: string, key: string) => {
+		this.screen.key(["C-z"], (ch: string, key: string) => {
 			this.updateWindowsList();
 			this.currentWindow?.hide();
 			this.windowManager.show();
 		});
 		//restores the current window
-		this.screen.key(["restore", "C-r"], (ch: string, key: string) => {
+		this.screen.key(["C-r"], (ch: string, key: string) => {
+			if (this.screen.lastWindow !== undefined) {
+				this.currentWindow?.hide();
+				this.currentWindow = this.screen.lastWindow;
+				delete this.screen.lastWindow;
+			}
+
 			this.updateWindowsList();
 			if (this.windowManager?.hidden === false)
 				this.currentWindow?.show();
