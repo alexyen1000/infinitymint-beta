@@ -137,7 +137,9 @@ if (
 			recursive: true,
 			force: true,
 		} as any);
-	} catch (error) {}
+	} catch (error: any) {
+		debugLog("unable to delete folder: " + error?.message || error);
+	}
 
 	session.environment.solidityNamespace =
 		process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
