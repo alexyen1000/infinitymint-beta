@@ -1,7 +1,13 @@
 import { HardhatUserConfig } from "hardhat/config";
 import fs from "node:fs";
 import Pipes from "./app/pipes";
-import { debugLog, isEnvTrue, readSession, saveSession } from "./app/helpers";
+import {
+	debugLog,
+	getSolidityNamespace,
+	isEnvTrue,
+	readSession,
+	saveSession,
+} from "./app/helpers";
 import { generateMnemonic } from "bip39";
 
 //if there is no temp folder, make it.
@@ -87,8 +93,8 @@ saveSession(session);
 //else, import the InfinityMint config
 const infinityMintConfig = require("./infinitymint.config").default;
 
-//set the default network
 session = readSession();
+//fuck about with hardhat config
 infinityMintConfig.hardhat.defaultNetwork =
 	infinityMintConfig.hardhat?.defaultNetwork ||
 	session.environment?.defaultNetwork;
@@ -103,5 +109,40 @@ if (
 	infinityMintConfig.hardhat.networks.localhost =
 		infinityMintConfig.hardhat.networks.ganache;
 
+if (infinityMintConfig.hardhat.paths === undefined)
+	infinityMintConfig.hardhat.paths = {};
+
+infinityMintConfig.hardhat.paths.sources = "./" + getSolidityNamespace();
+
+//delete artifacts folder if namespace changes
+if (
+	process.env.INFINITYMINT_SOLIDITY_NAMESPACE !== undefined &&
+	session.environment.solidityNamespace !== undefined &&
+	session.environment.solidityNamespace !==
+		process.env.INFINITYMINT_SOLIDITY_NAMESPACE
+) {
+	try {
+		debugLog("removing ./artifacts");
+		fs.rmdirSync("./artifacts", {
+			recursive: true,
+			force: true,
+		} as any);
+		debugLog("removing ./cache");
+		fs.rmdirSync("./cache", {
+			recursive: true,
+			force: true,
+		} as any);
+		debugLog("removing ./typechain-types");
+		fs.rmdirSync("./typechain-types", {
+			recursive: true,
+			force: true,
+		} as any);
+	} catch (error) {}
+
+	session.environment.solidityNamespace =
+		process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
+}
+
+saveSession(session);
 debugLog("loaded hardhat.config.ts");
 export default infinityMintConfig.hardhat; //export the infinity mint configuration file

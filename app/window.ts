@@ -7,6 +7,7 @@ import {
 	debugLog,
 	readSession,
 	saveSession,
+	getSolidityNamespace,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -354,7 +355,11 @@ export class InfinityMintWindow {
 		let etherBalance = ethers.utils.formatEther(balance);
 		debugLog("balance of account: " + etherBalance);
 		this.getElement("frame").setContent(
-			` > {bold}${this.name}{/bold} | ${getAccountIndex} => {underline}${defaultSigner.address}{/underline} {magenta-bg}${hre.network.name}{/magenta-bg} {green-fg}balance: ${etherBalance} ETH{/green-fg}`
+			` > {bold}${this.name}{/bold} | ${getAccountIndex} => {underline}${
+				defaultSigner.address
+			}{/underline} {magenta-bg}${
+				hre.network.name
+			}{/magenta-bg} {green-fg}balance: ${etherBalance} ETH{/green-fg} {cyan-fg}INFINITYMINT_SOLIDITY_NAMESPACE => ${getSolidityNamespace()}{/cyan-fg}`
 		);
 	}
 

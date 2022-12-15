@@ -115,6 +115,16 @@ export const readSession = (): InfinityMintSession => {
 	};
 };
 
+export const getSolidityNamespace = () => {
+	let session = readSession();
+
+	return (
+		session.environment?.solidityNamespace ||
+		process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
+		"alpha"
+	);
+};
+
 export const saveSessionVariable = (
 	session: InfinityMintSession,
 	key: string,

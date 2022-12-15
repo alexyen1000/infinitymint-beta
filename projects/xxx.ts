@@ -46,8 +46,9 @@ const profiles: InfinityMintProject = {
 			fileName: "",
 		},
 	],
-	defaultPath: {
+	basePath: {
 		name: "Profile",
+		fileName: "",
 	},
 	permissions: {
 		all: [],
@@ -81,9 +82,18 @@ const blocks: InfinityMintProject = {
 		assetController: "SimpleImage",
 		royaltyController: "DefaultRoyalty",
 	},
-	paths: [],
-	defaultPath: {
+	paths: [
+		{
+			name: "Hat",
+			fileName: "",
+		},
+	],
+	basePath: {
 		name: "Block",
+		fileName: "",
+		data: {
+			fuck: "shit",
+		},
 	},
 };
 
@@ -102,8 +112,9 @@ const content: InfinityMintProject = {
 		royaltyController: "DefaultRoyalty",
 	},
 	paths: [],
-	defaultPath: {
+	basePath: {
 		name: "Content",
+		fileName: "",
 	},
 };
 

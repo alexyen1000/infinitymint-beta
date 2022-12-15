@@ -9,9 +9,18 @@ import {
 import GanacheServer from "./app/ganacheServer";
 import config from "./infinitymint.config";
 import { Web3Provider } from "@ethersproject/providers";
+import fs from "fs";
 
 async function main() {
 	let session = Helpers.readSession();
+
+	Helpers.debugLog("printing hardhat tasks");
+	Object.values(hre.tasks).forEach((task, index) => {
+		Helpers.debugLog(`[${index}] => ${task.name}`);
+	});
+
+	if (!fs.existsSync("./artifacts")) await hre.run("compile");
+
 	//register current network pipes
 	registerNetworkPipes();
 	//start ganache
@@ -67,7 +76,11 @@ async function main() {
 	if (hre.network.name !== "ganache") startNetworkPipe();
 	//initialize console
 
-	Helpers.debugLog("starting InfinityConsole");
+	Helpers.debugLog(
+		"starting InfinityConsole with solidity namespace of " +
+			Helpers.getSolidityNamespace()
+	);
+
 	let infinityConsole = new InfinityConsole();
 	await infinityConsole.initialize();
 }

@@ -15,9 +15,9 @@ export interface InfinityMintProject {
 	modules: InfinityMintProjectModules;
 	price: number | BigNumber | string;
 	information: InfinityMintProjectInformation;
-	defaultPath?: InfinityMintProjectPath;
+	basePath?: InfinityMintProjectPath;
 	gems?: Array<InfinityMintProjectGem>;
-	defaultAsset?: InfinityMintProjectAsset;
+	baseAsset?: InfinityMintProjectAsset;
 	paths: Array<InfinityMintProjectPath>;
 	assets?: Array<InfinityMintProjectAsset>;
 	settings?: InfinityMintProjectSettings;
@@ -133,7 +133,8 @@ export interface InfinityMintProjectPathExport {
 
 export interface InfinityMintProjectPath {
 	name: string;
-	fileName?: string;
+	fileName: string;
+	data?: Dictionary<any>;
 	key?: string;
 	settings?: Dictionary<any>;
 	description?: string;
@@ -214,6 +215,7 @@ export interface InfinityMintDeployment {
 	permissions?: Array<any>;
 	important?: boolean;
 	instantlySetup?: boolean;
+	solidityNamespace?: string;
 	library?: boolean; //if this is a library and not a solidity contract
 	key?: string; //will take from the file name the deploy script is called if not specified
 	index?: number;

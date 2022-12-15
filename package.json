@@ -27,7 +27,7 @@
 	},
 	"scripts": {
 		"test": "mocha",
-		"start": "npx hardhat compile && npx ts-node index.ts"
+		"start": "npx hardhat && npx ts-node index.ts"
 	},
 	"repository": {
 		"type": "git",
