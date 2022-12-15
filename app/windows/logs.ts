@@ -3,6 +3,7 @@ import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
 
 let lastLength = 0;
+let lastSelectedLine = 0;
 const Logs = new InfinityMintWindow(
 	"Logs",
 	{
@@ -30,31 +31,51 @@ Logs.think = (window, frame, blessed) => {
 	let element = window.getElement("console");
 	let lines = Pipes.getPipe(window.options.pipe).logs;
 	//bleseed push line doesnt work for some reason so we have to do it this way
-	if (lastLength !== lines.length) {
-		let content = ``;
-		lines.forEach((line, index) => {
-			let finalLine =
-				`{white-bg}{black-fg}${index
-					.toString()
-					.padEnd(6, " ")}{/black-fg}{/white-bg} ` +
-				line.toString() +
-				"\n";
-			content =
-				content +
-				(index % 2 === 0
-					? `{white-fg}${finalLine}{/white-fg}`
-					: `{black-bg}${finalLine}{/black-bg}`);
-		});
-		element.setContent(content);
+
+	if (window.options.alwaysScroll)
+		window.options.selectedLine = lines.length - 1;
+
+	if (
+		lastLength !== lines.length ||
+		window.options.selectedLine !== lastSelectedLine
+	) {
+		element.setContent(
+			lines
+				.map((line, index) => {
+					let lineCount = `{white-bg}{black-fg}${index
+						.toString()
+						.padEnd(6, " ")}{/black-fg}{/white-bg} `;
+
+					if (index === window.options.selectedLine)
+						lineCount = `{yellow-bg}{black-fg}${index
+							.toString()
+							.padEnd(6, " ")}{/black-fg}{/yellow-bg} `;
+
+					let finalLine = lineCount + line.toString();
+
+					if (index === window.options.selectedLine)
+						return `{blue-bg}{white-fg}${finalLine}{/black-fg}{/blue-bg}`;
+
+					return index % 2 === 0
+						? `{white-fg}${finalLine}{/white-fg}`
+						: `{black-bg}${finalLine}{/black-bg}`;
+				})
+				.join("\n")
+		);
+
+		let actualLength = element.content.split("\n").length;
+		lastLength = actualLength;
+		lastSelectedLine = window.options.selectedLine;
+
 		element.focus();
 		element.setLabel(
 			"{bold}{white-fg}Pipe: {/white-fg}" +
 				window.options.pipe +
 				"{/bold}"
 		);
-		lastLength = lines.length;
-		if (window.options.alwaysScroll === true)
-			element.setScroll(content.split("\n").length);
+		if (window.options.alwaysScroll === true) {
+			element.setScroll(actualLength);
+		}
 	}
 };
 
@@ -63,7 +84,9 @@ Logs.initialize = async (window, frame, blessed) => {
 	//load the options with default values
 	window.loadOptions({
 		alwaysScroll: true,
+		scrollToSelectedLine: false,
 		pipe: "default",
+		selectedLine: 0,
 	});
 	//save to file default values if written
 	window.saveOptions();
@@ -107,7 +130,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			height: "shrink",
 			padding: 1,
 			content:
-				"Always Scroll [" +
+				"Auto Scroll [" +
 				(window.options.alwaysScroll ? "O" : "X") +
 				"]",
 			tags: true,
@@ -129,13 +152,16 @@ Logs.initialize = async (window, frame, blessed) => {
 	alwaysScroll.on("click", () => {
 		//save option
 		window.options.alwaysScroll = !window.options.alwaysScroll;
+		window.options.scrollToSelectedLine = false;
+
 		window.saveOptions();
 
 		//change style
 		alwaysScroll.style.bg = window.options.alwaysScroll ? "green" : "red";
 		alwaysScroll.setContent(
-			"Always Scroll [" + (window.options.alwaysScroll ? "O" : "X") + "]"
+			"Auto Scroll [" + (window.options.alwaysScroll ? "O" : "X") + "]"
 		);
+
 		window.getScreen().render();
 	});
 	alwaysScroll.setFront();
@@ -145,12 +171,12 @@ Logs.initialize = async (window, frame, blessed) => {
 		"gotoEnd",
 		blessed.box({
 			bottom: 0,
-			left: 22,
+			left: 20,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content: "Scroll To End",
+			content: "Goto End",
 			tags: true,
 			border: {
 				type: "line",
@@ -170,18 +196,20 @@ Logs.initialize = async (window, frame, blessed) => {
 	gotoEnd.setFront();
 	gotoEnd.on("click", () => {
 		console.setScroll(lastLength);
+		window.options.selectedLine =
+			(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1;
 	});
 
 	let gotoTop = window.registerElement(
 		"gotoTop",
 		blessed.box({
 			bottom: 0,
-			left: 22 + 18,
+			left: 22 + 11,
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content: "Scroll To Start",
+			content: "Goto Top",
 			tags: true,
 			border: {
 				type: "line",
@@ -201,45 +229,19 @@ Logs.initialize = async (window, frame, blessed) => {
 	gotoTop.setFront();
 	gotoTop.on("click", () => {
 		console.setScroll(0);
+		window.options.selectedLine = 0;
 	});
 
 	let save = window.registerElement(
 		"save",
 		blessed.box({
 			bottom: 0,
-			left: 22 + 18 + 20,
+			left: "center",
 			shrink: true,
 			width: "shrink",
 			height: "shrink",
 			padding: 1,
-			content: "Save Pipe",
-			tags: true,
-			border: {
-				type: "line",
-			},
-			style: {
-				fg: "white",
-				bg: "magenta",
-				border: {
-					fg: "#ffffff",
-				},
-				hover: {
-					bg: "grey",
-				},
-			},
-		})
-	);
-
-	let load = window.registerElement(
-		"load",
-		blessed.box({
-			bottom: 0,
-			left: 22 + 18 + 20 + 14,
-			shrink: true,
-			width: "shrink",
-			height: "shrink",
-			padding: 1,
-			content: "Load Pipe",
+			content: "Save Output To File",
 			tags: true,
 			border: {
 				type: "line",
@@ -338,9 +340,50 @@ Logs.initialize = async (window, frame, blessed) => {
 	changePipe.on("click", () => {
 		form.setFront();
 		form.toggle();
+		window.options.selectedLine = 0;
+		window.saveOptions();
+	});
+
+	window.getScreen().unkey(["up", "w"]);
+	window.getScreen().key(["up", "w"], (ch: string, key: string) => {
+		window.options.selectedLine = Math.max(
+			0,
+			window.options.selectedLine - 1
+		);
+	});
+
+	window.getScreen().unkey(["down", "s"]);
+	window.getScreen().key(["down", "s"], (ch: string, key: string) => {
+		window.options.selectedLine = Math.min(
+			(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
+			window.options.selectedLine + 1
+		);
+	});
+
+	//centers the scroll of the console to the selected line position when you do Control-Q
+	window.getScreen().unkey(["C-q"]);
+	window.getScreen().key(["C-q"], (ch: string, key: string) => {
+		let selectedLinePosition = [
+			...(Pipes.logs[window.options.pipe]?.logs || [""]),
+		]
+			.slice(0, window.options.selectedLine)
+			.join("\n")
+			.split("\n").length;
+
+		console.setScroll(selectedLinePosition);
 	});
 
 	window.think(window, frame, blessed); //do think once
+
+	//save when the window is destroyed
+	window.on("destroy", () => {
+		window.saveOptions();
+	});
+
+	//save when the window is hidden
+	window.on("hide", () => {
+		window.saveOptions();
+	});
 };
 
 Logs.setShouldInstantiate(true);

@@ -383,6 +383,10 @@ export class InfinityMintWindow {
 				width: "100%",
 				height: "100%",
 				tags: true,
+				keys: true,
+				vi: true,
+				mouse: true,
+				parent: this.screen,
 				padding: 1,
 				scrollbar: this.scrollbar || {},
 				border: this.border || {},
@@ -390,6 +394,7 @@ export class InfinityMintWindow {
 			})
 		);
 		frame.setBack();
+		frame.focus();
 		await this.setFrameContent();
 
 		let close = this.registerElement(

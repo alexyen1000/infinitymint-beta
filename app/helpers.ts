@@ -30,6 +30,7 @@ export interface BlessedElement extends Element {
 	removeLabel: Function;
 	pushLine: Function;
 	disableMouse: Function;
+	content: any;
 	disableKeys: Function;
 	setItems: Function;
 	enterSelected: Function;
@@ -51,10 +52,10 @@ export interface BlessedElement extends Element {
 	free: Function;
 	setLine: FuncDouble<number, string, Function>;
 	insertLine: FuncDouble<number, string, Function>;
-	key: FuncDouble<string, Function, Function>;
-	onceKey: FuncDouble<string, Function, Function>;
+	key: FuncDouble<string[], Function, Function>;
+	onceKey: FuncDouble<string[], Function, Function>;
 	onScreenEvent: FuncDouble<string, Function, Function>;
-	unkey: FuncDouble<string, Function, Function>;
+	unkey: FuncDouble<string[], Function, Function>;
 }
 
 /**

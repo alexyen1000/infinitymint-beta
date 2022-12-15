@@ -173,16 +173,18 @@ export default class InfinityConsole {
 		this.windowManager.setItems(
 			[...this.windows].map(
 				(window) =>
-					(window.name + " " + `[${window.getId()}] `).padEnd(
+					(window.name + " " + `[${window.getId()}]`).padEnd(
 						56,
 						" "
 					) +
 					(window.isAlive()
 						? " {green-fg}(alive){/green-fg}"
-						: " {red-fg}(dead){/red-fg}") +
-					(!window.hasInitialized() ? " [!] NOT INITIALIZED" : "") +
+						: " {red-fg}(dead) {/red-fg}") +
+					(!window.hasInitialized()
+						? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
+						: "") +
 					(window.isAlive() && window.shouldBackgroundThink()
-						? " [?] RUNNING IN BACK"
+						? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
 						: "")
 			)
 		);
