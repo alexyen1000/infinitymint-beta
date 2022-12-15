@@ -36,7 +36,12 @@ const GanacheServer = new (class {
 							logger: {
 								log: (msg: any, ...params) => {
 									Pipes.log(
-										`\n${msg.toString().replace(/>/g, "")}`,
+										`${msg
+											.toString()
+											.replace(/>/g, "")
+											.replace(/\n/g, "")
+											.replace(/  /g, " ")
+											.trim()}`,
 										"ganache"
 									);
 									if (

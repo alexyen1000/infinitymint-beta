@@ -232,6 +232,43 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.options.selectedLine = 0;
 	});
 
+	let gotoSelected = window.registerElement(
+		"gotoSelected",
+		blessed.box({
+			bottom: 0,
+			left: 22 + 11 + 13,
+			shrink: true,
+			width: "shrink",
+			height: "shrink",
+			padding: 1,
+			content: "Goto Selected",
+			tags: true,
+			border: {
+				type: "line",
+			},
+			style: {
+				fg: "white",
+				bg: "blue",
+				border: {
+					fg: "#ffffff",
+				},
+				hover: {
+					bg: "grey",
+				},
+			},
+		})
+	);
+	gotoSelected.on("click", () => {
+		let selectedLinePosition = [
+			...(Pipes.logs[window.options.pipe]?.logs || [""]),
+		]
+			.slice(0, window.options.selectedLine)
+			.join("\n")
+			.split("\n").length;
+
+		console.setScroll(selectedLinePosition);
+	});
+
 	let save = window.registerElement(
 		"save",
 		blessed.box({
