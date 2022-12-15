@@ -145,8 +145,9 @@ if (
 		process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
 }
 
-if(	session.environment.solidityNamespace  === undefined)
-		session.environment.solidityNamespace = process.env.INFINITYMINT_SOLIDITY_NAMESPACE
+if (session.environment.solidityNamespace === undefined)
+	session.environment.solidityNamespace =
+		process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
 
 saveSession(session);
 debugLog("loaded hardhat.config.ts");

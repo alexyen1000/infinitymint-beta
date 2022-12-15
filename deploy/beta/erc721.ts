@@ -4,7 +4,7 @@ const ERC721: InfinityMintDeployment = {
 	deploy: () => {},
 	setup: () => {},
 	//going to give
-	solidityNamespace: "hydra",
+	solidityNamespace: "beta",
 	permissions: ["approved"],
 };
 export default ERC721;
