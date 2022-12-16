@@ -1,8 +1,8 @@
-import { InfinityMintDeployment } from "../../app/config";
+import { InfinityMintDeploymentScript } from "../../app/config";
 
-const ERC721: InfinityMintDeployment = {
-	deploy: () => {},
-	setup: () => {},
+const ERC721: InfinityMintDeploymentScript = {
+	deploy: async (params) => {},
+	setup: async (params) => {},
 	//going to give
 	solidityNamespace: "beta",
 	permissions: ["approved"],

@@ -1,8 +1,8 @@
-import { InfinityMintDeployment } from "../../app/config";
+import { InfinityMintDeploymentScript } from "../../app/config";
 
-const Minter: InfinityMintDeployment = {
-	deploy: () => {},
-	setup: () => {},
+const Minter: InfinityMintDeploymentScript = {
+	deploy: async (params) => {},
+	setup: async (params) => {},
 	//going to give
 	solidityNamespace: "alpha",
 	permissions: ["erc721", "assets"],

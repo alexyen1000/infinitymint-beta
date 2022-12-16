@@ -12,6 +12,7 @@ import { Web3Provider } from "@ethersproject/providers";
 import fs from "fs";
 
 async function main() {
+	Helpers.log("starting infinitymint");
 	let session = Helpers.readSession();
 
 	Helpers.debugLog("printing hardhat tasks");

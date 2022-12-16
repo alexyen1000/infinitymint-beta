@@ -61,14 +61,16 @@ console.log = (msg, setPipe = true) => {
 	if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
 		Pipes.getPipe(Pipes.currentPipe).logs.push(msg);
 
-	if (isEnvTrue("PIPE_CALL_DEFAULT_LOG")) consoleLog(msg);
+	if (Pipes.logs[Pipes.currentPipe]?.listen) consoleLog(msg);
 };
 
 let consoleError = console.error;
-console.error = (error: any | Error) => {
-	Pipes.getPipe(Pipes.currentPipe).error(error);
+console.error = (error: any | Error, setPipe = true) => {
+	if (setPipe && Pipes.logs[Pipes.currentPipe])
+		Pipes.getPipe(Pipes.currentPipe).error(error);
 
-	if (isEnvTrue("PIPE_CALL_DEFAULT_ERROR")) consoleError(error);
+	if (Pipes.logs[Pipes.currentPipe]?.listen || isEnvTrue("PIPE_ECHO_ERRORS"))
+		consoleError(error);
 };
 
 //will log console.log output to the default pipe

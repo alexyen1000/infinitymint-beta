@@ -3,6 +3,8 @@ import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 import { FuncSingle } from "./helpers";
 import { Server, ServerOptions } from "ganache";
+import { EventEmitter } from "events";
+import { DeploymentScript } from "./deployments";
 
 export interface InfinityMintApplicationConfig {
 	productionChains: string[];
@@ -206,12 +208,31 @@ export interface InfinityMintScript {
 	arguments?: InfinityMintScriptArguments[];
 }
 
+export interface InfinityMintDeploymentParameters extends Dictionary<any> {
+	setup?: boolean;
+	eventEmitter?: EventEmitter;
+	deployments?: Dictionary<any>;
+	deploy?: DeploymentScript;
+	log: FuncSingle<string, void>;
+	debugLog: FuncSingle<string, void>;
+}
+
 /**
  * Interface for the InfinityMint deployments (gems included)
  */
-export interface InfinityMintDeployment {
-	deploy: Function;
-	setup: Function;
+export interface InfinityMintDeployment extends Dictionary<any> {
+	abi?: Array<any>;
+	key?: string;
+	name?: string;
+	address?: string;
+	project?: string;
+	deployer?: string;
+	receipt?: Dictionary<any>;
+}
+
+export interface InfinityMintDeploymentScript {
+	deploy: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	setup: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
 	permissions?: Array<any>;
 	important?: boolean;
 	instantlySetup?: boolean;

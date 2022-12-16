@@ -149,6 +149,15 @@ Logs.initialize = async (window, frame, blessed) => {
 			},
 		})
 	);
+
+	let alwaysScrollUpdate = () => {
+		//change style
+		alwaysScroll.style.bg = window.options.alwaysScroll ? "green" : "red";
+		alwaysScroll.setContent(
+			"Auto Scroll [" + (window.options.alwaysScroll ? "O" : "X") + "]"
+		);
+	};
+
 	alwaysScroll.on("click", () => {
 		//save option
 		window.options.alwaysScroll = !window.options.alwaysScroll;
@@ -156,11 +165,7 @@ Logs.initialize = async (window, frame, blessed) => {
 
 		window.saveOptions();
 
-		//change style
-		alwaysScroll.style.bg = window.options.alwaysScroll ? "green" : "red";
-		alwaysScroll.setContent(
-			"Auto Scroll [" + (window.options.alwaysScroll ? "O" : "X") + "]"
-		);
+		alwaysScrollUpdate();
 
 		window.getScreen().render();
 	});
@@ -383,6 +388,12 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	window.getScreen().unkey(["up", "w"]);
 	window.getScreen().key(["up", "w"], (ch: string, key: string) => {
+		if (window.options.alwaysScroll) {
+			window.options.alwaysScroll = false;
+			alwaysScrollUpdate();
+			window.saveOptions();
+		}
+
 		window.options.selectedLine = Math.max(
 			0,
 			window.options.selectedLine - 1

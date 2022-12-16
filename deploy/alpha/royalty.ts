@@ -1,8 +1,8 @@
-import { InfinityMintDeployment } from "../../app/config";
+import { InfinityMintDeploymentScript } from "../../app/config";
 
-const Royalty: InfinityMintDeployment = {
-	deploy: () => {},
-	setup: () => {},
+const Royalty: InfinityMintDeploymentScript = {
+	deploy: async (params) => {},
+	setup: async (params) => {},
 	//going to give
 	instantlySetup: true, //will run the set up for this contract instantly and not after everything else has deployed
 	solidityNamespace: "alpha",

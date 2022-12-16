@@ -1,5 +1,5 @@
 import { InfinityMintConsole } from "./config";
-import { debugLog, log } from "./helpers";
+import { debugLog, isEnvSet, isEnvTrue, log } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -21,6 +21,8 @@ import Music from "./windows/music";
 import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
 import { getProvider } from "./web3";
+import { DeploymentScript, getDeploymentScripts } from "./deployments";
+import Pipes from "./pipes";
 
 const blessed = require("blessed");
 export default class InfinityConsole {
@@ -36,14 +38,10 @@ export default class InfinityConsole {
 	private signers?: SignerWithAddress[];
 	private windowManager?: any;
 	private optionsBox?: any;
+	private deployments?: DeploymentScript[];
 
 	constructor(options?: InfinityMintConsole) {
-		this.screen = blessed.screen(
-			options?.blessed || {
-				smartCRS: true,
-				dockBorders: true,
-			}
-		);
+		this.screen = undefined;
 		this.windows = [];
 		this.canExit = true;
 		this.options = options;
@@ -194,6 +192,7 @@ export default class InfinityConsole {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
+		this.deployments = await getDeploymentScripts();
 		this.network = hre.network;
 		let chainId = (await getProvider().getNetwork()).chainId;
 		log(
@@ -203,174 +202,231 @@ export default class InfinityConsole {
 				this.network.name
 		);
 
-		this.windows = [
-			Menu,
-			Tutorial,
-			Projects,
-			Logs,
-			Browser,
-			Ganache,
-			Deployments,
-			Gems,
-			Networks,
-			Scaffold,
-			Music,
-			Scripts,
-			Settings,
-			Deploy,
-			CloseBox,
-		];
-		this.currentWindow = this.windows[0];
+		try {
+			this.screen = blessed.screen(
+				this.options?.blessed || {
+					smartCRS: true,
+					dockBorders: true,
+				}
+			);
+			this.windows = [
+				Menu,
+				Tutorial,
+				Projects,
+				Logs,
+				Browser,
+				Ganache,
+				Deployments,
+				Gems,
+				Networks,
+				Scaffold,
+				Music,
+				Scripts,
+				Settings,
+				Deploy,
+				CloseBox,
+			];
+			this.currentWindow = this.windows[0];
 
-		let instantInstantiate = this.windows.filter((thatWindow) =>
-			thatWindow.shouldInstantiate()
-		);
-
-		for (let i = 0; i < instantInstantiate.length; i++) {
-			debugLog(
-				"initializing " +
-					instantInstantiate[i].name +
-					`[${instantInstantiate[i].getId()}]`
+			let instantInstantiate = this.windows.filter((thatWindow) =>
+				thatWindow.shouldInstantiate()
 			);
 
-			if (!instantInstantiate[i].hasContainer())
-				instantInstantiate[i].setContainer(this);
+			for (let i = 0; i < instantInstantiate.length; i++) {
+				debugLog(
+					"initializing <" +
+						instantInstantiate[i].name +
+						`>[${instantInstantiate[i].getId()}]`
+				);
 
-			instantInstantiate[i].setScreen(this.screen);
-			await instantInstantiate[i].create();
-			instantInstantiate[i].hide();
-			//register events
-			this.registerEvents(instantInstantiate[i]);
-		}
+				if (!instantInstantiate[i].hasContainer())
+					instantInstantiate[i].setContainer(this);
 
-		//creating window manager
-		this.windowManager = blessed.list({
-			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
-			tags: true,
-			top: "center",
-			left: "center",
-			width: "95%",
-			height: "95%",
-			padding: 2,
-			keys: true,
-			mouse: true,
-			vi: true,
-			border: "line",
-			scrollbar: {
-				ch: " ",
-				track: {
-					bg: "black",
-				},
-				style: {
-					inverse: true,
-				},
-			},
-			style: {
-				bg: "grey",
-				fg: "white",
-				item: {
-					hover: {
-						bg: "white",
+				instantInstantiate[i].setScreen(this.screen);
+				await instantInstantiate[i].create();
+				instantInstantiate[i].hide();
+				//register events
+				this.registerEvents(instantInstantiate[i]);
+			}
+
+			//creating window manager
+			this.windowManager = blessed.list({
+				label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
+				tags: true,
+				top: "center",
+				left: "center",
+				width: "95%",
+				height: "95%",
+				padding: 2,
+				keys: true,
+				mouse: true,
+				vi: true,
+				border: "line",
+				scrollbar: {
+					ch: " ",
+					track: {
+						bg: "black",
+					},
+					style: {
+						inverse: true,
 					},
 				},
-				selected: {
-					bg: "white",
-					bold: true,
+				style: {
+					bg: "grey",
+					fg: "white",
+					item: {
+						hover: {
+							bg: "white",
+						},
+					},
+					selected: {
+						bg: "white",
+						bold: true,
+					},
 				},
-			},
-		});
-		//when an item is selected form the list box, attempt to show or hide that Windoiw.
-		this.windowManager.on("select", async (_el: Element, selected: any) => {
-			//disable the select if the current window is visible
-			if (this.currentWindow?.isVisible()) return;
-			this.currentWindow = this.windows[selected];
+			});
+			//when an item is selected form the list box, attempt to show or hide that Windoiw.
+			this.windowManager.on(
+				"select",
+				async (_el: Element, selected: any) => {
+					//disable the select if the current window is visible
+					if (this.currentWindow?.isVisible()) return;
+					this.currentWindow = this.windows[selected];
+					if (!this.currentWindow.hasInitialized()) {
+						this.currentWindow.setScreen(this.screen);
+						this.currentWindow.setContainer(this);
+						await this.currentWindow.create();
+						this.registerEvents();
+					} else if (!this.currentWindow.isVisible())
+						this.currentWindow.show();
+					else this.currentWindow.hide();
+					await this.currentWindow.setFrameContent();
+					this.windowManager.setBack();
+				}
+			);
+
+			//append list
+			this.screen.append(this.windowManager);
+
+			//if it hasn't been initialized
 			if (!this.currentWindow.hasInitialized()) {
-				this.currentWindow.setScreen(this.screen);
 				this.currentWindow.setContainer(this);
+				this.currentWindow.setScreen(this.screen);
+				//create window
 				await this.currentWindow.create();
+				//register events
 				this.registerEvents();
-			} else if (!this.currentWindow.isVisible())
-				this.currentWindow.show();
-			else this.currentWindow.hide();
-			await this.currentWindow.setFrameContent();
-			this.windowManager.setBack();
-		});
+			}
 
-		//append list
-		this.screen.append(this.windowManager);
+			this.updateWindowsList();
 
-		//if it hasn't been initialized
-		if (!this.currentWindow.hasInitialized()) {
-			this.currentWindow.setContainer(this);
-			this.currentWindow.setScreen(this.screen);
-			//create window
-			await this.currentWindow.create();
-			//register events
-			this.registerEvents();
-		}
+			//update interval
+			this.interval = setInterval(() => {
+				this.windows.forEach((window) => {
+					if (
+						window.isAlive() &&
+						(window.shouldBackgroundThink() ||
+							(!window.shouldBackgroundThink() &&
+								window.isVisible()))
+					)
+						window.update();
+				});
 
-		this.updateWindowsList();
+				this.screen.render();
+			}, 33);
 
-		//update interval
-		this.interval = setInterval(() => {
-			this.windows.forEach((window) => {
-				if (
-					window.isAlive() &&
-					(window.shouldBackgroundThink() ||
-						(!window.shouldBackgroundThink() && window.isVisible()))
-				)
-					window.update();
+			//register escape key
+			this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
+				this.windowManager.setBack();
+
+				if (this.currentWindow?.name !== "CloseBox") {
+					let windows = this.getWindowsByName("CloseBox");
+					if (windows.length !== 0)
+						windows[0].options.currentWindow =
+							this.currentWindow?.name;
+					this.currentWindow?.openWindow("CloseBox");
+					//if the closeBox aka the current window is visible and we press control-c again just exit
+				} else {
+					if (this.currentWindow.isVisible()) process.exit(0);
+					else this.currentWindow.show();
+				}
 			});
 
-			this.screen.render();
-		}, 33);
+			//shows the logs
+			this.screen.key(["C-l"], (ch: string, key: string) => {
+				if (this.currentWindow?.name !== "Logs")
+					this.screen.lastWindow = this.currentWindow;
 
-		//register escape key
-		this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
-			this.windowManager.setBack();
+				this.currentWindow?.openWindow("Logs");
+				this.windowManager.setBack();
+			});
 
-			if (this.currentWindow?.name !== "CloseBox") {
-				let windows = this.getWindowsByName("CloseBox");
-				if (windows.length !== 0)
-					windows[0].options.currentWindow = this.currentWindow?.name;
-				this.currentWindow?.openWindow("CloseBox");
-				//if the closeBox aka the current window is visible and we press control-c again just exit
-			} else {
-				if (this.currentWindow.isVisible()) process.exit(0);
-				else this.currentWindow.show();
-			}
-		});
-
-		//shows the logs
-		this.screen.key(["C-l"], (ch: string, key: string) => {
-			if (this.currentWindow?.name !== "Logs")
-				this.screen.lastWindow = this.currentWindow;
-
-			this.currentWindow?.openWindow("Logs");
-			this.windowManager.setBack();
-		});
-
-		//shows the list
-		this.screen.key(["C-z"], (ch: string, key: string) => {
-			this.updateWindowsList();
-			this.currentWindow?.hide();
-			this.windowManager.show();
-		});
-		//restores the current window
-		this.screen.key(["C-r"], (ch: string, key: string) => {
-			if (this.screen.lastWindow !== undefined) {
+			//shows the list
+			this.screen.key(["C-z"], (ch: string, key: string) => {
+				this.updateWindowsList();
 				this.currentWindow?.hide();
-				this.currentWindow = this.screen.lastWindow;
-				delete this.screen.lastWindow;
-			}
+				this.windowManager.show();
+			});
+			//restores the current window
+			this.screen.key(["C-r"], (ch: string, key: string) => {
+				if (this.screen.lastWindow !== undefined) {
+					this.currentWindow?.hide();
+					this.currentWindow = this.screen.lastWindow;
+					delete this.screen.lastWindow;
+				}
 
-			this.updateWindowsList();
-			if (this.windowManager?.hidden === false)
-				this.currentWindow?.show();
-		});
-		//render
-		this.screen.render();
-		//show the current window
-		this.currentWindow.show();
+				this.updateWindowsList();
+				if (this.windowManager?.hidden === false)
+					this.currentWindow?.show();
+			});
+			//render
+			this.screen.render();
+			//show the current window
+			this.currentWindow.show();
+		} catch (error: Error | any) {
+			Pipes.getPipe(Pipes.currentPipe).error(error as any);
+			if (isEnvTrue("CONSOLE_THROW_ERROR")) throw error;
+			else {
+				this.screen.destroy();
+				this.screen = blessed.screen(
+					this.options?.blessed || {
+						smartCRS: true,
+						dockBorders: true,
+					}
+				);
+
+				let errorBox = blessed.box({
+					top: "center",
+					left: "center",
+					shrink: true,
+					width: "80%",
+					height: "shrink",
+					padding: 1,
+					content: `{white-bg}CRITICAL ERROR SYSTEM MALFUCTION: ${error.message}{/white-bg}\n\n ${error.stack} \n\n infinitymint-beta: control-c to quit`,
+					tags: true,
+					border: {
+						type: "line",
+					},
+					style: {
+						fg: "white",
+						bg: "red",
+						border: {
+							fg: "#ffffff",
+						},
+					},
+				});
+
+				this.screen.append(errorBox);
+				this.screen.render();
+
+				//register escape key
+				this.screen.key(
+					["escape", "C-c"],
+					(ch: string, key: string) => {
+						process.exit(0);
+					}
+				);
+			}
+		}
 	}
 }

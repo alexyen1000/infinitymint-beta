@@ -1,8 +1,8 @@
-import { InfinityMintDeployment } from "../../app/config";
+import { InfinityMintDeploymentScript } from "../../app/config";
 
-const Utils: InfinityMintDeployment = {
-	deploy: () => {},
-	setup: () => {},
+const Utils: InfinityMintDeploymentScript = {
+	deploy: async (params) => {},
+	setup: async (params) => {},
 	//going to give
 	library: true,
 	important: true, //utils must be deployed either before or after values

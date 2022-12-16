@@ -1,8 +1,8 @@
-import { InfinityMintDeployment } from "../../app/config";
+import { InfinityMintDeploymentScript } from "../../app/config";
 
-const Assets: InfinityMintDeployment = {
-	deploy: () => {},
-	setup: () => {},
+const Assets: InfinityMintDeploymentScript = {
+	deploy: async (params) => {},
+	setup: async (params) => {},
 	//going to give
 	index: 2,
 	solidityNamespace: "alpha",

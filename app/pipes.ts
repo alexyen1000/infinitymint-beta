@@ -38,7 +38,7 @@ class Pipe {
 			this.logs.push(str);
 		};
 		this.errorHandler = (str: string) => {
-			if (this.listen) console.error(str);
+			if (this.listen) console.error(str, false);
 			this.errors.push(str);
 		};
 		this.terminationHandler = () => {};
