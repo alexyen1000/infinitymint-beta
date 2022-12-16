@@ -386,41 +386,49 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.saveOptions();
 	});
 
-	window.getScreen().unkey(["up", "w"]);
-	window.getScreen().key(["up", "w"], (ch: string, key: string) => {
-		if (window.options.alwaysScroll) {
-			window.options.alwaysScroll = false;
-			alwaysScrollUpdate();
-			window.saveOptions();
-		}
+	let registerKeys = (onlyDelete?: boolean) => {
+		window.getScreen().unkey(["up", "w"]);
 
-		window.options.selectedLine = Math.max(
-			0,
-			window.options.selectedLine - 1
-		);
-	});
+		if (onlyDelete !== true)
+			window.getScreen().key(["up", "w"], (ch: string, key: string) => {
+				if (window.options.alwaysScroll) {
+					window.options.alwaysScroll = false;
+					alwaysScrollUpdate();
+					window.saveOptions();
+				}
 
-	window.getScreen().unkey(["down", "s"]);
-	window.getScreen().key(["down", "s"], (ch: string, key: string) => {
-		window.options.selectedLine = Math.min(
-			(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
-			window.options.selectedLine + 1
-		);
-	});
+				window.options.selectedLine = Math.max(
+					0,
+					window.options.selectedLine - 1
+				);
+			});
 
-	//centers the scroll of the console to the selected line position when you do Control-Q
-	window.getScreen().unkey(["C-q"]);
-	window.getScreen().key(["C-q"], (ch: string, key: string) => {
-		let selectedLinePosition = [
-			...(Pipes.logs[window.options.pipe]?.logs || [""]),
-		]
-			.slice(0, window.options.selectedLine)
-			.join("\n")
-			.split("\n").length;
+		window.getScreen().unkey(["down", "s"]);
 
-		console.setScroll(selectedLinePosition);
-	});
+		if (onlyDelete !== true)
+			window.getScreen().key(["down", "s"], (ch: string, key: string) => {
+				window.options.selectedLine = Math.min(
+					(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
+					window.options.selectedLine + 1
+				);
+			});
 
+		//centers the scroll of the console to the selected line position when you do Control-Q
+		window.getScreen().unkey(["C-q"]);
+
+		if (onlyDelete !== true)
+			window.getScreen().key(["C-q"], (ch: string, key: string) => {
+				let selectedLinePosition = [
+					...(Pipes.logs[window.options.pipe]?.logs || [""]),
+				]
+					.slice(0, window.options.selectedLine)
+					.join("\n")
+					.split("\n").length;
+
+				console.setScroll(selectedLinePosition);
+			});
+	};
+	registerKeys(true);
 	window.think(window, frame, blessed); //do think once
 
 	//save when the window is destroyed
@@ -430,7 +438,12 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	//save when the window is hidden
 	window.on("hide", () => {
+		registerKeys(true);
 		window.saveOptions();
+	});
+
+	window.on("show", () => {
+		registerKeys();
 	});
 };
 

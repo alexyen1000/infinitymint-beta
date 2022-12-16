@@ -70,7 +70,7 @@ console.error = (error: any | Error, setPipe = true) => {
 		Pipes.getPipe(Pipes.currentPipe).error(error);
 
 	if (isEnvTrue("PIPE_NOTIFY_ERRORS"))
-		console.log("error: " + error?.message);
+		console.log("[error] " + error?.message);
 
 	if (Pipes.logs[Pipes.currentPipe]?.listen || isEnvTrue("PIPE_ECHO_ERRORS"))
 		consoleError(error);

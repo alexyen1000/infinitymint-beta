@@ -217,7 +217,11 @@ export default class InfinityConsole {
 			width: "80%",
 			height: "shrink",
 			padding: 1,
-			content: `{white-bg}CRITICAL ERROR SYSTEM MALFUCTION: ${error.message}{/white-bg}\n\n ${error.stack} \n\n infinitymint-beta`,
+			content: `{white-bg}CRITICAL ERROR - SYSTEM MALFUCTION: ${
+				error.message
+			} at ${Date.now()}{/white-bg}\n\n ${
+				error.stack
+			} \n\n {white-bg}infinitymint-beta{/white-bg}`,
 			tags: true,
 			border: {
 				type: "line",
@@ -278,24 +282,22 @@ export default class InfinityConsole {
 			//overwrites the key method to capture errors and actually console.error them instead of swallowing them
 			this.screen.oldKey = this.screen.key;
 			this.screen.key = (param1: any, cb: any) => {
-				this.screen.oldKey(param1, (...any: any[]) => {
-					if (typeof cb === typeof Promise)
-						this.screen.oldKey(param1, async (...any: any[]) => {
-							try {
-								await cb(...any);
-							} catch (error) {
-								this.errorHandler(error);
-							}
-						});
-					else
-						this.screen.oldKey(param1, (...any: any[]) => {
-							try {
-								cb(...any);
-							} catch (error) {
-								this.errorHandler(error);
-							}
-						});
-				});
+				if (typeof cb === typeof Promise)
+					this.screen.oldKey(param1, async (...any: any[]) => {
+						try {
+							await cb(...any);
+						} catch (error) {
+							this.errorHandler(error);
+						}
+					});
+				else
+					this.screen.oldKey(param1, (...any: any[]) => {
+						try {
+							cb(...any);
+						} catch (error) {
+							this.errorHandler(error);
+						}
+					});
 			};
 
 			//does the same a above, since for sone reason the on events aren't emitting errors, we can still get them like this

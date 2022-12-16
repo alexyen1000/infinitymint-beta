@@ -278,7 +278,7 @@ export class InfinityMintWindow {
 		element.oldOn = element.on;
 		element.on = (param1: any, cb: any) => {
 			if (typeof cb === typeof Promise)
-				element.oldOn(param1, async (...any: any[]) => {
+				this.elements[key].oldOn(param1, async (...any: any[]) => {
 					try {
 						await cb(...any);
 					} catch (error) {
@@ -286,7 +286,7 @@ export class InfinityMintWindow {
 					}
 				});
 			else
-				element.oldOn(param1, (...any: any[]) => {
+				this.elements[key].oldOn(param1, (...any: any[]) => {
 					try {
 						cb(...any);
 					} catch (error) {
@@ -411,9 +411,6 @@ export class InfinityMintWindow {
 				width: "100%",
 				height: "100%",
 				tags: true,
-				keys: true,
-				vi: true,
-				mouse: true,
 				parent: this.screen,
 				padding: 1,
 				scrollbar: this.scrollbar || {},
@@ -422,7 +419,6 @@ export class InfinityMintWindow {
 			})
 		);
 		frame.setBack();
-		frame.focus();
 		await this.setFrameContent();
 
 		let close = this.registerElement(
@@ -430,6 +426,7 @@ export class InfinityMintWindow {
 			blessed.box({
 				top: 0,
 				right: 0,
+				parent: frame,
 				width: "shrink",
 				height: "shrink",
 				tags: true,
@@ -452,6 +449,7 @@ export class InfinityMintWindow {
 			"hideButton",
 			blessed.box({
 				top: 0,
+				parent: frame,
 				right: 6,
 				width: "shrink",
 				height: "shrink",
@@ -483,6 +481,7 @@ export class InfinityMintWindow {
 				`appending element to screen of <${this.name}>[${this.id}]: ` +
 					element.constructor.name
 			);
+
 			this.screen.append(element);
 		});
 	}
