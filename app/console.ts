@@ -82,7 +82,7 @@ export default class InfinityConsole {
 		return this.signers;
 	}
 
-	public registerEvents(window?: InfinityMintWindow) {
+	public registerWindowsListEvents(window?: InfinityMintWindow) {
 		if (this.currentWindow === undefined && window === undefined) return;
 		window = window || this.currentWindow;
 
@@ -124,7 +124,7 @@ export default class InfinityConsole {
 				this.currentWindow.setScreen(this.screen);
 				this.currentWindow.setContainer(this);
 				await this.currentWindow.create();
-				this.registerEvents();
+				this.registerWindowsListEvents();
 			}
 			this.currentWindow.show();
 		}
@@ -322,6 +322,7 @@ export default class InfinityConsole {
 			//set the current window
 			this.currentWindow = this.windows[0];
 
+			//instantly instante windows which seek such a thing
 			let instantInstantiate = this.windows.filter((thatWindow) =>
 				thatWindow.shouldInstantiate()
 			);
@@ -340,7 +341,17 @@ export default class InfinityConsole {
 				await instantInstantiate[i].create();
 				instantInstantiate[i].hide();
 				//register events
-				this.registerEvents(instantInstantiate[i]);
+				this.registerWindowsListEvents(instantInstantiate[i]);
+			}
+
+			//if the current window still hasn't been initialized, t
+			if (!this.currentWindow.hasInitialized()) {
+				this.currentWindow.setContainer(this);
+				this.currentWindow.setScreen(this.screen);
+				//create window
+				await this.currentWindow.create();
+				//register events for the windowManager with the currentWindow
+				this.registerWindowsListEvents();
 			}
 
 			//creating window manager
@@ -385,36 +396,32 @@ export default class InfinityConsole {
 				async (_el: Element, selected: any) => {
 					//disable the select if the current window is visible
 					if (this.currentWindow?.isVisible()) return;
+					//set the current window to the one that was selected
 					this.currentWindow = this.windows[selected];
 					if (!this.currentWindow.hasInitialized()) {
+						//sets blessed screen for this window
 						this.currentWindow.setScreen(this.screen);
+						//set the container of this window ( the console, which is this)
 						this.currentWindow.setContainer(this);
 						await this.currentWindow.create();
-						this.registerEvents();
+						//registers events on the window
+						this.registerWindowsListEvents();
 					} else if (!this.currentWindow.isVisible())
 						this.currentWindow.show();
 					else this.currentWindow.hide();
 					await this.currentWindow.setFrameContent();
+					//set the window manager to the back of the screne
 					this.windowManager.setBack();
 				}
 			);
 
-			//append list
-			this.screen.append(this.windowManager);
-
-			//if it hasn't been initialized
-			if (!this.currentWindow.hasInitialized()) {
-				this.currentWindow.setContainer(this);
-				this.currentWindow.setScreen(this.screen);
-				//create window
-				await this.currentWindow.create();
-				//register events
-				this.registerEvents();
-			}
-
+			//update the list
 			this.updateWindowsList();
-
-			//update interval
+			//append window manager to the screen
+			this.screen.append(this.windowManager);
+			//set to the back of the screen
+			this.windowManager.setBack();
+			//update interval for thinks
 			this.interval = setInterval(() => {
 				this.windows.forEach((window) => {
 					if (
