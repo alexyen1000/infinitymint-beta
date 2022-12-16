@@ -69,6 +69,9 @@ console.error = (error: any | Error, setPipe = true) => {
 	if (setPipe && Pipes.logs[Pipes.currentPipe])
 		Pipes.getPipe(Pipes.currentPipe).error(error);
 
+	if (isEnvTrue("PIPE_NOTIFY_ERRORS"))
+		console.log("error: " + error?.message);
+
 	if (Pipes.logs[Pipes.currentPipe]?.listen || isEnvTrue("PIPE_ECHO_ERRORS"))
 		consoleError(error);
 };

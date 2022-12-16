@@ -209,6 +209,30 @@ export default class InfinityConsole {
 					dockBorders: true,
 				}
 			);
+
+			//overwrites the key method to capture errors
+			this.screen.oldKey = this.screen.key;
+			this.screen.key = (param1: any, cb: any) => {
+				this.screen.oldKey(param1, (p1: any, p2: any) => {
+					try {
+						cb(p1, p2);
+					} catch (error) {
+						console.error(error);
+					}
+				});
+			};
+
+			this.screen.oldOn = this.screen.on;
+			this.screen.on = (param1: any, cb: any) => {
+				this.screen.oldOn(param1, (...any: any[]) => {
+					try {
+						cb(...any);
+					} catch (error) {
+						console.error(error);
+					}
+				});
+			};
+
 			this.windows = [
 				Menu,
 				Tutorial,
@@ -392,6 +416,8 @@ export default class InfinityConsole {
 					this.options?.blessed || {
 						smartCRS: true,
 						dockBorders: true,
+						debug: true,
+						sendFocus: true,
 					}
 				);
 

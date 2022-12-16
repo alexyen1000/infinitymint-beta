@@ -10,13 +10,23 @@ import path from "path";
 export class DeploymentScript {
 	protected emitter: EventEmitter;
 	protected source: InfinityMintDeploymentScript;
+	protected sourceFile: string;
 	protected key: string;
 
 	constructor(sourceFile: string, key: string) {
 		this.emitter = new events.EventEmitter();
 		this.source = require("./../" + sourceFile)
 			.default as InfinityMintDeploymentScript;
+		this.sourceFile = sourceFile;
 		this.key = key;
+	}
+
+	/**
+	 * reloads the source file script
+	 */
+	reload() {
+		this.source = require("./../" + this.sourceFile)
+			.default as InfinityMintDeploymentScript;
 	}
 
 	/**
