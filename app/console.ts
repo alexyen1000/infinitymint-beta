@@ -210,7 +210,7 @@ export default class InfinityConsole {
 				}
 			);
 
-			//overwrites the key method to capture errors
+			//overwrites the key method to capture errors and actually console.error them instead of swallowing them
 			this.screen.oldKey = this.screen.key;
 			this.screen.key = (param1: any, cb: any) => {
 				this.screen.oldKey(param1, (p1: any, p2: any) => {
@@ -222,6 +222,7 @@ export default class InfinityConsole {
 				});
 			};
 
+			//does the same a above
 			this.screen.oldOn = this.screen.on;
 			this.screen.on = (param1: any, cb: any) => {
 				this.screen.oldOn(param1, (...any: any[]) => {
