@@ -45,6 +45,23 @@ export default class InfinityConsole {
 		this.windows = [];
 		this.canExit = true;
 		this.options = options;
+		this.windows = [
+			Menu,
+			Tutorial,
+			Projects,
+			Logs,
+			Browser,
+			Ganache,
+			Deployments,
+			Gems,
+			Networks,
+			Scaffold,
+			Music,
+			Scripts,
+			Settings,
+			Deploy,
+			CloseBox,
+		];
 	}
 
 	public getSigner(): SignerWithAddress {
@@ -200,7 +217,7 @@ export default class InfinityConsole {
 			width: "80%",
 			height: "shrink",
 			padding: 1,
-			content: `{white-bg}CRITICAL ERROR SYSTEM MALFUCTION: ${error.message}{/white-bg}\n\n ${error.stack} \n\n infinitymint-beta: control-c to quit`,
+			content: `{white-bg}CRITICAL ERROR SYSTEM MALFUCTION: ${error.message}{/white-bg}\n\n ${error.stack} \n\n infinitymint-beta`,
 			tags: true,
 			border: {
 				type: "line",
@@ -224,7 +241,7 @@ export default class InfinityConsole {
 		this.screen.render();
 	}
 
-	public errorFunc(error: Error | unknown) {
+	public errorHandler(error: Error | unknown) {
 		if (isEnvTrue("CONSOLE_THROW_ERROR")) throw error;
 
 		console.error(error);
@@ -249,6 +266,7 @@ export default class InfinityConsole {
 		);
 
 		try {
+			//create the screen
 			this.screen = blessed.screen(
 				this.options?.blessed || {
 					smartCRS: true,
@@ -256,17 +274,27 @@ export default class InfinityConsole {
 				}
 			);
 
+			//This basically captures errors which occur on keys/events and still pipes them to the current pipe
 			//overwrites the key method to capture errors and actually console.error them instead of swallowing them
 			this.screen.oldKey = this.screen.key;
 			this.screen.key = (param1: any, cb: any) => {
-				this.screen.oldKey(param1, (p1: any, p2: any) => {
-					try {
-						if (typeof cb === typeof Promise)
-							cb(p1, p2).catch(this.errorFunc);
-						else cb(p1, p2);
-					} catch (error) {
-						this.errorFunc(error);
-					}
+				this.screen.oldKey(param1, (...any: any[]) => {
+					if (typeof cb === typeof Promise)
+						this.screen.oldKey(param1, async (...any: any[]) => {
+							try {
+								await cb(...any);
+							} catch (error) {
+								this.errorHandler(error);
+							}
+						});
+					else
+						this.screen.oldKey(param1, (...any: any[]) => {
+							try {
+								cb(...any);
+							} catch (error) {
+								this.errorHandler(error);
+							}
+						});
 				});
 			};
 
@@ -278,7 +306,7 @@ export default class InfinityConsole {
 						try {
 							await cb(...any);
 						} catch (error) {
-							this.errorFunc(error);
+							this.errorHandler(error);
 						}
 					});
 				else
@@ -286,28 +314,12 @@ export default class InfinityConsole {
 						try {
 							cb(...any);
 						} catch (error) {
-							this.errorFunc(error);
+							this.errorHandler(error);
 						}
 					});
 			};
 
-			this.windows = [
-				Menu,
-				Tutorial,
-				Projects,
-				Logs,
-				Browser,
-				Ganache,
-				Deployments,
-				Gems,
-				Networks,
-				Scaffold,
-				Music,
-				Scripts,
-				Settings,
-				Deploy,
-				CloseBox,
-			];
+			//set the current window
 			this.currentWindow = this.windows[0];
 
 			let instantInstantiate = this.windows.filter((thatWindow) =>

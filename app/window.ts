@@ -282,7 +282,7 @@ export class InfinityMintWindow {
 					try {
 						await cb(...any);
 					} catch (error) {
-						this.getContainer().errorFunc(error);
+						this.getContainer().errorHandler(error);
 					}
 				});
 			else
@@ -290,7 +290,7 @@ export class InfinityMintWindow {
 					try {
 						cb(...any);
 					} catch (error) {
-						this.getContainer().errorFunc(error);
+						this.getContainer().errorHandler(error);
 					}
 				});
 		};
