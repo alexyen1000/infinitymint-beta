@@ -1,5 +1,5 @@
 import { InfinityMintConsole } from "./config";
-import { debugLog, isEnvSet, isEnvTrue, log } from "./helpers";
+import { BlessedElement, debugLog, isEnvSet, isEnvTrue, log } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -188,12 +188,58 @@ export default class InfinityConsole {
 		);
 	}
 
+	public getDeployments() {
+		return this.deployments;
+	}
+
+	public displayError(error: any, onClick?: any) {
+		let errorBox = blessed.box({
+			top: "center",
+			left: "center",
+			shrink: true,
+			width: "80%",
+			height: "shrink",
+			padding: 1,
+			content: `{white-bg}CRITICAL ERROR SYSTEM MALFUCTION: ${error.message}{/white-bg}\n\n ${error.stack} \n\n infinitymint-beta: control-c to quit`,
+			tags: true,
+			border: {
+				type: "line",
+			},
+			style: {
+				fg: "white",
+				bg: "red",
+				border: {
+					fg: "#ffffff",
+				},
+			},
+		});
+
+		if (onClick !== undefined)
+			errorBox.on("click", () => {
+				onClick(errorBox);
+			});
+
+		errorBox.setFront();
+		this.screen.append(errorBox);
+		this.screen.render();
+	}
+
+	public errorFunc(error: Error | unknown) {
+		if (isEnvTrue("CONSOLE_THROW_ERROR")) throw error;
+
+		console.error(error);
+		this.displayError(error, (errorBox: BlessedElement) => {
+			errorBox.destroy();
+		});
+	}
+
 	public async initialize() {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
 		this.deployments = await getDeploymentScripts();
 		this.network = hre.network;
+
 		let chainId = (await getProvider().getNetwork()).chainId;
 		log(
 			"initializing InfinityConsole chainId " +
@@ -215,23 +261,34 @@ export default class InfinityConsole {
 			this.screen.key = (param1: any, cb: any) => {
 				this.screen.oldKey(param1, (p1: any, p2: any) => {
 					try {
-						cb(p1, p2);
+						if (typeof cb === typeof Promise)
+							cb(p1, p2).catch(this.errorFunc);
+						else cb(p1, p2);
 					} catch (error) {
-						console.error(error);
+						this.errorFunc(error);
 					}
 				});
 			};
 
-			//does the same a above
+			//does the same a above, since for sone reason the on events aren't emitting errors, we can still get them like this
 			this.screen.oldOn = this.screen.on;
 			this.screen.on = (param1: any, cb: any) => {
-				this.screen.oldOn(param1, (...any: any[]) => {
-					try {
-						cb(...any);
-					} catch (error) {
-						console.error(error);
-					}
-				});
+				if (typeof cb === typeof Promise)
+					this.screen.oldOn(param1, async (...any: any[]) => {
+						try {
+							await cb(...any);
+						} catch (error) {
+							this.errorFunc(error);
+						}
+					});
+				else
+					this.screen.oldOn(param1, (...any: any[]) => {
+						try {
+							cb(...any);
+						} catch (error) {
+							this.errorFunc(error);
+						}
+					});
 			};
 
 			this.windows = [
@@ -422,29 +479,7 @@ export default class InfinityConsole {
 					}
 				);
 
-				let errorBox = blessed.box({
-					top: "center",
-					left: "center",
-					shrink: true,
-					width: "80%",
-					height: "shrink",
-					padding: 1,
-					content: `{white-bg}CRITICAL ERROR SYSTEM MALFUCTION: ${error.message}{/white-bg}\n\n ${error.stack} \n\n infinitymint-beta: control-c to quit`,
-					tags: true,
-					border: {
-						type: "line",
-					},
-					style: {
-						fg: "white",
-						bg: "red",
-						border: {
-							fg: "#ffffff",
-						},
-					},
-				});
-
-				this.screen.append(errorBox);
-				this.screen.render();
+				this.displayError(error);
 
 				//register escape key
 				this.screen.key(

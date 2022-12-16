@@ -2,6 +2,7 @@ import Pipes from "./pipes";
 import fs from "fs";
 import { InfinityMintSession } from "./config";
 import bip39 from "bip39";
+import { Dictionary } from "form-data";
 
 export interface Vector {
 	x: number;
@@ -18,7 +19,7 @@ export interface Blessed {
 	form: any;
 }
 
-export interface BlessedElement extends Element {
+export interface BlessedElement extends Element, Dictionary<any> {
 	focus: Function;
 	render: Function;
 	hide: Function;

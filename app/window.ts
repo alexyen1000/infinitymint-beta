@@ -273,6 +273,27 @@ export class InfinityMintWindow {
 				") for " +
 				`<${this.name}>[${this.id}]`
 		);
+
+		//does the same a above
+		element.oldOn = element.on;
+		element.on = (param1: any, cb: any) => {
+			if (typeof cb === typeof Promise)
+				element.oldOn(param1, async (...any: any[]) => {
+					try {
+						await cb(...any);
+					} catch (error) {
+						this.getContainer().errorFunc(error);
+					}
+				});
+			else
+				element.oldOn(param1, (...any: any[]) => {
+					try {
+						cb(...any);
+					} catch (error) {
+						this.getContainer().errorFunc(error);
+					}
+				});
+		};
 		this.elements[key] = element;
 		return this.elements[key];
 	}
