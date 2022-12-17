@@ -38,7 +38,6 @@ export default class InfinityConsole {
 	private signers?: SignerWithAddress[];
 	private windowManager?: any;
 	private optionsBox?: any;
-	private deployments?: DeploymentScript[];
 
 	constructor(options?: InfinityMintConsole) {
 		this.screen = undefined;
@@ -205,10 +204,6 @@ export default class InfinityConsole {
 		);
 	}
 
-	public getDeployments() {
-		return this.deployments;
-	}
-
 	public displayError(error: any, onClick?: any) {
 		let errorBox = blessed.box({
 			top: "center",
@@ -258,7 +253,6 @@ export default class InfinityConsole {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
-		this.deployments = await getDeploymentScripts();
 		this.network = hre.network;
 
 		let chainId = (await getProvider().getNetwork()).chainId;

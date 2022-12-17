@@ -426,7 +426,6 @@ export class InfinityMintWindow {
 			blessed.box({
 				top: 0,
 				right: 0,
-				parent: frame,
 				width: "shrink",
 				height: "shrink",
 				tags: true,
@@ -449,7 +448,6 @@ export class InfinityMintWindow {
 			"hideButton",
 			blessed.box({
 				top: 0,
-				parent: frame,
 				right: 6,
 				width: "shrink",
 				height: "shrink",

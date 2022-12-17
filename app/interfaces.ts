@@ -5,9 +5,16 @@ import { FuncSingle } from "./helpers";
 import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import { DeploymentScript } from "./deployments";
+import InfinityConsole from "./console";
 
 export interface InfinityMintGemScript extends InfinityMintDeploymentScript {
 	name: string;
+	init?: FuncSingle<InfinityMintGemParameters, Promise<void>>;
+}
+
+export interface InfinityMintGemParameters
+	extends InfinityMintDeploymentParameters {
+	gem: InfinityMintGemScript;
 }
 
 export interface InfinityMintGemConfig {
@@ -233,6 +240,7 @@ export interface InfinityMintScriptArguments {
 	name: string;
 	optional?: boolean;
 	validator?: Function;
+	value?: any;
 }
 
 export interface InfinityMintConsole {
@@ -242,12 +250,21 @@ export interface InfinityMintConsole {
 export interface InfinityMintScript {
 	name?: string;
 	description?: string;
-	execute: Function;
+	execute: FuncSingle<InfinityMintScriptParameters, Promise<void>>;
 	arguments?: InfinityMintScriptArguments[];
+}
+
+export interface InfinityMintScriptParameters extends Dictionary<any> {
+	args?: Dictionary<InfinityMintScriptArguments>;
+	eventEmitter?: EventEmitter;
+	project?: InfinityMintProject;
+	log: FuncSingle<string, void>;
+	debugLog: FuncSingle<string, void>;
 }
 
 export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	setup?: boolean;
+	console?: InfinityConsole;
 	eventEmitter?: EventEmitter;
 	deployments?: Dictionary<any>;
 	deploy?: DeploymentScript;
