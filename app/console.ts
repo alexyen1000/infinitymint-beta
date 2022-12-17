@@ -4,6 +4,9 @@ import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getProvider } from "./web3";
+import Pipes from "./pipes";
+
 //windows
 import Logs from "./windows/logs";
 import Menu from "./windows/menu";
@@ -20,9 +23,6 @@ import Projects from "./windows/projects";
 import Music from "./windows/music";
 import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
-import { getProvider } from "./web3";
-import { DeploymentScript, getDeploymentScripts } from "./deployments";
-import Pipes from "./pipes";
 
 const blessed = require("blessed");
 export default class InfinityConsole {
