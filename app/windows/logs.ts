@@ -105,7 +105,9 @@ Logs.initialize = async (window, frame, blessed) => {
 			keys: true,
 			tags: true,
 			scrollable: true,
+			vi: true,
 			mouse: true,
+			alwaysScroll: true,
 			scrollbar: window.getScrollbar() || {},
 			border: window.getBorder() || {},
 			style: {
