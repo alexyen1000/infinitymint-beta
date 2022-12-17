@@ -4,8 +4,12 @@
 	"homepage": "https://github.com/0x0zAgency/infinitymint-beta#readme",
 	"version": "1.0.2",
 	"main": "dist/index.js",
-	"directories": {"test": "tests"},
-	"_moduleAliases": {"@app": "dist/app/"},
+	"directories": {
+		"test": "tests"
+	},
+	"_moduleAliases": {
+		"@app": "dist/app/"
+	},
 	"scripts": {
 		"test": "mocha",
 		"start": "npx hardhat && npx ts-node index.ts",
@@ -38,6 +42,7 @@
 		"glob": "^8.0.3",
 		"hardhat": "^2.12.4",
 		"hardhat-change-network": "^0.0.7",
+		"infinitymint": "^1.0.3",
 		"module-alias": "^2.2.2",
 		"uuid": "^9.0.0"
 	}
