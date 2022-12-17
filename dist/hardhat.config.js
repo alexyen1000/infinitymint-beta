@@ -56,7 +56,7 @@ let consoleLog = console.log;
 console.log = (msg, setPipe = true) => {
     var _a;
     if (setPipe && pipes_1.default.logs[pipes_1.default.currentPipe] !== undefined)
-        pipes_1.default.getPipe(pipes_1.default.currentPipe).logs.push(msg);
+        pipes_1.default.getPipe(pipes_1.default.currentPipe).log(msg);
     if (((_a = pipes_1.default.logs[pipes_1.default.currentPipe]) === null || _a === void 0 ? void 0 : _a.listen) ||
         (pipes_1.default.logs[pipes_1.default.currentPipe] === undefined &&
             !(0, helpers_1.isEnvTrue)("PIPE_SILENCE_UNDEFINED_PIPE")))
