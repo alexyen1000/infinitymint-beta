@@ -11,12 +11,22 @@ import config from "./infinitymint.config";
 import { Web3Provider } from "@ethersproject/providers";
 import fs from "fs";
 
+///NOTE: Might need a hardhat config file in the root where ever this is included externally?
 //export the config file
-export { config, GanacheServer, Helpers, InfinityConsole, hre, ethers };
+export {
+	config as InfinityMintConfig,
+	GanacheServer,
+	Helpers,
+	InfinityConsole,
+	hre,
+	ethers,
+};
 
 //export the interfaces app as default
-export * as default from "./app/interfaces";
+export * as Interfaces from "./app/interfaces";
+export * as Web3Helpers from "./app/web3";
 
+//if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (!Helpers.isEnvTrue("MODULE_MODE"))
 	(async () => {
 		Helpers.log("starting infinitymint");
