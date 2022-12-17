@@ -31,34 +31,111 @@ export interface InfinityMintApplicationConfig {
 	testChains: any[];
 }
 
-/** 
- * The InfinityMintProject interface is what is returned when a project is loaded by infinitymint. When InfinityMint resolves a project it will return this an object as this interface.
- * @member name - Name of the project
- * @member infinityLinks - Specify custom InfinityLinks
- * @member system - Specify whether the project is part of a grouped system with other projects.
- * @member modules - Specify which InfintyMint modules will be used within
-   the creation of tokens, such as *RarityMinter*, *RoyaltyController*.
-   This is an immutable setting that cannot be changed or added with more.
-	 They are specific to the InfinityMint source code.
+/**
+ * The infinitymint project is responsible for holding the paths, assets and other information relating to the project.
  */
 export interface InfinityMintProject {
+	/**
+	 * the name of the current project
+	 */
 	name: string;
+	/**
+	 * custom infinityLinks which can be linked to the token
+	 */
 	infinityLinks?: Array<InfinityMintProjectSettingsLink>;
+	/**
+	 * specificy other projects by name to have them deploy along side this minter and be packed together into the export location.
+	 */
 	system?: Array<string>;
+	/**
+	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset controller` you are using.
+	 */
 	modules: InfinityMintProjectModules;
+	/**
+	 * The price of your tokens. This can be in a decimal (for crypto) or as a real life value, for example:
+	 * ```js
+	 * price: '$1';
+	 * price: 0.15;
+	 * ```
+	 */
 	price: number | BigNumber | string;
+	/**
+	 * The information relating to your project.
+	 *
+	 * @see {@link InfinityMintProjectInformation}
+	 */
 	information: InfinityMintProjectInformation;
-	basePath?: InfinityMintProjectPath;
+	/**
+	 * An array containing the gems which are associated with this project.
+	 *
+	 * @see {@link InfinityMintProjectGem}
+	 */
 	gems?: Array<InfinityMintProjectGem>;
+	/**
+	 * The base path of the project. All values entered into the basePath will be inserted into each of the minters paths. This is similar to `defaultPath` for classic infinitymint.
+	 *
+	 * @see {@link InfinityMintProjectPath}
+	 */
+	basePath?: InfinityMintProjectPath;
+	/**
+	 * The base asset of the project. All values entered into the baseAsset will be inserted into each of the minters paths. This is similar to `defaultAsset` for classic infinitymint.
+	 *
+	 * @see {@link InfinityMintProjectAsset}
+	 */
 	baseAsset?: InfinityMintProjectAsset;
+	/**
+	 * All the possible mint varations of the minter, must be an Array of {@link InfinityMintProjectPath}
+	 */
 	paths: Array<InfinityMintProjectPath>;
+	/**
+	 * All the possible asset varations of the minter, must be an Array of {@link InfinityMintProjectAsset}
+	 */
 	assets?: Array<InfinityMintProjectAsset>;
+	/**
+	 * The settings of the project. The settings key is which deployment the settings should be for, and you can enter what ever you like here.
+	 *
+	 * @see {@link InfinityMintProjectSettings}
+	 */
 	settings?: InfinityMintProjectSettings;
+	/**
+	 * The permissions of your project. here you can specify if certian addresses get free mint privilages or specific access to gems.
+	 *
+	 * @see {@link InfinityMintProjectPermissions}
+	 */
 	permissions?: InfinityMintProjectPermissions;
+	/**
+	 * Here you can specificy callbacks which will be fired when certain events are triggered.
+	 *
+	 * @see {@link InfinityMintProjectPermissions}
+	 */
 	events?: InfinityMintProjectEvents;
-	contracts?: any;
+	/**
+	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well.
+	 *
+	 * @see {@link InfinityMintDeployment}
+	 */
+	contracts?: Dictionary<InfinityMintDeployment>;
+	/**
+	 * Used in keeping track of temporary projects which fail in their deployment. keeps track of stages we have passed so we can continue where we left off if anything goes wrong.
+	 */
 	stages?: any;
+	/**
+	 * if this is a deployed project or not
+	 */
 	deployed?: boolean;
+	/**
+	 * The version information for this project
+	 */
+	version?: {
+		/**
+		 * @defaultValue initial
+		 */
+		tag: string;
+		/**
+		 * @defaultValue 0.0.1
+		 */
+		version: string;
+	};
 }
 
 export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
@@ -211,26 +288,32 @@ export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
 }
 
 /**
- * Interface for the infinitymint.config.js when that file is required this interface is what it is returning`.
- * @member project The Name Of The Projects
- * @member networks The web3 network(s) InfinityMint will connect to.
- * @member hardhat The configuration that Hardhat will use to determine the versioning & settings Solidity runtime.
- * @member ipfs The url to connect to IPFS, or set to false to not use IPFS.
- * @member ganache The settings inputted to ganache within the `server.run()` function of its startup. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
- * @member imports Other filesystem locations where IM will look for assets
- *	such as PNGs, Vectors etc.to create tokens with.
- * @member settings InfinityMint-specific config settings. Configures settings such as how networks behave, what wallets to use by default, & if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*. Also determines what will be used to fetch *Gas Estimates*.
+ * The infinitymint configuation interface, this is what is returnted from the infinitymint.config.js in the current root and holds ganache, hardhat and infinitymint configuration details.
  */
 export interface InfinityMintConfig {
 	/**
 	 * The name of the project.
 	 */
 	project?: string;
-	networks?: any;
+	/**
+	 * The hardhat configuration, the same as hre.config. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/hardhat>
+	 */
 	hardhat: HardhatUserConfig;
+	/**
+	 * ipfs cofiguration settings
+	 */
 	ipfs?: any;
+	/**
+	 * The settings inputted to ganache within the `server.run()` function of its startup. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
+	 */
 	ganache?: ServerOptions;
+	/**
+	 * Other filesystem locations where IM will look for assets such as PNGs, Vectors etc.to create tokens with.
+	 */
 	imports?: Array<string>;
+	/**
+	 * InfinityMint-specific config settings. Configures settings such as how networks behave, what wallets to use by default, & if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*. Also determines what will be used to fetch `Gas Estimates` and *token prices*.
+	 */
 	settings?: InfinityMintConfigSettings;
 }
 
@@ -294,25 +377,50 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 }
 
 /**
- * This interface is an InfinityMint deployment.
- * @member abi - The abi of the current dpeloyment.
- * @member name - The name of the current deployment, same as the .sol filename.
- * @member deployer - The address of the deployer of this contract.
- * @member key - The key name of this contract in the {@link InfinityMintProject} file.
- * @member project - The name of the project this deployment was deployed under.
- * @member network - The network this project was deployed under.
- * @member approved - The approved addresses for this deployment.
- * @member receipt - The receipt for the transaction that deployed this deployment.
+ * This interface is the object which is returned when you fetch an InfinityMint deloyment
+ * for the current project on the current network.
+ *
+ * @see {@link InfinityMintDeploymentScript} for how to create an InfinityMintDeployment
  */
 export interface InfinityMintDeployment extends Dictionary<any> {
+	/**
+	 *  The abi of the current dpeloyment.
+	 */
 	abi?: Array<any>;
+	/**
+	 * The key name of this contract in the {@link InfinityMintProject} file.
+	 */
 	key?: string;
+	/**
+	 * The name of the current deployment, same as the .sol filename.
+	 */
 	name?: string;
+	/**
+	 * The address of this deployment on the blockchain.
+	 */
 	address?: string;
+	/**
+	 * The name of the project this deployment was deployed under.
+	 */
 	project?: string;
-	network?: string;
+	/**
+	 * The network name and chainId this deployment was deploymend too.
+	 */
+	network?: {
+		name: string;
+		chainId: number;
+	};
+	/**
+	 *  The approved addresses for this deployment.
+	 */
 	approved?: string[];
+	/**
+	 *  The address of the deployer of this contract.
+	 */
 	deployer?: string;
+	/**
+	 * The receipt for this deployment
+	 */
 	receipt?: Dictionary<any>;
 }
 
