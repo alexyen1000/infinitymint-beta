@@ -7,14 +7,14 @@ import { EventEmitter } from "events";
 import { DeploymentScript } from "./deployments";
 import InfinityConsole from "./console";
 
-export interface InfinityMintGemMain extends InfinityMintDeploymentScript {
+export interface InfinityMintGem extends InfinityMintDeploymentScript {
 	name: string;
 	init?: FuncSingle<InfinityMintGemParameters, Promise<void>>;
 }
 
 export interface InfinityMintGemParameters
 	extends InfinityMintDeploymentParameters {
-	gem: InfinityMintGemMain;
+	gem: InfinityMintGem;
 }
 
 export interface InfinityMintGemConfig {

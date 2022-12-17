@@ -1,6 +1,6 @@
-import { InfinityMintGemParameters, InfinityMintGemMain } from "../interfaces";
+import { InfinityMintGemParameters, InfinityMintGem } from "../interfaces";
 
-const gem: InfinityMintGemMain = {
+const gem: InfinityMintGem = {
 	name: "ERC721 Redemption Tools",
 	deploy: async () => {},
 	init: async (params: InfinityMintGemParameters) => {},
