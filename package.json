@@ -10,7 +10,7 @@
 		"typescript": "^4.9.4"
 	},
 	"name": "infinitymint-beta",
-	"description": "This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.",
+	"description": "InfinityMint - Powered by Hardhat and Ganache",
 	"version": "1.0.0",
 	"main": "dist/index.js",
 	"directories": {
@@ -38,7 +38,7 @@
 		"type": "git",
 		"url": "git+https://github.com/llydia-eth/infinitymint-beta.git"
 	},
-	"author": "",
+	"author": "Llydia Cross",
 	"license": "ISC",
 	"bugs": {
 		"url": "https://github.com/llydia-eth/infinitymint-beta/issues"
