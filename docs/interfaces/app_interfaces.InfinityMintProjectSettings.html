@@ -16,12 +16,17 @@
 <li><a href="../modules/app_interfaces.html">app/interfaces</a></li>
 <li><a href="app_interfaces.InfinityMintProjectSettings.html">InfinityMintProjectSettings</a></li></ul>
 <h1>Interface InfinityMintProjectSettings</h1></div>
+<section class="tsd-panel tsd-comment">
+<div class="tsd-comment tsd-typography"><p>Project specific settings for each of the deployemtns in InfinityMint.</p>
+
+<h3>See</h3><p><a href="../modules/app_interfaces.html">{InfinityMintProjectModules}</a></p>
+</div></section>
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
 <li><span class="target">InfinityMintProjectSettings</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L241">app/interfaces.ts:241</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L294">app/interfaces.ts:294</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -31,7 +36,6 @@
 <h3 class="tsd-index-heading">Properties</h3>
 <div class="tsd-index-list"><a href="app_interfaces.InfinityMintProjectSettings.html#assets" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#FF984D" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-1024-path"></rect><path d="M9.354 16V7.24H12.174C12.99 7.24 13.638 7.476 14.118 7.948C14.606 8.412 14.85 9.036 14.85 9.82C14.85 10.604 14.606 11.232 14.118 11.704C13.638 12.168 12.99 12.4 12.174 12.4H10.434V16H9.354ZM10.434 11.428H12.174C12.646 11.428 13.022 11.284 13.302 10.996C13.59 10.7 13.734 10.308 13.734 9.82C13.734 9.324 13.59 8.932 13.302 8.644C13.022 8.356 12.646 8.212 12.174 8.212H10.434V11.428Z" fill="var(--color-text)" id="icon-1024-text"></path></svg><span>assets?</span></a>
 <a href="app_interfaces.InfinityMintProjectSettings.html#erc721" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>erc721?</span></a>
-<a href="app_interfaces.InfinityMintProjectSettings.html#gems" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>gems?</span></a>
 <a href="app_interfaces.InfinityMintProjectSettings.html#minter" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>minter?</span></a>
 <a href="app_interfaces.InfinityMintProjectSettings.html#royalty" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>royalty?</span></a>
 <a href="app_interfaces.InfinityMintProjectSettings.html#values" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>values?</span></a>
@@ -40,34 +44,49 @@
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="assets" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>assets</span><a href="#assets" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></h3>
-<div class="tsd-signature">assets<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsAssets.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsAssets</a></div><aside class="tsd-sources">
+<div class="tsd-signature">assets<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsAssets.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsAssets</a></div>
+<div class="tsd-comment tsd-typography"><p>Set settings for the assets deployment.</p>
+
+<h3>See</h3><p><a href="app_interfaces.InfinityMintProjectSettingsValues.html">InfinityMintProjectSettingsValues</a></p>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L246">app/interfaces.ts:246</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L324">app/interfaces.ts:324</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="erc721" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>erc721</span><a href="#erc721" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">erc721<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsERC721.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsERC721</a></div><aside class="tsd-sources">
+<div class="tsd-signature">erc721<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsERC721.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsERC721</a></div>
+<div class="tsd-comment tsd-typography"><p>Set settings for the erc721 (InfinityMint) deployment.</p>
+
+<h3>See</h3><p><a href="app_interfaces.InfinityMintProjectSettingsERC721.html">InfinityMintProjectSettingsERC721</a></p>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L242">app/interfaces.ts:242</a></li></ul></aside></section>
-<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="gems" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>gems</span><a href="#gems" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">gems<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Dictionary</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div><aside class="tsd-sources">
-<ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L247">app/interfaces.ts:247</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L300">app/interfaces.ts:300</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="minter" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>minter</span><a href="#minter" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">minter<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsMinter.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsMinter</a></div><aside class="tsd-sources">
+<div class="tsd-signature">minter<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsMinter.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsMinter</a></div>
+<div class="tsd-comment tsd-typography"><p>Set settings for the minter deployment.</p>
+
+<h3>See</h3><p><a href="app_interfaces.InfinityMintProjectSettingsMinter.html">InfinityMintProjectSettingsMinter</a></p>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L243">app/interfaces.ts:243</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L306">app/interfaces.ts:306</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="royalty" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>royalty</span><a href="#royalty" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">royalty<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsRoyalty.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsRoyalty</a></div><aside class="tsd-sources">
+<div class="tsd-signature">royalty<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsRoyalty.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsRoyalty</a></div>
+<div class="tsd-comment tsd-typography"><p>Set settings royalty deployment.</p>
+
+<h3>See</h3><p><a href="app_interfaces.InfinityMintProjectSettingsRoyalty.html">InfinityMintProjectSettingsRoyalty</a></p>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L245">app/interfaces.ts:245</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L318">app/interfaces.ts:318</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="values" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>values</span><a href="#values" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">values<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsValues.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsValues</a></div><aside class="tsd-sources">
+<div class="tsd-signature">values<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectSettingsValues.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectSettingsValues</a></div>
+<div class="tsd-comment tsd-typography"><p>Set settings for the values deployment.</p>
+
+<h3>See</h3><p><a href="app_interfaces.InfinityMintProjectSettingsValues.html">InfinityMintProjectSettingsValues</a></p>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L244">app/interfaces.ts:244</a></li></ul></aside></section></section></div>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L312">app/interfaces.ts:312</a></li></ul></aside></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tree">
 <div class="tree-settings">

@@ -21,7 +21,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">InfinityMintProjectModules</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L250">app/interfaces.ts:250</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L327">app/interfaces.ts:327</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -38,24 +38,44 @@
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="assets" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>assets</span><a href="#assets" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></h3>
-<div class="tsd-signature">assets<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
+<div class="tsd-signature">assets<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+<div class="tsd-comment tsd-typography"><p>Should be the <em>fully quallified solidity artifact name</em> for an Asset Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the <code>./alpha</code> folder. Gems will have an Gem_ before their artifact name.</p>
+
+<h3>Example</h3><pre><code class="language-ts"><span class="hl-1">RaritySVG</span><span class="hl-2">, </span><span class="hl-1">SimpleSVG</span><span class="hl-2">, </span><span class="hl-1">RarityImage</span><span class="hl-2">, </span><span class="hl-1">SimpleImage</span>
+</code></pre>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L251">app/interfaces.ts:251</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L333">app/interfaces.ts:333</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="minter" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>minter</span><a href="#minter" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">minter<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
+<div class="tsd-signature">minter<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+<div class="tsd-comment tsd-typography"><p>Should be the <em>fully quallified solidity artifact name</em> for a Mint Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the <code>./alpha</code> folder. Gems will have an Gem_ before their artifact name.</p>
+
+<h3>Example</h3><pre><code class="language-ts"><span class="hl-1">DefaultMinter</span><span class="hl-2">, </span><span class="hl-1">SelectiveMinter</span><span class="hl-2">, </span><span class="hl-1">LockedMinter</span>
+</code></pre>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L252">app/interfaces.ts:252</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L339">app/interfaces.ts:339</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="random" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>random</span><a href="#random" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">random<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
+<div class="tsd-signature">random<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+<div class="tsd-comment tsd-typography"><p>Should be the <em>fully quallified solidity artifact name</em> for a Random Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the <code>./alpha</code> folder. Gems will have an Gem_ before their artifact name.</p>
+
+<h3>Example</h3><pre><code class="language-ts"><span class="hl-1">DefaultRoyalty</span><span class="hl-2">, </span><span class="hl-1">SplitRoyalty</span>
+</code></pre>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L254">app/interfaces.ts:254</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L351">app/interfaces.ts:351</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="royalty" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>royalty</span><a href="#royalty" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">royalty<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
+<div class="tsd-signature">royalty<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+<div class="tsd-comment tsd-typography"><p>Should be the <em>fully quallified solidity artifact name</em> for a Royalty Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the <code>./alpha</code> folder. Gems will have an Gem_ before their artifact name.</p>
+
+<h3>Example</h3><pre><code class="language-ts"><span class="hl-1">DefaultRoyalty</span><span class="hl-2">, </span><span class="hl-1">SplitRoyalty</span>
+</code></pre>
+</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/575daf4/app/interfaces.ts#L253">app/interfaces.ts:253</a></li></ul></aside></section></section></div>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/569e975/app/interfaces.ts#L345">app/interfaces.ts:345</a></li></ul></aside></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tree">
 <div class="tree-settings">
