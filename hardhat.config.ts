@@ -1,5 +1,4 @@
-require("module-alias/register");
-
+import "module-alias/register";
 import { HardhatUserConfig } from "hardhat/config";
 import fs from "node:fs";
 import Pipes from "./app/pipes";

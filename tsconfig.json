@@ -16,14 +16,12 @@
 			"./gems",
 			"./deploy"
 		],
+		"paths": {
+			"@app/*": ["./app/*"]
+		},
 		"esModuleInterop": true
 	},
 	"exclude": ["dist", "node_modules"],
 	"include": ["./test", "./src", "./scripts", "./app", "./gems", "./deploy"],
-	"files": [
-		"./hardhat.config.ts",
-		"./infinitymint.config.ts",
-		"./index.ts",
-		"./.env"
-	]
+	"files": ["./hardhat.config.ts", "./infinitymint.config.ts", "./index.ts"]
 }
