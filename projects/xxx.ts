@@ -1,4 +1,4 @@
-import { InfinityMintProject } from "../app/config";
+import { InfinityMintProject } from "../app/interfaces";
 
 const profiles: InfinityMintProject = {
 	name: "xxx_profiles",
@@ -21,23 +21,24 @@ const profiles: InfinityMintProject = {
 		assetController: "SimpleImage",
 		royaltyController: "DefaultRoyalty",
 	},
-	infinityLinks: [
-		{
-			key: "test",
-			name: "test",
-		},
-	],
 	settings: {
-		minter: {
-			randomNames: true,
-		},
+		minter: {},
 		values: {
 			maxSupply: 24,
+		},
+		assets: {
+			preventSamePathTwice: true,
+			rarity: {
+				pickLeastCommon: true,
+			},
 		},
 		royalty: {
 			cuts: {
 				stickers: 20,
 			},
+		},
+		gems: {
+			redemptionTools: {},
 		},
 	},
 	paths: [

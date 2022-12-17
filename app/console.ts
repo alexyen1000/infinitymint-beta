@@ -1,4 +1,4 @@
-import { InfinityMintConsole } from "./config";
+import { InfinityMintConsole } from "./interfaces";
 import { BlessedElement, debugLog, isEnvSet, isEnvTrue, log } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";

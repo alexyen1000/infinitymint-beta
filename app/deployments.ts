@@ -2,7 +2,7 @@ import events, { EventEmitter } from "events";
 import {
 	InfinityMintDeploymentScript,
 	InfinityMintDeploymentParameters,
-} from "./config";
+} from "./interfaces";
 import { debugLog, log } from "./helpers";
 import { glob } from "glob";
 import path from "path";

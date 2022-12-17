@@ -1,4 +1,4 @@
-import { InfinityMintScript } from "../app/config";
+import { InfinityMintScript } from "./interfaces";
 
 const Deploy: InfinityMintScript = {
 	name: "Deploy",

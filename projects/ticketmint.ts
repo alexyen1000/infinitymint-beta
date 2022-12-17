@@ -1,4 +1,4 @@
-import { InfinityMintProject } from "../app/config";
+import { InfinityMintProject } from "../app/interfaces";
 
 const ticketmint: InfinityMintProject = {
 	name: "ticketmint",

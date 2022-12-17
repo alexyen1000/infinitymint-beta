@@ -6,8 +6,22 @@ import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import { DeploymentScript } from "./deployments";
 
+export interface InfinityMintGemScript extends InfinityMintDeploymentScript {
+	name: string;
+}
+
+export interface InfinityMintGemConfig {
+	name?: string;
+	homepage?: string;
+	git?: string;
+	version: string;
+	solidityNamespace: string;
+	author?: Dictionary<any> | Dictionary<any>[];
+}
+
 export interface InfinityMintApplicationConfig {
-	productionChains: string[];
+	productionChains: any[];
+	testChains: any[];
 }
 
 export interface InfinityMintProject {
@@ -80,14 +94,30 @@ export interface InfinityMintProjectSettingsLinkSettings {
 }
 
 export interface InfinityMintProjectSettingsValues extends Dictionary<any> {
-	maxSupply?: number;
-	maxTokensPerWallet?: number;
-	approvedOnly?: boolean;
+	disablePreviews?: boolean;
+	disableAssets?: boolean;
 }
 
 export interface InfinityMintProjectSettingsMinter {
+	pathId?: number;
+	maxSupply?: number;
+	mintBytes?: Dictionary<any>;
+	approvedOnly?: boolean;
+	onlyImplicitMint?: boolean;
+	maxTokensPerWallet?: number;
+	previewCount?: number;
+}
+
+export interface InfinityMintProjectSettingsAssets {
 	incremental?: boolean;
 	randomNames?: boolean;
+	preventSamePathTwice?: boolean;
+	rarity?: {
+		pickLeastCommon?: boolean;
+		pickMostCommon?: boolean;
+	};
+	disabledPaths?: Array<any>;
+	nameCount?: number;
 }
 
 export interface InfinityMintProjectSettingsRoyaltySplit
@@ -109,10 +139,18 @@ export interface InfinityMintProjectSettingsRoyalty extends Dictionary<any> {
 		| InfinityMintProjectSettingsRoyaltySplit[];
 }
 
+export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
+	defaultTokenURI?: string;
+	allowTransfer?: boolean;
+}
+
 export interface InfinityMintProjectSettings {
+	erc721?: InfinityMintProjectSettingsERC721;
 	minter?: InfinityMintProjectSettingsMinter;
 	values?: InfinityMintProjectSettingsValues;
 	royalty?: InfinityMintProjectSettingsRoyalty;
+	assets?: InfinityMintProjectSettingsAssets;
+	gems?: Dictionary<any>;
 }
 
 export interface InfinityMintProjectModules {

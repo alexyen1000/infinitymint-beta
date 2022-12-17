@@ -1,6 +1,6 @@
 import Pipes from "./pipes";
 import fs from "fs";
-import { InfinityMintSession } from "./config";
+import { InfinityMintSession } from "./interfaces";
 import bip39 from "bip39";
 import { Dictionary } from "form-data";
 

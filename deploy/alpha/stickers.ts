@@ -1,4 +1,4 @@
-import { InfinityMintDeploymentScript } from "../../app/config";
+import { InfinityMintDeploymentScript } from "../../app/interfaces";
 
 const Stickers: InfinityMintDeploymentScript = {
 	deploy: async (params) => {},
