@@ -19,5 +19,6 @@ infinitymint.config.ts
 package-lock.json
 yarn.lock
 .DS_Store
+dist
 
 _docs
