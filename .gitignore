@@ -12,7 +12,10 @@ artifacts
 # InfinityMint files
 infinitymint.config.ts
 .session
+/gems/__*
+/gems/@*
 
 # Node
 package-lock.json
 yarn.lock
+
