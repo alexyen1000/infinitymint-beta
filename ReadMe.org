@@ -15,10 +15,10 @@ To do this, enter a =GANACHE_URL= within your =.env=.
 *** ⛔️ OpenSSL Legacy Provider
 
 You might encounter an error regarding ESVP being unspported on your machine.
-To solve this, simply run the following in a terminal before you run nom start.
+To solve this, simply run the following in a terminal before you run =npm run start=.
 
 #+BEGIN_SRC bash
-export NODE_OPTIONS=--openssl-legacy-provider=
+export NODE_OPTIONS=--openssl-legacy-provider
 #+END_SRC
 
 *** ⛔️ NODE_OPTIONS: --openssl-legacy-provider is invalid
