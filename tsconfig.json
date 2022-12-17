@@ -21,7 +21,7 @@
 		},
 		"esModuleInterop": true
 	},
-	"exclude": ["./dist", "./node_modules"],
+	"exclude": ["./dist", "./node_modules", "./infinitymint.config.ts"],
 	"include": ["./test", "./src", "./scripts", "./app", "./deploy", "./gems"],
-	"files": ["./hardhat.config.ts", "./index.ts"]
+	"files": ["./hardhat.config.ts", "./infinitymint.config.ts", "./index.ts"]
 }
