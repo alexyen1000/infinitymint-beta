@@ -25,7 +25,7 @@ import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
 
 const blessed = require("blessed");
-export default class InfinityConsole {
+export class InfinityConsole {
 	private screen: any;
 	private options?: InfinityMintConsole;
 
@@ -509,3 +509,4 @@ export default class InfinityConsole {
 		}
 	}
 }
+export default InfinityConsole;
