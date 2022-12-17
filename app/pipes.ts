@@ -75,7 +75,7 @@ interface PipeOptions {
 /**
  * Logging factory class
  */
-const Pipes = new (class {
+export const Pipes = new (class {
 	public logs: Dictionary<Pipe>;
 	public currentPipe: string;
 	constructor() {

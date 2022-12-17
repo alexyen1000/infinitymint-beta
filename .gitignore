@@ -18,4 +18,4 @@ infinitymint.config.ts
 # Node
 package-lock.json
 yarn.lock
-
+.DS_Store
