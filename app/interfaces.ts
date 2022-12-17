@@ -31,13 +31,12 @@ export interface InfinityMintApplicationConfig {
 	testChains: any[];
 }
 
-/**
- * @interface
- * InfinityMint Project settings
- * @param name - Name of the rpoejct
- * @param infinityLinks - Specify custom InfinityLinks
- * @param system - Specify whether the project is part of a grouped system with other projects.
- * @param modules - Specify which InfintyMint modules will be used within
+/** 
+ * The InfinityMintProject interface is what is returned when a project is loaded by infinitymint. When InfinityMint resolves a project it will return this an object as this interface.
+ * @member name - Name of the project
+ * @member infinityLinks - Specify custom InfinityLinks
+ * @member system - Specify whether the project is part of a grouped system with other projects.
+ * @member modules - Specify which InfintyMint modules will be used within
    the creation of tokens, such as *RarityMinter*, *RoyaltyController*.
    This is an immutable setting that cannot be changed or added with more.
 	 They are specific to the InfinityMint source code.
@@ -212,37 +211,20 @@ export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
 }
 
 /**
- * 
- * @interface
- * The InfinityMint project configuration. Is read in the first phase of running `npm run start`.
- * @param project The name of the project.
- * @param networks - The web3 network(s) InfinityMint will connect to.
- * @param hardhat - The configuration that Hardhat will use to determine the versioning
-   & settings Solidity runtime.
- * @param ipfs - The url to connect to IPFS, or set to false to not use IPFS.
-	 @param ganache The settings inputted to ganache within the `server.run()` function of its startup.
-	 Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
-	 For example;
-	 ```js
-	 ganache: {
-    chain: {
-      chainId: 1337,
-    },
-    wallet: {
-			// `wallet.totalAccounts`
-      totalAccounts: 20,
-      defaultBalance: 69420,
-    },
-  },
-	```
-	@param imports {Array<String>} - Other filesystem locations where IM will look for assets
-	such as PNGs, Vectors etc.to create tokens with.
-	@param settings {InfinityMintConfigSettings} - InfinityMint-specific config settings.
-	Configures settings such as how networks behave, what wallets to use by default,
-	& if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*.
-	Also determines what will act as the *Gas Machine.*
+ * Interface for the infinitymint.config.js when that file is required this interface is what it is returning`.
+ * @member project The Name Of The Projects
+ * @member networks The web3 network(s) InfinityMint will connect to.
+ * @member hardhat The configuration that Hardhat will use to determine the versioning & settings Solidity runtime.
+ * @member ipfs The url to connect to IPFS, or set to false to not use IPFS.
+ * @member ganache The settings inputted to ganache within the `server.run()` function of its startup. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
+ * @member imports Other filesystem locations where IM will look for assets
+ *	such as PNGs, Vectors etc.to create tokens with.
+ * @member settings InfinityMint-specific config settings. Configures settings such as how networks behave, what wallets to use by default, & if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*. Also determines what will be used to fetch *Gas Estimates*.
  */
 export interface InfinityMintConfig {
+	/**
+	 * The name of the project.
+	 */
 	project?: string;
 	networks?: any;
 	hardhat: HardhatUserConfig;
@@ -312,7 +294,15 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 }
 
 /**
- * Interface for the InfinityMint deployments (gems included)
+ * This interface is an InfinityMint deployment.
+ * @member abi - The abi of the current dpeloyment.
+ * @member name - The name of the current deployment, same as the .sol filename.
+ * @member deployer - The address of the deployer of this contract.
+ * @member key - The key name of this contract in the {@link InfinityMintProject} file.
+ * @member project - The name of the project this deployment was deployed under.
+ * @member network - The network this project was deployed under.
+ * @member approved - The approved addresses for this deployment.
+ * @member receipt - The receipt for the transaction that deployed this deployment.
  */
 export interface InfinityMintDeployment extends Dictionary<any> {
 	abi?: Array<any>;
@@ -320,6 +310,8 @@ export interface InfinityMintDeployment extends Dictionary<any> {
 	name?: string;
 	address?: string;
 	project?: string;
+	network?: string;
+	approved?: string[];
 	deployer?: string;
 	receipt?: Dictionary<any>;
 }
