@@ -11,7 +11,7 @@
 	},
 	"name": "infinitymint",
 	"description": "InfinityMint - Powered by Hardhat and Ganache",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"main": "dist/index.js",
 	"directories": {
 		"test": "tests"
