@@ -1,5 +1,5 @@
 {
 	"$schema": "https://typedoc.org/schema.json",
-	"entryPoints": ["./src/*", "./app/*"],
+	"entryPoints": ["app/*", "app/windows/*"],
 	"out": "_docs"
 }
