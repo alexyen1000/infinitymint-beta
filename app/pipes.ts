@@ -105,8 +105,13 @@ const Pipes = new (class {
 
 	public log(msg: string, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipe;
-		if (this.logs[actualPipe] == undefined)
+		if (
+			this.logs[actualPipe] === undefined &&
+			this.logs["default"] === undefined
+		)
 			throw new Error("bad pipe: " + actualPipe);
+		else if (this.logs[actualPipe] === undefined)
+			return this.log(msg, "default");
 
 		if (dontHighlight !== true)
 			msg = msg

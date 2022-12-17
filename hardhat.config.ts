@@ -58,11 +58,16 @@ if (!fs.existsSync("./infinitymint.config.ts")) {
 
 //overwrite console log
 let consoleLog = console.log;
-console.log = (msg, setPipe = true) => {
+console.log = (msg: string, setPipe = true) => {
 	if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
 		Pipes.getPipe(Pipes.currentPipe).logs.push(msg);
 
-	if (Pipes.logs[Pipes.currentPipe]?.listen) consoleLog(msg);
+	if (
+		Pipes.logs[Pipes.currentPipe]?.listen ||
+		(Pipes.logs[Pipes.currentPipe] === undefined &&
+			!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
+	)
+		consoleLog(msg);
 };
 
 let consoleError = console.error;
