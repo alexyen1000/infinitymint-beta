@@ -7,14 +7,14 @@ import { EventEmitter } from "events";
 import { DeploymentScript } from "./deployments";
 import InfinityConsole from "./console";
 
-export interface InfinityMintGemScript extends InfinityMintDeploymentScript {
+export interface InfinityMintGemMain extends InfinityMintDeploymentScript {
 	name: string;
 	init?: FuncSingle<InfinityMintGemParameters, Promise<void>>;
 }
 
 export interface InfinityMintGemParameters
 	extends InfinityMintDeploymentParameters {
-	gem: InfinityMintGemScript;
+	gem: InfinityMintGemMain;
 }
 
 export interface InfinityMintGemConfig {
@@ -252,7 +252,7 @@ export interface InfinityMintConfig {
 	settings?: InfinityMintConfigSettings;
 }
 
-export interface InfinityMintConfigNetworkSettings {
+export interface InfinityMintConfigSettingsNetwork {
 	defaultAccount?: number;
 	useDefaultPipe?: boolean;
 }
@@ -269,7 +269,7 @@ export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
 export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
 
 export interface InfinityMintConfigSettings extends Dictionary<any> {
-	networks: Dictionary<InfinityMintConfigNetworkSettings>;
+	networks: Dictionary<InfinityMintConfigSettingsNetwork>;
 	deploy?: InfinityMintConfigSettingsDeploy;
 	build?: InfinityMintConfigSettingsBuild;
 	export?: InfinityMintConfigSettingsExport;
