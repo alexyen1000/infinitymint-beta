@@ -2,5 +2,5 @@
 	"$schema": "https://typedoc.org/schema.json",
 	"entryPoints": ["app/*", "app/windows/*"],
 	"exclude": ["node_modules"],
-	"out": "_docs"
+	"out": "docs"
 }
