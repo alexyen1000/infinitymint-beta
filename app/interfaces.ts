@@ -54,8 +54,8 @@ export interface InfinityMintProject {
 	/**
 	 * The price of your tokens. This can be in a decimal (for crypto) or as a real life value, for example:
 	 * ```js
-	 * price: '$1';
-	 * price: 0.15;
+	 * //price: '$1',
+	 * //price: 0.15,
 	 * ```
 	 */
 	price: number | BigNumber | string;
