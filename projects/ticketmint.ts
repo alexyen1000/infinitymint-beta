@@ -4,10 +4,10 @@ const ticketmint: InfinityMintProject = {
 	name: "ticketmint",
 	price: "$1",
 	modules: {
-		randomController: "SeededRandom",
-		assetController: "SimpleToken",
+		random: "SeededRandom",
+		assets: "SimpleToken",
 		minter: "DefaultMinter",
-		royaltyController: "DefaultRoyalty",
+		royalty: "DefaultRoyalty",
 	},
 	information: {
 		tokenSymbol: "EXAMPLE",
