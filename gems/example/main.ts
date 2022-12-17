@@ -1,4 +1,4 @@
-import { InfinityMintGemScript } from "../../app/interfaces";
+import { InfinityMintGemScript } from "../interfaces";
 
 const gem: InfinityMintGemScript = {
 	name: "Example Gem",

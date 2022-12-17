@@ -1,4 +1,4 @@
-import { InfinityMintScript } from "../app/interfaces";
+import { InfinityMintScript } from "./interfaces";
 
 const Export: InfinityMintScript = {
 	name: "Export Project To React",

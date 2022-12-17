@@ -8,11 +8,18 @@
 		"outDir": "./dist",
 		"strict": true,
 		"allowJs": true,
-		"rootDirs": ["./src", "./scripts", "./test", "./app"],
+		"rootDirs": [
+			"./src",
+			"./scripts",
+			"./test",
+			"./app",
+			"./gems",
+			"./deploy"
+		],
 		"esModuleInterop": true
 	},
 	"exclude": ["dist", "node_modules"],
-	"include": ["./test", "./src", "./scripts", "./app"],
+	"include": ["./test", "./src", "./scripts", "./app", "./gems", "./deploy"],
 	"files": [
 		"./hardhat.config.ts",
 		"./infinitymint.config.ts",

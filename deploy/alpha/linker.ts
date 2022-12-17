@@ -1,5 +1,4 @@
-import { InfinityMintDeploymentScript } from "../../app/interfaces";
-
+import { InfinityMintDeploymentScript } from "../interfaces";
 const Linker: InfinityMintDeploymentScript = {
 	deploy: async (params) => {},
 	setup: async (params) => {},

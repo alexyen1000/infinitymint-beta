@@ -16,10 +16,6 @@
 	"directories": {
 		"test": "tests"
 	},
-	"_moduleAliases": {
-		"@root": ".",
-		"@app": "/app/"
-	},
 	"dependencies": {
 		"bip39": "^3.0.4",
 		"blessed": "^0.1.81",

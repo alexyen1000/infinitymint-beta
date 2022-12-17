@@ -1,4 +1,4 @@
-import { InfinityMintDeploymentScript } from "../../app/interfaces";
+import { InfinityMintDeploymentScript } from "../interfaces";
 
 const Project: InfinityMintDeploymentScript = {
 	deploy: async (params) => {},

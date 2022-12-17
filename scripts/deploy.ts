@@ -1,8 +1,5 @@
-import {
-	InfinityMintScript,
-	InfinityMintScriptParameters,
-} from "../app/interfaces";
-import { getDeploymentScripts } from "../app/deployments";
+import { InfinityMintScript, InfinityMintScriptParameters } from "./interfaces";
+import { getDeploymentScripts } from "./deployments";
 
 const Deploy: InfinityMintScript = {
 	name: "Deploy",
