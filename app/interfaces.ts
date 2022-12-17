@@ -32,7 +32,13 @@ export interface InfinityMintApplicationConfig {
 }
 
 /**
- * The infinitymint project is responsible for holding the paths, assets and other information relating to the project.
+ * The infinitymint project is responsible for holding the paths, assets and other information relating to the project. You can set which modules are used in the creation of the minter, along with other specific settings relating to the project. Each project is stored inside of the `./projects/` in the root of where ever InfinityMint is run.
+ *
+ * @see {@link InfinityMintDeployment}
+ * @see {@link InfinityMintProjectModules}
+ * @see {@link InfinityMintProjectAsset}
+ * @see {@link InfinityMintProjectPath}
+ * @see {@link InfinityMintProjectSettings}
  */
 export interface InfinityMintProject {
 	/**
@@ -147,7 +153,13 @@ export interface InfinityMintProjectEvents extends Dictionary<any> {
 	export?: FuncSingle<InfinityMintProject, Promise<void>>;
 }
 
+/**
+ * The project information is where you can set the token symbol, other language definitions such as the full name of your project, short name and a brief description for metadata purposes.
+ */
 export interface InfinityMintProjectInformation {
+	/**
+	 * The symbol of your token. `appears on OpenSea and inside of the contract as the ERC721 tokenSymbol`.
+	 */
 	tokenSymbol: string;
 	tokenSingular: string;
 	tokenMultiple?: string;
@@ -199,7 +211,9 @@ export interface InfinityMintProjectPermissions extends Dictionary<any> {
 }
 
 /**
- * Used inside of the project file to enable gems and specify settings for the gems.
+ * Holds settings and other information relating to a gem inside of the project file. This is not the gem file its self but simply a configuration option inside of the projects where users can state if a gem is enable or disabled and pass settings from the project directly to all of the gem scripts and windows for them to read and use.
+ *
+ * @see {@link InfinityMintGem}
  */
 export interface InfinityMintProjectGem {
 	/**
@@ -287,7 +301,7 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 }
 
 /**
- * Project specific settings for each of the deployemtns in InfinityMint.
+ * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
  *
  * @see {@link InfinityMintProjectModules}
  */
@@ -324,6 +338,12 @@ export interface InfinityMintProjectSettings {
 	assets?: InfinityMintProjectSettingsAssets;
 }
 
+/**
+ * The InfinityMint project modules are the solidity files InfinityMint will use for its token creation and royalty distribution. Here is where you can change what is used in each step of the InfinityMint chain. The assets key controls what type of content will be minted based on what type of content it is (svg, image, sound). The minter controls how to talk to the asset controller, and if the user needs to specify which path they would like or if it should be random or if it should be only one specific path id until you say anything different. The royalty controller will control who is paid what for what ever happens inside of the minter. From mints, to things that gems do. The royalty controller covers all bases. The random controller decides how InfinityMint obtains its random numbers which it uses in the mint process. You can use VCF randomness with chainlink here or use keccack256 randomisation but beware of the security risks of doing so.
+ *
+ * @see {@link InfinityMintProjectModules}
+ * @see {@link InfinityMintDeployment}
+ */
 export interface InfinityMintProjectModules {
 	/**
 	 * Should be the *fully quallified solidity artifact name* for an Asset Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
@@ -432,10 +452,50 @@ export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
 
 export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
 
+/**
+ * here you can specify the infinity mint settings for the `networks`, `deploy` and `build` and `export` steps. You can configure infinity mint here.
+ *
+ * @see {@link InfinityMintConfigSettingsNetwork};
+ * @see {@link InfinityMintConfigSettingsDeploy};
+ * @see {@link InfinityMintConfigSettingsBuild};
+ * @see {@link InfinityMintConfigSettingsExport};
+ */
 export interface InfinityMintConfigSettings extends Dictionary<any> {
+	/**
+	 * each key is the network name followed by an object with the type of {@link InfinityMintConfigSettingsNetwork}
+	 * 
+	 * @example ```js 
+	 	networks: {
+			//settings for the hardhat network
+			hardhat: {
+				defaultAccount: 0,
+			},
+			//settings for the ganache network
+			ganache: {
+				defaultAccount: 0,
+			},
+		},
+	 ```
+	 */
 	networks: Dictionary<InfinityMintConfigSettingsNetwork>;
+	/**
+	 * Configure InfinityMints deploy stage here.
+	 *
+	 * @see {@link InfinityMintConfigSettingsDeploy}
+	 * @see {@link InfinityMintDeployment}
+	 */
 	deploy?: InfinityMintConfigSettingsDeploy;
+	/**
+	 * Configure InfinityMints deploy stage here.
+	 *
+	 * @see {@link InfinityMintConfigSettingsDeploy}
+	 */
 	build?: InfinityMintConfigSettingsBuild;
+	/**
+	 * Configure InfinityMints deploy stage here.
+	 *
+	 * @see {@link InfinityMintConfigSettingsDeploy}
+	 */
 	export?: InfinityMintConfigSettingsExport;
 }
 
@@ -476,8 +536,8 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 }
 
 /**
- * This interface is the object which is returned when you fetch an InfinityMint deloyment
- * for the current project on the current network.
+ * An InfinityMintDeployment is a smart contract which is currently active on which ever network is currently set. It holds the
+ * abi for the contract along with its address and who deployed it. It also contains which project (see {@link InfinityMintProject}) it was deployed under.
  *
  * @see {@link InfinityMintDeploymentScript} for how to create an InfinityMintDeployment
  */
@@ -487,7 +547,7 @@ export interface InfinityMintDeployment extends Dictionary<any> {
 	 */
 	abi?: Array<any>;
 	/**
-	 * The key name of this contract in the {@link InfinityMintProject} file.
+	 * The key name of this contract , will be the same as the module name (see {@link InfinityMintProjectModules}) or the name of the current deployment the same as the artifact name.
 	 */
 	key?: string;
 	/**
@@ -500,6 +560,8 @@ export interface InfinityMintDeployment extends Dictionary<any> {
 	address?: string;
 	/**
 	 * The name of the project this deployment was deployed under.
+	 *
+	 * @see {@link InfinityMintProject}
 	 */
 	project?: string;
 	/**
@@ -523,14 +585,57 @@ export interface InfinityMintDeployment extends Dictionary<any> {
 	receipt?: Dictionary<any>;
 }
 
+/**
+ * This is the interface which should be returned from all deployment scripts inside of the `./deploy` folder.
+ */
 export interface InfinityMintDeploymentScript {
+	/**
+	 * @async
+	 * Deploys the smart contract or smart contracts.
+	 */
 	deploy: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	/**
+	 * @async
+	 * Sets up the smart contract post deployment.
+	 */
 	setup: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	/**
+	 * The list of addresses or refrences which will be given admin access to this contract
+	 */
 	permissions?: Array<any>;
+	/**
+	 * If this contract should be deployed first before anything else, useful when deployg librarys.
+	 *
+	 * @defaultValue false
+	 */
 	important?: boolean;
+	/**
+	 * Will run setup immediately after the deployment is succcessful
+	 *
+	 * @defaultValue false
+	 */
 	instantlySetup?: boolean;
+	/**
+	 * The current solidity namespace this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint.
+	 *
+	 * @defaultValue alpha
+	 */
 	solidityNamespace?: string;
-	library?: boolean; //if this is a library and not a solidity contract
-	key?: string; //will take from the file name the deploy script is called if not specified
+	/**
+	 * If this deployment is a library
+	 *
+	 * @defaultValue false
+	 */
+	library?: boolean;
+	/**
+	 * the key is the module name (see {@link InfinityMintProjectModules}) which is the name of the deployment script, or the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can pull this contract through code. Can be set to a custom value or left to be worked out.
+	 *
+	 */
+	key?: string;
+	/**
+	 * used to specify deployment order, lower indexes will be deployed over higher indexes. Minus values can be used.
+	 *
+	 * @defaultValue 10
+	 */
 	index?: number;
 }
