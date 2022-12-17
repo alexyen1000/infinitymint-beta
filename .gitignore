@@ -21,5 +21,4 @@ yarn.lock
 .DS_Store
 
 # Docs
-*docs*
 _www
