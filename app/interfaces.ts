@@ -156,19 +156,67 @@ export interface InfinityMintProjectInformation {
 	description?: string;
 }
 
+/**
+ * Here you can specify addresses which will be given admin permissions inside of the InfinityMint deployments.
+ */
 export interface InfinityMintProjectPermissions extends Dictionary<any> {
+	/**
+	 * Will give all addresses inside the array admin access to all deployments.
+	 */
 	all?: Array<string>;
+	/**
+	 * Will give all addresses inside the array admin access to only the erc721 (InfinityMint) deployment.
+	 */
 	erc721?: Array<string>;
+	/**
+	 * Will give all addresses inside the array admin access to only the minter deployment.
+	 *
+	 * @see {@link InfinityMintProjectModules}
+	 */
 	minter?: Array<string>;
+	/**
+	 * Will give all addresses inside the array admin access to only the random deployment.
+	 *
+	 * @see {@link InfinityMintProjectModules}
+	 */
 	random?: Array<string>;
+	/**
+	 * Will give all addresses inside the array admin access to only the royalty deployment.
+	 *
+	 * @see {@link InfinityMintProjectModules}
+	 */
 	royalty?: Array<string>;
+	/**
+	 * Will give all addresses inside the array admin access to only the assets deployment.
+	 *
+	 * @see {@link InfinityMintProjectModules}
+	 */
 	assets?: Array<string>;
+	/**
+	 * Will give all addresses inside the array admin access on all gem contracts.
+	 */
 	gems?: Array<string>;
 }
 
+/**
+ * Used inside of the project file to enable gems and specify settings for the gems.
+ */
 export interface InfinityMintProjectGem {
+	/**
+	 * The name of the gem to enable/disable.
+	 *
+	 * @see {@link InfinityMintGem}
+	 */
 	name: string;
+	/**
+	 * If the gem is enabled or disabled.
+	 */
 	enabled: boolean;
+	/**
+	 * The settings for the gem.
+	 *
+	 * @see {@link InfinityMintGem}
+	 */
 	settings?: Dictionary<any>;
 }
 
@@ -238,19 +286,68 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 	allowTransfer?: boolean;
 }
 
+/**
+ * Project specific settings for each of the deployemtns in InfinityMint.
+ *
+ * @see {@link {InfinityMintProjectModules}}
+ */
 export interface InfinityMintProjectSettings {
+	/**
+	 * Set settings for the erc721 (InfinityMint) deployment.
+	 *
+	 * @see {@link InfinityMintProjectSettingsERC721}
+	 */
 	erc721?: InfinityMintProjectSettingsERC721;
+	/**
+	 * Set settings for the minter deployment.
+	 *
+	 * @see {@link InfinityMintProjectSettingsMinter}
+	 */
 	minter?: InfinityMintProjectSettingsMinter;
+	/**
+	 * Set settings for the values deployment.
+	 *
+	 * @see {@link InfinityMintProjectSettingsValues}
+	 */
 	values?: InfinityMintProjectSettingsValues;
+	/**
+	 * Set settings royalty deployment.
+	 *
+	 * @see {@link InfinityMintProjectSettingsRoyalty}
+	 */
 	royalty?: InfinityMintProjectSettingsRoyalty;
+	/**
+	 * Set settings for the assets deployment.
+	 *
+	 * @see {@link InfinityMintProjectSettingsValues}
+	 */
 	assets?: InfinityMintProjectSettingsAssets;
-	gems?: Dictionary<any>;
 }
 
 export interface InfinityMintProjectModules {
+	/**
+	 * Should be the *fully quallified solidity artifact name* for an Asset Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @example RaritySVG, SimpleSVG, RarityImage, SimpleImage
+	 */
 	assets: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name* for a Mint Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @example DefaultMinter, SelectiveMinter, LockedMinter
+	 */
 	minter: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name* for a Royalty Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @example DefaultRoyalty, SplitRoyalty
+	 */
 	royalty: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name* for a Random Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @example DefaultRoyalty, SplitRoyalty
+	 */
 	random: string;
 }
 
@@ -313,6 +410,8 @@ export interface InfinityMintConfig {
 	imports?: Array<string>;
 	/**
 	 * InfinityMint-specific config settings. Configures settings such as how networks behave, what wallets to use by default, & if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*. Also determines what will be used to fetch `Gas Estimates` and *token prices*.
+	 *
+	 * @see {@link InfinityMintConfigSettings}
 	 */
 	settings?: InfinityMintConfigSettings;
 }
