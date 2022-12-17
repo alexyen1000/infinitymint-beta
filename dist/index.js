@@ -44,7 +44,7 @@ const fs_1 = __importDefault(require("fs"));
 exports.Interfaces = __importStar(require("./app/interfaces"));
 exports.Web3Helpers = __importStar(require("./app/web3"));
 //turn this to flase if you are building InfinityMint
-const RUN_INFINITYMINT = true;
+const RUN_INFINITYMINT = false;
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (RUN_INFINITYMINT || Helpers.isEnvTrue("RUN_INFINITYMINT"))
     (async () => {

@@ -37,7 +37,7 @@ interface PipeOptions {
 /**
  * Logging factory class
  */
-declare const Pipes: {
+export declare const Pipes: {
     logs: Dictionary<Pipe>;
     currentPipe: string;
     setCurrentPipe(key: string): void;
