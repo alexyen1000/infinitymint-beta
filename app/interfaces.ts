@@ -31,6 +31,17 @@ export interface InfinityMintApplicationConfig {
 	testChains: any[];
 }
 
+/**
+ * @interface
+ * InfinityMint Project settings
+ * @param name {string} - Name of the rpoejct
+ * @param Specify custom [[InfinityLinks]]
+ * @param system {Array<String>} Specify whether the project is part of a grouped system with other projects.
+ * @param modules {InfinityMintProjectModules} - Specify which InfintyMint modules will be used within
+   the creation of tokens, such as *RarityMinter*, *RoyaltyController*.
+   This is an immutable setting that cannot be changed or added with more.
+	 They are specific to the InfinityMint source code.
+ */
 export interface InfinityMintProject {
 	name: string;
 	infinityLinks?: Array<InfinityMintProjectSettingsLink>;
@@ -201,7 +212,35 @@ export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
 }
 
 /**
- * Interface for the InfinityMint configuration file
+ * 
+ * @interface
+ * The InfinityMint project configuration. Is read in the first phase of running `npm run start`.
+ * @param project {String} - The name of the project.
+ * @param networks {Object} - The web3 network(s) InfinityMint will connect to.
+ * @param hardhat {HardhatUserConfig} - The configuration that Hardhat will use to determine the versioning
+   & settings Solidity runtime.
+ * @param ipfs {any} - The url to connect to IPFS, or set to false to not use IPFS.
+	 @param ganache {ServerOptions} The settings inputted to ganache within the `server.run()` function of its startup.
+	 Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
+	 For example;
+	 ```js
+	 ganache: {
+    chain: {
+      chainId: 1337,
+    },
+    wallet: {
+			// `wallet.totalAccounts`
+      totalAccounts: 20,
+      defaultBalance: 69420,
+    },
+  },
+	```
+	@param imports {Array<String>} - Other filesystem locations where IM will look for assets
+	such as PNGs, Vectors etc.to create tokens with.
+	@param settings {InfinityMintConfigSettings} - InfinityMint-specific config settings.
+	Configures settings such as how networks behave, what wallets to use by default,
+	& if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*.
+	Also determines what will act as the *Gas Machine.*
  */
 export interface InfinityMintConfig {
 	project?: string;
