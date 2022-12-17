@@ -73,9 +73,9 @@ export interface InfinityMintProjectPermissions extends Dictionary<any> {
 	all?: Array<string>;
 	erc721?: Array<string>;
 	minter?: Array<string>;
-	randomController?: Array<string>;
-	royaltyController?: Array<string>;
-	assetController?: Array<string>;
+	random?: Array<string>;
+	royalty?: Array<string>;
+	assets?: Array<string>;
 	gems?: Array<string>;
 }
 
@@ -161,10 +161,10 @@ export interface InfinityMintProjectSettings {
 }
 
 export interface InfinityMintProjectModules {
-	assetController: string;
+	assets: string;
 	minter: string;
-	royaltyController: string;
-	randomController: string;
+	royalty: string;
+	random: string;
 }
 
 export interface InfinityMintProjectPathExport {
