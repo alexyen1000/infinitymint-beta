@@ -17,7 +17,7 @@
 		"test": "tests"
 	},
 	"_moduleAliases": {
-		"@app": "dist/app"
+		"@app": "dist/app/"
 	},
 	"dependencies": {
 		"bip39": "^3.0.4",

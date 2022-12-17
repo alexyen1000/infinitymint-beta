@@ -10,7 +10,6 @@ import GanacheServer from "./app/ganacheServer";
 import config from "./infinitymint.config";
 import { Web3Provider } from "@ethersproject/providers";
 import fs from "fs";
-import { getDeploymentScripts } from "./app/deployments";
 
 ///NOTE: Might need a hardhat config file in the root where ever this is included externally?
 //export the config file
