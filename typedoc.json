@@ -9,7 +9,7 @@
 		"deploy/*/*",
 		"gems/example/*/*"
 	],
-	"theme": "igtheme",
+	"theme": "hierarchy",
 	"name": "InfinityMint",
 	"entryPointStrategy": "expand",
 	"gitRemote": "origin",
