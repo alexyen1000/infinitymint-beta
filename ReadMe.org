@@ -17,7 +17,9 @@ To do this, enter a =GANACHE_URL= within your =.env=.
 You might encounter an error regarding ESVP being unspported on your machine.
 To solve this, simply run the following in a terminal before you run nom start.
 
-=export NODE_OPTIONS\=--openssl-legacy-provider=
+#+BEGIN_SRC bash
+export NODE_OPTIONS=--openssl-legacy-provider=
+#+END_SRC
 
 *** ⛔️ NODE_OPTIONS: --openssl-legacy-provider is invalid
 
@@ -43,6 +45,6 @@ The projects which are used by InfinityMint are stored in a a folder called /pro
 
 *** 🗿 Resources
 
-[https://docs.infinitymint.app][Official Documentation]
+[[https://docs.infinitymint.app][Official Documentation]]
 
-[https://www.doxygen.nl/][DoxyGen Documentation]
+[[https://www.doxygen.nl/][DoxyGen Documentation]]
