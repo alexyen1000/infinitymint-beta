@@ -200,6 +200,8 @@ class InfinityMintWindow {
     registerElement(key, element) {
         if (this.elements[key] !== undefined)
             throw new Error("key already registered in window: " + key);
+        if (element.parent === undefined)
+            element.parent = this.screen;
         (0, helpers_1.debugLog)("registering element (" +
             element.constructor.name +
             ") for " +
@@ -329,6 +331,7 @@ class InfinityMintWindow {
             right: 0,
             width: "shrink",
             height: "shrink",
+            parent: this.screen,
             tags: true,
             padding: 1,
             content: "[x]",
@@ -349,6 +352,7 @@ class InfinityMintWindow {
             right: 6,
             width: "shrink",
             height: "shrink",
+            parent: this.screen,
             tags: true,
             padding: 1,
             content: "[-]",
