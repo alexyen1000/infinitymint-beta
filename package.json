@@ -36,12 +36,12 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/llydia-eth/infinitymint-beta.git"
+		"url": "git+https://github.com/0x0zAgency/infinitymint-beta.git"
 	},
 	"author": "Llydia Cross",
 	"license": "ISC",
 	"bugs": {
-		"url": "https://github.com/llydia-eth/infinitymint-beta/issues"
+		"url": "https://github.com/0x0zAgency/infinitymint-beta/issues"
 	},
-	"homepage": "https://github.com/llydia-eth/infinitymint-beta#readme"
+	"homepage": "https://github.com/0x0zAgency/infinitymint-beta#readme"
 }
