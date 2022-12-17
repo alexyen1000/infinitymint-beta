@@ -42,7 +42,7 @@ declare const Pipes: {
     currentPipe: string;
     setCurrentPipe(key: string): void;
     error(error: any): void;
-    log(msg: string, pipe?: string, dontHighlight?: boolean): void;
+    log(msg: string, pipe?: string, dontHighlight?: boolean): any;
     getPipe(key: string): Pipe;
     registerSimplePipe(key: string, options?: PipeOptions): Pipe;
     closePipe(pipe: string | Pipe): void;
