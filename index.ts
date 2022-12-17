@@ -27,7 +27,7 @@ export * as Interfaces from "./app/interfaces";
 export * as Web3Helpers from "./app/web3";
 
 //used when running dist
-const RUN_INFINITYMINT = false;
+const RUN_INFINITYMINT = true;
 
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 
