@@ -4,7 +4,7 @@ import { Dictionary } from "form-data";
 /**
  * The log pipe class
  */
-class Pipe {
+export class Pipe {
 	public logs: String[];
 	public listen: boolean;
 	public save: boolean;
@@ -75,7 +75,7 @@ interface PipeOptions {
 /**
  * Logging factory class
  */
-export const Pipes = new (class {
+export class Pipes {
 	public logs: Dictionary<Pipe>;
 	public currentPipe: string;
 	constructor() {
@@ -174,5 +174,5 @@ export const Pipes = new (class {
 
 		return this.logs[key];
 	}
-})();
-export default Pipes;
+}
+export default new Pipes();

@@ -6,7 +6,7 @@ import { debugLog, log, readSession } from "./helpers";
 import Pipes from "./pipes";
 import { startNetworkPipe } from "./web3";
 
-const GanacheServer = new (class {
+export class GanacheServer {
 	public server?: Server;
 	public options?: ServerOptions;
 	public port?: number;
@@ -70,5 +70,5 @@ const GanacheServer = new (class {
 
 		return this.provider;
 	}
-})();
-export default GanacheServer;
+}
+export default new GanacheServer();
