@@ -8,14 +8,7 @@
 		"outDir": "./dist",
 		"strict": false,
 		"allowJs": true,
-		"rootDirs": [
-			"./src",
-			"./scripts",
-			"./test",
-			"./app",
-			"./gems",
-			"./deploy"
-		],
+		"rootDirs": ["./scripts", "./test", "./app", "./gems", "./deploy"],
 		"paths": {
 			"@app/*": ["./app/*"]
 		},
