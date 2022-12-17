@@ -17,9 +17,9 @@ const profiles: InfinityMintProject = {
 	],
 	modules: {
 		minter: "DefaultMinter",
-		randomController: "SeededRandom",
-		assetController: "SimpleImage",
-		royaltyController: "DefaultRoyalty",
+		random: "SeededRandom",
+		assets: "SimpleImage",
+		royalty: "DefaultRoyalty",
 	},
 	settings: {
 		minter: {},
@@ -79,9 +79,9 @@ const blocks: InfinityMintProject = {
 	system: ["xxx_profiles", "xxx_content"],
 	modules: {
 		minter: "DefaultMinter",
-		randomController: "SeededRandom",
-		assetController: "SimpleImage",
-		royaltyController: "DefaultRoyalty",
+		random: "SeededRandom",
+		assets: "SimpleImage",
+		royalty: "DefaultRoyalty",
 	},
 	paths: [
 		{
@@ -108,9 +108,9 @@ const content: InfinityMintProject = {
 	},
 	modules: {
 		minter: "DefaultMinter",
-		randomController: "SeededRandom",
-		assetController: "SimpleImage",
-		royaltyController: "DefaultRoyalty",
+		random: "SeededRandom",
+		assets: "SimpleImage",
+		royalty: "DefaultRoyalty",
 	},
 	paths: [],
 	basePath: {

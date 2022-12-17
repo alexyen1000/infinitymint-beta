@@ -4,10 +4,10 @@ const example: InfinityMintProject = {
 	name: "example",
 	price: "$1",
 	modules: {
-		randomController: "SeededRandom",
-		assetController: "SimpleSVG",
+		random: "SeededRandom",
+		assets: "SimpleSVG",
 		minter: "DefaultMinter",
-		royaltyController: "DefaultRoyalty",
+		royalty: "DefaultRoyalty",
 	},
 	information: {
 		tokenSymbol: "EXAMPLE",
