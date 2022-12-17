@@ -289,7 +289,7 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 /**
  * Project specific settings for each of the deployemtns in InfinityMint.
  *
- * @see {@link {InfinityMintProjectModules}}
+ * @see {@link InfinityMintProjectModules}
  */
 export interface InfinityMintProjectSettings {
 	/**
