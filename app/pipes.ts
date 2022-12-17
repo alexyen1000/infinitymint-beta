@@ -64,7 +64,7 @@ export class Pipe {
 /**
  * Interface for the log pipe options
  */
-interface PipeOptions {
+export interface PipeOptions {
 	save?: boolean;
 	listen?: boolean;
 	setAsCurrentPipe?: boolean;
