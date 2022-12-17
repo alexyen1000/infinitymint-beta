@@ -23,5 +23,5 @@
 	},
 	"exclude": ["./dist", "./node_modules"],
 	"include": ["./test", "./src", "./scripts", "./app", "./deploy", "./gems"],
-	"files": ["./hardhat.config.ts", "./infinitymint.config.ts", "./index.ts"]
+	"files": ["./hardhat.config.ts", "./index.ts"]
 }
