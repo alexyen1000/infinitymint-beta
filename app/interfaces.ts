@@ -34,10 +34,10 @@ export interface InfinityMintApplicationConfig {
 /**
  * @interface
  * InfinityMint Project settings
- * {@param name} - Name of the rpoejct
- * {@param infinityLinks} - Specify custom InfinityLinks
- * {@param system} - Specify whether the project is part of a grouped system with other projects.
- * {@param modules} - Specify which InfintyMint modules will be used within
+ * @param name - Name of the rpoejct
+ * @param infinityLinks - Specify custom InfinityLinks
+ * @param system - Specify whether the project is part of a grouped system with other projects.
+ * @param modules - Specify which InfintyMint modules will be used within
    the creation of tokens, such as *RarityMinter*, *RoyaltyController*.
    This is an immutable setting that cannot be changed or added with more.
 	 They are specific to the InfinityMint source code.
@@ -215,12 +215,12 @@ export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
  * 
  * @interface
  * The InfinityMint project configuration. Is read in the first phase of running `npm run start`.
- * {@param project} The name of the project.
- * {@param networks} - The web3 network(s) InfinityMint will connect to.
- * {@param hardhat} - The configuration that Hardhat will use to determine the versioning
+ * @param project The name of the project.
+ * @param networks - The web3 network(s) InfinityMint will connect to.
+ * @param hardhat - The configuration that Hardhat will use to determine the versioning
    & settings Solidity runtime.
- * {@param ipfs} - The url to connect to IPFS, or set to false to not use IPFS.
-	 {@param ganache} The settings inputted to ganache within the `server.run()` function of its startup.
+ * @param ipfs - The url to connect to IPFS, or set to false to not use IPFS.
+	 @param ganache The settings inputted to ganache within the `server.run()` function of its startup.
 	 Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
 	 For example;
 	 ```js
