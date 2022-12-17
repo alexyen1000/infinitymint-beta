@@ -26,9 +26,8 @@ export {
 export * as Interfaces from "./app/interfaces";
 export * as Web3Helpers from "./app/web3";
 
-//used when running dist
+//turn this to flase if you are building InfinityMint
 const RUN_INFINITYMINT = true;
-
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (RUN_INFINITYMINT || Helpers.isEnvTrue("RUN_INFINITYMINT"))
 	(async () => {
