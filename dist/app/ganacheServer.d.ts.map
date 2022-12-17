@@ -1,0 +1,1 @@
+{"version":3,"file":"ganacheServer.d.ts","sourceRoot":"","sources":["../../app/ganacheServer.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAE,MAAM,0BAA0B,CAAC;AACxD,OAAgB,EAAE,MAAM,EAAE,aAAa,EAAE,MAAM,SAAS,CAAC;AAMzD,QAAA,MAAM,aAAa;aACF,MAAM;cACL,aAAa;WAChB,MAAM;eACF,YAAY;mBAEf,aAAa,SAAS,MAAM,GAAG,QAAQ,YAAY,CAAC;;CA0DhE,CAAC;AACL,eAAe,aAAa,CAAC"}
