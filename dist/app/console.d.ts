@@ -19,8 +19,8 @@ export default class InfinityConsole {
     setWindow(thatWindow: string | Window): Promise<void>;
     reload(): Promise<void>;
     getWindows(): InfinityMintWindow[];
-    getWindowById(id: string | Window): InfinityMintWindow | undefined;
-    getWindowByAge(name: string, oldest: boolean): InfinityMintWindow | undefined;
+    getWindowById(id: string | Window): InfinityMintWindow;
+    getWindowByAge(name: string, oldest: boolean): InfinityMintWindow;
     getWindowsByName(name: string): InfinityMintWindow[];
     addWindow(window: InfinityMintWindow): void;
     hasWindow: (window: InfinityMintWindow) => boolean;

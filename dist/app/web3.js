@@ -75,17 +75,20 @@ const getProvider = () => {
 };
 exports.getProvider = getProvider;
 const getNetworkSettings = (network) => {
-    return infinitymint_config_1.default?.settings?.networks[network] || {};
+    var _a;
+    return ((_a = infinitymint_config_1.default === null || infinitymint_config_1.default === void 0 ? void 0 : infinitymint_config_1.default.settings) === null || _a === void 0 ? void 0 : _a.networks[network]) || {};
 };
 exports.getNetworkSettings = getNetworkSettings;
 const getDefaultAccountIndex = () => {
-    return infinitymint_config_1.default?.settings?.networks[hardhat_1.default.network.name]?.defaultAccount || 0;
+    var _a, _b;
+    return ((_b = (_a = infinitymint_config_1.default === null || infinitymint_config_1.default === void 0 ? void 0 : infinitymint_config_1.default.settings) === null || _a === void 0 ? void 0 : _a.networks[hardhat_1.default.network.name]) === null || _b === void 0 ? void 0 : _b.defaultAccount) || 0;
 };
 exports.getDefaultAccountIndex = getDefaultAccountIndex;
 const registerNetworkPipes = () => {
     let networks = Object.keys(hardhat_1.default.config.networks);
     networks.forEach((network) => {
-        let settings = infinitymint_config_1.default?.settings?.networks[network] || {};
+        var _a;
+        let settings = ((_a = infinitymint_config_1.default === null || infinitymint_config_1.default === void 0 ? void 0 : infinitymint_config_1.default.settings) === null || _a === void 0 ? void 0 : _a.networks[network]) || {};
         if (settings.useDefaultPipe)
             return;
         (0, helpers_1.debugLog)("registered pipe for " + network);

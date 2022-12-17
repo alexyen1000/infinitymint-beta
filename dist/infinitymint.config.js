@@ -1,4 +1,5 @@
 "use strict";
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const helpers_1 = require("./app/helpers");
 //the session
@@ -20,7 +21,7 @@ const config = {
             ganache: {
                 url: "http://localhost:8545",
                 accounts: {
-                    mnemonic: session.environment?.ganacheMnemomic,
+                    mnemonic: (_a = session.environment) === null || _a === void 0 ? void 0 : _a.ganacheMnemomic,
                 },
             },
         },

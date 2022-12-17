@@ -82,7 +82,8 @@ class InfinityMintWindow {
         this.container = container;
     }
     async openWindow(name) {
-        this.container?.setWindow(name);
+        var _a;
+        (_a = this.container) === null || _a === void 0 ? void 0 : _a.setWindow(name);
     }
     getCreation() {
         return this.creation;
@@ -279,7 +280,8 @@ class InfinityMintWindow {
         this.getElement("frame").off(event, listener);
     }
     isVisible() {
-        return this.getElement("frame")?.hidden === false;
+        var _a;
+        return ((_a = this.getElement("frame")) === null || _a === void 0 ? void 0 : _a.hidden) === false;
     }
     async setFrameContent() {
         let defaultSigner = await (0, web3_1.getDefaultSigner)();

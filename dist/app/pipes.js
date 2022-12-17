@@ -92,28 +92,29 @@ const Pipes = new (class {
         delete this.logs[pipe.toString()];
     }
     registerPipe(key, process, options) {
+        var _a, _b, _c;
         let pipe = this.createPipe(key, options);
-        process.stdout?.on("data", (str) => {
+        (_a = process.stdout) === null || _a === void 0 ? void 0 : _a.on("data", (str) => {
             pipe.log(str);
         });
-        process.stderr?.on("data", (str) => {
+        (_b = process.stderr) === null || _b === void 0 ? void 0 : _b.on("data", (str) => {
             pipe.error(str);
         });
-        process.stdout?.on("end", (code) => {
+        (_c = process.stdout) === null || _c === void 0 ? void 0 : _c.on("end", (code) => {
             if (code === 1)
                 pipe.error("exited with code 1 probably error");
             pipe.log("execited with code: " + code);
-            if (options?.autoClose)
+            if (options === null || options === void 0 ? void 0 : options.autoClose)
                 this.closePipe(pipe);
         });
         return pipe;
     }
     createPipe(key, options) {
         this.logs[key] = new Pipe(key);
-        this.logs[key].save = options?.save || true;
-        this.logs[key].listen = options?.listen || false;
-        this.logs[key].appendDate = options?.appendDate || true;
-        if (this.currentPipe === "" || options?.setAsCurrentPipe)
+        this.logs[key].save = (options === null || options === void 0 ? void 0 : options.save) || true;
+        this.logs[key].listen = (options === null || options === void 0 ? void 0 : options.listen) || false;
+        this.logs[key].appendDate = (options === null || options === void 0 ? void 0 : options.appendDate) || true;
+        if (this.currentPipe === "" || (options === null || options === void 0 ? void 0 : options.setAsCurrentPipe))
             this.currentPipe = key;
         return this.logs[key];
     }

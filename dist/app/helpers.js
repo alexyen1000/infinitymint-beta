@@ -32,8 +32,9 @@ const readSession = () => {
 };
 exports.readSession = readSession;
 const getSolidityNamespace = () => {
+    var _a;
     let session = (0, exports.readSession)();
-    return (session.environment?.solidityNamespace ||
+    return (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.solidityNamespace) ||
         process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
         "alpha");
 };
@@ -58,7 +59,8 @@ const isEnvTrue = (key) => {
 };
 exports.isEnvTrue = isEnvTrue;
 const isEnvSet = (key) => {
-    return (process.env[key] !== undefined && process.env[key]?.trim().length !== 0);
+    var _a;
+    return (process.env[key] !== undefined && ((_a = process.env[key]) === null || _a === void 0 ? void 0 : _a.trim().length) !== 0);
 };
 exports.isEnvSet = isEnvSet;
 //# sourceMappingURL=helpers.js.map

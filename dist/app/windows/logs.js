@@ -63,6 +63,7 @@ Logs.think = (window, frame, blessed) => {
 };
 //initializes the console
 Logs.initialize = async (window, frame, blessed) => {
+    var _a;
     //load the options with default values
     window.loadOptions({
         alwaysScroll: true,
@@ -77,7 +78,7 @@ Logs.initialize = async (window, frame, blessed) => {
         height: "100%-8",
         padding: 1,
         top: 4,
-        label: `{bold}{white-fg}Pipe: {/white-fg}${window.options?.pipe || "undefined"}{/bold}`,
+        label: `{bold}{white-fg}Pipe: {/white-fg}${((_a = window.options) === null || _a === void 0 ? void 0 : _a.pipe) || "undefined"}{/bold}`,
         left: "center",
         keys: true,
         tags: true,
@@ -162,9 +163,10 @@ Logs.initialize = async (window, frame, blessed) => {
     }));
     gotoEnd.setFront();
     gotoEnd.on("click", () => {
+        var _a;
         console.setScroll(lastLength);
         window.options.selectedLine =
-            (pipes_1.default.logs[window.options.pipe]?.logs || [""]).length - 1;
+            (((_a = pipes_1.default.logs[window.options.pipe]) === null || _a === void 0 ? void 0 : _a.logs) || [""]).length - 1;
     });
     let gotoTop = window.registerElement("gotoTop", blessed.box({
         bottom: 0,
@@ -218,8 +220,9 @@ Logs.initialize = async (window, frame, blessed) => {
         },
     }));
     gotoSelected.on("click", () => {
+        var _a;
         let selectedLinePosition = [
-            ...(pipes_1.default.logs[window.options.pipe]?.logs || [""]),
+            ...(((_a = pipes_1.default.logs[window.options.pipe]) === null || _a === void 0 ? void 0 : _a.logs) || [""]),
         ]
             .slice(0, window.options.selectedLine)
             .join("\n")
@@ -340,14 +343,16 @@ Logs.initialize = async (window, frame, blessed) => {
         window.getScreen().unkey(["down", "s"]);
         if (onlyDelete !== true)
             window.getScreen().key(["down", "s"], (ch, key) => {
-                window.options.selectedLine = Math.min((pipes_1.default.logs[window.options.pipe]?.logs || [""]).length - 1, window.options.selectedLine + 1);
+                var _a;
+                window.options.selectedLine = Math.min((((_a = pipes_1.default.logs[window.options.pipe]) === null || _a === void 0 ? void 0 : _a.logs) || [""]).length - 1, window.options.selectedLine + 1);
             });
         //centers the scroll of the console to the selected line position when you do Control-Q
         window.getScreen().unkey(["C-q"]);
         if (onlyDelete !== true)
             window.getScreen().key(["C-q"], (ch, key) => {
+                var _a;
                 let selectedLinePosition = [
-                    ...(pipes_1.default.logs[window.options.pipe]?.logs || [""]),
+                    ...(((_a = pipes_1.default.logs[window.options.pipe]) === null || _a === void 0 ? void 0 : _a.logs) || [""]),
                 ]
                     .slice(0, window.options.selectedLine)
                     .join("\n")

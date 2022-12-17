@@ -43,9 +43,12 @@ const fs_1 = __importDefault(require("fs"));
 //export the interfaces app as default
 exports.Interfaces = __importStar(require("./app/interfaces"));
 exports.Web3Helpers = __importStar(require("./app/web3"));
+//used when running dist
+const RUN_INFINITYMINT = false;
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if (!Helpers.isEnvTrue("MODULE_MODE"))
+if (RUN_INFINITYMINT)
     (async () => {
+        var _a, _b;
         Helpers.log("starting infinitymint");
         let session = Helpers.readSession();
         Helpers.debugLog("printing hardhat tasks");
@@ -57,14 +60,14 @@ if (!Helpers.isEnvTrue("MODULE_MODE"))
         //register current network pipes
         (0, web3_1.registerNetworkPipes)();
         //start ganache
-        if (hardhat_1.default.config.networks?.ganache !== undefined &&
+        if (((_a = hardhat_1.default.config.networks) === null || _a === void 0 ? void 0 : _a.ganache) !== undefined &&
             Helpers.isEnvTrue("GANACHE_EXTERNAL")) {
             //check for ganache and mnemonic here
         }
-        else if (hardhat_1.default.config.networks?.ganache !== undefined) {
+        else if (((_b = hardhat_1.default.config.networks) === null || _b === void 0 ? void 0 : _b.ganache) !== undefined) {
             //ask if they want to start ganache
             //start ganache here
-            let obj = { ...infinitymint_config_1.default.ganache };
+            let obj = Object.assign({}, infinitymint_config_1.default.ganache);
             if (obj.wallet === undefined)
                 obj.wallet = {};
             if (session.environment.ganacheMnemomic === undefined)

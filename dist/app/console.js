@@ -73,7 +73,7 @@ class InfinityConsole {
         if (window.options.destroy)
             window.off("destroy", window.options.destroy);
         window.options.destroy = window.on("destroy", () => {
-            (0, helpers_1.debugLog)("destroyed window " + window?.name);
+            (0, helpers_1.debugLog)("destroyed window " + (window === null || window === void 0 ? void 0 : window.name));
             this.updateWindowsList();
         });
         //so we only fire once
@@ -189,17 +189,18 @@ class InfinityConsole {
         });
     }
     async initialize() {
+        var _a, _b, _c;
         if (this.network !== undefined)
             throw new Error("console already initialized");
         this.network = hardhat_1.default.network;
         let chainId = (await (0, web3_1.getProvider)().getNetwork()).chainId;
         (0, helpers_1.log)("initializing InfinityConsole chainId " +
-            (this.network.config?.chainId || chainId) +
+            (((_a = this.network.config) === null || _a === void 0 ? void 0 : _a.chainId) || chainId) +
             " network name " +
             this.network.name);
         try {
             //create the screen
-            this.screen = blessed.screen(this.options?.blessed || {
+            this.screen = blessed.screen(((_b = this.options) === null || _b === void 0 ? void 0 : _b.blessed) || {
                 smartCRS: true,
                 dockBorders: true,
             });
@@ -311,8 +312,9 @@ class InfinityConsole {
             });
             //when an item is selected form the list box, attempt to show or hide that Windoiw.
             this.windowManager.on("select", async (_el, selected) => {
+                var _a;
                 //disable the select if the current window is visible
-                if (this.currentWindow?.isVisible())
+                if ((_a = this.currentWindow) === null || _a === void 0 ? void 0 : _a.isVisible())
                     return;
                 //set the current window to the one that was selected
                 this.currentWindow = this.windows[selected];
@@ -352,13 +354,14 @@ class InfinityConsole {
             }, 33);
             //register escape key
             this.screen.key(["escape", "C-c"], (ch, key) => {
+                var _a, _b, _c;
                 this.windowManager.setBack();
-                if (this.currentWindow?.name !== "CloseBox") {
+                if (((_a = this.currentWindow) === null || _a === void 0 ? void 0 : _a.name) !== "CloseBox") {
                     let windows = this.getWindowsByName("CloseBox");
                     if (windows.length !== 0)
                         windows[0].options.currentWindow =
-                            this.currentWindow?.name;
-                    this.currentWindow?.openWindow("CloseBox");
+                            (_b = this.currentWindow) === null || _b === void 0 ? void 0 : _b.name;
+                    (_c = this.currentWindow) === null || _c === void 0 ? void 0 : _c.openWindow("CloseBox");
                     //if the closeBox aka the current window is visible and we press control-c again just exit
                 }
                 else {
@@ -370,27 +373,30 @@ class InfinityConsole {
             });
             //shows the logs
             this.screen.key(["C-l"], (ch, key) => {
-                if (this.currentWindow?.name !== "Logs")
+                var _a, _b;
+                if (((_a = this.currentWindow) === null || _a === void 0 ? void 0 : _a.name) !== "Logs")
                     this.screen.lastWindow = this.currentWindow;
-                this.currentWindow?.openWindow("Logs");
+                (_b = this.currentWindow) === null || _b === void 0 ? void 0 : _b.openWindow("Logs");
                 this.windowManager.setBack();
             });
             //shows the list
             this.screen.key(["C-z"], (ch, key) => {
+                var _a;
                 this.updateWindowsList();
-                this.currentWindow?.hide();
+                (_a = this.currentWindow) === null || _a === void 0 ? void 0 : _a.hide();
                 this.windowManager.show();
             });
             //restores the current window
             this.screen.key(["C-r"], (ch, key) => {
+                var _a, _b, _c;
                 if (this.screen.lastWindow !== undefined) {
-                    this.currentWindow?.hide();
+                    (_a = this.currentWindow) === null || _a === void 0 ? void 0 : _a.hide();
                     this.currentWindow = this.screen.lastWindow;
                     delete this.screen.lastWindow;
                 }
                 this.updateWindowsList();
-                if (this.windowManager?.hidden === false)
-                    this.currentWindow?.show();
+                if (((_b = this.windowManager) === null || _b === void 0 ? void 0 : _b.hidden) === false)
+                    (_c = this.currentWindow) === null || _c === void 0 ? void 0 : _c.show();
             });
             //render
             this.screen.render();
@@ -403,7 +409,7 @@ class InfinityConsole {
                 throw error;
             else {
                 this.screen.destroy();
-                this.screen = blessed.screen(this.options?.blessed || {
+                this.screen = blessed.screen(((_c = this.options) === null || _c === void 0 ? void 0 : _c.blessed) || {
                     smartCRS: true,
                     dockBorders: true,
                     debug: true,

@@ -26,8 +26,12 @@ export {
 export * as Interfaces from "./app/interfaces";
 export * as Web3Helpers from "./app/web3";
 
+//used when running dist
+const RUN_INFINITYMINT = false;
+
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if (!Helpers.isEnvTrue("MODULE_MODE"))
+
+if (RUN_INFINITYMINT)
 	(async () => {
 		Helpers.log("starting infinitymint");
 		let session = Helpers.readSession();

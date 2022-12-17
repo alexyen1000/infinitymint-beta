@@ -1,12 +1,12 @@
 {
 	"compilerOptions": {
-		"target": "ES2020",
+		"target": "ES2017",
 		"module": "commonjs",
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
 		"outDir": "./dist",
-		"strict": true,
+		"strict": false,
 		"allowJs": true,
 		"rootDirs": [
 			"./src",
@@ -21,7 +21,7 @@
 		},
 		"esModuleInterop": true
 	},
-	"exclude": ["dist", "node_modules"],
-	"include": ["./test", "./src", "./scripts", "./app", "./gems", "./deploy"],
+	"exclude": ["./dist", "./node_modules"],
+	"include": ["./test", "./src", "./scripts", "./app", "./deploy", "./gems"],
 	"files": ["./hardhat.config.ts", "./infinitymint.config.ts", "./index.ts"]
 }

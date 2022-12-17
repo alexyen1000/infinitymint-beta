@@ -8,8 +8,9 @@ const gem = {
     name: "Example Gem",
     deploy: async () => { },
     init: async (params) => {
+        var _a;
         //add the example window to the InfinityConsole
-        params?.console?.addWindow(new example_1.default());
+        (_a = params === null || params === void 0 ? void 0 : params.console) === null || _a === void 0 ? void 0 : _a.addWindow(new example_1.default());
     },
     setup: async () => { },
 };

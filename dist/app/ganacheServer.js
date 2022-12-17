@@ -20,8 +20,7 @@ const GanacheServer = new (class {
                 if (err)
                     throw err;
                 //creates a new ethers provider with the logger piping to ganache
-                let provider = new hardhat_1.ethers.providers.Web3Provider(ganache_1.default.provider({
-                    logging: {
+                let provider = new hardhat_1.ethers.providers.Web3Provider(ganache_1.default.provider(Object.assign({ logging: {
                         debug: true,
                         verbose: true,
                         logger: {
@@ -37,9 +36,7 @@ const GanacheServer = new (class {
                                     pipes_1.default.log(JSON.stringify(params, null, 2), "ganache");
                             },
                         },
-                    },
-                    ...options,
-                }));
+                    } }, options)));
                 this.provider = provider;
                 resolve(this.provider);
             });

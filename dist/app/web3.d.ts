@@ -16,6 +16,6 @@ export declare const getProvider: () => JsonRpcProvider;
 export declare const getNetworkSettings: (network: string) => import("./interfaces").InfinityMintConfigSettingsNetwork;
 export declare const getDefaultAccountIndex: () => number;
 export declare const registerNetworkPipes: () => void;
-export declare const getPrivateKeys: (mnemonic: any, walletLength?: number) => string[];
+export declare const getPrivateKeys: (mnemonic: any, walletLength?: number) => any[];
 export declare const startNetworkPipe: (provider?: Web3Provider | JsonRpcProvider | EthereumProvider, network?: any) => void;
 //# sourceMappingURL=web3.d.ts.map

@@ -2,6 +2,7 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const node_fs_1 = __importDefault(require("node:fs"));
@@ -53,18 +54,20 @@ if (!node_fs_1.default.existsSync("./infinitymint.config.ts")) {
 //overwrite console log
 let consoleLog = console.log;
 console.log = (msg, setPipe = true) => {
+    var _a;
     if (setPipe && pipes_1.default.logs[pipes_1.default.currentPipe] !== undefined)
         pipes_1.default.getPipe(pipes_1.default.currentPipe).logs.push(msg);
-    if (pipes_1.default.logs[pipes_1.default.currentPipe]?.listen)
+    if ((_a = pipes_1.default.logs[pipes_1.default.currentPipe]) === null || _a === void 0 ? void 0 : _a.listen)
         consoleLog(msg);
 };
 let consoleError = console.error;
 console.error = (error, setPipe = true) => {
+    var _a;
     if (setPipe && pipes_1.default.logs[pipes_1.default.currentPipe])
         pipes_1.default.getPipe(pipes_1.default.currentPipe).error(error);
     if ((0, helpers_1.isEnvTrue)("PIPE_NOTIFY_ERRORS"))
-        console.log("[error] " + error?.message);
-    if (pipes_1.default.logs[pipes_1.default.currentPipe]?.listen || (0, helpers_1.isEnvTrue)("PIPE_ECHO_ERRORS"))
+        console.log("[error] " + (error === null || error === void 0 ? void 0 : error.message));
+    if (((_a = pipes_1.default.logs[pipes_1.default.currentPipe]) === null || _a === void 0 ? void 0 : _a.listen) || (0, helpers_1.isEnvTrue)("PIPE_ECHO_ERRORS"))
         consoleError(error);
 };
 //will log console.log output to the default pipe
@@ -79,7 +82,7 @@ pipes_1.default.registerSimplePipe("debug", {
 let session = (0, helpers_1.readSession)();
 //if the ganache is not external and no mnemonic for ganache in the environment file then set one
 if ((0, helpers_1.isEnvTrue)("GANACHE_EXTERNAL") === false &&
-    session.environment?.ganacheMnemomic === undefined)
+    ((_a = session.environment) === null || _a === void 0 ? void 0 : _a.ganacheMnemomic) === undefined)
     session.environment.ganacheMnemomic = (0, bip39_1.generateMnemonic)();
 (0, helpers_1.debugLog)("saving .session file");
 (0, helpers_1.saveSession)(session);
@@ -88,8 +91,8 @@ const infinityMintConfig = require("./infinitymint.config").default;
 session = (0, helpers_1.readSession)();
 //fuck about with hardhat config
 infinityMintConfig.hardhat.defaultNetwork =
-    infinityMintConfig.hardhat?.defaultNetwork ||
-        session.environment?.defaultNetwork;
+    ((_b = infinityMintConfig.hardhat) === null || _b === void 0 ? void 0 : _b.defaultNetwork) ||
+        ((_c = session.environment) === null || _c === void 0 ? void 0 : _c.defaultNetwork);
 if (infinityMintConfig.hardhat.networks === undefined)
     infinityMintConfig.hardhat.networks = {};
 if (infinityMintConfig.hardhat.networks.localhost === undefined &&
@@ -122,7 +125,7 @@ if (process.env.INFINITYMINT_SOLIDITY_NAMESPACE !== undefined &&
         });
     }
     catch (error) {
-        (0, helpers_1.debugLog)("unable to delete folder: " + error?.message || error);
+        (0, helpers_1.debugLog)("unable to delete folder: " + (error === null || error === void 0 ? void 0 : error.message) || error);
     }
     session.environment.solidityNamespace =
         process.env.INFINITYMINT_SOLIDITY_NAMESPACE;

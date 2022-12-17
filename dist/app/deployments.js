@@ -56,13 +56,7 @@ class DeploymentScript {
         return this.source.permissions;
     }
     async execute(method, args) {
-        let params = {
-            ...args,
-            debugLog: helpers_1.debugLog,
-            log: helpers_1.log,
-            eventEmitter: this.emitter,
-            deploy: this,
-        };
+        let params = Object.assign(Object.assign({}, args), { debugLog: helpers_1.debugLog, log: helpers_1.log, eventEmitter: this.emitter, deploy: this });
         (0, helpers_1.debugLog)("executing method " + method + " on " + this.key);
         switch (method) {
             case "deploy":

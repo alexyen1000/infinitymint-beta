@@ -30,7 +30,7 @@ export declare class DeploymentScript {
     getIndex(): number;
     getSolidityNamespace(): string;
     getKey(): string;
-    getPermissions(): any[] | undefined;
+    getPermissions(): any[];
     execute(method: string, args: any): Promise<void>;
 }
 /**
