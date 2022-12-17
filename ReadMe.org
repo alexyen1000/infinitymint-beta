@@ -17,7 +17,7 @@ To do this, enter a =GANACHE_URL= within your =.env=.
 You might encounter an error regarding ESVP being unspported on your machine.
 To solve this, simply run the following in a terminal before you run nom start.
 
-=export NODE_OPTIONS=--openssl-legacy-provider=
+=export NODE_OPTIONS\=--openssl-legacy-provider=
 
 *** ⛔️ NODE_OPTIONS: --openssl-legacy-provider is invalid
 
@@ -31,6 +31,8 @@ You can use your arrow keys to navigate the menus and you can press enter to sel
 The default project will be set to /partytime/, a slightly complex InfinityMint project which shows off many of the features of the minter.
 You can deploy it via the =deploy_project= button.
 
+**** TODO Update users on the new IM UI.
+
 When you first deploy, InfinityMint will ask for a /export/ location.
 This is going to be either infinitymint or infinitymint-classic depending on what you cloned earlier in the installation phase.
 
@@ -41,6 +43,6 @@ The projects which are used by InfinityMint are stored in a a folder called /pro
 
 *** 🗿 Resources
 
-[https://docs.infinitymint.app[Official Documentation]]
+[https://docs.infinitymint.app][Official Documentation]
 
-[https://www.doxygen.nl/[DoxyGen Documentation]]
+[https://www.doxygen.nl/][DoxyGen Documentation]
