@@ -1,6 +1,12 @@
 {
 	"$schema": "https://typedoc.org/schema.json",
-	"entryPoints": ["app/*", "app/*/*", "scripts/*", "deploy/*/*"],
+	"entryPoints": [
+		"app/*",
+		"app/*/*",
+		"scripts/*",
+		"deploy/*/*",
+		"/gems/example/*/*"
+	],
 	"gitRemote": "origin",
 	"exclude": ["node_modules"],
 	"out": "docs"
