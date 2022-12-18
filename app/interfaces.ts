@@ -70,7 +70,7 @@ export interface InfinityMintProject {
 	 */
 	system?: Array<string>;
 	/**
-	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset controller` you are using.
+	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset, minter, royalty or random` solidity contract you are using.
 	 */
 	modules: InfinityMintProjectModules;
 	/**

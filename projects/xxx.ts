@@ -37,9 +37,6 @@ const profiles: InfinityMintProject = {
 				stickers: 20,
 			},
 		},
-		gems: {
-			redemptionTools: {},
-		},
 	},
 	paths: [
 		{
