@@ -27,8 +27,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Web3Helpers = exports.Interfaces = exports.ethers = exports.hre = exports.InfinityConsole = exports.Helpers = exports.GanacheServer = exports.InfinityMintConfig = void 0;
-const Helpers = __importStar(require("./app/helpers"));
-exports.Helpers = Helpers;
 const console_1 = __importDefault(require("./app/console"));
 exports.InfinityConsole = console_1.default;
 const hardhat_1 = __importStar(require("hardhat"));
@@ -40,18 +38,21 @@ exports.GanacheServer = ganacheServer_1.default;
 const infinitymint_config_1 = __importDefault(require("./infinitymint.config"));
 exports.InfinityMintConfig = infinitymint_config_1.default;
 const fs_1 = __importDefault(require("fs"));
+const helpers_1 = require("./app/helpers");
+const Helpers = __importStar(require("./app/helpers"));
+exports.Helpers = Helpers;
 //export the interfaces app as default
 exports.Interfaces = __importStar(require("./app/interfaces"));
 exports.Web3Helpers = __importStar(require("./app/web3"));
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if (Helpers.isEnvTrue("RUN_INFINITYMINT"))
+if ((0, helpers_1.isEnvTrue)("RUN_INFINITYMINT"))
     (async () => {
         var _a, _b;
-        Helpers.log("starting infinitymint");
-        let session = Helpers.readSession();
-        Helpers.debugLog("printing hardhat tasks");
+        (0, helpers_1.log)("starting infinitymint");
+        let session = (0, helpers_1.readSession)();
+        (0, helpers_1.debugLog)("printing hardhat tasks");
         Object.values(hardhat_1.default.tasks).forEach((task, index) => {
-            Helpers.debugLog(`[${index}] => ${task.name}`);
+            (0, helpers_1.debugLog)(`[${index}] => ${task.name}`);
         });
         if (!fs_1.default.existsSync("./artifacts"))
             await hardhat_1.default.run("compile");
@@ -59,7 +60,7 @@ if (Helpers.isEnvTrue("RUN_INFINITYMINT"))
         (0, web3_1.registerNetworkPipes)();
         //start ganache
         if (((_a = hardhat_1.default.config.networks) === null || _a === void 0 ? void 0 : _a.ganache) !== undefined &&
-            Helpers.isEnvTrue("GANACHE_EXTERNAL")) {
+            (0, helpers_1.isEnvTrue)("GANACHE_EXTERNAL")) {
             //check for ganache and mnemonic here
         }
         else if (((_b = hardhat_1.default.config.networks) === null || _b === void 0 ? void 0 : _b.ganache) !== undefined) {
@@ -71,38 +72,38 @@ if (Helpers.isEnvTrue("RUN_INFINITYMINT"))
             if (session.environment.ganacheMnemomic === undefined)
                 throw new Error("no ganache mnemonic");
             obj.wallet.mnemonic = session.environment.ganacheMnemomic;
-            Helpers.saveSession(session);
-            Helpers.debugLog("starting ganache with menomic of: " + obj.wallet.mnemonic);
+            (0, helpers_1.saveSession)(session);
+            (0, helpers_1.debugLog)("starting ganache with menomic of: " + obj.wallet.mnemonic);
             //get private keys and save them to file
             let keys = (0, web3_1.getPrivateKeys)(session.environment.ganacheMnemomic);
-            Helpers.debugLog("found " +
+            (0, helpers_1.debugLog)("found " +
                 keys.length +
                 " private keys for mnemonic: " +
                 session.environment.ganacheMnemomic);
             keys.forEach((key, index) => {
-                Helpers.debugLog(`[${index}] => ${key}`);
+                (0, helpers_1.debugLog)(`[${index}] => ${key}`);
             });
             session.environment.ganachePrivateKeys = keys;
-            Helpers.saveSession(session);
+            (0, helpers_1.saveSession)(session);
             let provider = await ganacheServer_1.default.start(obj);
             (0, web3_1.startNetworkPipe)(provider, "ganache");
         }
         else {
-            Helpers.debugLog("! WARNING ! no ganache network found");
+            (0, helpers_1.debugLog)("! WARNING ! no ganache network found");
         }
         let artifacts = hardhat_1.default.artifacts;
         let contracts = await artifacts.getAllFullyQualifiedNames();
-        Helpers.debugLog("found " + contracts.length + " compiled contracts");
+        (0, helpers_1.debugLog)("found " + contracts.length + " compiled contracts");
         contracts.forEach((contract, index) => {
             let split = contract.split(":");
-            Helpers.debugLog(`[${index}] => (${split[1]}) => ${split[0]}`);
+            (0, helpers_1.debugLog)(`[${index}] => (${split[1]}) => ${split[0]}`);
         });
         //start a network pipe if we aren't ganache as we do something different if we are
         if (hardhat_1.default.network.name !== "ganache")
             (0, web3_1.startNetworkPipe)();
         //initialize console
-        Helpers.debugLog("starting InfinityConsole with solidity namespace of " +
-            Helpers.getSolidityNamespace());
+        (0, helpers_1.debugLog)("starting InfinityConsole with solidity namespace of " +
+            (0, helpers_1.getSolidityNamespace)());
         let infinityConsole = new console_1.default();
         await infinityConsole.initialize();
     })().catch((error) => {

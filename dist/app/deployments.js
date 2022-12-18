@@ -76,9 +76,9 @@ exports.DeploymentScript = DeploymentScript;
  * @returns
  */
 const getDeploymentScripts = (root) => {
-    (0, helpers_1.debugLog)("finding deployment scripts in: " + root);
     return new Promise((resolve, reject) => {
         let filePath = (root || "./") + "deploy/**/*.ts";
+        (0, helpers_1.debugLog)("finding deployment scripts in: " + filePath);
         (0, glob_1.glob)(filePath, (err, matches) => {
             if (err)
                 throw err;
