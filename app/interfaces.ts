@@ -587,7 +587,7 @@ export interface InfinityMintConfigSettings extends Dictionary<any> {
 	/**
 	 * Configure InfinityMints deploy stage here.
 	 *
-	 * @see {@link InfinityMintConfigSettingsDeploy}
+	 * @see {@link InfinityMintConfigSettingsBuild}
 	 */
 	build?: InfinityMintConfigSettingsBuild;
 	/**
