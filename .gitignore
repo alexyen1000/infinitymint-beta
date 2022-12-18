@@ -14,6 +14,9 @@ infinitymint.config.ts
 .session
 /gems/__*
 /gems/@*
+/alpha/__gems/
+/beta/__gems/
+/*/__gems/
 
 # Node
 package-lock.json
