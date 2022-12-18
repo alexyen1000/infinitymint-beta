@@ -83,7 +83,8 @@ const initializeInfinitymintConfig = () => {
             throw new Error("cannot use node modules in InfinityMint package");
         if (!fs_extra_1.default.existsSync("./../node_modules/infinitymint/"))
             throw new Error("please npm i infinitymint");
-        if (fs_extra_1.default.existsSync("./../" + session.environment.solidityNamespace))
+        if (fs_extra_1.default.existsSync("./../" + session.environment.solidityNamespace) &&
+            (0, exports.isEnvTrue)("SOLIDITY_CLEAN_NAMESPACE"))
             fs_extra_1.default.rmdirSync("./../" + session.environment.solidityNamespace, {
                 recursive: true,
                 force: true,

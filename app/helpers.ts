@@ -186,7 +186,10 @@ export const initializeInfinitymintConfig = () => {
 		if (!fs.existsSync("./../node_modules/infinitymint/"))
 			throw new Error("please npm i infinitymint");
 
-		if (fs.existsSync("./../" + session.environment.solidityNamespace))
+		if (
+			fs.existsSync("./../" + session.environment.solidityNamespace) &&
+			isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")
+		)
 			fs.rmdirSync("./../" + session.environment.solidityNamespace, {
 				recursive: true,
 				force: true,
