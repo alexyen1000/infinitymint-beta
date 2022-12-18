@@ -8,8 +8,7 @@
 		"test": "tests"
 	},
 	"_moduleAliases": {
-		"@app": "dist/app/",
-		"@infinitymint": "dist/"
+		"@app": "dist/app/"
 	},
 	"scripts": {
 		"test": "mocha",

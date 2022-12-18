@@ -10,8 +10,7 @@
 		"allowJs": true,
 		"rootDirs": ["./scripts", "./test", "./app", "./gems", "./deploy"],
 		"paths": {
-			"@app/*": ["./app/*"],
-			"@infinitymint/*": ["./*"]
+			"@app/*": ["./app/*"]
 		},
 		"esModuleInterop": true
 	},

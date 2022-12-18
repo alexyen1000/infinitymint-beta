@@ -1,10 +1,8 @@
-import { LogLevel } from "@ethersproject/logger";
 import { Web3Provider } from "@ethersproject/providers";
 import ganache, { Server, ServerOptions } from "ganache";
 import hre, { ethers } from "hardhat";
 import { debugLog, log, readSession } from "./helpers";
 import Pipes from "./pipes";
-import { startNetworkPipe } from "./web3";
 
 export class GanacheServer {
 	public server?: Server;
