@@ -149,9 +149,14 @@ export const overwriteConsoleMethods = () => {
 	};
 };
 
+/**
+ * Returns safely the infinity mint config file
+ * @returns
+ */
 export const getConfigFile = () => {
-	return require(process.cwd() + "/infinitymint.config")
-		.default as InfinityMintConfig;
+	let res = require(process.cwd() + "/infinitymint.config");
+	res = res.default || res;
+	return res as InfinityMintConfig;
 };
 
 /**
@@ -185,8 +190,9 @@ export const initializeInfinitymintConfig = () => {
 	let solidityModuleFolder =
 		process.cwd() +
 		"/node_modules/infinitymint/" +
-		process.env.SOLIDITY_NAMESPACE;
-	let solidityFolder = process.cwd() + "/" + process.env.SOLIDITY_NAMESPACE;
+		(process.env.SOLIDITY_NAMESPACE || "alpha");
+	let solidityFolder =
+		process.cwd() + "/" + (process.env.SOLIDITY_NAMESPACE || "alpha");
 
 	if (isEnvTrue("SOLIDITY_USE_NODE_MODULE")) {
 		if (
@@ -223,10 +229,9 @@ export const initializeInfinitymintConfig = () => {
 
 	//delete artifacts folder if namespace changes
 	if (
-		process.env.INFINITYMINT_SOLIDITY_NAMESPACE !== undefined &&
+		process.env.SOLIDITY_NAMESPACE !== undefined &&
 		session.environment.solidityNamespace !== undefined &&
-		session.environment.solidityNamespace !==
-			process.env.INFINITYMINT_SOLIDITY_NAMESPACE
+		session.environment.solidityNamespace !== process.env.SOLIDITY_NAMESPACE
 	) {
 		try {
 			debugLog("removing ./artifacts");
@@ -248,14 +253,13 @@ export const initializeInfinitymintConfig = () => {
 			debugLog("unable to delete folder: " + error?.message || error);
 		}
 
-		session.environment.solidityNamespace =
-			process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
+		session.environment.solidityNamespace = process.env.SOLIDITY_NAMESPACE;
 	}
 
 	//set the solidity namespace
 	if (session.environment.solidityNamespace === undefined)
 		session.environment.solidityNamespace =
-			process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
+			process.env.SOLIDITY_NAMESPACE || "alpha";
 
 	saveSession(session);
 	return infinityMintConfig as InfinityMintConfig;
@@ -393,7 +397,7 @@ export const getSolidityNamespace = () => {
 
 	return (
 		session.environment?.solidityNamespace ||
-		process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
+		process.env.SOLIDITY_NAMESPACE ||
 		"alpha"
 	);
 };

@@ -81,6 +81,10 @@ export declare const log: (msg: string, pipe?: string) => void;
 export declare const debugLog: (msg: string) => void;
 export declare const readSession: () => InfinityMintSession;
 export declare const overwriteConsoleMethods: () => void;
+/**
+ * Returns safely the infinity mint config file
+ * @returns
+ */
 export declare const getConfigFile: () => InfinityMintConfig;
 /**
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.

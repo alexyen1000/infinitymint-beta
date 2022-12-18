@@ -58,9 +58,14 @@ const overwriteConsoleMethods = () => {
     };
 };
 exports.overwriteConsoleMethods = overwriteConsoleMethods;
+/**
+ * Returns safely the infinity mint config file
+ * @returns
+ */
 const getConfigFile = () => {
-    return require(process.cwd() + "/infinitymint.config")
-        .default;
+    let res = require(process.cwd() + "/infinitymint.config");
+    res = res.default || res;
+    return res;
 };
 exports.getConfigFile = getConfigFile;
 /**
@@ -87,8 +92,8 @@ const initializeInfinitymintConfig = () => {
     //do
     let solidityModuleFolder = process.cwd() +
         "/node_modules/infinitymint/" +
-        process.env.SOLIDITY_NAMESPACE;
-    let solidityFolder = process.cwd() + "/" + process.env.SOLIDITY_NAMESPACE;
+        (process.env.SOLIDITY_NAMESPACE || "alpha");
+    let solidityFolder = process.cwd() + "/" + (process.env.SOLIDITY_NAMESPACE || "alpha");
     if ((0, exports.isEnvTrue)("SOLIDITY_USE_NODE_MODULE")) {
         if (fs_1.default.existsSync(process.cwd() + "/package.json") &&
             (0, exports.readJson)(process.cwd() + "/package.json").name === "infinitymint")
@@ -110,10 +115,9 @@ const initializeInfinitymintConfig = () => {
     //set the sources
     infinityMintConfig.hardhat.paths.sources = solidityFolder;
     //delete artifacts folder if namespace changes
-    if (process.env.INFINITYMINT_SOLIDITY_NAMESPACE !== undefined &&
+    if (process.env.SOLIDITY_NAMESPACE !== undefined &&
         session.environment.solidityNamespace !== undefined &&
-        session.environment.solidityNamespace !==
-            process.env.INFINITYMINT_SOLIDITY_NAMESPACE) {
+        session.environment.solidityNamespace !== process.env.SOLIDITY_NAMESPACE) {
         try {
             (0, exports.debugLog)("removing ./artifacts");
             fs_1.default.rmdirSync(process.cwd() + "/artifacts", {
@@ -134,13 +138,12 @@ const initializeInfinitymintConfig = () => {
         catch (error) {
             (0, exports.debugLog)("unable to delete folder: " + (error === null || error === void 0 ? void 0 : error.message) || error);
         }
-        session.environment.solidityNamespace =
-            process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
+        session.environment.solidityNamespace = process.env.SOLIDITY_NAMESPACE;
     }
     //set the solidity namespace
     if (session.environment.solidityNamespace === undefined)
         session.environment.solidityNamespace =
-            process.env.INFINITYMINT_SOLIDITY_NAMESPACE;
+            process.env.SOLIDITY_NAMESPACE || "alpha";
     (0, exports.saveSession)(session);
     return infinityMintConfig;
 };
@@ -255,7 +258,7 @@ const getSolidityNamespace = () => {
     var _a;
     let session = (0, exports.readSession)();
     return (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.solidityNamespace) ||
-        process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
+        process.env.SOLIDITY_NAMESPACE ||
         "alpha");
 };
 exports.getSolidityNamespace = getSolidityNamespace;

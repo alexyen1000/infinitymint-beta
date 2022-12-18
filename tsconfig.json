@@ -16,5 +16,5 @@
 	},
 	"exclude": ["./dist", "./node_modules", "gems/__", "./gems/__cache"],
 	"include": ["./test", "./src", "./scripts", "./app", "./deploy", "./gems"],
-	"files": ["./hardhat.config.ts", "./infinitymint.config.ts", "./index.ts"]
+	"files": ["./hardhat.config.ts", "./index.ts"]
 }
