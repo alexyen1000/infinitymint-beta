@@ -7,7 +7,10 @@ import { debugLog, log } from "./helpers";
 import { glob } from "glob";
 import path from "path";
 
-export class DeploymentScript {
+/**
+ * Deployment class for InfinityMint deployments
+ */
+export class InfinityMintDeployment {
 	protected emitter: EventEmitter;
 	protected source: InfinityMintDeploymentScript;
 	protected sourceFile: string;
@@ -97,7 +100,7 @@ export class DeploymentScript {
  */
 export const getDeploymentScripts = (
 	root?: string
-): Promise<DeploymentScript[]> => {
+): Promise<InfinityMintDeployment[]> => {
 	return new Promise((resolve, reject) => {
 		let filePath = (root || "./") + "deploy/**/*.ts";
 		debugLog("finding deployment scripts in: " + filePath);
@@ -115,7 +118,7 @@ export const getDeploymentScripts = (
 					let key = path.parse(match).name;
 					debugLog(`[${index}] => ${key}:(${match})`);
 
-					return new DeploymentScript(match, key);
+					return new InfinityMintDeployment(match, key);
 				})
 			);
 		});

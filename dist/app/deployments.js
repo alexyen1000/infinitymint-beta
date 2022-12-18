@@ -3,12 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDeploymentScripts = exports.DeploymentScript = void 0;
+exports.getDeploymentScripts = exports.InfinityMintDeployment = void 0;
 const events_1 = __importDefault(require("events"));
 const helpers_1 = require("./helpers");
 const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
-class DeploymentScript {
+/**
+ * Deployment class for InfinityMint deployments
+ */
+class InfinityMintDeployment {
     constructor(sourceFile, key) {
         this.emitter = new events_1.default.EventEmitter();
         this.source = require("./../" + sourceFile)
@@ -70,7 +73,7 @@ class DeploymentScript {
         }
     }
 }
-exports.DeploymentScript = DeploymentScript;
+exports.InfinityMintDeployment = InfinityMintDeployment;
 /**
  * Returns a list of all the deployment scripts
  * @returns
@@ -89,7 +92,7 @@ const getDeploymentScripts = (root) => {
             resolve(matches.map((match, index) => {
                 let key = path_1.default.parse(match).name;
                 (0, helpers_1.debugLog)(`[${index}] => ${key}:(${match})`);
-                return new DeploymentScript(match, key);
+                return new InfinityMintDeployment(match, key);
             }));
         });
     });

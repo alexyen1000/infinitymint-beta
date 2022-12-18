@@ -1,7 +1,10 @@
 /// <reference types="node" />
 import events, { EventEmitter } from "events";
 import { InfinityMintDeploymentScript } from "./interfaces";
-export declare class DeploymentScript {
+/**
+ * Deployment class for InfinityMint deployments
+ */
+export declare class InfinityMintDeployment {
     protected emitter: EventEmitter;
     protected source: InfinityMintDeploymentScript;
     protected sourceFile: string;
@@ -37,5 +40,5 @@ export declare class DeploymentScript {
  * Returns a list of all the deployment scripts
  * @returns
  */
-export declare const getDeploymentScripts: (root?: string) => Promise<DeploymentScript[]>;
+export declare const getDeploymentScripts: (root?: string) => Promise<InfinityMintDeployment[]>;
 //# sourceMappingURL=deployments.d.ts.map

@@ -4,7 +4,6 @@ import { HardhatUserConfig } from "hardhat/types";
 import { FuncSingle } from "./helpers";
 import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
-import { DeploymentScript } from "./deployments";
 import InfinityConsole from "./console";
 
 /**
@@ -50,7 +49,7 @@ export interface InfinityMintApplicationConfig {
 /**
  * The infinitymint project is responsible for holding the paths, assets and other information relating to the project. You can set which modules are used in the creation of the minter, along with other specific settings relating to the project. Each project is stored inside of the `./projects/` in the root of where ever InfinityMint is run.
  *
- * @see {@link InfinityMintDeployment}
+ * @see {@link InfinityMintDeploymentLive}
  * @see {@link InfinityMintProjectModules}
  * @see {@link InfinityMintProjectAsset}
  * @see {@link InfinityMintProjectPath}
@@ -64,7 +63,7 @@ export interface InfinityMintProject {
 	/**
 	 * custom infinityLinks which can be linked to the token
 	 */
-	infinityLinks?: Array<InfinityMintProjectSettingsLink>;
+	links?: Array<InfinityMintProjectSettingsLink>;
 	/**
 	 * specificy other projects by name to have them deploy along side this minter and be packed together into the export location.
 	 */
@@ -134,13 +133,13 @@ export interface InfinityMintProject {
 	/**
 	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well.
 	 *
-	 * @see {@link InfinityMintDeployment}
+	 * @see {@link InfinityMintDeploymentLive}
 	 */
-	contracts?: Dictionary<InfinityMintDeployment>;
+	contracts?: Dictionary<InfinityMintDeploymentLive>;
 	/**
 	 * Used in keeping track of temporary projects which fail in their deployment. keeps track of stages we have passed so we can continue where we left off if anything goes wrong.
 	 */
-	stages?: any;
+	stages?: Dictionary<any>;
 	/**
 	 * if this is a deployed project or not
 	 */
@@ -405,7 +404,7 @@ export interface InfinityMintProjectSettings {
  * The InfinityMint project modules are the solidity files InfinityMint will use for its token creation and royalty distribution. Here is where you can change what is used in each step of the InfinityMint chain. The assets key controls what type of content will be minted based on what type of content it is (svg, image, sound). The minter controls how to talk to the asset controller, and if the user needs to specify which path they would like or if it should be random or if it should be only one specific path id until you say anything different. The royalty controller will control who is paid what for what ever happens inside of the minter. From mints, to things that gems do the royalty controller decides how any incoming money will be split accordingly. The random controller decides how InfinityMint obtains its random numbers which it uses in the mint process. You can use VCF randomness with chainlink here or use keccack256 randomisation but beware of the security risks of doing so.
  *
  * @see {@link InfinityMintProjectSettings}
- * @see {@link InfinityMintDeployment}
+ * @see {@link InfinityMintDeploymentLive}
  */
 export interface InfinityMintProjectModules {
 	/**
@@ -582,7 +581,7 @@ export interface InfinityMintConfigSettings extends Dictionary<any> {
 	 * Configure InfinityMints deploy stage here.
 	 *
 	 * @see {@link InfinityMintConfigSettingsDeploy}
-	 * @see {@link InfinityMintDeployment}
+	 * @see {@link InfinityMintDeploymentLive}
 	 */
 	deploy?: InfinityMintConfigSettingsDeploy;
 	/**
@@ -625,12 +624,22 @@ export interface InfinityMintScriptParameters extends Dictionary<any> {
 	debugLog: FuncSingle<string, void>;
 }
 
+/**
+ * Parameters which are passed into every deploy script. See {@link InfinityMintDeploymentScript}
+ */
 export interface InfinityMintDeploymentParameters extends Dictionary<any> {
+	/**
+	 * Returns true if this deployment has been set up or not.
+	 *
+	 * @defautValue false
+	 */
 	setup?: boolean;
 	console?: InfinityConsole;
 	eventEmitter?: EventEmitter;
-	deployments?: Dictionary<any>;
-	deploy?: DeploymentScript;
+	/**
+	 * Contains a list of current live deployments up to this deployment.
+	 */
+	deployments?: Dictionary<InfinityMintDeploymentLive>;
 	log: FuncSingle<string, void>;
 	debugLog: FuncSingle<string, void>;
 }
@@ -641,7 +650,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
  *
  * @see {@link InfinityMintDeploymentScript}
  */
-export interface InfinityMintDeployment extends Dictionary<any> {
+export interface InfinityMintDeploymentLive extends Dictionary<any> {
 	/**
 	 *  The abi of the current dpeloyment.
 	 */
@@ -689,7 +698,7 @@ export interface InfinityMintDeployment extends Dictionary<any> {
 /**
  * This is the interface which should be returned from all deployment scripts inside of the `./deploy` folder.
  *
- * @see {@link InfinityMintDeployment}
+ * @see {@link InfinityMintDeploymentLive}
  */
 export interface InfinityMintDeploymentScript {
 	/**
@@ -733,7 +742,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * the key is the module name (see {@link InfinityMintProjectModules}) which is the name of the deployment script, or the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can pull this contract through code. Can be set to a custom value or left to be worked out.
 	 *
-	 * @see {@link InfinityMintDeployment}
+	 * @see {@link InfinityMintDeploymentLive}
 	 */
 	key?: string;
 	/**
