@@ -95,13 +95,21 @@ export class DeploymentScript {
  * Returns a list of all the deployment scripts
  * @returns
  */
-export const getDeploymentScripts = (): Promise<DeploymentScript[]> => {
-	debugLog("finding deployment scripts in ./deploy");
+export const getDeploymentScripts = (
+	root?: string
+): Promise<DeploymentScript[]> => {
+	debugLog("finding deployment scripts in: " + root);
 	return new Promise((resolve, reject) => {
-		glob("./deploy/**/*.ts", (err: Error | null, matches: any[]) => {
+		let filePath = (root || "./") + "deploy/**/*.ts";
+		glob(filePath, (err: Error | null, matches: any[]) => {
 			if (err) throw err;
 
-			debugLog("found " + matches.length + " deployment scripts");
+			debugLog(
+				"found " +
+					matches.length +
+					" deployment scripts in: " +
+					filePath
+			);
 			resolve(
 				matches.map((match, index) => {
 					let key = path.parse(match).name;

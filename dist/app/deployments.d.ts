@@ -37,5 +37,5 @@ export declare class DeploymentScript {
  * Returns a list of all the deployment scripts
  * @returns
  */
-export declare const getDeploymentScripts: () => Promise<DeploymentScript[]>;
+export declare const getDeploymentScripts: (root?: string) => Promise<DeploymentScript[]>;
 //# sourceMappingURL=deployments.d.ts.map

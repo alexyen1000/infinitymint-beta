@@ -75,13 +75,17 @@ exports.DeploymentScript = DeploymentScript;
  * Returns a list of all the deployment scripts
  * @returns
  */
-const getDeploymentScripts = () => {
-    (0, helpers_1.debugLog)("finding deployment scripts in ./deploy");
+const getDeploymentScripts = (root) => {
+    (0, helpers_1.debugLog)("finding deployment scripts in: " + root);
     return new Promise((resolve, reject) => {
-        (0, glob_1.glob)("./deploy/**/*.ts", (err, matches) => {
+        let filePath = (root || "./") + "deploy/**/*.ts";
+        (0, glob_1.glob)(filePath, (err, matches) => {
             if (err)
                 throw err;
-            (0, helpers_1.debugLog)("found " + matches.length + " deployment scripts");
+            (0, helpers_1.debugLog)("found " +
+                matches.length +
+                " deployment scripts in: " +
+                filePath);
             resolve(matches.map((match, index) => {
                 let key = path_1.default.parse(match).name;
                 (0, helpers_1.debugLog)(`[${index}] => ${key}:(${match})`);

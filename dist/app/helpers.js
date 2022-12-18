@@ -148,8 +148,8 @@ const initializeInfinitymintConfig = () => {
     return infinityMintConfig;
 };
 exports.initializeInfinitymintConfig = initializeInfinitymintConfig;
-const loadInfinityMint = () => {
-    (0, exports.createInfinityMintConfig)();
+const loadInfinityMint = (useJavascript) => {
+    (0, exports.createInfinityMintConfig)(useJavascript);
     (0, exports.preInitialize)();
     (0, exports.initializeGanacheMnemonic)();
     (0, exports.overwriteConsoleMethods)();
@@ -159,8 +159,14 @@ const preInitialize = () => {
     //if there is no temp folder, make it.
     if (!fs_extra_1.default.existsSync("./temp"))
         fs_extra_1.default.mkdirSync("./temp");
+    //if there is no temp folder, make it.
+    if (!fs_extra_1.default.existsSync("./projects"))
+        fs_extra_1.default.mkdirSync("./projects");
+    //if there is no temp folder, make it.
+    if (!fs_extra_1.default.existsSync("./gems"))
+        fs_extra_1.default.mkdirSync("./gems");
     //copy the .env file from example if there is none
-    if (!fs_extra_1.default.existsSync("./.env"))
+    if (!fs_extra_1.default.existsSync("./.env") && fs_extra_1.default.existsSync("./.env.example"))
         fs_extra_1.default.copyFileSync("./.env.example", "./.env");
     //will log console.log output to the default pipe
     if ((0, exports.isEnvTrue)("PIPE_ECHO_DEFAULT"))
@@ -184,7 +190,7 @@ const initializeGanacheMnemonic = () => {
     return (_b = session.environment) === null || _b === void 0 ? void 0 : _b.ganacheMnemomic;
 };
 exports.initializeGanacheMnemonic = initializeGanacheMnemonic;
-const createInfinityMintConfig = () => {
+const createInfinityMintConfig = (useJavascript) => {
     let config = {
         solidity: {
             version: "0.8.12",
@@ -199,18 +205,29 @@ const createInfinityMintConfig = () => {
             tests: "./tests",
         },
     };
-    //check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
-    if (!fs_extra_1.default.existsSync("./infinitymint.config.ts")) {
-        let stub = `\n
+    let filename = useJavascript
+        ? "./infinitymint.config.js"
+        : "./infinitymint.config.ts";
+    let stub = useJavascript
+        ? `\n
+		const { InfinityMintConfig } = require("./app/config");
+
+		//please visit docs.infinitymint.app for a more complete starter configuration file
+		const config = {
+			hardhat: ${JSON.stringify(config, null, 2)}
+		}
+		module.exports = config;`
+        : `\n
 		import { InfinityMintConfig } from "./app/config";
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config: InfinityMintConfig = {
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
-		export default config;
-	`;
-        fs_extra_1.default.writeFileSync("./infinitymint.config.ts", stub);
+		export default config;`;
+    //check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
+    if (!fs_extra_1.default.existsSync(filename)) {
+        fs_extra_1.default.writeFileSync(filename, stub);
     }
 };
 exports.createInfinityMintConfig = createInfinityMintConfig;

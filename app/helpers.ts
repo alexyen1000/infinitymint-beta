@@ -282,6 +282,10 @@ export const loadInfinityMint = (useJavascript?: boolean) => {
 export const preInitialize = () => {
 	//if there is no temp folder, make it.
 	if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
+	//if there is no temp folder, make it.
+	if (!fs.existsSync("./projects")) fs.mkdirSync("./projects");
+	//if there is no temp folder, make it.
+	if (!fs.existsSync("./gems")) fs.mkdirSync("./gems");
 	//copy the .env file from example if there is none
 	if (!fs.existsSync("./.env") && fs.existsSync("./.env.example"))
 		fs.copyFileSync("./.env.example", "./.env");
