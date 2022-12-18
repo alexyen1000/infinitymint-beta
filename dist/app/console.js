@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.InfinityConsole = void 0;
 const helpers_1 = require("./helpers");
 const hardhat_1 = __importDefault(require("hardhat"));
 const web3_1 = require("./web3");
@@ -426,5 +427,6 @@ class InfinityConsole {
         }
     }
 }
+exports.InfinityConsole = InfinityConsole;
 exports.default = InfinityConsole;
 //# sourceMappingURL=console.js.map

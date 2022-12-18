@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.GanacheServer = void 0;
 const ganache_1 = __importDefault(require("ganache"));
 const hardhat_1 = require("hardhat");
 const helpers_1 = require("./helpers");
 const pipes_1 = __importDefault(require("./pipes"));
-const GanacheServer = new (class {
+class GanacheServer {
     start(options, port) {
         return new Promise((resolve, reject) => {
             let session = (0, helpers_1.readSession)();
@@ -47,6 +48,7 @@ const GanacheServer = new (class {
             throw new Error("invalid ethers provider");
         return this.provider;
     }
-})();
-exports.default = GanacheServer;
+}
+exports.GanacheServer = GanacheServer;
+exports.default = new GanacheServer();
 //# sourceMappingURL=ganacheServer.js.map

@@ -1,7 +1,7 @@
 import { InfinityMintConsole } from "./interfaces";
 import { InfinityMintWindow } from "./window";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-export default class InfinityConsole {
+export declare class InfinityConsole {
     private screen;
     private options?;
     protected currentWindow?: InfinityMintWindow;
@@ -29,4 +29,5 @@ export default class InfinityConsole {
     errorHandler(error: Error | unknown): void;
     initialize(): Promise<void>;
 }
+export default InfinityConsole;
 //# sourceMappingURL=console.d.ts.map

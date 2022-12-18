@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Pipes = void 0;
+exports.Pipes = exports.Pipe = void 0;
 /**
  * The log pipe class
  */
@@ -45,10 +45,11 @@ class Pipe {
         this.errorHandler(error);
     }
 }
+exports.Pipe = Pipe;
 /**
  * Logging factory class
  */
-exports.Pipes = new (class {
+class Pipes {
     constructor() {
         this.logs = {};
         this.currentPipe = "default";
@@ -122,6 +123,7 @@ exports.Pipes = new (class {
             this.currentPipe = key;
         return this.logs[key];
     }
-})();
-exports.default = exports.Pipes;
+}
+exports.Pipes = Pipes;
+exports.default = new Pipes();
 //# sourceMappingURL=pipes.js.map
