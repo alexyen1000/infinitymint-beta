@@ -16,6 +16,9 @@
 <li><a href="../modules/app_interfaces.html">app/interfaces</a></li>
 <li><a href="app_interfaces.InfinityMintProjectContent.html">InfinityMintProjectContent</a></li></ul>
 <h1>Interface InfinityMintProjectContent</h1></div>
+<section class="tsd-panel tsd-comment">
+<div class="tsd-comment tsd-typography"><p>InfinityMint paths are what the minter will use when rendering your token. For each path you define is a different apperance the token can take. Inside the project file you can set options (see <a href="app_interfaces.InfinityMintProjectSettingsAssets.html">InfinityMintProjectSettingsAssets</a>) for how the paths will be picked. For each path you have to specify its name and the fileName to use. You can also specify if it is encrypted.</p>
+</div></section>
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
@@ -23,7 +26,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">InfinityMintProjectContent</span></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L459">app/interfaces.ts:459</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L483">app/interfaces.ts:483</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -47,68 +50,79 @@
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="content" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>content</span><a href="#content" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></h3>
-<div class="tsd-signature">content<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Dictionary</span><span class="tsd-signature-symbol">&lt;</span><a href="app_interfaces.InfinityMintProjectContent.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectContent</a><span class="tsd-signature-symbol">&gt;</span></div><aside class="tsd-sources">
+<div class="tsd-signature">content<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Dictionary</span><span class="tsd-signature-symbol">&lt;</span><a href="app_interfaces.InfinityMintProjectContent.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectContent</a><span class="tsd-signature-symbol">&gt;</span></div>
+<div class="tsd-comment tsd-typography"><p>Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.</p>
+
+<h3>Example</h3><pre><code class="language-js"><br/><span class="hl-0">    </span><span class="hl-1">content</span><span class="hl-0">: {</span><br/><span class="hl-0">        </span><span class="hl-1">myContent</span><span class="hl-0">: {</span><br/><span class="hl-0">            </span><span class="hl-1">name</span><span class="hl-0">: </span><span class="hl-4">&#39;3d&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">            </span><span class="hl-1">fileName</span><span class="hl-0">: </span><span class="hl-4">&#39;@import/3d/file.obj&#39;</span><br/><span class="hl-0">        }</span><br/><span class="hl-0">}</span>
+</code></pre>
+</div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#content">content</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L454">app/interfaces.ts:454</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L470">app/interfaces.ts:470</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="data" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>data</span><a href="#data" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">data<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Dictionary</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#data">data</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L450">app/interfaces.ts:450</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L453">app/interfaces.ts:453</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="description" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>description</span><a href="#description" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">description<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#description">description</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L453">app/interfaces.ts:453</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L456">app/interfaces.ts:456</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="encrypted" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>encrypted</span><a href="#encrypted" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">encrypted<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div><aside class="tsd-sources">
+<div class="tsd-signature">encrypted<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
+<div class="tsd-comment tsd-typography"><p>Uses AE2 encryption. Note when using encryption you must find a way to send the decryption key to the token holder.</p>
+
+<h3>Default Value</h3><p>false</p>
+</div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#encrypted">encrypted</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L456">app/interfaces.ts:456</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L480">app/interfaces.ts:480</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="export" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>export</span><a href="#export" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<div class="tsd-signature">export<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectPathExport.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectPathExport</a></div><aside class="tsd-sources">
+<div class="tsd-signature">export<span class="tsd-signature-symbol">?:</span> <a href="app_interfaces.InfinityMintProjectPathExport.html" class="tsd-signature-type" data-tsd-kind="Interface">InfinityMintProjectPathExport</a></div>
+<div class="tsd-comment tsd-typography"><p>When the path has been exported this is filled.</p>
+</div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#export">export</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L455">app/interfaces.ts:455</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L474">app/interfaces.ts:474</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="fileName" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>file<wbr/>Name</span><a href="#fileName" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">file<wbr/>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#fileName">fileName</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L449">app/interfaces.ts:449</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L452">app/interfaces.ts:452</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="key" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>key</span><a href="#key" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">key<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#key">key</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L451">app/interfaces.ts:451</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L454">app/interfaces.ts:454</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="name" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>name</span><a href="#name" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#name">name</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L448">app/interfaces.ts:448</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L451">app/interfaces.ts:451</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="onlyApproved" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>only<wbr/>Approved</span><a href="#onlyApproved" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">only<wbr/>Approved<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L461">app/interfaces.ts:461</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L485">app/interfaces.ts:485</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="onlyOwners" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>only<wbr/>Owners</span><a href="#onlyOwners" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">only<wbr/>Owners<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L460">app/interfaces.ts:460</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L484">app/interfaces.ts:484</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a id="settings" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>settings</span><a href="#settings" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">settings<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Dictionary</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div><aside class="tsd-sources">
 <p>Inherited from <a href="app_interfaces.InfinityMintProjectPath.html">InfinityMintProjectPath</a>.<a href="app_interfaces.InfinityMintProjectPath.html#settings">settings</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/cf2f4ba/app/interfaces.ts#L452">app/interfaces.ts:452</a></li></ul></aside></section></section></div>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/13433f1/app/interfaces.ts#L455">app/interfaces.ts:455</a></li></ul></aside></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tree">
 <div class="tree-settings">

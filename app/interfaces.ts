@@ -444,6 +444,9 @@ export interface InfinityMintProjectPathExport {
 	ipfsCid: string;
 }
 
+/**
+ * InfinityMint paths are what the minter will use when rendering your token. For each path you define is a different apperance the token can take. Inside the project file you can set options (see {@link InfinityMintProjectSettingsAssets}) for how the paths will be picked. For each path you have to specify its name and the fileName to use. You can also specify if it is encrypted.
+ */
 export interface InfinityMintProjectPath {
 	name: string;
 	fileName: string;
@@ -451,8 +454,29 @@ export interface InfinityMintProjectPath {
 	key?: string;
 	settings?: Dictionary<any>;
 	description?: string;
+	/**
+	 * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
+	 *
+	 * @example ```js
+	 *
+	 * 	content: {
+	 * 		myContent: {
+	 * 			name: '3d',
+	 * 			fileName: '@import/3d/file.obj'
+	 * 		}
+	 * }
+	 * ```
+	 */
 	content?: Dictionary<InfinityMintProjectContent>;
+	/**
+	 * When the path has been exported this is filled.
+	 */
 	export?: InfinityMintProjectPathExport;
+	/**
+	 * Uses AE2 encryption. Note when using encryption you must find a way to send the decryption key to the token holder.
+	 *
+	 * @defaultValue false
+	 */
 	encrypted?: boolean;
 }
 
@@ -498,6 +522,9 @@ export interface InfinityMintConfig {
 	settings?: InfinityMintConfigSettings;
 }
 
+/**
+ * @see {@link InfinityMintConfigSettings}
+ */
 export interface InfinityMintConfigSettingsNetwork {
 	defaultAccount?: number;
 	useDefaultPipe?: boolean;
@@ -508,19 +535,28 @@ export interface InfinityMintSession {
 	created: number;
 }
 
+/**
+ * @see {@link InfinityMintConfigSettings}
+ */
 export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {}
 
+/**
+ * @see {@link InfinityMintConfigSettings}
+ */
 export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
 
+/**
+ * @see {@link InfinityMintConfigSettings}
+ */
 export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
 
 /**
  * here you can specify the infinity mint settings for the `networks`, `deploy` and `build` and `export` steps. You can configure infinity mint here.
  *
- * @see {@link InfinityMintConfigSettingsNetwork};
- * @see {@link InfinityMintConfigSettingsDeploy};
- * @see {@link InfinityMintConfigSettingsBuild};
- * @see {@link InfinityMintConfigSettingsExport};
+ * @see {@link InfinityMintConfigSettingsNetwork}
+ * @see {@link InfinityMintConfigSettingsDeploy}
+ * @see {@link InfinityMintConfigSettingsBuild}
+ * @see {@link InfinityMintConfigSettingsExport}
  */
 export interface InfinityMintConfigSettings extends Dictionary<any> {
 	/**
