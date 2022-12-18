@@ -572,7 +572,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
  * An InfinityMintDeployment is a smart contract which is currently active on which ever network is currently set. It holds the
  * abi for the contract along with its address and who deployed it. It also contains which project (see {@link InfinityMintProject}) it was deployed under.
  *
- * @see {@link InfinityMintDeploymentScript} for how to create an InfinityMintDeployment
+ * @see {@link InfinityMintDeploymentScript}
  */
 export interface InfinityMintDeployment extends Dictionary<any> {
 	/**
@@ -621,6 +621,8 @@ export interface InfinityMintDeployment extends Dictionary<any> {
 
 /**
  * This is the interface which should be returned from all deployment scripts inside of the `./deploy` folder.
+ *
+ * @see {@link InfinityMintDeployment}
  */
 export interface InfinityMintDeploymentScript {
 	/**
