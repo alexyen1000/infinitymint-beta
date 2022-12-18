@@ -458,14 +458,14 @@ export interface InfinityMintProjectPath {
 	/**
 	 * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
 	 *
-	 * @example ```js
-	 *
-	 * 	content: {
+	 * @examples
+	 * ```js
+	 * content: {
 	 * 		myContent: {
 	 * 			name: '3d',
 	 * 			fileName: '@import/3d/file.obj'
 	 * 		}
-	 * }
+	 *	}
 	 * ```
 	 */
 	content?: Dictionary<InfinityMintProjectContent>;
@@ -562,19 +562,20 @@ export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
 export interface InfinityMintConfigSettings extends Dictionary<any> {
 	/**
 	 * each key is the network name followed by an object with the type of {@link InfinityMintConfigSettingsNetwork}
-	 * 
-	 * @example ```js 
-	 	networks: {
-			//settings for the hardhat network
-			hardhat: {
-				defaultAccount: 0,
-			},
-			//settings for the ganache network
-			ganache: {
-				defaultAccount: 0,
-			},
-		},
-	 ```
+	 *
+	 * @example
+	 * ```js
+	 * networks: {
+	 *		//settings for the hardhat network
+	 *		hardhat: {
+	 *			defaultAccount: 0,
+	 *		},
+	 *		//settings for the ganache network
+	 *		ganache: {
+	 *			defaultAccount: 0,
+	 *		},
+	 *	},
+	 * ```
 	 */
 	networks: Dictionary<InfinityMintConfigSettingsNetwork>;
 	/**
