@@ -80,6 +80,12 @@ export interface Rectangle {
 export declare const log: (msg: string, pipe?: string) => void;
 export declare const debugLog: (msg: string) => void;
 export declare const readSession: () => InfinityMintSession;
+export declare const overwriteConsoleMethods: () => void;
+export declare const initializeInfinitymintConfig: () => any;
+export declare const loadInfinityMint: () => void;
+export declare const preInitialize: () => void;
+export declare const initializeGanacheMnemonic: () => any;
+export declare const createInfinityMintConfig: () => void;
 export declare const getSolidityNamespace: () => any;
 export declare const saveSessionVariable: (session: InfinityMintSession, key: string, value: any) => InfinityMintSession;
 export declare const saveSession: (session: InfinityMintSession) => void;
