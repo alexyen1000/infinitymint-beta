@@ -282,11 +282,21 @@ export interface InfinityMintProjectSettingsLinkSettings {
 	erc721?: boolean;
 }
 
+/**
+ * Settings for the values deployment. Can contain either booleans or numbers. All values here will be set on chain inside of the InfinityMintValues contract.
+ *
+ * @see {@link InfinityMintProjectSettings}
+ */
 export interface InfinityMintProjectSettingsValues extends Dictionary<any> {
 	disablePreviews?: boolean;
 	disableAssets?: boolean;
 }
 
+/**
+ * Settings for the minter deployment.
+ *
+ * @see {@link InfinityMintProjectSettings}
+ */
 export interface InfinityMintProjectSettingsMinter {
 	pathId?: number;
 	maxSupply?: number;
@@ -297,6 +307,11 @@ export interface InfinityMintProjectSettingsMinter {
 	previewCount?: number;
 }
 
+/**
+ * Settings for the asset controller deployment. Here you can configure algorithmic properties which define how InfinityMint will create you toke. You can also change how many random names InfinityMint should mint for your token and for instance if you would like to prevent the same pathId from minting twice.
+ *
+ * @see {@link InfinityMintProjectSettings}
+ */
 export interface InfinityMintProjectSettingsAssets {
 	incremental?: boolean;
 	randomNames?: boolean;
@@ -321,6 +336,11 @@ export interface InfinityMintProjectSettingsRoyaltyCuts
 	stickers: number;
 }
 
+/**
+ * Settings for the royalty deployment.
+ *
+ * @see {@link InfinityMintProjectSettings}
+ */
 export interface InfinityMintProjectSettingsRoyalty extends Dictionary<any> {
 	cuts: InfinityMintProjectSettingsRoyaltyCuts;
 	splits?:
@@ -328,6 +348,11 @@ export interface InfinityMintProjectSettingsRoyalty extends Dictionary<any> {
 		| InfinityMintProjectSettingsRoyaltySplit[];
 }
 
+/**
+ * Settings for the erc721 (InfinityMint) deployment.
+ *
+ * @see {@link InfinityMintProjectSettings}
+ */
 export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 	defaultTokenURI?: string;
 	allowTransfer?: boolean;
@@ -336,7 +361,11 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 /**
  * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
  *
- * @see {@link InfinityMintProjectModules}
+ * @see {@link InfinityMintProjectSettingsAssets}
+ * @see {@link InfinityMintProjectSettingsERC721}
+ * @see {@link InfinityMintProjectSettingsMinter}
+ * @see {@link InfinityMintProjectSettingsValues}
+ * @see {@link InfinityMintProjectSettingsRoyalty}
  */
 export interface InfinityMintProjectSettings {
 	/**
@@ -366,7 +395,7 @@ export interface InfinityMintProjectSettings {
 	/**
 	 * Set settings for the assets deployment.
 	 *
-	 * @see {@link InfinityMintProjectSettingsValues}
+	 * @see {@link InfinityMintProjectSettingsAssets}
 	 */
 	assets?: InfinityMintProjectSettingsAssets;
 }
