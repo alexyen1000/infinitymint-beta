@@ -108,10 +108,9 @@ const initializeInfinitymintConfig = () => {
         }
     }
     infinityMintConfig.hardhat.paths.sources =
-        __dirname +
+        (process.env.SOLIDITY_ROOT || process.cwd()) +
             "/" +
             (process.env.INFINITYMINT_SOLIDITY_NAMESPACE || (0, exports.getSolidityNamespace)());
-    infinityMintConfig.hardhat.paths.sources = "./" + (0, exports.getSolidityNamespace)();
     //delete artifacts folder if namespace changes
     if (process.env.INFINITYMINT_SOLIDITY_NAMESPACE !== undefined &&
         session.environment.solidityNamespace !== undefined &&

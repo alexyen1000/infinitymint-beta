@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
-const helpers_1 = require("@app/helpers");
+const helpers_1 = require("./app/helpers");
 //require dotenv
 require("dotenv").config({
     override: false, //will not override already established environment variables
