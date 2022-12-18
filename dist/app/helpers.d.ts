@@ -1,4 +1,4 @@
-import { InfinityMintSession } from "./interfaces";
+import { InfinityMintConfig, InfinityMintSession } from "./interfaces";
 import { Dictionary } from "form-data";
 export interface Vector {
     x: number;
@@ -81,8 +81,11 @@ export declare const log: (msg: string, pipe?: string) => void;
 export declare const debugLog: (msg: string) => void;
 export declare const readSession: () => InfinityMintSession;
 export declare const overwriteConsoleMethods: () => void;
-export declare const initializeInfinitymintConfig: () => any;
+export declare const getConfigFile: () => InfinityMintConfig;
+export declare const initializeInfinitymintConfig: () => InfinityMintConfig;
 export declare const loadInfinityMint: (useJavascript?: boolean) => void;
+export declare const createDirs: (dirs: string[]) => void;
+export declare const readJson: (fileName: string) => any;
 export declare const preInitialize: () => void;
 export declare const initializeGanacheMnemonic: () => any;
 export declare const createInfinityMintConfig: (useJavascript?: boolean) => void;

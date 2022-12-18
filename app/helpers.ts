@@ -1,6 +1,7 @@
 import Pipes from "./pipes";
-import fs from "fs-extra";
-import { InfinityMintSession } from "./interfaces";
+import fsExtra from "fs-extra";
+import fs from "fs";
+import { InfinityMintConfig, InfinityMintSession } from "./interfaces";
 import bip39, { generateMnemonic } from "bip39";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
@@ -98,12 +99,12 @@ export const debugLog = (msg: string) => {
 };
 
 export const readSession = (): InfinityMintSession => {
-	if (!fs.existsSync("./.session"))
+	if (!fs.existsSync(process.cwd() + "/.session"))
 		return { created: Date.now(), environment: {} };
 
 	try {
 		return JSON.parse(
-			fs.readFileSync("./.session", {
+			fs.readFileSync(process.cwd() + "/.session", {
 				encoding: "utf-8",
 			})
 		);
@@ -148,9 +149,14 @@ export const overwriteConsoleMethods = () => {
 	};
 };
 
+export const getConfigFile = () => {
+	return require(process.cwd() + "/infinitymint.config")
+		.default as InfinityMintConfig;
+};
+
 export const initializeInfinitymintConfig = () => {
 	//else, import the InfinityMint config
-	const infinityMintConfig = require("./../infinitymint.config").default;
+	const infinityMintConfig = getConfigFile();
 
 	let session = readSession();
 	//fuck about with hardhat config
@@ -172,6 +178,12 @@ export const initializeInfinitymintConfig = () => {
 		infinityMintConfig.hardhat.paths = {};
 
 	//do
+	let solidityModuleFolder =
+		process.cwd() +
+		"/node_modules/infinitymint/" +
+		process.env.SOLIDITY_NAMESPACE;
+	let solidityFolder = process.cwd() + "/" + process.env.SOLIDITY_NAMESPACE;
+
 	if (isEnvTrue("SOLIDITY_USE_NODE_MODULE")) {
 		if (
 			fs.existsSync("./../package.json") &&
@@ -183,54 +195,31 @@ export const initializeInfinitymintConfig = () => {
 		)
 			throw new Error("cannot use node modules in InfinityMint package");
 
-		if (!fs.existsSync("./../node_modules/infinitymint/"))
-			throw new Error("please npm i infinitymint");
+		if (!fs.existsSync(solidityModuleFolder))
+			throw new Error(
+				"please npm i infinitymint and make sure " + module + "exists"
+			);
 
 		if (
-			fs.existsSync("./../" + session.environment.solidityNamespace) &&
+			fs.existsSync(solidityFolder) &&
 			isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")
 		)
-			fs.rmdirSync("./../" + session.environment.solidityNamespace, {
+			fs.rmdirSync(solidityFolder, {
 				recursive: true,
 				force: true,
 			} as any);
 
-		if (
-			!fs.existsSync(
-				"./../" +
-					(process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
-						getSolidityNamespace())
-			)
-		) {
+		if (!fs.existsSync(solidityFolder)) {
 			debugLog(
-				"copying ./../node_modules/infinitymint/" +
-					(process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
-						getSolidityNamespace()) +
-					" to ./../" +
-					(process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
-						getSolidityNamespace())
+				"copying " + solidityModuleFolder + " to " + solidityFolder
 			);
-			fs.copySync(
-				"./../node_modules/infinitymint/" +
-					(process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
-						getSolidityNamespace()),
-				"./../" +
-					(process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
-						getSolidityNamespace())
-			);
-			fs.chmodSync(
-				"./../" +
-					(process.env.INFINITYMINT_SOLIDITY_NAMESPACE ||
-						getSolidityNamespace()),
-				0o777
-			);
+			fsExtra.copySync(solidityModuleFolder, solidityFolder);
+			fs.chmodSync(solidityFolder, 0o777);
 		}
 	}
 
-	infinityMintConfig.hardhat.paths.sources =
-		(process.env.SOLIDITY_ROOT || process.cwd()) +
-		"/" +
-		(process.env.INFINITYMINT_SOLIDITY_NAMESPACE || getSolidityNamespace());
+	//set the sources
+	infinityMintConfig.hardhat.paths.sources = solidityFolder;
 
 	//delete artifacts folder if namespace changes
 	if (
@@ -241,17 +230,17 @@ export const initializeInfinitymintConfig = () => {
 	) {
 		try {
 			debugLog("removing ./artifacts");
-			fs.rmdirSync("./artifacts", {
+			fs.rmdirSync(process.cwd() + "/artifacts", {
 				recursive: true,
 				force: true,
 			} as any);
 			debugLog("removing ./cache");
-			fs.rmdirSync("./cache", {
+			fs.rmdirSync(process.cwd() + "/cache", {
 				recursive: true,
 				force: true,
 			} as any);
 			debugLog("removing ./typechain-types");
-			fs.rmdirSync("./typechain-types", {
+			fs.rmdirSync(process.cwd() + ".typechain-types", {
 				recursive: true,
 				force: true,
 			} as any);
@@ -279,16 +268,40 @@ export const loadInfinityMint = (useJavascript?: boolean) => {
 	overwriteConsoleMethods();
 };
 
+export const createDirs = (dirs: string[]) => {
+	dirs.filter((dir: string) => !fs.existsSync(dir)).forEach((dir) =>
+		fs.mkdirSync(process.cwd() + (dir[0] !== "/" ? "/" + dir : dir))
+	);
+};
+
+export const readJson = (fileName: string) => {
+	return JSON.parse(
+		fs.readFileSync(fileName, {
+			encoding: "utf8",
+		})
+	);
+};
+
 export const preInitialize = () => {
-	//if there is no temp folder, make it.
-	if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
-	//if there is no temp folder, make it.
-	if (!fs.existsSync("./projects")) fs.mkdirSync("./projects");
-	//if there is no temp folder, make it.
-	if (!fs.existsSync("./gems")) fs.mkdirSync("./gems");
+	//creates dirs
+	createDirs([
+		"gems",
+		"temp",
+		"temp/settings",
+		"temp/receipts",
+		"temp/deployments",
+		"temp/projects",
+		"projects",
+	]);
 	//copy the .env file from example if there is none
-	if (!fs.existsSync("./.env") && fs.existsSync("./.env.example"))
-		fs.copyFileSync("./.env.example", "./.env");
+	if (
+		!fs.existsSync(process.cwd() + "/.env") &&
+		fs.existsSync(process.cwd() + "/.env.example")
+	)
+		fs.copyFileSync(
+			process.cwd() + "/.env",
+			process.cwd() + "/.env.example"
+		);
 
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
@@ -332,8 +345,8 @@ export const createInfinityMintConfig = (useJavascript?: boolean) => {
 	};
 
 	let filename = useJavascript
-		? "./infinitymint.config.js"
-		: "./infinitymint.config.ts";
+		? "infinitymint.config.js"
+		: "infinitymint.config.ts";
 	let stub = useJavascript
 		? `\n
 		const { InfinityMintConfig } = require("./app/config");
@@ -353,8 +366,8 @@ export const createInfinityMintConfig = (useJavascript?: boolean) => {
 		export default config;`;
 
 	//check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
-	if (!fs.existsSync(filename)) {
-		fs.writeFileSync(filename, stub);
+	if (!fs.existsSync(process.cwd() + "/" + filename)) {
+		fs.writeFileSync(process.cwd() + "/" + filename, stub);
 	}
 };
 
