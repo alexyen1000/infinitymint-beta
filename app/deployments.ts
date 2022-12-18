@@ -98,9 +98,9 @@ export class DeploymentScript {
 export const getDeploymentScripts = (
 	root?: string
 ): Promise<DeploymentScript[]> => {
-	debugLog("finding deployment scripts in: " + root);
 	return new Promise((resolve, reject) => {
 		let filePath = (root || "./") + "deploy/**/*.ts";
+		debugLog("finding deployment scripts in: " + filePath);
 		glob(filePath, (err: Error | null, matches: any[]) => {
 			if (err) throw err;
 
