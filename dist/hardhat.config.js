@@ -11,7 +11,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-change-network"); //allows hre.changeNetwork to occur
 //load infinitymint
-(0, helpers_1.loadInfinityMint)();
+(0, helpers_1.loadInfinityMint)(false, true);
 //return the infinitymint config file
 let config = (0, helpers_1.initializeInfinitymintConfig)();
 (0, helpers_1.debugLog)("loaded hardhat.config.ts");

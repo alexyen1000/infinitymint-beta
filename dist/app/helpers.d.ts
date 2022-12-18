@@ -82,13 +82,25 @@ export declare const debugLog: (msg: string) => void;
 export declare const readSession: () => InfinityMintSession;
 export declare const overwriteConsoleMethods: () => void;
 export declare const getConfigFile: () => InfinityMintConfig;
+/**
+ * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
+ * @returns
+ */
 export declare const initializeInfinitymintConfig: () => InfinityMintConfig;
-export declare const loadInfinityMint: (useJavascript?: boolean) => void;
+/**
+ * Loaded when hardhat is being initialized, essentially creates an infinitymint.config if one is not available, generates a new ganache mnemonic and overwrites console.log and console.error to be piped to what ever pipe is currently default.
+ *
+ * @see {@link app/interfaces.InfinityMintConfig}
+ * @see {@link app/pipes.Pipe}
+ * @param useJavascript Will return infinitymint.config.js instead of infinitymint.config.ts
+ * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/dist/app/interfaces')
+ */
+export declare const loadInfinityMint: (useJavascript?: boolean, useInternalRequire?: boolean) => void;
 export declare const createDirs: (dirs: string[]) => void;
 export declare const readJson: (fileName: string) => any;
 export declare const preInitialize: () => void;
 export declare const initializeGanacheMnemonic: () => any;
-export declare const createInfinityMintConfig: (useJavascript?: boolean) => void;
+export declare const createInfinityMintConfig: (useJavascript?: boolean, useInternalRequire?: boolean) => void;
 export declare const getSolidityNamespace: () => any;
 export declare const saveSessionVariable: (session: InfinityMintSession, key: string, value: any) => InfinityMintSession;
 export declare const saveSession: (session: InfinityMintSession) => void;

@@ -63,6 +63,10 @@ const getConfigFile = () => {
         .default;
 };
 exports.getConfigFile = getConfigFile;
+/**
+ * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
+ * @returns
+ */
 const initializeInfinitymintConfig = () => {
     var _a, _b;
     //else, import the InfinityMint config
@@ -86,10 +90,8 @@ const initializeInfinitymintConfig = () => {
         process.env.SOLIDITY_NAMESPACE;
     let solidityFolder = process.cwd() + "/" + process.env.SOLIDITY_NAMESPACE;
     if ((0, exports.isEnvTrue)("SOLIDITY_USE_NODE_MODULE")) {
-        if (fs_1.default.existsSync("./../package.json") &&
-            JSON.parse(fs_1.default.readFileSync("./../package.json", {
-                encoding: "utf8",
-            })).name === "infinitymint")
+        if (fs_1.default.existsSync(process.cwd() + "/package.json") &&
+            (0, exports.readJson)(process.cwd() + "/package.json").name === "infinitymint")
             throw new Error("cannot use node modules in InfinityMint package");
         if (!fs_1.default.existsSync(solidityModuleFolder))
             throw new Error("please npm i infinitymint and make sure " + module + "exists");
@@ -143,8 +145,16 @@ const initializeInfinitymintConfig = () => {
     return infinityMintConfig;
 };
 exports.initializeInfinitymintConfig = initializeInfinitymintConfig;
-const loadInfinityMint = (useJavascript) => {
-    (0, exports.createInfinityMintConfig)(useJavascript);
+/**
+ * Loaded when hardhat is being initialized, essentially creates an infinitymint.config if one is not available, generates a new ganache mnemonic and overwrites console.log and console.error to be piped to what ever pipe is currently default.
+ *
+ * @see {@link app/interfaces.InfinityMintConfig}
+ * @see {@link app/pipes.Pipe}
+ * @param useJavascript Will return infinitymint.config.js instead of infinitymint.config.ts
+ * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/dist/app/interfaces')
+ */
+const loadInfinityMint = (useJavascript, useInternalRequire) => {
+    (0, exports.createInfinityMintConfig)(useJavascript, useInternalRequire);
     (0, exports.preInitialize)();
     (0, exports.initializeGanacheMnemonic)();
     (0, exports.overwriteConsoleMethods)();
@@ -197,7 +207,7 @@ const initializeGanacheMnemonic = () => {
     return (_b = session.environment) === null || _b === void 0 ? void 0 : _b.ganacheMnemomic;
 };
 exports.initializeGanacheMnemonic = initializeGanacheMnemonic;
-const createInfinityMintConfig = (useJavascript) => {
+const createInfinityMintConfig = (useJavascript, useInternalRequire) => {
     let config = {
         solidity: {
             version: "0.8.12",
@@ -212,12 +222,15 @@ const createInfinityMintConfig = (useJavascript) => {
             tests: "./tests",
         },
     };
+    let requireStatement = useInternalRequire
+        ? "./app/interfaces"
+        : "infinitymint/dist/app/interfaces";
     let filename = useJavascript
         ? "infinitymint.config.js"
         : "infinitymint.config.ts";
     let stub = useJavascript
         ? `\n
-		const { InfinityMintConfig } = require("./app/config");
+		const { InfinityMintConfig } = require("${requireStatement}");
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config = {
@@ -225,7 +238,7 @@ const createInfinityMintConfig = (useJavascript) => {
 		}
 		module.exports = config;`
         : `\n
-		import { InfinityMintConfig } from "./app/config";
+		import { InfinityMintConfig } from "${requireStatement}";
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config: InfinityMintConfig = {

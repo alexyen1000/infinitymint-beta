@@ -16,7 +16,7 @@ import "@nomiclabs/hardhat-ethers";
 import "hardhat-change-network"; //allows hre.changeNetwork to occur
 
 //load infinitymint
-loadInfinityMint();
+loadInfinityMint(false, true);
 
 //return the infinitymint config file
 let config = initializeInfinitymintConfig();
