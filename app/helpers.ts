@@ -272,8 +272,8 @@ export const initializeInfinitymintConfig = () => {
 	return infinityMintConfig;
 };
 
-export const loadInfinityMint = () => {
-	createInfinityMintConfig();
+export const loadInfinityMint = (useJavascript?: boolean) => {
+	createInfinityMintConfig(useJavascript);
 	preInitialize();
 	initializeGanacheMnemonic();
 	overwriteConsoleMethods();
@@ -283,7 +283,8 @@ export const preInitialize = () => {
 	//if there is no temp folder, make it.
 	if (!fs.existsSync("./temp")) fs.mkdirSync("./temp");
 	//copy the .env file from example if there is none
-	if (!fs.existsSync("./.env")) fs.copyFileSync("./.env.example", "./.env");
+	if (!fs.existsSync("./.env") && fs.existsSync("./.env.example"))
+		fs.copyFileSync("./.env.example", "./.env");
 
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
@@ -310,7 +311,7 @@ export const initializeGanacheMnemonic = () => {
 	return session.environment?.ganacheMnemomic;
 };
 
-export const createInfinityMintConfig = () => {
+export const createInfinityMintConfig = (useJavascript?: boolean) => {
 	let config: HardhatUserConfig = {
 		solidity: {
 			version: "0.8.12",
@@ -326,18 +327,30 @@ export const createInfinityMintConfig = () => {
 		},
 	};
 
-	//check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
-	if (!fs.existsSync("./infinitymint.config.ts")) {
-		let stub = `\n
+	let filename = useJavascript
+		? "./infinitymint.config.js"
+		: "./infinitymint.config.ts";
+	let stub = useJavascript
+		? `\n
+		const { InfinityMintConfig } = require("./app/config");
+
+		//please visit docs.infinitymint.app for a more complete starter configuration file
+		const config = {
+			hardhat: ${JSON.stringify(config, null, 2)}
+		}
+		module.exports = config;`
+		: `\n
 		import { InfinityMintConfig } from "./app/config";
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config: InfinityMintConfig = {
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
-		export default config;
-	`;
-		fs.writeFileSync("./infinitymint.config.ts", stub);
+		export default config;`;
+
+	//check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
+	if (!fs.existsSync(filename)) {
+		fs.writeFileSync(filename, stub);
 	}
 };
 
