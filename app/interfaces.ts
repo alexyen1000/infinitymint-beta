@@ -664,6 +664,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * the key is the module name (see {@link InfinityMintProjectModules}) which is the name of the deployment script, or the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can pull this contract through code. Can be set to a custom value or left to be worked out.
 	 *
+	 * @see {@link InfinityMintDeployment}
 	 */
 	key?: string;
 	/**
