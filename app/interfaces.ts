@@ -374,7 +374,7 @@ export interface InfinityMintProjectSettings {
 /**
  * The InfinityMint project modules are the solidity files InfinityMint will use for its token creation and royalty distribution. Here is where you can change what is used in each step of the InfinityMint chain. The assets key controls what type of content will be minted based on what type of content it is (svg, image, sound). The minter controls how to talk to the asset controller, and if the user needs to specify which path they would like or if it should be random or if it should be only one specific path id until you say anything different. The royalty controller will control who is paid what for what ever happens inside of the minter. From mints, to things that gems do the royalty controller decides how any incoming money will be split accordingly. The random controller decides how InfinityMint obtains its random numbers which it uses in the mint process. You can use VCF randomness with chainlink here or use keccack256 randomisation but beware of the security risks of doing so.
  *
- * @see {@link InfinityMintProjectModules}
+ * @see {@link InfinityMintProjectSettings}
  * @see {@link InfinityMintDeployment}
  */
 export interface InfinityMintProjectModules {
