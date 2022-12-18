@@ -7,16 +7,32 @@ import { EventEmitter } from "events";
 import { DeploymentScript } from "./deployments";
 import InfinityConsole from "./console";
 
+/**
+ * Gems are our plugins. They allow you to easily extend the functionality of InfinityMint. Gems an contain solidity code, react code and more and integrate with every aspect of InfinityMint
+ */
 export interface InfinityMintGem extends InfinityMintDeploymentScript {
+	/**
+	 * the name of this gem, does not have to be the same name as the folder it sits in
+	 */
 	name: string;
+	/**
+	 * called when the gem is first loaded into InfinityMint, useful when registering new windows with the InfinityConsole. Is initialized
+	 * based on the load order of the gem. You get all of the same order of execution options as you would do with a {@link InfinityMintDeploymentScript}
+	 */
 	init?: FuncSingle<InfinityMintGemParameters, Promise<void>>;
 }
 
+/**
+ * Parameters which are passed into the deploy, setup and init methods inside of a {@link InfinityMintGem}.
+ */
 export interface InfinityMintGemParameters
 	extends InfinityMintDeploymentParameters {
 	gem: InfinityMintGem;
 }
 
+/**
+ * returned from the .json file inside of a gem folder. Contains metadata information about the gem as well as its git location and verison and solidity namespace
+ */
 export interface InfinityMintGemConfig {
 	name?: string;
 	homepage?: string;
@@ -147,10 +163,27 @@ export interface InfinityMintProject {
 export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
 	(param0: T, param1: T2, param3: T3, param4: T4): TResult;
 }
+
+/**
+ * Events are defined based on their name and the key must have a value of a promise,.
+ */
 export interface InfinityMintProjectEvents extends Dictionary<any> {
+	/**
+	 * Will be called when setup is complete
+	 */
 	setup?: FuncSingle<InfinityMintProject, Promise<void>>;
+	/**
+	 * Will be called when deployment is complete
+	 */
 	deploy?: FuncSingle<InfinityMintProject, Promise<void>>;
+	/**
+	 * Will be called when export is complete
+	 */
 	export?: FuncSingle<InfinityMintProject, Promise<void>>;
+	/**
+	 * Will be called when build is complete
+	 */
+	build?: FuncSingle<InfinityMintProject, Promise<void>>;
 }
 
 /**
