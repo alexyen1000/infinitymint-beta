@@ -128,7 +128,7 @@ export interface InfinityMintProject {
 	/**
 	 * Here you can specificy callbacks which will be fired when certain events are triggered.
 	 *
-	 * @see {@link InfinityMintProjectPermissions}
+	 * @see {@link InfinityMintProjectEvents}
 	 */
 	events?: InfinityMintProjectEvents;
 	/**
@@ -165,7 +165,7 @@ export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
 }
 
 /**
- * Events are defined based on their name and the key must have a value of a promise,.
+ * Events can be defined which can then be called directly from the project file. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
  */
 export interface InfinityMintProjectEvents extends Dictionary<any> {
 	/**
@@ -361,6 +361,7 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 /**
  * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
  *
+ * @see {@link InfinityMintProject}
  * @see {@link InfinityMintProjectSettingsAssets}
  * @see {@link InfinityMintProjectSettingsERC721}
  * @see {@link InfinityMintProjectSettingsMinter}
