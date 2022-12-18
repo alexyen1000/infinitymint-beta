@@ -2,7 +2,7 @@
 	"name": "infinitymint",
 	"description": "InfinityMint - Powered by Hardhat and Ganache",
 	"homepage": "https://github.com/0x0zAgency/infinitymint-beta#readme",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"main": "dist/index.js",
 	"directories": {
 		"test": "tests"
