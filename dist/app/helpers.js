@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityNamespace = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
+exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityNamespace = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
 const pipes_1 = __importDefault(require("./pipes"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const fs_1 = __importDefault(require("fs"));
@@ -68,6 +68,14 @@ const getConfigFile = () => {
     return res;
 };
 exports.getConfigFile = getConfigFile;
+const getCompiledProject = (projectName) => { };
+exports.getCompiledProject = getCompiledProject;
+const getProject = (projectName) => {
+    let res = require(process.cwd() + "/projects/" + projectName + ".ts");
+    res = res.default || res;
+    return res;
+};
+exports.getProject = getProject;
 /**
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns

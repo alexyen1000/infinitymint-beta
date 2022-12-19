@@ -1,15 +1,47 @@
 /// <reference types="node" />
 import events, { EventEmitter } from "events";
-import { InfinityMintDeploymentScript } from "./interfaces";
+import { InfinityMintDeploymentScript, InfinityMintDeploymentLive, InfinityMintProject } from "./interfaces";
 /**
  * Deployment class for InfinityMint deployments
  */
 export declare class InfinityMintDeployment {
+    /**
+     * node even emitter
+     */
     protected emitter: EventEmitter;
-    protected source: InfinityMintDeploymentScript;
-    protected sourceFile: string;
+    /**
+     * the infinity mint deployment script
+     */
+    protected deploymentScript: InfinityMintDeploymentScript;
+    /**
+     * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link InfinityMintDeploymentLive}
+     */
+    protected liveDeployments: InfinityMintDeploymentLive[];
+    /**
+     * the location of the deployment script which determains its behaviur
+     */
+    protected deploymentScriptLocation: string;
+    /**
+     * the key of this deployment
+     */
     protected key: string;
-    constructor(sourceFile: string, key: string);
+    /**
+     * the infinity mint project this deployment is attached too
+     */
+    protected project: InfinityMintProject;
+    /**
+     * the network the deployment is on
+     */
+    protected network: string;
+    /**
+     * returns true if the deployment has been deployed to a blockchain
+     */
+    protected hasDeployedAll: boolean;
+    /**
+     * returns true if the deployment has been set up
+     */
+    protected hasSetupDeployments: boolean;
+    constructor(deploymentScriptLocation: string, key: string, network: string, project: InfinityMintProject);
     /**
      * reloads the source file script
      */
@@ -34,11 +66,26 @@ export declare class InfinityMintDeployment {
     getSolidityNamespace(): string;
     getKey(): string;
     getPermissions(): any[];
+    getFilePath(): string;
+    private read;
+    getDeploymentByArtifactName(name: string): InfinityMintDeploymentLive[];
+    getDeployer(index?: number): string;
+    getApproved(index?: number): string[];
+    getAddress(index?: number): string;
+    isLibrary(): boolean;
+    getAbi(index?: number): any[];
+    getDeployments(): InfinityMintDeploymentLive[];
+    hasDeployed(): boolean;
+    hasSetup(): boolean;
+    save(): void;
+    updateLiveDeployments(liveDeployments: InfinityMintDeploymentLive | InfinityMintDeploymentLive[]): void;
+    deploy(...args: any): Promise<void>;
+    setup(...args: any): Promise<void>;
     execute(method: string, args: any): Promise<void>;
 }
 /**
- * Returns a list of all the deployment scripts
+ * Returns a list of InfinityMintDeployment classes for the network and project.
  * @returns
  */
-export declare const getDeploymentScripts: (root?: string) => Promise<InfinityMintDeployment[]>;
+export declare const getDeployments: (project: InfinityMintProject, network: string, root?: string) => Promise<InfinityMintDeployment[]>;
 //# sourceMappingURL=deployments.d.ts.map

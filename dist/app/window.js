@@ -331,7 +331,6 @@ class InfinityMintWindow {
             right: 0,
             width: "shrink",
             height: "shrink",
-            parent: this.screen,
             tags: true,
             padding: 1,
             content: "[x]",
@@ -347,12 +346,12 @@ class InfinityMintWindow {
         close.on("click", () => {
             this.destroy();
         });
+        close.focus();
         let hide = this.registerElement("hideButton", blessed.box({
             top: 0,
             right: 6,
             width: "shrink",
             height: "shrink",
-            parent: this.screen,
             tags: true,
             padding: 1,
             content: "[-]",
@@ -368,6 +367,7 @@ class InfinityMintWindow {
         hide.on("click", () => {
             this.hide();
         });
+        hide.focus();
         (0, helpers_1.debugLog)(`calling initialize on <${this.name}>[${this.id}]`);
         await this.initialize(this, frame, blessed);
         this.initialized = true;

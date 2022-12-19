@@ -152,6 +152,14 @@ export interface InfinityMintProject {
          */
         version: string;
     };
+    /**
+     * is true if this is a compiled infinitymint project
+     */
+    compiled?: boolean;
+    /**
+     * Holds any IPFS locations of the project, react build and deployments
+     */
+    ipfs: Dictionary<any>;
 }
 export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
     (param0: T, param1: T2, param3: T3, param4: T4): TResult;
@@ -416,6 +424,10 @@ export interface InfinityMintProjectPathExport {
     projectStorage: boolean;
     ipfsUrl: string;
     ipfsCid: string;
+    /**
+     * list of back ups where this content might be found, accepts IPFS cids and http/https web2 links
+     */
+    backups: string[];
 }
 /**
  * InfinityMint paths are what the minter will use when rendering your token. For each path you define is a different apperance the token can take. Inside the project file you can set options (see {@link InfinityMintProjectSettingsAssets}) for how the paths will be picked. For each path you have to specify its name and the fileName to use. You can also specify if it is encrypted.
@@ -451,6 +463,10 @@ export interface InfinityMintProjectPath {
      * @defaultValue false
      */
     encrypted?: boolean;
+    /**
+     * true if the project the path contains has been compiled.
+     */
+    compiled?: boolean;
 }
 export interface InfinityMintProjectContent extends InfinityMintProjectPath {
     onlyOwners?: boolean;
@@ -468,6 +484,10 @@ export interface InfinityMintConfig {
      * The name of the project.
      */
     project?: string;
+    /**
+     * if to launch into the InfinityConsole. See {@link InfinityConsole}
+     */
+    console?: boolean;
     /**
      * The hardhat configuration, the same as hre.config. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/hardhat>
      */
@@ -606,7 +626,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
     debugLog: FuncSingle<string, void>;
 }
 /**
- * An InfinityMintDeployment is a smart contract which is currently active on which ever network is currently set. It holds the
+ * An InfinityMint Depllyment is a smart contract which is currently active on which ever network is currently set. It holds the
  * abi for the contract along with its address and who deployed it. It also contains which project (see {@link InfinityMintProject}) it was deployed under.
  *
  * @see {@link InfinityMintDeploymentScript}
@@ -654,6 +674,10 @@ export interface InfinityMintDeploymentLive extends Dictionary<any> {
      * The receipt for this deployment
      */
     receipt?: Dictionary<any>;
+    /**
+     * true if the contract has had its setup method called successfully in the deploy script, see {@link InfinityMintDeploymentScript}
+     */
+    setup?: boolean;
 }
 /**
  * This is the interface which should be returned from all deployment scripts inside of the `./deploy` folder.

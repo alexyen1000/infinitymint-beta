@@ -1,4 +1,4 @@
-import { InfinityMintConfig, InfinityMintSession } from "./interfaces";
+import { InfinityMintConfig, InfinityMintProject, InfinityMintSession } from "./interfaces";
 import { Dictionary } from "form-data";
 export interface Vector {
     x: number;
@@ -86,6 +86,8 @@ export declare const overwriteConsoleMethods: () => void;
  * @returns
  */
 export declare const getConfigFile: () => InfinityMintConfig;
+export declare const getCompiledProject: (projectName: string) => void;
+export declare const getProject: (projectName: string) => InfinityMintProject;
 /**
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns

@@ -157,6 +157,14 @@ export interface InfinityMintProject {
 		 */
 		version: string;
 	};
+	/**
+	 * is true if this is a compiled infinitymint project
+	 */
+	compiled?: boolean;
+	/**
+	 * Holds any IPFS locations of the project, react build and deployments
+	 */
+	ipfs: Dictionary<any>;
 }
 
 export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
@@ -442,6 +450,10 @@ export interface InfinityMintProjectPathExport {
 	projectStorage: boolean;
 	ipfsUrl: string;
 	ipfsCid: string;
+	/**
+	 * list of back ups where this content might be found, accepts IPFS cids and http/https web2 links
+	 */
+	backups: string[];
 }
 
 /**
@@ -478,6 +490,10 @@ export interface InfinityMintProjectPath {
 	 * @defaultValue false
 	 */
 	encrypted?: boolean;
+	/**
+	 * true if the project the path contains has been compiled.
+	 */
+	compiled?: boolean;
 }
 
 export interface InfinityMintProjectContent extends InfinityMintProjectPath {
@@ -649,7 +665,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 }
 
 /**
- * An InfinityMintDeployment is a smart contract which is currently active on which ever network is currently set. It holds the
+ * An InfinityMint Depllyment is a smart contract which is currently active on which ever network is currently set. It holds the
  * abi for the contract along with its address and who deployed it. It also contains which project (see {@link InfinityMintProject}) it was deployed under.
  *
  * @see {@link InfinityMintDeploymentScript}
@@ -697,6 +713,10 @@ export interface InfinityMintDeploymentLive extends Dictionary<any> {
 	 * The receipt for this deployment
 	 */
 	receipt?: Dictionary<any>;
+	/**
+	 * true if the contract has had its setup method called successfully in the deploy script, see {@link InfinityMintDeploymentScript}
+	 */
+	setup?: boolean;
 }
 
 /**

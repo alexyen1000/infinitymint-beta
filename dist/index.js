@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Web3Helpers = exports.Interfaces = exports.ethers = exports.hre = exports.InfinityConsole = exports.Helpers = exports.GanacheServer = exports.InfinityMintConfig = void 0;
+exports.Web3Helpers = exports.Interfaces = exports.ethers = exports.hre = exports.InfinityConsole = exports.Helpers = exports.GanacheServer = void 0;
 const console_1 = __importDefault(require("./app/console"));
 exports.InfinityConsole = console_1.default;
 const hardhat_1 = __importStar(require("hardhat"));
@@ -35,8 +35,6 @@ Object.defineProperty(exports, "ethers", { enumerable: true, get: function () { 
 const web3_1 = require("./app/web3");
 const ganacheServer_1 = __importDefault(require("./app/ganacheServer"));
 exports.GanacheServer = ganacheServer_1.default;
-const infinitymint_config_1 = __importDefault(require("./infinitymint.config"));
-exports.InfinityMintConfig = infinitymint_config_1.default;
 const fs_1 = __importDefault(require("fs"));
 const helpers_1 = require("./app/helpers");
 const Helpers = __importStar(require("./app/helpers"));
@@ -44,8 +42,10 @@ exports.Helpers = Helpers;
 //export the interfaces app as default
 exports.Interfaces = __importStar(require("./app/interfaces"));
 exports.Web3Helpers = __importStar(require("./app/web3"));
+//get the infinitymint config file
+let config = (0, helpers_1.getConfigFile)();
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if ((0, helpers_1.isEnvTrue)("RUN_INFINITYMINT"))
+if (config.console)
     (async () => {
         var _a, _b;
         (0, helpers_1.log)("starting infinitymint");
@@ -66,7 +66,7 @@ if ((0, helpers_1.isEnvTrue)("RUN_INFINITYMINT"))
         else if (((_b = hardhat_1.default.config.networks) === null || _b === void 0 ? void 0 : _b.ganache) !== undefined) {
             //ask if they want to start ganache
             //start ganache here
-            let obj = Object.assign({}, infinitymint_config_1.default.ganache);
+            let obj = Object.assign({}, config.ganache);
             if (obj.wallet === undefined)
                 obj.wallet = {};
             if (session.environment.ganacheMnemomic === undefined)

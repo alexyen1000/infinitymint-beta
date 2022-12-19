@@ -28,7 +28,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getProvider = exports.changeNetwork = exports.getDefaultSigner = void 0;
 const hardhat_1 = __importStar(require("hardhat"));
-const infinitymint_config_1 = __importDefault(require("../infinitymint.config"));
 const helpers_1 = require("./helpers");
 const pipes_1 = __importDefault(require("./pipes"));
 const ganacheServer_1 = __importDefault(require("./ganacheServer"));
@@ -76,19 +75,22 @@ const getProvider = () => {
 exports.getProvider = getProvider;
 const getNetworkSettings = (network) => {
     var _a;
-    return ((_a = infinitymint_config_1.default === null || infinitymint_config_1.default === void 0 ? void 0 : infinitymint_config_1.default.settings) === null || _a === void 0 ? void 0 : _a.networks[network]) || {};
+    let config = (0, helpers_1.getConfigFile)();
+    return ((_a = config === null || config === void 0 ? void 0 : config.settings) === null || _a === void 0 ? void 0 : _a.networks[network]) || {};
 };
 exports.getNetworkSettings = getNetworkSettings;
 const getDefaultAccountIndex = () => {
     var _a, _b;
-    return ((_b = (_a = infinitymint_config_1.default === null || infinitymint_config_1.default === void 0 ? void 0 : infinitymint_config_1.default.settings) === null || _a === void 0 ? void 0 : _a.networks[hardhat_1.default.network.name]) === null || _b === void 0 ? void 0 : _b.defaultAccount) || 0;
+    let config = (0, helpers_1.getConfigFile)();
+    return ((_b = (_a = config === null || config === void 0 ? void 0 : config.settings) === null || _a === void 0 ? void 0 : _a.networks[hardhat_1.default.network.name]) === null || _b === void 0 ? void 0 : _b.defaultAccount) || 0;
 };
 exports.getDefaultAccountIndex = getDefaultAccountIndex;
 const registerNetworkPipes = () => {
     let networks = Object.keys(hardhat_1.default.config.networks);
+    let config = (0, helpers_1.getConfigFile)();
     networks.forEach((network) => {
         var _a;
-        let settings = ((_a = infinitymint_config_1.default === null || infinitymint_config_1.default === void 0 ? void 0 : infinitymint_config_1.default.settings) === null || _a === void 0 ? void 0 : _a.networks[network]) || {};
+        let settings = ((_a = config === null || config === void 0 ? void 0 : config.settings) === null || _a === void 0 ? void 0 : _a.networks[network]) || {};
         if (settings.useDefaultPipe)
             return;
         (0, helpers_1.debugLog)("registered pipe for " + network);

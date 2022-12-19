@@ -1,7 +1,11 @@
 import Pipes, { Pipe } from "./pipes";
 import fsExtra from "fs-extra";
 import fs from "fs";
-import { InfinityMintConfig, InfinityMintSession } from "./interfaces";
+import {
+	InfinityMintConfig,
+	InfinityMintProject,
+	InfinityMintSession,
+} from "./interfaces";
 import { generateMnemonic } from "bip39";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
@@ -157,6 +161,14 @@ export const getConfigFile = () => {
 	let res = require(process.cwd() + "/infinitymint.config");
 	res = res.default || res;
 	return res as InfinityMintConfig;
+};
+
+export const getCompiledProject = (projectName: string) => {};
+
+export const getProject = (projectName: string) => {
+	let res = require(process.cwd() + "/projects/" + projectName + ".ts");
+	res = res.default || res;
+	return res as InfinityMintProject;
 };
 
 /**
