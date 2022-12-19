@@ -6,6 +6,8 @@ const ERC721 = {
     //going to give
     solidityNamespace: "alpha",
     permissions: ["approved"],
+    important: true,
+    unique: true,
 };
 exports.default = ERC721;
 //# sourceMappingURL=erc721.js.map

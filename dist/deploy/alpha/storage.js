@@ -6,6 +6,7 @@ const Storage = {
     //going to give
     solidityNamespace: "alpha",
     permissions: ["approved", "erc721", "minter"],
+    unique: true,
 };
 exports.default = Storage;
 //# sourceMappingURL=storage.js.map

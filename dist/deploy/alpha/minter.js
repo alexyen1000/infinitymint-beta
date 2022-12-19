@@ -6,6 +6,7 @@ const Minter = {
     //going to give
     solidityNamespace: "alpha",
     permissions: ["erc721", "assets"],
+    unique: true,
 };
 exports.default = Minter;
 //# sourceMappingURL=minter.js.map

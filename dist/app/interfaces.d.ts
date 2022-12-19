@@ -153,6 +153,27 @@ export interface InfinityMintProject {
         version: string;
     };
     /**
+     * only available in deployed InfinityMint projects
+     */
+    network?: {
+        /**
+         * chain id of the network this project was deployed too
+         */
+        chainId?: number;
+        /**
+         * rpc url if added, must specify in the config to add. See {@link InfinityMintConfig}
+         */
+        url?: string;
+        /**
+         * the name of the network
+         */
+        name?: string;
+        /**
+         * the token symbol
+         */
+        tokenSymbol?: string;
+    };
+    /**
      * is true if this is a compiled infinitymint project
      */
     compiled?: boolean;
@@ -485,7 +506,7 @@ export interface InfinityMintConfig {
      */
     project?: string;
     /**
-     * if to launch into the InfinityConsole. See {@link InfinityConsole}
+     * if to launch into the InfinityConsole. See {@link @app/console.InfinityConsole}
      */
     console?: boolean;
     /**
@@ -526,6 +547,10 @@ export interface InfinityMintSession {
  * @see {@link InfinityMintConfigSettings}
  */
 export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {
+    /**
+     * locations are relative to the cwd
+     */
+    scriptFolders?: string[];
 }
 /**
  * @see {@link InfinityMintConfigSettings}
@@ -604,6 +629,7 @@ export interface InfinityMintScriptParameters extends Dictionary<any> {
     eventEmitter?: EventEmitter;
     project?: InfinityMintProject;
     log: FuncSingle<string, void>;
+    config: InfinityMintConfig;
     debugLog: FuncSingle<string, void>;
 }
 /**
@@ -678,6 +704,10 @@ export interface InfinityMintDeploymentLive extends Dictionary<any> {
      * true if the contract has had its setup method called successfully in the deploy script, see {@link InfinityMintDeploymentScript}
      */
     setup?: boolean;
+    /**
+     * the location of the deployment script which deployed this deployment
+     */
+    deploymentScript?: string;
 }
 /**
  * This is the interface which should be returned from all deployment scripts inside of the `./deploy` folder.
@@ -697,14 +727,23 @@ export interface InfinityMintDeploymentScript {
     setup: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
     /**
      * The list of addresses or refrences which will be given admin access to this contract
+     *
+     * @example
+     * ```js
+     * ['approved', 'all', 'erc721']
+     * ```
      */
     permissions?: Array<any>;
     /**
-     * If this contract should be deployed first before anything else, useful when deployg librarys.
+     * If important is true will prevent allow other deploy scripts from overwrite this key. If false will allow scripts to overwrite this key even if unique is true
      *
      * @defaultValue false
      */
     important?: boolean;
+    /**
+     * if set to true, infinityMint will throw an error if similar key to another deployment is found
+     */
+    unique?: boolean;
     /**
      * Will run setup immediately after the deployment is succcessful
      *

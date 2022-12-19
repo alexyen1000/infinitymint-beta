@@ -6,6 +6,8 @@ import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
 import GanacheServer from "./ganacheServer";
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getLocalDeployment } from "./deployments";
+import { InfinityMintDeploymentLive } from "./interfaces";
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -60,6 +62,52 @@ export const getProvider = () => {
 		return GanacheServer.getProvider();
 
 	return ethers.provider;
+};
+
+/**
+ * Returns an ethers contract instance but takes an InfinityMintDeployment directly
+ * @param deployment
+ * @param provider
+ * @returns
+ */
+export const createContract = (
+	deployment: InfinityMintDeploymentLive,
+	provider?: any
+) => {
+	provider = provider || getProvider();
+	return new ethers.Contract(deployment.address, deployment.abi, provider);
+};
+
+/**
+ * Returns an ethers contract which you can use to execute methods on a smart contraact.
+ * @param contractName
+ * @param network
+ * @param provider
+ * @returns
+ */
+export const getNetworkContract = (
+	contractName: string,
+	network?: string,
+	provider?: any
+) => {
+	provider = provider || getProvider();
+	return createContract(
+		getNetworkDeployment(contractName, network),
+		provider
+	);
+};
+
+/**
+ * Returns an InfinityMintLiveDeployment with that contract name
+ * @param contractName
+ * @param network
+ * @returns
+ */
+export const getNetworkDeployment = (
+	contractName: string,
+	network?: string
+) => {
+	return getLocalDeployment(contractName, network || hre.network.name);
 };
 
 export const getNetworkSettings = (network: string) => {

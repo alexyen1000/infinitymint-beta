@@ -6,6 +6,7 @@ const Project = {
     //going to give
     solidityNamespace: "alpha",
     permissions: ["approved", "erc721", "minter"],
+    unique: true,
 };
 exports.default = Project;
 //# sourceMappingURL=project.js.map

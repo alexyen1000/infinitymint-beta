@@ -1,6 +1,7 @@
 import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { InfinityMintDeploymentLive } from "./interfaces";
 export declare const getDefaultSigner: () => Promise<SignerWithAddress>;
 export declare const changeNetwork: (network: string) => void;
 /**
@@ -13,6 +14,28 @@ export declare const changeNetwork: (network: string) => void;
  * @returns
  */
 export declare const getProvider: () => JsonRpcProvider;
+/**
+ * Returns an ethers contract instance but takes an InfinityMintDeployment directly
+ * @param deployment
+ * @param provider
+ * @returns
+ */
+export declare const createContract: (deployment: InfinityMintDeploymentLive, provider?: any) => import("ethers").Contract;
+/**
+ * Returns an ethers contract which you can use to execute methods on a smart contraact.
+ * @param contractName
+ * @param network
+ * @param provider
+ * @returns
+ */
+export declare const getNetworkContract: (contractName: string, network?: string, provider?: any) => import("ethers").Contract;
+/**
+ * Returns an InfinityMintLiveDeployment with that contract name
+ * @param contractName
+ * @param network
+ * @returns
+ */
+export declare const getNetworkDeployment: (contractName: string, network?: string) => InfinityMintDeploymentLive;
 export declare const getNetworkSettings: (network: string) => import("./interfaces").InfinityMintConfigSettingsNetwork;
 export declare const getDefaultAccountIndex: () => number;
 export declare const registerNetworkPipes: () => void;

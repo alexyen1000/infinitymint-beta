@@ -6,6 +6,7 @@ const Linker = {
     //going to give
     solidityNamespace: "alpha",
     permissions: ["approved", "erc721", "minter", "assets"],
+    unique: true,
 };
 exports.default = Linker;
 //# sourceMappingURL=linker.js.map

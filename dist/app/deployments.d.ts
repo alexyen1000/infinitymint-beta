@@ -14,7 +14,7 @@ export declare class InfinityMintDeployment {
      */
     protected deploymentScript: InfinityMintDeploymentScript;
     /**
-     * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link InfinityMintDeploymentLive}
+     * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link @app/interfaces.InfinityMintDeploymentLive}
      */
     protected liveDeployments: InfinityMintDeploymentLive[];
     /**
@@ -75,17 +75,67 @@ export declare class InfinityMintDeployment {
     isLibrary(): boolean;
     getAbi(index?: number): any[];
     getDeployments(): InfinityMintDeploymentLive[];
+    isImportant(): boolean;
+    isUnique(): boolean;
     hasDeployed(): boolean;
     hasSetup(): boolean;
     save(): void;
+    /**
+     * Returns an ethers contract instance of this deployment for you to call methods on the smart contract
+     * @param index
+     * @returns
+     */
+    getContract(index?: number): import("ethers").Contract;
+    /**
+     * used after deploy to set the the live deployments for this deployment. See {@link @app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
+     * @param liveDeployments
+     */
     updateLiveDeployments(liveDeployments: InfinityMintDeploymentLive | InfinityMintDeploymentLive[]): void;
+    /**
+     * returns true if we have a local deployment for this current network
+     * @param index
+     * @returns
+     */
+    hasLocalDeployment(index?: number): boolean;
+    /**
+     * gets a deployment inside of the current /deployments/ folder
+     * @param index
+     * @returns
+     */
+    getLocalDeployment(index?: number): InfinityMintDeploymentLive;
     deploy(...args: any): Promise<void>;
     setup(...args: any): Promise<void>;
     execute(method: string, args: any): Promise<void>;
 }
 /**
- * Returns a list of InfinityMintDeployment classes for the network and project.
+ * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
+ */
+export declare const getLocalDeployment: (contractName: string, network: string) => InfinityMintDeploymentLive;
+/**
+ * Returns the raw .json file in the /deployments/network/ folder
+ * @param contractName
  * @returns
  */
-export declare const getDeployments: (project: InfinityMintProject, network: string, root?: string) => Promise<InfinityMintDeployment[]>;
+export declare const readLocalDeployment: (contractName: string, network: string) => any;
+/**
+ * Returns true if a deployment manifest for this key/contractName is found
+ * @param contractName - can be a key (erc721, assets) or a fully qualified contract name
+ * @param project
+ * @param network
+ * @returns
+ */
+export declare const hasDeployments: (contractName: string, project: InfinityMintProject, network?: string) => boolean;
+export declare const getDeployment: (contractName: string, project: InfinityMintProject, network?: string) => InfinityMintDeployment;
+export declare const getLiveDeployments: (contractName: string, project: InfinityMintProject, network: string) => InfinityMintDeploymentLive[];
+/**
+ * Returns a new deployment class from a live deployment file
+ * @param liveDeployment
+ * @returns
+ */
+export declare const createDeployment: (liveDeployment: InfinityMintDeploymentLive, deploymentScript?: string) => InfinityMintDeployment;
+/**
+ * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
+ * @returns
+ */
+export declare const getDeployments: (project: InfinityMintProject, network?: string, root?: string) => Promise<InfinityMintDeployment[]>;
 //# sourceMappingURL=deployments.d.ts.map

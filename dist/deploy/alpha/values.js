@@ -5,6 +5,7 @@ const Values = {
     setup: async (params) => { },
     //going to give
     instantlySetup: true,
+    unique: true,
     important: true,
     index: 0,
     solidityNamespace: "alpha",

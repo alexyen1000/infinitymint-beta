@@ -5,6 +5,7 @@ const Utils = {
     setup: async (params) => { },
     //going to give
     library: true,
+    unique: true,
     important: true,
     index: 0,
     solidityNamespace: "alpha",

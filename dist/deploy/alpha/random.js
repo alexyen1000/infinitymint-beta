@@ -7,6 +7,7 @@ const Random = {
     index: 1,
     solidityNamespace: "alpha",
     permissions: ["approved", "erc721", "minter", "assets"],
+    unique: true,
 };
 exports.default = Random;
 //# sourceMappingURL=random.js.map

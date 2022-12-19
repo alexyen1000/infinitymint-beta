@@ -7,6 +7,7 @@ const Royalty = {
     instantlySetup: true,
     solidityNamespace: "alpha",
     permissions: ["approved", "erc721", "minter"],
+    unique: true,
 };
 exports.default = Royalty;
 //# sourceMappingURL=royalty.js.map

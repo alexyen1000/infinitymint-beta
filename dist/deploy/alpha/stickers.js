@@ -6,6 +6,7 @@ const Stickers = {
     //going to give
     solidityNamespace: "alpha",
     permissions: ["approved", "erc721", "minter", "assets"],
+    unique: true,
 };
 exports.default = Stickers;
 //# sourceMappingURL=stickers.js.map

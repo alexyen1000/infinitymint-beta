@@ -9,6 +9,7 @@ import { debugLog, getProject, log } from "./helpers";
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
+import { createContract } from "./web3";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -254,9 +255,20 @@ export class InfinityMintDeployment {
 		fs.writeFileSync(this.getFilePath(), JSON.stringify(deployments));
 	}
 
-	getEthersContract() {}
+	/**
+	 * Returns an ethers contract instance of this deployment for you to call methods on the smart contract
+	 * @param index
+	 * @returns
+	 */
+	getContract(index?: number) {
+		return createContract(this.liveDeployments[index || 0]);
+	}
 
-	updateLiveDeployments(
+	/**
+	 * used after deploy to set the the live deployments for this deployment. See {@link @app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
+	 * @param liveDeployments
+	 */
+	public updateLiveDeployments(
 		liveDeployments:
 			| InfinityMintDeploymentLive
 			| InfinityMintDeploymentLive[]
@@ -264,8 +276,67 @@ export class InfinityMintDeployment {
 		if (liveDeployments instanceof Array)
 			liveDeployments = [liveDeployments];
 
+		let mismatchNetworkAndProject = liveDeployments.filter(
+			(deployment: InfinityMintDeploymentLive) =>
+				deployment.network.name !== this.network ||
+				deployment.project !== this.project.name
+		) as InfinityMintDeploymentLive[];
+
+		//throw error if we found any
+		if (mismatchNetworkAndProject.length !== 0)
+			throw new Error(
+				"one or more deployments are from a different network or project, check: " +
+					mismatchNetworkAndProject.map(
+						(deployment) =>
+							`<${deployment.key}>(${deployment.name}), `
+					)
+			);
+
 		this.liveDeployments = liveDeployments as InfinityMintDeploymentLive[];
 		this.save();
+	}
+
+	/**
+	 * returns true if we have a local deployment for this current network
+	 * @param index
+	 * @returns
+	 */
+	hasLocalDeployment(index?: number) {
+		let deployment = this.liveDeployments[index || 0];
+		let path =
+			process.cwd() +
+			"/deployments/" +
+			this.network +
+			"/" +
+			deployment.name +
+			".json";
+
+		return fs.existsSync(path);
+	}
+
+	/**
+	 * gets a deployment inside of the current /deployments/ folder
+	 * @param index
+	 * @returns
+	 */
+	getLocalDeployment(index?: number) {
+		let deployment = this.liveDeployments[index || 0];
+		let path =
+			process.cwd() +
+			"/deployments/" +
+			this.network +
+			"/" +
+			deployment.name +
+			".json";
+
+		if (!fs.existsSync(path))
+			throw new Error("local deployment not found: " + path);
+
+		return JSON.parse(
+			fs.readFileSync(path, {
+				encoding: "utf-8",
+			})
+		) as InfinityMintDeploymentLive;
 	}
 
 	async deploy(...args: any) {
@@ -301,6 +372,34 @@ export class InfinityMintDeployment {
 		}
 	}
 }
+
+/**
+ * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
+ */
+export const getLocalDeployment = (contractName: string, network: string) => {
+	return readLocalDeployment(
+		contractName,
+		network
+	) as InfinityMintDeploymentLive;
+};
+
+/**
+ * Returns the raw .json file in the /deployments/network/ folder
+ * @param contractName
+ * @returns
+ */
+export const readLocalDeployment = (contractName: string, network: string) => {
+	let path =
+		process.cwd() +
+		"/deployments/" +
+		network +
+		"/" +
+		contractName +
+		".json";
+
+	if (!fs.existsSync(path)) throw new Error(`${path} not found`);
+	return JSON.parse(fs.readFileSync(path, { encoding: "utf-8" }));
+};
 
 /**
  * Returns true if a deployment manifest for this key/contractName is found

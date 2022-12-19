@@ -26,11 +26,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getProvider = exports.changeNetwork = exports.getDefaultSigner = void 0;
+exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getNetworkDeployment = exports.getNetworkContract = exports.createContract = exports.getProvider = exports.changeNetwork = exports.getDefaultSigner = void 0;
 const hardhat_1 = __importStar(require("hardhat"));
 const helpers_1 = require("./helpers");
 const pipes_1 = __importDefault(require("./pipes"));
 const ganacheServer_1 = __importDefault(require("./ganacheServer"));
+const deployments_1 = require("./deployments");
 //stores listeners for the providers
 const ProviderListeners = {};
 const getDefaultSigner = async () => {
@@ -73,6 +74,39 @@ const getProvider = () => {
     return hardhat_1.ethers.provider;
 };
 exports.getProvider = getProvider;
+/**
+ * Returns an ethers contract instance but takes an InfinityMintDeployment directly
+ * @param deployment
+ * @param provider
+ * @returns
+ */
+const createContract = (deployment, provider) => {
+    provider = provider || (0, exports.getProvider)();
+    return new hardhat_1.ethers.Contract(deployment.address, deployment.abi, provider);
+};
+exports.createContract = createContract;
+/**
+ * Returns an ethers contract which you can use to execute methods on a smart contraact.
+ * @param contractName
+ * @param network
+ * @param provider
+ * @returns
+ */
+const getNetworkContract = (contractName, network, provider) => {
+    provider = provider || (0, exports.getProvider)();
+    return (0, exports.createContract)((0, exports.getNetworkDeployment)(contractName, network), provider);
+};
+exports.getNetworkContract = getNetworkContract;
+/**
+ * Returns an InfinityMintLiveDeployment with that contract name
+ * @param contractName
+ * @param network
+ * @returns
+ */
+const getNetworkDeployment = (contractName, network) => {
+    return (0, deployments_1.getLocalDeployment)(contractName, network || hardhat_1.default.network.name);
+};
+exports.getNetworkDeployment = getNetworkDeployment;
 const getNetworkSettings = (network) => {
     var _a;
     let config = (0, helpers_1.getConfigFile)();
