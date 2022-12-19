@@ -177,7 +177,7 @@ exports.InfinityMintDeployment = InfinityMintDeployment;
  */
 const getDeployments = (project, network, root) => {
     return new Promise((resolve, reject) => {
-        let filePath = (root || "./") + "deploy/**/*.ts";
+        let filePath = (root || process.cwd() + "/") + "deploy/**/*.ts";
         (0, helpers_1.debugLog)("finding deployment scripts in: " + filePath);
         (0, glob_1.glob)(filePath, (err, matches) => {
             if (err)
