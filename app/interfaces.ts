@@ -515,7 +515,7 @@ export interface InfinityMintConfig {
 	 */
 	project?: string;
 	/**
-	 * if to launch into the InfinityConsole. See {@link InfinityConsole}
+	 * if to launch into the InfinityConsole. See {@link @app/console.InfinityConsole}
 	 */
 	console?: boolean;
 	/**

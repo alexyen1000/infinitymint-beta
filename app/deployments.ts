@@ -23,7 +23,7 @@ export class InfinityMintDeployment {
 	 */
 	protected deploymentScript: InfinityMintDeploymentScript;
 	/**
-	 * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link InfinityMintDeploymentLive}
+	 * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link @app/interfaces.InfinityMintDeploymentLive}
 	 */
 	protected liveDeployments: InfinityMintDeploymentLive[];
 	/**
