@@ -17,7 +17,7 @@
 <li><a href="app_interfaces.InfinityMintDeploymentLive.html">InfinityMintDeploymentLive</a></li></ul>
 <h1>Interface InfinityMintDeploymentLive</h1></div>
 <section class="tsd-panel tsd-comment">
-<div class="tsd-comment tsd-typography"><p>An InfinityMintDeployment is a smart contract which is currently active on which ever network is currently set. It holds the
+<div class="tsd-comment tsd-typography"><p>An InfinityMint Depllyment is a smart contract which is currently active on which ever network is currently set. It holds the
 abi for the contract along with its address and who deployed it. It also contains which project (see <a href="app_interfaces.InfinityMintProject.html">InfinityMintProject</a>) it was deployed under.</p>
 
 <h3>See</h3><p><a href="app_interfaces.InfinityMintDeploymentScript.html">InfinityMintDeploymentScript</a></p>
@@ -29,7 +29,7 @@ abi for the contract along with its address and who deployed it. It also contain
 <ul class="tsd-hierarchy">
 <li><span class="target">InfinityMintDeploymentLive</span></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L653">app/interfaces.ts:653</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L673">app/interfaces.ts:673</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -46,6 +46,7 @@ abi for the contract along with its address and who deployed it. It also contain
 <a href="app_interfaces.InfinityMintDeploymentLive.html#network" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>network?</span></a>
 <a href="app_interfaces.InfinityMintDeploymentLive.html#project" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>project?</span></a>
 <a href="app_interfaces.InfinityMintDeploymentLive.html#receipt" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>receipt?</span></a>
+<a href="app_interfaces.InfinityMintDeploymentLive.html#setup" class="tsd-index-link tsd-kind-property tsd-parent-kind-interface"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>setup?</span></a>
 </div></section></div></details></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
@@ -55,42 +56,42 @@ abi for the contract along with its address and who deployed it. It also contain
 <div class="tsd-comment tsd-typography"><p>The abi of the current dpeloyment.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L657">app/interfaces.ts:657</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L677">app/interfaces.ts:677</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="address" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>address</span><a href="#address" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">address<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The address of this deployment on the blockchain.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L670">app/interfaces.ts:670</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L690">app/interfaces.ts:690</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="approved" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>approved</span><a href="#approved" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">approved<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>The approved addresses for this deployment.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L687">app/interfaces.ts:687</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L707">app/interfaces.ts:707</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="deployer" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>deployer</span><a href="#deployer" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">deployer<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The address of the deployer of this contract.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L691">app/interfaces.ts:691</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L711">app/interfaces.ts:711</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="key" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>key</span><a href="#key" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">key<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>the key is the module name (see <a href="app_interfaces.InfinityMintProjectModules.html">InfinityMintProjectModules</a>) which is the name of the deployment script, or the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see <a href="app_interfaces.InfinityMintProject.html">InfinityMintProject</a>) and how you can pull this contract through code. Can be set to a custom value or left to be worked out.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L662">app/interfaces.ts:662</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L682">app/interfaces.ts:682</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="name" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>name</span><a href="#name" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">name<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The name of the current deployment, same as the .sol filename.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L666">app/interfaces.ts:666</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L686">app/interfaces.ts:686</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="network" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>network</span><a href="#network" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">network<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>chainId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
@@ -104,7 +105,7 @@ abi for the contract along with its address and who deployed it. It also contain
 <li class="tsd-parameter">
 <h5>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L680">app/interfaces.ts:680</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L700">app/interfaces.ts:700</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="project" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>project</span><a href="#project" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">project<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
@@ -113,14 +114,21 @@ abi for the contract along with its address and who deployed it. It also contain
 <h3>See</h3><p><a href="app_interfaces.InfinityMintProject.html">InfinityMintProject</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L676">app/interfaces.ts:676</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L696">app/interfaces.ts:696</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="receipt" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>receipt</span><a href="#receipt" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">receipt<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Dictionary</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div>
 <div class="tsd-comment tsd-typography"><p>The receipt for this deployment</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/e3af1ec/app/interfaces.ts#L695">app/interfaces.ts:695</a></li></ul></aside></section></section></div>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L715">app/interfaces.ts:715</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface"><a id="setup" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagOptional">Optional</code> <span>setup</span><a href="#setup" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">setup<span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
+<div class="tsd-comment tsd-typography"><p>true if the contract has had its setup method called successfully in the deploy script, see <a href="app_interfaces.InfinityMintDeploymentScript.html">InfinityMintDeploymentScript</a></p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/llydia-eth/infinitymint-beta/blob/6a7fa43/app/interfaces.ts#L719">app/interfaces.ts:719</a></li></ul></aside></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tree">
 <div class="tree-settings">
@@ -243,7 +251,7 @@ abi for the contract along with its address and who deployed it. It also contain
 <li><a class="category__link js-category-link category__link--ts" href="../modules/app_deployments.html" data-id="/modules/app_deployments.html">deployments.ts</a>
 <ul>
 <li class="tsd-kind-class tsd-parent-kind-module"><a class="category__link js-category-link" href="../classes/app_deployments.InfinityMintDeployment.html" data-id="/classes/app_deployments.InfinityMintDeployment.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg>InfinityMintDeployment</a></li>
-<li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_deployments.getDeploymentScripts.html" data-id="/functions/app_deployments.getDeploymentScripts.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-64-path"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)" id="icon-64-text"></path></svg>getDeploymentScripts</a></li></ul></li>
+<li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_deployments.getDeployments.html" data-id="/functions/app_deployments.getDeployments.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-64-path"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)" id="icon-64-text"></path></svg>getDeployments</a></li></ul></li>
 <li><a class="category__link js-category-link category__link--ts" href="../modules/app_ganacheServer.html" data-id="/modules/app_ganacheServer.html">ganacheServer.ts</a>
 <ul>
 <li class="tsd-kind-class tsd-parent-kind-module"><a class="category__link js-category-link" href="../classes/app_ganacheServer.GanacheServer.html" data-id="/classes/app_ganacheServer.GanacheServer.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg>GanacheServer</a></li>
@@ -262,7 +270,9 @@ abi for the contract along with its address and who deployed it. It also contain
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.createInfinityMintConfig.html" data-id="/functions/app_helpers.createInfinityMintConfig.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>createInfinityMintConfig</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.debugLog.html" data-id="/functions/app_helpers.debugLog.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>debugLog</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.error.html" data-id="/functions/app_helpers.error.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>error</a></li>
+<li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.getCompiledProject.html" data-id="/functions/app_helpers.getCompiledProject.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>getCompiledProject</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.getConfigFile.html" data-id="/functions/app_helpers.getConfigFile.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>getConfigFile</a></li>
+<li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.getProject.html" data-id="/functions/app_helpers.getProject.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>getProject</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.getSolidityNamespace.html" data-id="/functions/app_helpers.getSolidityNamespace.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>getSolidityNamespace</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.initializeGanacheMnemonic.html" data-id="/functions/app_helpers.initializeGanacheMnemonic.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>initializeGanacheMnemonic</a></li>
 <li class="tsd-kind-function tsd-parent-kind-module"><a class="category__link js-category-link" href="../functions/app_helpers.initializeInfinitymintConfig.html" data-id="/functions/app_helpers.initializeInfinitymintConfig.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>initializeInfinitymintConfig</a></li>
