@@ -7,5 +7,6 @@ const Royalty: InfinityMintDeploymentScript = {
 	instantlySetup: true, //will run the set up for this contract instantly and not after everything else has deployed
 	solidityNamespace: "alpha",
 	permissions: ["approved", "erc721", "minter"],
+	unique: true,
 };
 export default Royalty;

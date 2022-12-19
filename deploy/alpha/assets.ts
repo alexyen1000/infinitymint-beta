@@ -7,5 +7,6 @@ const Assets: InfinityMintDeploymentScript = {
 	index: 2,
 	solidityNamespace: "alpha",
 	permissions: ["approved", "erc721", "minter"],
+	unique: true,
 };
 export default Assets;

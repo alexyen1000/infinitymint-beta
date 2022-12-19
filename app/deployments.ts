@@ -5,7 +5,7 @@ import {
 	InfinityMintDeploymentLive,
 	InfinityMintProject,
 } from "./interfaces";
-import { debugLog, log } from "./helpers";
+import { debugLog, getProject, log } from "./helpers";
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
@@ -58,9 +58,19 @@ export class InfinityMintDeployment {
 		project: InfinityMintProject
 	) {
 		this.emitter = new events.EventEmitter();
-		this.deploymentScript = require(process.cwd() +
-			"/deploy/" +
-			deploymentScriptLocation).default as InfinityMintDeploymentScript;
+
+		if (
+			fs.existsSync(process.cwd() + "/deploy/" + deploymentScriptLocation)
+		)
+			this.deploymentScript = require(process.cwd() +
+				"/deploy/" +
+				deploymentScriptLocation)
+				.default as InfinityMintDeploymentScript;
+		else
+			debugLog(
+				`deploy script for [${this.key}]<${this.project}> not found`
+			);
+
 		this.deploymentScriptLocation = deploymentScriptLocation;
 		this.key = key;
 
@@ -236,6 +246,8 @@ export class InfinityMintDeployment {
 		fs.writeFileSync(this.getFilePath(), JSON.stringify(deployments));
 	}
 
+	getEthersContract() {}
+
 	updateLiveDeployments(
 		liveDeployments:
 			| InfinityMintDeploymentLive
@@ -283,15 +295,37 @@ export class InfinityMintDeployment {
 }
 
 /**
+ * Returns a new deployment class from a live deployment file
+ * @param liveDeployment
+ * @returns
+ */
+export const createDeployment = (
+	liveDeployment: InfinityMintDeploymentLive,
+	deploymentScript?: string
+) => {
+	return new InfinityMintDeployment(
+		deploymentScript || liveDeployment.deploymentScript,
+		liveDeployment.key,
+		liveDeployment.network.name,
+		getProject(liveDeployment.project)
+	);
+};
+
+/**
  * Returns a list of InfinityMintDeployment classes for the network and project.
  * @returns
  */
 export const getDeployments = (
 	project: InfinityMintProject,
-	network: string,
+	network?: string,
 	root?: string
 ): Promise<InfinityMintDeployment[]> => {
 	return new Promise((resolve, reject) => {
+		network = network || project.network?.name;
+
+		if (network === undefined)
+			throw new Error("unable to automatically determain network");
+
 		let filePath = (root || process.cwd() + "/") + "deploy/**/*.ts";
 		debugLog("finding deployment scripts in: " + filePath);
 		glob(filePath, (err: Error | null, matches: any[]) => {

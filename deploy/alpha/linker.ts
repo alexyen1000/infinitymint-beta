@@ -5,5 +5,6 @@ const Linker: InfinityMintDeploymentScript = {
 	//going to give
 	solidityNamespace: "alpha",
 	permissions: ["approved", "erc721", "minter", "assets"],
+	unique: true,
 };
 export default Linker;

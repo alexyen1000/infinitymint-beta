@@ -7,5 +7,6 @@ const Random: InfinityMintDeploymentScript = {
 	index: 1,
 	solidityNamespace: "alpha",
 	permissions: ["approved", "erc721", "minter", "assets"],
+	unique: true,
 };
 export default Random;

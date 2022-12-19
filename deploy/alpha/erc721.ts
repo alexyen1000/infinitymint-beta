@@ -6,5 +6,7 @@ const ERC721: InfinityMintDeploymentScript = {
 	//going to give
 	solidityNamespace: "alpha",
 	permissions: ["approved"],
+	important: true,
+	unique: true,
 };
 export default ERC721;

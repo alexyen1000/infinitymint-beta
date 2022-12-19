@@ -6,5 +6,6 @@ const Minter: InfinityMintDeploymentScript = {
 	//going to give
 	solidityNamespace: "alpha",
 	permissions: ["erc721", "assets"],
+	unique: true,
 };
 export default Minter;

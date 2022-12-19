@@ -5,7 +5,8 @@ const Utils: InfinityMintDeploymentScript = {
 	setup: async (params) => {},
 	//going to give
 	library: true,
-	important: true, //utils must be deployed either before or after values
+	unique: true,
+	important: true,
 	index: 0, //should be after values
 	solidityNamespace: "alpha",
 	permissions: ["approved", "erc721"],

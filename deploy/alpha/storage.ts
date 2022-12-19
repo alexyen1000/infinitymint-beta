@@ -6,5 +6,6 @@ const Storage: InfinityMintDeploymentScript = {
 	//going to give
 	solidityNamespace: "alpha",
 	permissions: ["approved", "erc721", "minter"],
+	unique: true,
 };
 export default Storage;
