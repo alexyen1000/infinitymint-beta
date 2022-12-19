@@ -6,7 +6,6 @@ import {
 	startNetworkPipe,
 } from "./app/web3";
 import GanacheServer from "./app/ganacheServer";
-import config from "./infinitymint.config";
 import { Web3Provider } from "@ethersproject/providers";
 import fs from "fs";
 import {
@@ -16,26 +15,22 @@ import {
 	log,
 	saveSession,
 	getSolidityNamespace,
+	getConfigFile,
 } from "./app/helpers";
 import * as Helpers from "./app/helpers";
 
 ///NOTE: Might need a hardhat config file in the root where ever this is included externally?
 //export the config file
-export {
-	config as InfinityMintConfig,
-	GanacheServer,
-	Helpers,
-	InfinityConsole,
-	hre,
-	ethers,
-};
+export { GanacheServer, Helpers, InfinityConsole, hre, ethers };
 
 //export the interfaces app as default
 export * as Interfaces from "./app/interfaces";
 export * as Web3Helpers from "./app/web3";
 
+//get the infinitymint config file
+let config = getConfigFile();
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if (isEnvTrue("RUN_INFINITYMINT"))
+if (config.console)
 	(async () => {
 		log("starting infinitymint");
 		let session = readSession();

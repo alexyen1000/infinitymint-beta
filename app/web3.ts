@@ -1,6 +1,5 @@
 import hre, { ethers } from "hardhat";
-import config from "../infinitymint.config";
-import { debugLog, isEnvTrue, log } from "./helpers";
+import { debugLog, getConfigFile, isEnvTrue, log } from "./helpers";
 import Pipes from "./pipes";
 import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
 import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
@@ -64,15 +63,18 @@ export const getProvider = () => {
 };
 
 export const getNetworkSettings = (network: string) => {
+	let config = getConfigFile();
 	return config?.settings?.networks[network] || {};
 };
 
 export const getDefaultAccountIndex = () => {
+	let config = getConfigFile();
 	return config?.settings?.networks[hre.network.name]?.defaultAccount || 0;
 };
 
 export const registerNetworkPipes = () => {
 	let networks = Object.keys(hre.config.networks);
+	let config = getConfigFile();
 
 	networks.forEach((network) => {
 		let settings = config?.settings?.networks[network] || {};

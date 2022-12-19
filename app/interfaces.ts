@@ -499,6 +499,10 @@ export interface InfinityMintConfig {
 	 */
 	project?: string;
 	/**
+	 * if to launch into the InfinityConsole. See {@link InfinityConsole}
+	 */
+	console?: boolean;
+	/**
 	 * The hardhat configuration, the same as hre.config. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/hardhat>
 	 */
 	hardhat: HardhatUserConfig;
