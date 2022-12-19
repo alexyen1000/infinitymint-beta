@@ -6,7 +6,7 @@ import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
 import GanacheServer from "./ganacheServer";
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getLocalDeployment } from "./deployments";
+import { getNetworkDeployment, create } from "./deployments";
 import { InfinityMintDeploymentLive } from "./interfaces";
 
 //stores listeners for the providers
@@ -70,7 +70,7 @@ export const getProvider = () => {
  * @param provider
  * @returns
  */
-export const createContract = (
+export const getContract = (
 	deployment: InfinityMintDeploymentLive,
 	provider?: any
 ) => {
@@ -85,16 +85,9 @@ export const createContract = (
  * @param provider
  * @returns
  */
-export const getNetworkContract = (
-	contractName: string,
-	network?: string,
-	provider?: any
-) => {
+export const get = (contractName: string, network?: string, provider?: any) => {
 	provider = provider || getProvider();
-	return createContract(
-		getNetworkDeployment(contractName, network),
-		provider
-	);
+	return getContract(getNetworkDeployment(contractName, network), provider);
 };
 
 /**
@@ -103,11 +96,10 @@ export const getNetworkContract = (
  * @param network
  * @returns
  */
-export const getNetworkDeployment = (
-	contractName: string,
-	network?: string
-) => {
-	return getLocalDeployment(contractName, network || hre.network.name);
+export const getDeployment = (contractName: string, network?: string) => {
+	return create(
+		getNetworkDeployment(contractName, network || hre.network.name)
+	);
 };
 
 export const getNetworkSettings = (network: string) => {

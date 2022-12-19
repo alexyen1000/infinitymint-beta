@@ -9,7 +9,7 @@ import { debugLog, getProject, log } from "./helpers";
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
-import { createContract } from "./web3";
+import { getContract } from "./web3";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -261,7 +261,7 @@ export class InfinityMintDeployment {
 	 * @returns
 	 */
 	getContract(index?: number) {
-		return createContract(this.liveDeployments[index || 0]);
+		return getContract(this.liveDeployments[index || 0]);
 	}
 
 	/**
@@ -376,8 +376,8 @@ export class InfinityMintDeployment {
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
  */
-export const getLocalDeployment = (contractName: string, network: string) => {
-	return readLocalDeployment(
+export const getNetworkDeployment = (contractName: string, network: string) => {
+	return readNetworkDeployment(
 		contractName,
 		network
 	) as InfinityMintDeploymentLive;
@@ -388,7 +388,10 @@ export const getLocalDeployment = (contractName: string, network: string) => {
  * @param contractName
  * @returns
  */
-export const readLocalDeployment = (contractName: string, network: string) => {
+export const readNetworkDeployment = (
+	contractName: string,
+	network: string
+) => {
 	let path =
 		process.cwd() +
 		"/deployments/" +
@@ -408,7 +411,7 @@ export const readLocalDeployment = (contractName: string, network: string) => {
  * @param network
  * @returns
  */
-export const hasDeployments = (
+export const hasDeploymentManifest = (
 	contractName: string,
 	project: InfinityMintProject,
 	network?: string
@@ -426,7 +429,7 @@ export const hasDeployments = (
 	return fs.existsSync(path);
 };
 
-export const getDeployment = (
+export const getInfinityMintDeployment = (
 	contractName: string,
 	project: InfinityMintProject,
 	network?: string
@@ -434,10 +437,10 @@ export const getDeployment = (
 	network = network || project?.network?.name;
 
 	if (network === undefined)
-		throw new Error("unable to automatically determain network");
+		throw new Error("unable to automatically determin network");
 
 	let liveDeployments = getLiveDeployments(contractName, project, network);
-	return createDeployment(liveDeployments[0]);
+	return create(liveDeployments[0]);
 };
 
 export const getLiveDeployments = (
@@ -451,7 +454,7 @@ export const getLiveDeployments = (
 			project.version?.version || "1.0.0"
 		}/${contractName}_${network}.json`;
 
-	if (!hasDeployments(contractName, project, network))
+	if (!hasDeploymentManifest(contractName, project, network))
 		throw new Error("missing deployment manifest: " + path);
 
 	let result = JSON.parse(
@@ -467,7 +470,7 @@ export const getLiveDeployments = (
  * @param liveDeployment
  * @returns
  */
-export const createDeployment = (
+export const create = (
 	liveDeployment: InfinityMintDeploymentLive,
 	deploymentScript?: string
 ) => {
@@ -483,7 +486,7 @@ export const createDeployment = (
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-export const getDeployments = (
+export const getInfinityMintDeployments = (
 	project: InfinityMintProject,
 	network?: string,
 	root?: string
