@@ -211,6 +211,14 @@ export class InfinityMintDeployment {
 		return deployments.liveDeployments as InfinityMintDeploymentLive[];
 	}
 
+	isImportant() {
+		return this.deploymentScript?.important === true;
+	}
+
+	isUnique() {
+		return this.deploymentScript?.unique === true;
+	}
+
 	hasDeployed() {
 		return this.hasDeployedAll === true;
 	}
@@ -295,6 +303,67 @@ export class InfinityMintDeployment {
 }
 
 /**
+ * Returns true if a deployment manifest for this key/contractName is found
+ * @param contractName - can be a key (erc721, assets) or a fully qualified contract name
+ * @param project
+ * @param network
+ * @returns
+ */
+export const hasDeployments = (
+	contractName: string,
+	project: InfinityMintProject,
+	network?: string
+) => {
+	network = network || project?.network?.name;
+
+	if (network === undefined)
+		throw new Error("unable to automatically determain network");
+
+	let path =
+		process.cwd() +
+		`/temp/deployments/${project.name}@${
+			project.version?.version || "1.0.0"
+		}/${contractName}_${network}.json`;
+	return fs.existsSync(path);
+};
+
+export const getDeployment = (
+	contractName: string,
+	project: InfinityMintProject,
+	network?: string
+) => {
+	network = network || project?.network?.name;
+
+	if (network === undefined)
+		throw new Error("unable to automatically determain network");
+
+	let liveDeployments = getLiveDeployments(contractName, project, network);
+	return createDeployment(liveDeployments[0]);
+};
+
+export const getLiveDeployments = (
+	contractName: string,
+	project: InfinityMintProject,
+	network: string
+) => {
+	let path =
+		process.cwd() +
+		`/temp/deployments/${project.name}@${
+			project.version?.version || "1.0.0"
+		}/${contractName}_${network}.json`;
+
+	if (!hasDeployments(contractName, project, network))
+		throw new Error("missing deployment manifest: " + path);
+
+	let result = JSON.parse(
+		fs.readFileSync(path, {
+			encoding: "utf-8",
+		})
+	);
+	return (result.liveDeployments || []) as InfinityMintDeploymentLive[];
+};
+
+/**
  * Returns a new deployment class from a live deployment file
  * @param liveDeployment
  * @returns
@@ -312,7 +381,7 @@ export const createDeployment = (
 };
 
 /**
- * Returns a list of InfinityMintDeployment classes for the network and project.
+ * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
 export const getDeployments = (

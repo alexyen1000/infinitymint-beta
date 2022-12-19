@@ -579,7 +579,12 @@ export interface InfinityMintSession {
 /**
  * @see {@link InfinityMintConfigSettings}
  */
-export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {}
+export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {
+	/**
+	 * locations are relative to the cwd
+	 */
+	scriptFolders?: string[];
+}
 
 /**
  * @see {@link InfinityMintConfigSettings}
@@ -662,6 +667,7 @@ export interface InfinityMintScriptParameters extends Dictionary<any> {
 	eventEmitter?: EventEmitter;
 	project?: InfinityMintProject;
 	log: FuncSingle<string, void>;
+	config: InfinityMintConfig;
 	debugLog: FuncSingle<string, void>;
 }
 
