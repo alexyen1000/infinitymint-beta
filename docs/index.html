@@ -22,43 +22,29 @@
 </a>
 <ul>
 <li>Mac OSX (any version), Windows (XP, Vista, 7, 8, 10, 11), Debian (5+), Ubuntu (14+)</li>
-<li>Node <strong>18.5.0</strong> or Higher</li>
+<li>Node <strong>16.0.0</strong> or Higher</li>
 </ul>
 
 <a href="#🗿-installation" id="🗿-installation" style="color: inherit; text-decoration: none;">
   <h2>🗿 Installation</h2>
 </a>
-<p>First, run <code>npm install --build-from-source</code> in the root of the repository.
-If you are not using the <em>InfinityChain</em>, then you will first need to start <em>ganache</em>.
-To do this, enter a <code>GANACHE_URL</code> within your <code>.env</code>.</p>
+<p><code>npm i infinitymint</code></p>
+<p>InfinityMint works with both Javascript and Typescript and can be used in both the browser and in node.</p>
 
-<a href="#⛔️-openssl-legacy-provider" id="⛔️-openssl-legacy-provider" style="color: inherit; text-decoration: none;">
-  <h3>⛔️ OpenSSL Legacy Provider</h3>
+<a href="#🗿-setup" id="🗿-setup" style="color: inherit; text-decoration: none;">
+  <h2>🗿 Setup</h2>
 </a>
-<p>You might encounter an error regarding ESVP being unsupported on your machine.
-To solve this, simply run the following in a terminal before you run <code>npm run start</code>.</p>
-<p><code>export NODE_OPTIONS=--openssl-legacy-provider</code></p>
+<p>You will need to create a new file in the current working directory (the one with your package.json) called <code>hardhat.config.js</code> or <code>hardhat.config.ts</code>, depending on if you are using InfinityMint in a TypeScript or Javascript environment.</p>
+<p>Please copy the following contents into your hardhat configuration file.</p>
+<p><a href="examples/hardhat.config.ts">Link to hardhat.config.ts (for ts)</a></br>
+<a href="examples/hardhat.config.js">Link to hardhat.config.js (for js)</a></p>
+<p>InfinityMint will automatically create a <code>infinitymint.config.ts</code> or <code>infinitymint.config.js</code> depending on the environment. This new project file which is created is where you configure both hardhat and InfinityMint and other things which can be installed into InfinityMint.</p>
+<p>Please view our official documentation and <a href="https://docs.infinitymint.app/modules/examples_examples.html">examples</a> for more information.</p>
 
-<a href="#⛔️-node_options---openssl-legacy-provider-is-invalid" id="⛔️-node_options---openssl-legacy-provider-is-invalid" style="color: inherit; text-decoration: none;">
-  <h3>⛔️ NODE_OPTIONS: --openssl-legacy-provider is invalid</h3>
+<a href="#🗿-documentation" id="🗿-documentation" style="color: inherit; text-decoration: none;">
+  <h2>🗿 Documentation</h2>
 </a>
-<p>You might encounter this error if you are trying to run InfinityMint at a lower version than node <strong>18.15.0</strong>.
-To fix this, simply head to the <code>.env</code> file in this repository and remove the <code>NODE_OPTIONS</code> line.</p>
-<p>*** 🗿 Getting Started</p>
-<p>By default, <em>InfinityMint</em> will be ready to go.
-You can use your arrow keys to navigate the menus and you can press enter to select an option.
-The default project will be set to <em>PartyTime</em>, a slightly complex <em>InfinityMint</em> project which shows off many of the features of the minter.
-You can deploy it via the <code>deploy_project</code> button.</p>
-<p>When you first deploy, InfinityMint will ask for a <em>export</em> location.
-This is going to be either <em>InfinityMint</em> or <em>InfinityMint-classic</em> depending on what you cloned earlier in the installation phase.</p>
-<p>An /export/ is simply a website or location InfinityMint will export assets and smart contract <strong>ABI</strong>s,
-&amp; can be configured to the projects demands.</p>
-<p>The projects which are used by InfinityMint are stored in a a folder called <em>projects</em> located in the repository.</p>
-
-<a href="#🗿-resources" id="🗿-resources" style="color: inherit; text-decoration: none;">
-  <h3>🗿 Resources</h3>
-</a>
-<p><a href="https://docs.infinitymint.app">Official Documentation</a>
+<p><a href="https://docs.infinitymint.app">Official Documentation</a></br>
 <a href="https://typedoc.org/">TypeDoc Documentation</a></p>
 </div></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -331,7 +317,10 @@ This is going to be either <em>InfinityMint</em> or <em>InfinityMint-classic</em
 <li class="tsd-kind-variable tsd-parent-kind-module"><a class="category__link js-category-link" href="variables/examples_examples.ProjectExample.html" data-id="/variables/examples_examples.ProjectExample.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg>ProjectExample</a></li>
 <li class="tsd-kind-variable tsd-parent-kind-module"><a class="category__link js-category-link" href="variables/examples_examples.SetupExample.html" data-id="/variables/examples_examples.SetupExample.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg>SetupExample</a></li>
 <li class="tsd-kind-variable tsd-parent-kind-module"><a class="category__link js-category-link" href="variables/examples_examples.TestsExample.html" data-id="/variables/examples_examples.TestsExample.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg>TestsExample</a></li>
-<li class="tsd-kind-variable tsd-parent-kind-module"><a class="category__link js-category-link" href="variables/examples_examples.WindowsExample.html" data-id="/variables/examples_examples.WindowsExample.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg>WindowsExample</a></li></ul></li></ul></li>
+<li class="tsd-kind-variable tsd-parent-kind-module"><a class="category__link js-category-link" href="variables/examples_examples.WindowsExample.html" data-id="/variables/examples_examples.WindowsExample.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg>WindowsExample</a></li></ul></li>
+<li><a class="category__link js-category-link category__link--ts" href="modules/examples_hardhat_config.html" data-id="/modules/examples_hardhat_config.html">hardhat.config.ts</a>
+<ul>
+<li class="tsd-kind-reference tsd-parent-kind-module"><a class="category__link js-category-link" href="modules/examples_hardhat_config.html#default" data-id="/modules/examples_hardhat_config.html#default"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-8388608-path"></use><use href="#icon-8388608-text"></use></svg>default</a></li></ul></li></ul></li>
 <li><span class="js-category-title category__title" data-id="root-gems">
 <div class="category__folder" data-id="root-gems"></div>gems</span>
 <ul class="js-category-list category" data-id="root-gems">
