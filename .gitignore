@@ -25,3 +25,6 @@ yarn.lock
 
 # Docs
 _www
+
+# Nix
+nix/result
