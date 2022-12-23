@@ -1,11 +1,10 @@
 import { InfinityMintDeploymentScript } from "../interfaces";
 
 const Utils: InfinityMintDeploymentScript = {
-	deploy: async (params) => {},
-	setup: async (params) => {},
 	//going to give
 	library: true,
 	unique: true,
+	tag: "utils",
 	important: true,
 	index: 0, //should be after values
 	solidityNamespace: "alpha",
