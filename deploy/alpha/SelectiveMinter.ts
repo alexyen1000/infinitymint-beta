@@ -1,12 +1,13 @@
 import { InfinityMintDeploymentScript } from "../interfaces";
 
-const Utils: InfinityMintDeploymentScript = {
+const SelectiveMinter: InfinityMintDeploymentScript = {
 	//going to give
 	library: true,
 	unique: true,
-	module: "utils",
+	module: "minter",
 	important: true,
 	index: 0, //should be after values
 	solidityFolder: "alpha",
+	permissions: ["approved", "erc721", "assets"],
 };
-export default Utils;
+export default SelectiveMinter;

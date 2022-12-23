@@ -781,10 +781,12 @@ export interface InfinityMintDeploymentScript {
 	 */
 	setup?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
 	/**
-	 * The list of addresses or refrences which will be given admin access to this contract
+	 * The list of addresses or refrences which will be given admin access to this contract. Can be addresses or keys.
+	 *
 	 *
 	 * @example
 	 * ```js
+	 * //erc721 will replace with address of InfinityMint (erc721) deployment
 	 * ['approved', 'all', 'erc721']
 	 * ```
 	 */
@@ -806,11 +808,11 @@ export interface InfinityMintDeploymentScript {
 	 */
 	instantlySetup?: boolean;
 	/**
-	 * The current solidity namespace this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint.
+	 * The current solidity namespace this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint or to launch completely custom code bases.
 	 *
 	 * @defaultValue alpha
 	 */
-	solidityNamespace?: string;
+	solidityFolder?: string;
 	/**
 	 * Refers to the name of the artifact/contract that this deployment script works with. Will be the same as the key if left undefined.
 	 */
@@ -826,15 +828,23 @@ export interface InfinityMintDeploymentScript {
 	 */
 	deployArgs?: any[];
 	/**
-	 * If this deployment is a library
+	 * If this deployment is a library. Will not set permissions.
 	 *
 	 * @defaultValue false
 	 */
 	library?: boolean;
 	/**
-	 * tag to save this deployment under, tags are easy identifiers for things like assets, royalty and more. Tags are unique and no other deployment script in the current build can include the same tag. These tags are what the keys are saved under in the contracts field of the project. (see @link InfinityMintProject)
+	 * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
 	 */
-	tag?: "assets" | "royalty" | "random" | "minter" | "utils" | "values";
+	module?:
+		| "assets"
+		| "royalty"
+		| "random"
+		| "minter"
+		| "utils"
+		| "values"
+		| "storage"
+		| "erc721";
 	/**
 	 * the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can find this contracts address.
 	 *

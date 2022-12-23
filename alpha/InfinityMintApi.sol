@@ -99,7 +99,7 @@ contract InfinityMintApi is InfinityMintObject {
 		view
 		returns (address result)
 	{
-		return getLink(tokenId, 0);
+		getLink(tokenId, valuesController.tryGetValue("linkWalletIndex"));
 	}
 
 	function getLink(uint32 tokenId, uint256 index)
@@ -118,7 +118,8 @@ contract InfinityMintApi is InfinityMintObject {
 		view
 		returns (address result)
 	{
-		return getLink(tokenId, 1);
+		return
+			getLink(tokenId, valuesController.tryGetValue("linkStickersIndex"));
 	}
 
 	function getPreviewTimestamp(address addr) public view returns (uint256) {

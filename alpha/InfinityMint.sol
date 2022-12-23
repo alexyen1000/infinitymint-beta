@@ -337,7 +337,10 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		InfinityObject memory temp = storageController.get(tokenId);
 		//if the sender isn't the sticker contract attached to this token
 		require(
-			storageController.validDestination(tokenId, 1),
+			storageController.validDestination(
+				tokenId,
+				valuesController.tryGetValue("linkStickerIndex")
+			),
 			"sticker contract not set"
 		);
 		require(

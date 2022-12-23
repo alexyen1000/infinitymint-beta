@@ -6,9 +6,9 @@ const Values: InfinityMintDeploymentScript = {
 	instantlySetup: true, //will run the set up for this contract instantly and not after everything else has deployed
 	unique: true,
 	important: true,
-	tag: "values",
+	module: "values",
 	index: 0, //nothing should be before values
-	solidityNamespace: "alpha",
-	permissions: ["approved", "erc721"],
+	solidityFolder: "alpha",
+	permissions: ["approved"],
 };
 export default Values;

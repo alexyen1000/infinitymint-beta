@@ -1,6 +1,6 @@
 import { InfinityMintDeploymentScript } from "../interfaces";
 
-const Utils: InfinityMintDeploymentScript = {
+const DefaultMinter: InfinityMintDeploymentScript = {
 	//going to give
 	library: true,
 	unique: true,
@@ -8,5 +8,6 @@ const Utils: InfinityMintDeploymentScript = {
 	important: true,
 	index: 0, //should be after values
 	solidityFolder: "alpha",
+	permissions: ["approved", "erc721", "assets"],
 };
-export default Utils;
+export default DefaultMinter;

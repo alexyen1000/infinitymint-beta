@@ -137,7 +137,7 @@ export class InfinityMintDeployment {
 	}
 
 	getSolidityNamespace() {
-		return this.deploymentScript.solidityNamespace || "alpha";
+		return this.deploymentScript.solidityFolder || "alpha";
 	}
 
 	getKey() {

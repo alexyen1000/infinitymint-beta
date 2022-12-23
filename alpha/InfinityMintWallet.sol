@@ -9,7 +9,8 @@ import "./IntegrityInterface.sol";
 contract InfinityMintWallet is
 	Authentication,
 	IERC721Receiver,
-	IntegrityInterface
+	IntegrityInterface,
+	InfinityMintObject
 {
 	/// @notice the version type of wallet this is
 	bytes public walletType = "Wallet";
@@ -76,9 +77,21 @@ contract InfinityMintWallet is
 	function transferOwnershipToTokenOwner() public onlyOnce {
 		address owner = IERC721(erc721).ownerOf(currentTokenId);
 		require(deployer != owner, "owner of the token is the deployer");
-		require(msg.sender == owner, "sender must be the new owner");
+		require(sender() == owner, "sender must be the new owner");
 
 		transferOwnership(owner);
+	}
+
+	/// @notice Allows anyone to pay this contract address directly
+	receive() external payable {
+		receiveTokens(value());
+	}
+
+	function receiveTokens(uint256 value) internal {
+		require(value >= 0);
+
+		walletValue = walletValue + value;
+		emit Deposit(sender(), value, walletValue);
 	}
 
 	function transfer(
@@ -114,11 +127,7 @@ contract InfinityMintWallet is
 
 	/// @notice Allows anyone to deposit ERC20 into this wallet.
 	function deposit() public payable onlyOnce {
-		uint256 value = (msg.value);
-		require(value >= 0);
-
-		walletValue = walletValue + value;
-		emit Deposit(msg.sender, value, walletValue);
+		receiveTokens(value());
 	}
 
 	/// @notice Allows you to withdraw
@@ -127,6 +136,6 @@ contract InfinityMintWallet is
 		uint256 balance = (walletValue);
 		walletValue = 0;
 		payable(deployer).transfer(balance);
-		emit Withdraw(msg.sender, address(this).balance, walletValue);
+		emit Withdraw(sender(), address(this).balance, walletValue);
 	}
 }
