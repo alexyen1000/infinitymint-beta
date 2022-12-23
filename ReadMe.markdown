@@ -13,9 +13,9 @@ InfinityMint works with both Javascript and Typescript and can be used in both t
 
 ## 🗿 Setup
 
-You will need to create a new file in the current working directory (the one with your package.json) called `hardhat.config.js` or `hardhat.config.ts`, depending on if you are using InfinityMint in a TypeScript or Javascript environment.
+You will need to create a new file in the current working directory (the one with your package.json) or the node project called `hardhat.config.js` or `hardhat.config.ts`, depending on if you are using InfinityMint in a TypeScript or Javascript environment.
 
-Please copy the following contents into your hardhat configuration file.
+Please either download the configuation file and place it in your node projects root or copy the following contents into your hardhat configuration file. If you are bringing InfinityMint into an already established hardhat project. Then simply backup the contents of your current hardhat configuration file as you will be able to place it into InfinityMint's configuation file instead.
 
 [Link to hardhat.config.ts (for ts)](examples/hardhat.config.ts)</br>
 [Link to hardhat.config.js (for js)](examples/hardhat.config.js)
