@@ -20,7 +20,7 @@ export declare const getProvider: () => JsonRpcProvider;
  * @param provider
  * @returns
  */
-export declare const createContract: (deployment: InfinityMintDeploymentLive, provider?: any) => import("ethers").Contract;
+export declare const getContract: (deployment: InfinityMintDeploymentLive, provider?: any) => import("ethers").Contract;
 /**
  * Returns an ethers contract which you can use to execute methods on a smart contraact.
  * @param contractName
@@ -28,14 +28,14 @@ export declare const createContract: (deployment: InfinityMintDeploymentLive, pr
  * @param provider
  * @returns
  */
-export declare const getNetworkContract: (contractName: string, network?: string, provider?: any) => import("ethers").Contract;
+export declare const get: (contractName: string, network?: string, provider?: any) => import("ethers").Contract;
 /**
  * Returns an InfinityMintLiveDeployment with that contract name
  * @param contractName
  * @param network
  * @returns
  */
-export declare const getNetworkDeployment: (contractName: string, network?: string) => InfinityMintDeploymentLive;
+export declare const getDeployment: (contractName: string, network?: string) => import("./deployments").InfinityMintDeployment;
 export declare const getNetworkSettings: (network: string) => import("./interfaces").InfinityMintConfigSettingsNetwork;
 export declare const getDefaultAccountIndex: () => number;
 export declare const registerNetworkPipes: () => void;

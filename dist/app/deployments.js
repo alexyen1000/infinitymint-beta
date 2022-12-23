@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDeployments = exports.createDeployment = exports.getLiveDeployments = exports.getDeployment = exports.hasDeployments = exports.readLocalDeployment = exports.getLocalDeployment = exports.InfinityMintDeployment = void 0;
+exports.getInfinityMintDeployments = exports.create = exports.getLiveDeployments = exports.getInfinityMintDeployment = exports.hasDeploymentManifest = exports.readNetworkDeployment = exports.getNetworkDeployment = exports.InfinityMintDeployment = void 0;
 const events_1 = __importDefault(require("events"));
 const helpers_1 = require("./helpers");
 const glob_1 = require("glob");
@@ -75,7 +75,7 @@ class InfinityMintDeployment {
         return this.deploymentScript.index || 10;
     }
     getSolidityNamespace() {
-        return this.deploymentScript.solidityNamespace || "alpha";
+        return this.deploymentScript.solidityFolder || "alpha";
     }
     getKey() {
         return this.key;
@@ -160,7 +160,7 @@ class InfinityMintDeployment {
      * @returns
      */
     getContract(index) {
-        return (0, web3_1.createContract)(this.liveDeployments[index || 0]);
+        return (0, web3_1.getContract)(this.liveDeployments[index || 0]);
     }
     /**
      * used after deploy to set the the live deployments for this deployment. See {@link @app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
@@ -239,16 +239,16 @@ exports.InfinityMintDeployment = InfinityMintDeployment;
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
  */
-const getLocalDeployment = (contractName, network) => {
-    return (0, exports.readLocalDeployment)(contractName, network);
+const getNetworkDeployment = (contractName, network) => {
+    return (0, exports.readNetworkDeployment)(contractName, network);
 };
-exports.getLocalDeployment = getLocalDeployment;
+exports.getNetworkDeployment = getNetworkDeployment;
 /**
  * Returns the raw .json file in the /deployments/network/ folder
  * @param contractName
  * @returns
  */
-const readLocalDeployment = (contractName, network) => {
+const readNetworkDeployment = (contractName, network) => {
     let path = process.cwd() +
         "/deployments/" +
         network +
@@ -259,7 +259,7 @@ const readLocalDeployment = (contractName, network) => {
         throw new Error(`${path} not found`);
     return JSON.parse(fs_1.default.readFileSync(path, { encoding: "utf-8" }));
 };
-exports.readLocalDeployment = readLocalDeployment;
+exports.readNetworkDeployment = readNetworkDeployment;
 /**
  * Returns true if a deployment manifest for this key/contractName is found
  * @param contractName - can be a key (erc721, assets) or a fully qualified contract name
@@ -267,7 +267,7 @@ exports.readLocalDeployment = readLocalDeployment;
  * @param network
  * @returns
  */
-const hasDeployments = (contractName, project, network) => {
+const hasDeploymentManifest = (contractName, project, network) => {
     var _a, _b;
     network = network || ((_a = project === null || project === void 0 ? void 0 : project.network) === null || _a === void 0 ? void 0 : _a.name);
     if (network === undefined)
@@ -276,21 +276,21 @@ const hasDeployments = (contractName, project, network) => {
         `/temp/deployments/${project.name}@${((_b = project.version) === null || _b === void 0 ? void 0 : _b.version) || "1.0.0"}/${contractName}_${network}.json`;
     return fs_1.default.existsSync(path);
 };
-exports.hasDeployments = hasDeployments;
-const getDeployment = (contractName, project, network) => {
+exports.hasDeploymentManifest = hasDeploymentManifest;
+const getInfinityMintDeployment = (contractName, project, network) => {
     var _a;
     network = network || ((_a = project === null || project === void 0 ? void 0 : project.network) === null || _a === void 0 ? void 0 : _a.name);
     if (network === undefined)
-        throw new Error("unable to automatically determain network");
+        throw new Error("unable to automatically determin network");
     let liveDeployments = (0, exports.getLiveDeployments)(contractName, project, network);
-    return (0, exports.createDeployment)(liveDeployments[0]);
+    return (0, exports.create)(liveDeployments[0]);
 };
-exports.getDeployment = getDeployment;
+exports.getInfinityMintDeployment = getInfinityMintDeployment;
 const getLiveDeployments = (contractName, project, network) => {
     var _a;
     let path = process.cwd() +
         `/temp/deployments/${project.name}@${((_a = project.version) === null || _a === void 0 ? void 0 : _a.version) || "1.0.0"}/${contractName}_${network}.json`;
-    if (!(0, exports.hasDeployments)(contractName, project, network))
+    if (!(0, exports.hasDeploymentManifest)(contractName, project, network))
         throw new Error("missing deployment manifest: " + path);
     let result = JSON.parse(fs_1.default.readFileSync(path, {
         encoding: "utf-8",
@@ -303,15 +303,15 @@ exports.getLiveDeployments = getLiveDeployments;
  * @param liveDeployment
  * @returns
  */
-const createDeployment = (liveDeployment, deploymentScript) => {
+const create = (liveDeployment, deploymentScript) => {
     return new InfinityMintDeployment(deploymentScript || liveDeployment.deploymentScript, liveDeployment.key, liveDeployment.network.name, (0, helpers_1.getProject)(liveDeployment.project));
 };
-exports.createDeployment = createDeployment;
+exports.create = create;
 /**
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-const getDeployments = (project, network, root) => {
+const getInfinityMintDeployments = (project, network, root) => {
     return new Promise((resolve, reject) => {
         var _a;
         network = network || ((_a = project.network) === null || _a === void 0 ? void 0 : _a.name);
@@ -334,5 +334,5 @@ const getDeployments = (project, network, root) => {
         });
     });
 };
-exports.getDeployments = getDeployments;
+exports.getInfinityMintDeployments = getInfinityMintDeployments;
 //# sourceMappingURL=deployments.js.map

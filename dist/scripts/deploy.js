@@ -19,7 +19,7 @@ const Deploy = {
             ...(((_c = (_b = (_a = params.config) === null || _a === void 0 ? void 0 : _a.settings) === null || _b === void 0 ? void 0 : _b.deploy) === null || _c === void 0 ? void 0 : _c.scriptFolders) || []),
         ].filter((location) => fs_1.default.existsSync(location));
         for (let i = 0; i < locations.length; i++) {
-            let result = await (0, deployments_1.getDeployments)(params.project, hardhat_1.default.network.name, "./");
+            let result = await (0, deployments_1.getInfinityMintDeployments)(params.project, hardhat_1.default.network.name, "./");
             deployments = [
                 ...deployments,
                 ...result,

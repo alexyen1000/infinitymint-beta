@@ -4,7 +4,7 @@ const ERC721 = {
     deploy: async (params) => { },
     setup: async (params) => { },
     //going to give
-    solidityNamespace: "beta",
+    solidityFolder: "beta",
     permissions: ["approved"],
 };
 exports.default = ERC721;

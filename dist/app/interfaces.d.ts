@@ -632,6 +632,17 @@ export interface InfinityMintScriptParameters extends Dictionary<any> {
     config: InfinityMintConfig;
     debugLog: FuncSingle<string, void>;
 }
+export interface InfinityMintDeploymentParametersDeployments extends Dictionary<InfinityMintDeploymentLive> {
+    assets: InfinityMintDeploymentLive;
+    royalty: InfinityMintDeploymentLive;
+    erc721: InfinityMintDeploymentLive;
+    random: InfinityMintDeploymentLive;
+    minter: InfinityMintDeploymentLive;
+    values: InfinityMintDeploymentLive;
+    utils: InfinityMintDeploymentLive;
+    InfinityMintLinker: InfinityMintDeploymentLive;
+    InfinityMintProject: InfinityMintDeploymentLive;
+}
 /**
  * Parameters which are passed into every deploy script. See {@link InfinityMintDeploymentScript}
  */
@@ -647,7 +658,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
     /**
      * Contains a list of current live deployments up to this deployment.
      */
-    deployments?: Dictionary<InfinityMintDeploymentLive>;
+    deployments?: InfinityMintDeploymentParametersDeployments;
     log: FuncSingle<string, void>;
     debugLog: FuncSingle<string, void>;
 }
@@ -719,17 +730,19 @@ export interface InfinityMintDeploymentScript {
      * @async
      * Deploys the smart contract or smart contracts.
      */
-    deploy: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+    deploy?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
     /**
      * @async
      * Sets up the smart contract post deployment.
      */
-    setup: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+    setup?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
     /**
-     * The list of addresses or refrences which will be given admin access to this contract
+     * The list of addresses or refrences which will be given admin access to this contract. Can be addresses or keys.
+     *
      *
      * @example
      * ```js
+     * //erc721 will replace with address of InfinityMint (erc721) deployment
      * ['approved', 'all', 'erc721']
      * ```
      */
@@ -751,19 +764,37 @@ export interface InfinityMintDeploymentScript {
      */
     instantlySetup?: boolean;
     /**
-     * The current solidity namespace this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint.
+     * The current solidity namespace this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint or to launch completely custom code bases.
      *
      * @defaultValue alpha
      */
-    solidityNamespace?: string;
+    solidityFolder?: string;
     /**
-     * If this deployment is a library
+     * Refers to the name of the artifact/contract that this deployment script works with. Will be the same as the key if left undefined.
+     */
+    contractName?: string;
+    /**
+     * used in auto deployment configuration (when no deploy field is set and contractName is of valid artifact), will pass these arguments to the constructor of the smart contract.
+     *
+     * @example
+     * ```js
+     * //will replace erc721, assets, royalty with the address of the live deployment that uses that tag. (if it has been deployed by this stage)
+     * deployArgs: ['erc721','assets', 'royalty','0x523...']
+     * ```
+     */
+    deployArgs?: any[];
+    /**
+     * If this deployment is a library. Will not set permissions.
      *
      * @defaultValue false
      */
     library?: boolean;
     /**
-     * the key is the module name (see {@link InfinityMintProjectModules}) which is the name of the deployment script, or the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can pull this contract through code. Can be set to a custom value or left to be worked out.
+     * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
+     */
+    module?: "assets" | "royalty" | "random" | "minter" | "utils" | "values" | "storage" | "erc721";
+    /**
+     * the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can find this contracts address.
      *
      * @see {@link InfinityMintDeploymentLive}
      */

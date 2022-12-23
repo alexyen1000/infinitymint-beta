@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getNetworkDeployment = exports.getNetworkContract = exports.createContract = exports.getProvider = exports.changeNetwork = exports.getDefaultSigner = void 0;
+exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getDeployment = exports.get = exports.getContract = exports.getProvider = exports.changeNetwork = exports.getDefaultSigner = void 0;
 const hardhat_1 = __importStar(require("hardhat"));
 const helpers_1 = require("./helpers");
 const pipes_1 = __importDefault(require("./pipes"));
@@ -80,11 +80,11 @@ exports.getProvider = getProvider;
  * @param provider
  * @returns
  */
-const createContract = (deployment, provider) => {
+const getContract = (deployment, provider) => {
     provider = provider || (0, exports.getProvider)();
     return new hardhat_1.ethers.Contract(deployment.address, deployment.abi, provider);
 };
-exports.createContract = createContract;
+exports.getContract = getContract;
 /**
  * Returns an ethers contract which you can use to execute methods on a smart contraact.
  * @param contractName
@@ -92,21 +92,21 @@ exports.createContract = createContract;
  * @param provider
  * @returns
  */
-const getNetworkContract = (contractName, network, provider) => {
+const get = (contractName, network, provider) => {
     provider = provider || (0, exports.getProvider)();
-    return (0, exports.createContract)((0, exports.getNetworkDeployment)(contractName, network), provider);
+    return (0, exports.getContract)((0, deployments_1.getNetworkDeployment)(contractName, network), provider);
 };
-exports.getNetworkContract = getNetworkContract;
+exports.get = get;
 /**
  * Returns an InfinityMintLiveDeployment with that contract name
  * @param contractName
  * @param network
  * @returns
  */
-const getNetworkDeployment = (contractName, network) => {
-    return (0, deployments_1.getLocalDeployment)(contractName, network || hardhat_1.default.network.name);
+const getDeployment = (contractName, network) => {
+    return (0, deployments_1.create)((0, deployments_1.getNetworkDeployment)(contractName, network || hardhat_1.default.network.name));
 };
-exports.getNetworkDeployment = getNetworkDeployment;
+exports.getDeployment = getDeployment;
 const getNetworkSettings = (network) => {
     var _a;
     let config = (0, helpers_1.getConfigFile)();
