@@ -21,6 +21,13 @@
 		"./gems/__cache",
 		"./gems/@"
 	],
-	"include": ["./test", "./src", "./scripts", "./app", "./deploy", "./gems"],
+	"include": [
+		"./test",
+		"./scripts",
+		"./app",
+		"./deploy",
+		"./gems",
+		"./examples"
+	],
 	"files": ["./hardhat.config.ts", "./index.ts"]
 }

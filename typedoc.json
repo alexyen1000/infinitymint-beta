@@ -7,7 +7,8 @@
 		"app/*/*",
 		"scripts/*",
 		"deploy/*/*",
-		"gems/example/*/*"
+		"gems/example/*/*",
+		"examples/*"
 	],
 	"theme": "hierarchy",
 	"name": "InfinityMint",
