@@ -21,7 +21,8 @@ infinitymint.config.ts
 .DS_Store
 
 # Docs
-_www
+_www/
+docs/
 
 # Nix
 nix/result
