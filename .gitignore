@@ -18,9 +18,6 @@ infinitymint.config.ts
 /beta/__gems/
 /*/__gems/
 
-# Node
-package-lock.json
-yarn.lock
 .DS_Store
 
 # Docs
