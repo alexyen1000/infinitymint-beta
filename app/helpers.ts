@@ -115,7 +115,7 @@ export interface FuncQuad<T, T2, T3, T4, TResult> {
 }
 
 /**
- * used in the InfinityMintWindow. Is the bounding box of the current window relative to the current terminal size (see {@link @app/windows.InfinityMintWindow}).ß
+ * used in the InfinityMintWindow. Is the bounding box of the current window relative to the current terminal size (see {@link app/window.InfinityMintWindow}).
  */
 export interface Rectangle {
 	startX: number | string;
@@ -214,7 +214,7 @@ export const getConfigFile = () => {
 };
 
 /**
- * Returns a compiled InfinityMintProject ready to be deployed, see {@link @app/interfaces.InfinityMintProject}.
+ * Returns a compiled InfinityMintProject ready to be deployed, see {@link app/interfaces.InfinityMintProject}.
  * @param projectName
  */
 export const getCompiledProject = (projectName: string) => {
@@ -231,7 +231,7 @@ export const getCompiledProject = (projectName: string) => {
 };
 
 /**
- * Returns a deployed InfinityMintProject, see {@link @app/interfaces.InfinityMintProject}.
+ * Returns a deployed InfinityMintProject, see {@link app/interfaces.InfinityMintProject}.
  * @param projectName
  */
 export const getDeployedProject = (projectName: string, version?: any) => {
@@ -248,7 +248,7 @@ export const getDeployedProject = (projectName: string, version?: any) => {
 };
 
 /**
- * Returns an InfinityMintProject file relative to the /projects/ folder, see {@link @app/interfaces.InfinityMintProject}. Will return type of InfinityMintProjectClassic if second param is true.
+ * Returns an InfinityMintProject file relative to the /projects/ folder, see {@link app/interfaces.InfinityMintProject}. Will return type of InfinityMintProjectClassic if second param is true.
  * @param projectName
  * @param isJavaScript
  */

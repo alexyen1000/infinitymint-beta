@@ -24,7 +24,7 @@ export class InfinityMintDeployment {
 	 */
 	protected deploymentScript: InfinityMintDeploymentScript;
 	/**
-	 * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link @app/interfaces.InfinityMintDeploymentLive}
+	 * the live infinity mint deployment interface containing the abi, address, deployer approved and more, See {@link app/interfaces.InfinityMintDeploymentLive}
 	 */
 	protected liveDeployments: InfinityMintDeploymentLive[];
 	/**
@@ -265,7 +265,7 @@ export class InfinityMintDeployment {
 	}
 
 	/**
-	 * used after deploy to set the the live deployments for this deployment. See {@link @app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
+	 * used after deploy to set the the live deployments for this deployment. See {@link app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
 	 * @param liveDeployments
 	 */
 	public updateLiveDeployments(
