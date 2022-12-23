@@ -2,14 +2,17 @@ import { Dictionary } from "form-data";
 import { Rectangle, Vector, FuncTripple } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import InfinityConsole from "./console";
+/**
+ * @experimental
+ */
 export declare class InfinityMintWindow {
     initialize: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, Promise<void>>;
     think: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, void>;
     name: string;
     elements: Dictionary<BlessedElement>;
     options: any;
-    protected width: number;
-    protected height: number;
+    protected width: number | string;
+    protected height: number | string;
     protected x: number;
     protected y: number;
     protected z: number;
@@ -44,22 +47,28 @@ export declare class InfinityMintWindow {
     getContainer(): InfinityConsole;
     setBorder(border: any): void;
     getBorder(): object;
-    setWidth(num: number): void;
+    setWidth(num: number | string): void;
     getId(): any;
     isEqual(thatWindow: InfinityMintWindow): boolean;
     toString(): any;
-    setHeight(num: number): void;
+    setHeight(num: number | string): void;
     getRectangle(): Rectangle;
     getStyle(): object;
     setStyle(style: any): void;
-    getWidth(): number;
-    etX(): number;
+    getWidth(): string | number;
+    getX(): number;
     get(): Vector;
     getY(): number;
-    getHeight(): number;
+    getHeight(): string | number;
     hide(): void;
     show(): void;
-    setSize(width: number, height: number): void;
+    setSize(width: number | string, height: number | string): void;
+    /**
+     * Registers a new blessed element with the window.
+     * @param key
+     * @param element
+     * @returns
+     */
     registerElement(key: string, element: BlessedElement): BlessedElement;
     getElement(key: string): BlessedElement;
     getScrollbar(): any;
@@ -72,7 +81,7 @@ export declare class InfinityMintWindow {
     on(event: string, listener: Function): Function;
     off(event: string, listener?: Function): void;
     isVisible(): boolean;
-    setFrameContent(): Promise<void>;
+    updateFrameTitle(): Promise<void>;
     create(): Promise<void>;
 }
 //# sourceMappingURL=window.d.ts.map

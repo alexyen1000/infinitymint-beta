@@ -429,7 +429,7 @@ export const hasDeploymentManifest = (
 	return fs.existsSync(path);
 };
 
-export const getInfinityMintDeployment = (
+export const getDeploymentClass = (
 	contractName: string,
 	project: InfinityMintProject,
 	network?: string
@@ -474,11 +474,12 @@ export const create = (
 	liveDeployment: InfinityMintDeploymentLive,
 	deploymentScript?: string
 ) => {
+	let project = getProject(liveDeployment.project, liveDeployment.javascript);
 	return new InfinityMintDeployment(
 		deploymentScript || liveDeployment.deploymentScript,
 		liveDeployment.key,
 		liveDeployment.network.name,
-		getProject(liveDeployment.project)
+		project
 	);
 };
 
@@ -486,7 +487,7 @@ export const create = (
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-export const getInfinityMintDeployments = (
+export const getDeploymentClasses = (
 	project: InfinityMintProject,
 	network?: string,
 	root?: string

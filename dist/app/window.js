@@ -29,6 +29,9 @@ const hardhat_1 = __importStar(require("hardhat"));
 const web3_1 = require("./web3");
 const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed");
+/**
+ * @experimental
+ */
 class InfinityMintWindow {
     constructor(name, style, border, scrollbar, options) {
         this.name = name || this.constructor.name;
@@ -134,9 +137,13 @@ class InfinityMintWindow {
     getRectangle() {
         return {
             startX: this.x,
-            endX: this.x + this.width,
+            endX: typeof this.width === "number"
+                ? this.x + this.width
+                : this.width,
             startY: this.y,
-            endY: this.y + this.height,
+            endY: typeof this.height === "number"
+                ? this.y + this.height
+                : this.height,
             width: this.width,
             height: this.height,
             z: this.z,
@@ -151,7 +158,7 @@ class InfinityMintWindow {
     getWidth() {
         return this.width;
     }
-    etX() {
+    getX() {
         return this.x;
     }
     get() {
@@ -197,15 +204,27 @@ class InfinityMintWindow {
         this.width = width;
         this.height = height;
     }
+    /**
+     * Registers a new blessed element with the window.
+     * @param key
+     * @param element
+     * @returns
+     */
     registerElement(key, element) {
         if (this.elements[key] !== undefined)
             throw new Error("key already registered in window: " + key);
+        if (this.elements[key].window !== undefined)
+            throw new Error("element (" +
+                element.constructor.name +
+                ") is already registerd to " +
+                `<${element.window.name}>[${element.window.getId()}]`);
         if (element.parent === undefined)
             element.parent = this.screen;
         (0, helpers_1.debugLog)("registering element (" +
             element.constructor.name +
             ") for " +
             `<${this.name}>[${this.id}]`);
+        element.window = this;
         //does the same a above
         element.oldOn = element.on;
         element.on = (param1, cb) => {
@@ -285,7 +304,7 @@ class InfinityMintWindow {
         var _a;
         return ((_a = this.getElement("frame")) === null || _a === void 0 ? void 0 : _a.hidden) === false;
     }
-    async setFrameContent() {
+    async updateFrameTitle() {
         let defaultSigner = await (0, web3_1.getDefaultSigner)();
         let balance = await defaultSigner.getBalance();
         let getAccountIndex = (0, web3_1.getDefaultAccountIndex)();
@@ -325,7 +344,6 @@ class InfinityMintWindow {
             style: this.style || {},
         }));
         frame.setBack();
-        await this.setFrameContent();
         let close = this.registerElement("closeButton", blessed.box({
             top: 0,
             right: 0,
@@ -378,6 +396,8 @@ class InfinityMintWindow {
                 element.constructor.name);
             this.screen.append(element);
         });
+        //frame title
+        await this.updateFrameTitle();
     }
 }
 exports.InfinityMintWindow = InfinityMintWindow;

@@ -16,6 +16,10 @@ import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed");
+
+/**
+ * @experimental
+ */
 export class InfinityMintWindow {
 	public initialize: FuncTripple<
 		InfinityMintWindow,
@@ -33,8 +37,8 @@ export class InfinityMintWindow {
 	public elements: Dictionary<BlessedElement>;
 	public options: any;
 
-	protected width: number;
-	protected height: number;
+	protected width: number | string;
+	protected height: number | string;
 	protected x: number;
 	protected y: number;
 	protected z: number;
@@ -166,7 +170,7 @@ export class InfinityMintWindow {
 		return this.border;
 	}
 
-	public setWidth(num: number) {
+	public setWidth(num: number | string) {
 		this.width = num;
 	}
 
@@ -182,16 +186,22 @@ export class InfinityMintWindow {
 		return this.id;
 	}
 
-	public setHeight(num: number) {
+	public setHeight(num: number | string) {
 		this.height = num;
 	}
 
 	public getRectangle(): Rectangle {
 		return {
 			startX: this.x,
-			endX: this.x + this.width,
+			endX:
+				typeof this.width === "number"
+					? this.x + (this.width as number)
+					: this.width,
 			startY: this.y,
-			endY: this.y + this.height,
+			endY:
+				typeof this.height === "number"
+					? this.y + (this.height as number)
+					: this.height,
 			width: this.width,
 			height: this.height,
 			z: this.z,
@@ -210,7 +220,7 @@ export class InfinityMintWindow {
 		return this.width;
 	}
 
-	public etX() {
+	public getX() {
 		return this.x;
 	}
 
@@ -256,17 +266,31 @@ export class InfinityMintWindow {
 		});
 	}
 
-	public setSize(width: number, height: number) {
+	public setSize(width: number | string, height: number | string) {
 		this.width = width;
 		this.height = height;
 	}
 
+	/**
+	 * Registers a new blessed element with the window.
+	 * @param key
+	 * @param element
+	 * @returns
+	 */
 	public registerElement(
 		key: string,
 		element: BlessedElement
 	): BlessedElement {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
+
+		if (this.elements[key].window !== undefined)
+			throw new Error(
+				"element (" +
+					element.constructor.name +
+					") is already registerd to " +
+					`<${element.window.name}>[${element.window.getId()}]`
+			);
 
 		if (element.parent === undefined) element.parent = this.screen;
 
@@ -277,6 +301,7 @@ export class InfinityMintWindow {
 				`<${this.name}>[${this.id}]`
 		);
 
+		element.window = this;
 		//does the same a above
 		element.oldOn = element.on;
 		element.on = (param1: any, cb: any) => {
@@ -366,7 +391,7 @@ export class InfinityMintWindow {
 		return this.getElement("frame")?.hidden === false;
 	}
 
-	public async setFrameContent() {
+	public async updateFrameTitle() {
 		let defaultSigner = await getDefaultSigner();
 		let balance = await defaultSigner.getBalance();
 		let getAccountIndex = getDefaultAccountIndex();
@@ -422,7 +447,6 @@ export class InfinityMintWindow {
 			})
 		);
 		frame.setBack();
-		await this.setFrameContent();
 
 		let close = this.registerElement(
 			"closeButton",
@@ -487,5 +511,7 @@ export class InfinityMintWindow {
 
 			this.screen.append(element);
 		});
+		//frame title
+		await this.updateFrameTitle();
 	}
 }

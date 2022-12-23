@@ -42,6 +42,37 @@ export interface InfinityMintApplicationConfig {
     testChains: any[];
 }
 /**
+ * Definition for the classic InfinityMint project, is used when projects are .js and not .ts, if they are .ts {@link InfinityMintProject} is used.
+ */
+export interface InfinityMintProjectJavascript extends InfinityMintProject, Dictionary<any> {
+    /**
+     * will always be true
+     */
+    javascript: true;
+    mods: Dictionary<boolean>;
+    contracts: Dictionary<any>;
+    description: Dictionary<any>;
+    name: string;
+    static: Dictionary<any>;
+    deployment: Dictionary<any>;
+    royalty?: Dictionary<any>;
+    approved: Dictionary<string>;
+    assetConfig: Dictionary<any>;
+    names: Array<string>;
+}
+/**
+ * classic paths, used when project file is a .js
+ */
+export interface InfinityMintProjectJavascriptPaths {
+    default: Dictionary<any>;
+    indexes: Array<InfinityMintProjectPath>;
+}
+/**
+ * classic assets, used when project file is a .js
+ */
+export interface InfinityMintProjectJavascriptAssets extends Dictionary<InfinityMintProjectAsset> {
+}
+/**
  * The infinitymint project is responsible for holding the paths, assets and other information relating to the project. You can set which modules are used in the creation of the minter, along with other specific settings relating to the project. Each project is stored inside of the `./projects/` in the root of where ever InfinityMint is run.
  *
  * @see {@link InfinityMintDeploymentLive}
@@ -102,11 +133,11 @@ export interface InfinityMintProject {
     /**
      * All the possible mint varations of the minter, must be an Array of {@link InfinityMintProjectPath}
      */
-    paths: Array<InfinityMintProjectPath>;
+    paths: Array<InfinityMintProjectPath> | InfinityMintProjectJavascriptPaths;
     /**
      * All the possible asset varations of the minter, must be an Array of {@link InfinityMintProjectAsset}
      */
-    assets?: Array<InfinityMintProjectAsset>;
+    assets?: Array<InfinityMintProjectAsset> | InfinityMintProjectJavascriptAssets;
     /**
      * The settings of the project. The settings key is which deployment the settings should be for, and you can enter what ever you like here.
      *
@@ -180,7 +211,12 @@ export interface InfinityMintProject {
     /**
      * Holds any IPFS locations of the project, react build and deployments
      */
-    ipfs: Dictionary<any>;
+    ipfs?: Dictionary<any>;
+    /**
+     * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
+     * @private
+     */
+    javascript?: boolean;
 }
 export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
     (param0: T, param1: T2, param3: T3, param4: T4): TResult;
@@ -410,7 +446,7 @@ export interface InfinityMintProjectSettings {
  * @see {@link InfinityMintProjectSettings}
  * @see {@link InfinityMintDeploymentLive}
  */
-export interface InfinityMintProjectModules {
+export interface InfinityMintProjectModules extends Dictionary<any> {
     /**
      * Should be the *fully quallified solidity artifact name* for an Asset Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
      *
@@ -456,6 +492,9 @@ export interface InfinityMintProjectPathExport {
 export interface InfinityMintProjectPath {
     name: string;
     fileName: string;
+    /**
+     * is the mint data, this is copied to each token internally
+     */
     data?: Dictionary<any>;
     key?: string;
     settings?: Dictionary<any>;
@@ -484,6 +523,42 @@ export interface InfinityMintProjectPath {
      * @defaultValue false
      */
     encrypted?: boolean;
+    /**
+     * true if the project the path contains has been compiled.
+     */
+    compiled?: boolean;
+}
+/**
+ * is the same as {@link InfinityMintProjectPath} but is for JavaScript project files (classic InfinityMint).
+ */
+export interface InfinityMintProjectJavaScriptPath {
+    name: string;
+    fileName: string;
+    /**
+     * is the mint data, this is copied to each token internally
+     */
+    data?: Dictionary<any>;
+    key?: string;
+    settings?: Dictionary<any>;
+    description?: string;
+    /**
+     * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
+     *
+     * @examples
+     * ```js
+     * content: {
+     * 		myContent: {
+     * 			name: '3d',
+     * 			fileName: '@import/3d/file.obj'
+     * 		}
+     *	}
+     * ```
+     */
+    content?: Dictionary<InfinityMintProjectContent>;
+    /**
+     * When the path has been exported this is filled.
+     */
+    paths?: InfinityMintProjectPathExport;
     /**
      * true if the project the path contains has been compiled.
      */
@@ -719,6 +794,10 @@ export interface InfinityMintDeploymentLive extends Dictionary<any> {
      * the location of the deployment script which deployed this deployment
      */
     deploymentScript?: string;
+    /**
+     * is true if the project file this deployment is from is a javascript file and not typescript
+     */
+    javascript?: boolean;
 }
 /**
  * This is the interface which should be returned from all deployment scripts inside of the `./deploy` folder.

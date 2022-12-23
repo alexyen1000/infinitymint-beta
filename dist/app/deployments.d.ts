@@ -125,7 +125,7 @@ export declare const readNetworkDeployment: (contractName: string, network: stri
  * @returns
  */
 export declare const hasDeploymentManifest: (contractName: string, project: InfinityMintProject, network?: string) => boolean;
-export declare const getInfinityMintDeployment: (contractName: string, project: InfinityMintProject, network?: string) => InfinityMintDeployment;
+export declare const getDeploymentClass: (contractName: string, project: InfinityMintProject, network?: string) => InfinityMintDeployment;
 export declare const getLiveDeployments: (contractName: string, project: InfinityMintProject, network: string) => InfinityMintDeploymentLive[];
 /**
  * Returns a new deployment class from a live deployment file
@@ -137,5 +137,5 @@ export declare const create: (liveDeployment: InfinityMintDeploymentLive, deploy
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-export declare const getInfinityMintDeployments: (project: InfinityMintProject, network?: string, root?: string) => Promise<InfinityMintDeployment[]>;
+export declare const getDeploymentClasses: (project: InfinityMintProject, network?: string, root?: string) => Promise<InfinityMintDeployment[]>;
 //# sourceMappingURL=deployments.d.ts.map

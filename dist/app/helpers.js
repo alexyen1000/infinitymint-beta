@@ -3,19 +3,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityNamespace = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
+exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityNamespace = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
 const pipes_1 = __importDefault(require("./pipes"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const fs_1 = __importDefault(require("fs"));
 const bip39_1 = require("bip39");
+/**
+ * Logs a console message to the current pipe.
+ * @param msg
+ * @param pipe
+ */
 const log = (msg, pipe) => {
     pipes_1.default.log(msg, pipe);
 };
 exports.log = log;
+/**
+ * Logs a debug message to the current pipe.
+ * @param msg
+ * @param pipe
+ */
 const debugLog = (msg) => {
     (0, exports.log)(msg, "debug");
 };
 exports.debugLog = debugLog;
+/**
+ * Reads the current .session file in the cwd which holds settings relating to the current instance of InfinityMint.
+ * @returns
+ */
 const readSession = () => {
     if (!fs_1.default.existsSync(process.cwd() + "/.session"))
         return { created: Date.now(), environment: {} };
@@ -33,6 +47,9 @@ const readSession = () => {
     };
 };
 exports.readSession = readSession;
+/**
+ * Overwrites default behaviour of console.log and console.error
+ */
 const overwriteConsoleMethods = () => {
     //overwrite console log
     let consoleLog = console.log;
@@ -68,11 +85,51 @@ const getConfigFile = () => {
     return res;
 };
 exports.getConfigFile = getConfigFile;
-const getCompiledProject = (projectName) => { };
-exports.getCompiledProject = getCompiledProject;
-const getProject = (projectName) => {
-    let res = require(process.cwd() + "/projects/" + projectName + ".ts");
+/**
+ * Returns a compiled InfinityMintProject ready to be deployed, see {@link @app/interfaces.InfinityMintProject}.
+ * @param projectName
+ */
+const getCompiledProject = (projectName) => {
+    let res = require(process.cwd() +
+        "/projects/compiled/" +
+        projectName +
+        ".compiled.json");
     res = res.default || res;
+    //
+    if (res.compiled !== true)
+        throw new Error(`project ${projectName} has not been compiled`);
+    return res;
+};
+exports.getCompiledProject = getCompiledProject;
+/**
+ * Returns a deployed InfinityMintProject, see {@link @app/interfaces.InfinityMintProject}.
+ * @param projectName
+ */
+const getDeployedProject = (projectName, version) => {
+    let res = require(process.cwd() +
+        "/projects/deployed/" +
+        projectName +
+        `@${version}.json`);
+    res = res.default || res;
+    //
+    if (res.deployed !== true)
+        throw new Error(`project ${projectName} has not been deployed`);
+    return res;
+};
+exports.getDeployedProject = getDeployedProject;
+/**
+ * Returns an InfinityMintProject file relative to the /projects/ folder, see {@link @app/interfaces.InfinityMintProject}. Will return type of InfinityMintProjectClassic if second param is true.
+ * @param projectName
+ * @param isJavaScript
+ */
+const getProject = (projectName, isJavaScript) => {
+    let res = require(process.cwd() +
+        "/projects/" +
+        projectName +
+        (isJavaScript ? ".js" : ".ts"));
+    res = res.default || res;
+    if (isJavaScript)
+        return res;
     return res;
 };
 exports.getProject = getProject;

@@ -1,8 +1,5 @@
 import { InfinityMintScript, InfinityMintScriptParameters } from "./interfaces";
-import {
-	getInfinityMintDeployments,
-	InfinityMintDeployment,
-} from "./deployments";
+import { getDeploymentClasses, InfinityMintDeployment } from "./deployments";
 import hre from "hardhat";
 import fs from "fs";
 
@@ -21,7 +18,7 @@ const Deploy: InfinityMintScript = {
 		].filter((location) => fs.existsSync(location));
 
 		for (let i = 0; i < locations.length; i++) {
-			let result = await getInfinityMintDeployments(
+			let result = await getDeploymentClasses(
 				params.project,
 				hre.network.name,
 				"./"

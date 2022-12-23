@@ -4,11 +4,13 @@ import fs from "fs";
 import {
 	InfinityMintConfig,
 	InfinityMintProject,
+	InfinityMintProjectJavascript,
 	InfinityMintSession,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
+import { InfinityMintWindow } from "./window";
 
 export interface Vector {
 	x: number;
@@ -25,6 +27,12 @@ export interface Blessed {
 	form: any;
 }
 
+/**
+ * A very experimentael prototype typescript interfaced for the blessed-js terminal-kit library. Most of the methods
+ * on here are probably not going to work.
+ *
+ * @experimental
+ */
 export interface BlessedElement extends Element, Dictionary<any> {
 	focus: Function;
 	render: Function;
@@ -35,9 +43,16 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	setBack: Function;
 	setScroll: Function;
 	removeLabel: Function;
+	/**
+	 * Doesn't appear to function
+	 */
 	pushLine: Function;
 	disableMouse: Function;
 	content: any;
+	/**
+	 * Returns the current window this element is assigned too. Will be undefined if the element has not been registered with an InfinityMintWindow
+	 */
+	window: InfinityMintWindow;
 	disableKeys: Function;
 	setItems: Function;
 	enterSelected: Function;
@@ -57,7 +72,13 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	toggle: Function;
 	destroy: Function;
 	free: Function;
+	/**
+	 * Doesn't appear to function
+	 */
 	setLine: FuncDouble<number, string, Function>;
+	/**
+	 * Doesn't appear to function
+	 */
 	insertLine: FuncDouble<number, string, Function>;
 	key: FuncDouble<string[], Function, Function>;
 	onceKey: FuncDouble<string[], Function, Function>;
@@ -66,42 +87,68 @@ export interface BlessedElement extends Element, Dictionary<any> {
 }
 
 /**
- * Can somebody educate me on a better way?
- *  - Lyds
+ * Interface for defining a typescript typesript type that is an anon function that takes one param and returns one result.
  */
 export interface FuncSingle<T, TResult> {
 	(param0: T): TResult;
 }
 
+/**
+ * Interface for defining a typescript typesript type that is an anon function that takes two param and returns one result.
+ */
 export interface FuncDouble<T, T2, TResult> {
 	(param0: T, param1: T2): TResult;
 }
 
+/**
+ * Interface for defining a typescript typesript type that is an anon function that takes three param and returns one result.
+ */
 export interface FuncTripple<T, T2, T3, TResult> {
 	(param0: T, param1: T2, param3: T3): TResult;
 }
 
+/**
+ * Interface for defining a typescript typesript type that is an anon function that takes four param and returns one result.
+ */
 export interface FuncQuad<T, T2, T3, T4, TResult> {
 	(param0: T, param1: T2, param3: T3, param4: T4): TResult;
 }
 
+/**
+ * used in the InfinityMintWindow. Is the bounding box of the current window relative to the current terminal size (see {@link @app/windows.InfinityMintWindow}).ß
+ */
 export interface Rectangle {
-	startX: number;
-	endX: number;
-	startY: number;
-	endY: number;
-	width: number;
-	height: number;
+	startX: number | string;
+	endX: number | string;
+	startY: number | string;
+	endY: number | string;
+	width: number | string;
+	height: number | string;
 	z: number;
 }
+
+/**
+ * Logs a console message to the current pipe.
+ * @param msg
+ * @param pipe
+ */
 export const log = (msg: string, pipe?: string) => {
 	Pipes.log(msg, pipe);
 };
 
+/**
+ * Logs a debug message to the current pipe.
+ * @param msg
+ * @param pipe
+ */
 export const debugLog = (msg: string) => {
 	log(msg, "debug");
 };
 
+/**
+ * Reads the current .session file in the cwd which holds settings relating to the current instance of InfinityMint.
+ * @returns
+ */
 export const readSession = (): InfinityMintSession => {
 	if (!fs.existsSync(process.cwd() + "/.session"))
 		return { created: Date.now(), environment: {} };
@@ -122,6 +169,9 @@ export const readSession = (): InfinityMintSession => {
 	};
 };
 
+/**
+ * Overwrites default behaviour of console.log and console.error
+ */
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let consoleLog = console.log;
@@ -163,11 +213,53 @@ export const getConfigFile = () => {
 	return res as InfinityMintConfig;
 };
 
-export const getCompiledProject = (projectName: string) => {};
-
-export const getProject = (projectName: string) => {
-	let res = require(process.cwd() + "/projects/" + projectName + ".ts");
+/**
+ * Returns a compiled InfinityMintProject ready to be deployed, see {@link @app/interfaces.InfinityMintProject}.
+ * @param projectName
+ */
+export const getCompiledProject = (projectName: string) => {
+	let res = require(process.cwd() +
+		"/projects/compiled/" +
+		projectName +
+		".compiled.json");
 	res = res.default || res;
+	//
+	if (res.compiled !== true)
+		throw new Error(`project ${projectName} has not been compiled`);
+
+	return res as InfinityMintProject;
+};
+
+/**
+ * Returns a deployed InfinityMintProject, see {@link @app/interfaces.InfinityMintProject}.
+ * @param projectName
+ */
+export const getDeployedProject = (projectName: string, version?: any) => {
+	let res = require(process.cwd() +
+		"/projects/deployed/" +
+		projectName +
+		`@${version}.json`);
+	res = res.default || res;
+	//
+	if (res.deployed !== true)
+		throw new Error(`project ${projectName} has not been deployed`);
+
+	return res as InfinityMintProject;
+};
+
+/**
+ * Returns an InfinityMintProject file relative to the /projects/ folder, see {@link @app/interfaces.InfinityMintProject}. Will return type of InfinityMintProjectClassic if second param is true.
+ * @param projectName
+ * @param isJavaScript
+ */
+export const getProject = (projectName: string, isJavaScript?: boolean) => {
+	let res = require(process.cwd() +
+		"/projects/" +
+		projectName +
+		(isJavaScript ? ".js" : ".ts"));
+	res = res.default || res;
+
+	if (isJavaScript) return res as InfinityMintProjectJavascript;
 	return res as InfinityMintProject;
 };
 

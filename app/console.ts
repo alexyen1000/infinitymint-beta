@@ -407,7 +407,7 @@ export class InfinityConsole {
 					} else if (!this.currentWindow.isVisible())
 						this.currentWindow.show();
 					else this.currentWindow.hide();
-					await this.currentWindow.setFrameContent();
+					await this.currentWindow.updateFrameTitle();
 					//set the window manager to the back of the screne
 					this.windowManager.setBack();
 				}

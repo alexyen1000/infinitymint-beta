@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getInfinityMintDeployments = exports.create = exports.getLiveDeployments = exports.getInfinityMintDeployment = exports.hasDeploymentManifest = exports.readNetworkDeployment = exports.getNetworkDeployment = exports.InfinityMintDeployment = void 0;
+exports.getDeploymentClasses = exports.create = exports.getLiveDeployments = exports.getDeploymentClass = exports.hasDeploymentManifest = exports.readNetworkDeployment = exports.getNetworkDeployment = exports.InfinityMintDeployment = void 0;
 const events_1 = __importDefault(require("events"));
 const helpers_1 = require("./helpers");
 const glob_1 = require("glob");
@@ -277,7 +277,7 @@ const hasDeploymentManifest = (contractName, project, network) => {
     return fs_1.default.existsSync(path);
 };
 exports.hasDeploymentManifest = hasDeploymentManifest;
-const getInfinityMintDeployment = (contractName, project, network) => {
+const getDeploymentClass = (contractName, project, network) => {
     var _a;
     network = network || ((_a = project === null || project === void 0 ? void 0 : project.network) === null || _a === void 0 ? void 0 : _a.name);
     if (network === undefined)
@@ -285,7 +285,7 @@ const getInfinityMintDeployment = (contractName, project, network) => {
     let liveDeployments = (0, exports.getLiveDeployments)(contractName, project, network);
     return (0, exports.create)(liveDeployments[0]);
 };
-exports.getInfinityMintDeployment = getInfinityMintDeployment;
+exports.getDeploymentClass = getDeploymentClass;
 const getLiveDeployments = (contractName, project, network) => {
     var _a;
     let path = process.cwd() +
@@ -304,14 +304,15 @@ exports.getLiveDeployments = getLiveDeployments;
  * @returns
  */
 const create = (liveDeployment, deploymentScript) => {
-    return new InfinityMintDeployment(deploymentScript || liveDeployment.deploymentScript, liveDeployment.key, liveDeployment.network.name, (0, helpers_1.getProject)(liveDeployment.project));
+    let project = (0, helpers_1.getProject)(liveDeployment.project, liveDeployment.javascript);
+    return new InfinityMintDeployment(deploymentScript || liveDeployment.deploymentScript, liveDeployment.key, liveDeployment.network.name, project);
 };
 exports.create = create;
 /**
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-const getInfinityMintDeployments = (project, network, root) => {
+const getDeploymentClasses = (project, network, root) => {
     return new Promise((resolve, reject) => {
         var _a;
         network = network || ((_a = project.network) === null || _a === void 0 ? void 0 : _a.name);
@@ -334,5 +335,5 @@ const getInfinityMintDeployments = (project, network, root) => {
         });
     });
 };
-exports.getInfinityMintDeployments = getInfinityMintDeployments;
+exports.getDeploymentClasses = getDeploymentClasses;
 //# sourceMappingURL=deployments.js.map
