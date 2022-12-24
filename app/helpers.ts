@@ -503,7 +503,7 @@ export const createInfinityMintConfig = (
 	}
 };
 
-export const getsolidityFolder = () => {
+export const getSolidityFolder = () => {
 	let session = readSession();
 
 	return (

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getsolidityFolder = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
+exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityFolder = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
 const pipes_1 = __importDefault(require("./pipes"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const fs_1 = __importDefault(require("fs"));
@@ -325,14 +325,14 @@ const createInfinityMintConfig = (useJavascript, useInternalRequire) => {
     }
 };
 exports.createInfinityMintConfig = createInfinityMintConfig;
-const getsolidityFolder = () => {
+const getSolidityFolder = () => {
     var _a;
     let session = (0, exports.readSession)();
     return (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.solidityFolder) ||
         process.env.SOLIDITY_FOLDER ||
         "alpha");
 };
-exports.getsolidityFolder = getsolidityFolder;
+exports.getSolidityFolder = getSolidityFolder;
 const saveSessionVariable = (session, key, value) => {
     if (session.environment === undefined)
         session.environment = {};

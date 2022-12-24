@@ -14,7 +14,7 @@ import {
 	readSession,
 	log,
 	saveSession,
-	getsolidityFolder,
+	getSolidityFolder,
 	getConfigFile,
 } from "./app/helpers";
 import * as Helpers from "./app/helpers";
@@ -99,7 +99,7 @@ if (config.console)
 
 		debugLog(
 			"starting InfinityConsole with solidity namespace of " +
-				getsolidityFolder()
+				getSolidityFolder()
 		);
 
 		let infinityConsole = new InfinityConsole();

@@ -628,8 +628,15 @@ export interface InfinityMintConfig {
 export interface InfinityMintConfigSettingsNetwork {
 	defaultAccount?: number;
 	useDefaultPipe?: boolean;
+	/**
+	 * Allows you to specify an RPC to use for this network in a client setting. Does not equal the RPC which is used for hardhat to communicate in chain and is just used to create JsonStaticProvider on reacts end.
+	 */
+	rpc?: string;
 }
 
+/**
+ * the interface for the .session file
+ */
 export interface InfinityMintSession {
 	environment?: any;
 	created: number;

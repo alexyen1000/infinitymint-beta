@@ -317,7 +317,7 @@ class InfinityMintWindow {
             defaultSigner.address);
         let etherBalance = hardhat_1.ethers.utils.formatEther(balance);
         this.log("balance of account: " + etherBalance);
-        this.getElement("frame").setContent(` {bold}${this.name}{/bold} | {yellow-fg}[${getAccountIndex}]{/yellow-fg} {underline}${defaultSigner.address}{/underline} | {magenta-bg}${hardhat_1.default.network.name}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${(0, helpers_1.getsolidityFolder)()}{/cyan-fg}`);
+        this.getElement("frame").setContent(` {bold}${this.name}{/bold} | {yellow-fg}[${getAccountIndex}]{/yellow-fg} {underline}${defaultSigner.address}{/underline} | {magenta-bg}${hardhat_1.default.network.name}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${(0, helpers_1.getSolidityFolder)()}{/cyan-fg}`);
     }
     async create() {
         if (this.initialized && this.destroyed === false)

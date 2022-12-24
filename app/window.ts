@@ -7,7 +7,7 @@ import {
 	debugLog,
 	readSession,
 	saveSession,
-	getsolidityFolder,
+	getSolidityFolder,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -420,7 +420,7 @@ export class InfinityMintWindow {
 				defaultSigner.address
 			}{/underline} | {magenta-bg}${
 				hre.network.name
-			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${getsolidityFolder()}{/cyan-fg}`
+			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${getSolidityFolder()}{/cyan-fg}`
 		);
 	}
 

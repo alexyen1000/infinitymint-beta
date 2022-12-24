@@ -103,7 +103,7 @@ if (config.console)
             (0, web3_1.startNetworkPipe)();
         //initialize console
         (0, helpers_1.debugLog)("starting InfinityConsole with solidity namespace of " +
-            (0, helpers_1.getsolidityFolder)());
+            (0, helpers_1.getSolidityFolder)());
         let infinityConsole = new console_1.default();
         await infinityConsole.initialize();
     })().catch((error) => {
