@@ -284,7 +284,7 @@ export class InfinityMintWindow {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
 
-		if (this.elements[key].window !== undefined)
+		if (element.window !== undefined)
 			throw new Error(
 				"element (" +
 					element.constructor.name +
