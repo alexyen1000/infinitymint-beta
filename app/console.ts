@@ -1,4 +1,4 @@
-import { InfinityMintConsole } from "./interfaces";
+import { InfinityMintConsoleOptions } from "./interfaces";
 import { BlessedElement, debugLog, isEnvSet, isEnvTrue, log } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
@@ -27,7 +27,7 @@ import CloseBox from "./windows/closeBox";
 const blessed = require("blessed");
 export class InfinityConsole {
 	private screen: any;
-	private options?: InfinityMintConsole;
+	private options?: InfinityMintConsoleOptions;
 
 	protected currentWindow?: InfinityMintWindow;
 	protected windows: InfinityMintWindow[];
@@ -39,7 +39,7 @@ export class InfinityConsole {
 	private windowManager?: any;
 	private optionsBox?: any;
 
-	constructor(options?: InfinityMintConsole) {
+	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
 		this.windows = [];
 		this.canExit = true;

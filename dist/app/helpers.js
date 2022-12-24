@@ -207,6 +207,8 @@ const initializeInfinitymintConfig = () => {
         }
         catch (error) {
             (0, exports.debugLog)("unable to delete folder: " + (error === null || error === void 0 ? void 0 : error.message) || error);
+            if ((0, exports.isEnvTrue)("THROW_ALL_ERRORS"))
+                throw error;
         }
         session.environment.solidityFolder = process.env.SOLIDITY_FOLDER;
     }

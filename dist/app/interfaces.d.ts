@@ -58,7 +58,6 @@ export interface InfinityMintProjectJavascript extends InfinityMintProject, Dict
     mods: Dictionary<boolean>;
     contracts: Dictionary<any>;
     description: Dictionary<any>;
-    name: string;
     static: Dictionary<any>;
     deployment: Dictionary<any>;
     royalty?: Dictionary<any>;
@@ -534,38 +533,11 @@ export interface InfinityMintProjectPath {
 /**
  * is the same as {@link InfinityMintProjectPath} but is for JavaScript project files (classic InfinityMint).
  */
-export interface InfinityMintProjectJavaScriptPath {
-    name: string;
-    fileName: string;
+export interface InfinityMintProjectJavascriptPath extends InfinityMintProjectPath {
     /**
-     * is the mint data, this is copied to each token internally
-     */
-    data?: Dictionary<any>;
-    key?: string;
-    settings?: Dictionary<any>;
-    description?: string;
-    /**
-     * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
-     *
-     * @examples
-     * ```js
-     * content: {
-     * 		myContent: {
-     * 			name: '3d',
-     * 			fileName: '@import/3d/file.obj'
-     * 		}
-     *	}
-     * ```
-     */
-    content?: Dictionary<InfinityMintProjectContent>;
-    /**
-     * When the path has been exported this is filled.
+     * For Javascript infinitymint paths this is where exported data is put. This is only used when the project is a javascript file as it does call it 'exports'. See {@link InfinityMintProjectPath}
      */
     paths?: InfinityMintProjectPathExport;
-    /**
-     * true if the project the path contains has been compiled.
-     */
-    compiled?: boolean;
 }
 export interface InfinityMintProjectContent extends InfinityMintProjectPath {
     onlyOwners?: boolean;
@@ -687,28 +659,35 @@ export interface InfinityMintConfigSettings extends Dictionary<any> {
      */
     export?: InfinityMintConfigSettingsExport;
 }
+/**
+ * This interface refers to the specific arguments which can be passed to the script. Either as parameters in a bash script or from the InfinityMintConsole. See {@link InfinityMintScript}
+ */
 export interface InfinityMintScriptArguments {
     name: string;
     optional?: boolean;
     validator?: Function;
     value?: any;
 }
-export interface InfinityMintConsole {
+/**
+ *
+ */
+export interface InfinityMintConsoleOptions {
     blessed?: Dictionary<any>;
 }
+/**
+ * An InfinityMint script is like a Hardhat test, it essentially allows InfinityMint to perform a task. The scripts by default are located in the `./scripts` folder.
+ */
 export interface InfinityMintScript {
     name?: string;
     description?: string;
     execute: FuncSingle<InfinityMintScriptParameters, Promise<void>>;
     arguments?: InfinityMintScriptArguments[];
 }
-export interface InfinityMintScriptParameters extends Dictionary<any> {
+/**
+ * This is passed into the execute method of the script inside the scripts/ folder by default. See {@link InfinityMintScript}
+ */
+export interface InfinityMintScriptParameters extends InfinityMintProjectEventParameters, Dictionary<any> {
     args?: Dictionary<InfinityMintScriptArguments>;
-    eventEmitter?: EventEmitter;
-    project?: InfinityMintProject;
-    config: InfinityMintConfig;
-    log: typeof log;
-    debugLog: typeof debugLog;
 }
 export interface InfinityMintDeploymentParametersDeployments extends Dictionary<InfinityMintDeploymentLive> {
     assets: InfinityMintDeploymentLive;

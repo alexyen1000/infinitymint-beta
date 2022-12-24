@@ -1,4 +1,4 @@
-import { InfinityMintConsole } from "./interfaces";
+import { InfinityMintConsoleOptions } from "./interfaces";
 import { InfinityMintWindow } from "./window";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 export declare class InfinityConsole {
@@ -12,7 +12,7 @@ export declare class InfinityConsole {
     private signers?;
     private windowManager?;
     private optionsBox?;
-    constructor(options?: InfinityMintConsole);
+    constructor(options?: InfinityMintConsoleOptions);
     getSigner(): SignerWithAddress;
     getSigners(): SignerWithAddress[];
     registerWindowsListEvents(window?: InfinityMintWindow): void;
