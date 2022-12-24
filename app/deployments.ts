@@ -136,7 +136,7 @@ export class InfinityMintDeployment {
 		return this.deploymentScript.index || 10;
 	}
 
-	getSolidityNamespace() {
+	getsolidityFolder() {
 		return this.deploymentScript.solidityFolder || "alpha";
 	}
 

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityNamespace = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
+exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getsolidityFolder = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
 const pipes_1 = __importDefault(require("./pipes"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const fs_1 = __importDefault(require("fs"));
@@ -67,7 +67,7 @@ const overwriteConsoleMethods = () => {
         var _a;
         if (setPipe && pipes_1.default.logs[pipes_1.default.currentPipe])
             pipes_1.default.getPipe(pipes_1.default.currentPipe).error(error);
-        if ((0, exports.isEnvTrue)("PIPE_NOTIFY_ERRORS"))
+        if ((0, exports.isEnvTrue)("PIPE_LOG_ERRORS_TO_DEFAULT"))
             console.log("[error] " + (error === null || error === void 0 ? void 0 : error.message));
         if (((_a = pipes_1.default.logs[pipes_1.default.currentPipe]) === null || _a === void 0 ? void 0 : _a.listen) ||
             (0, exports.isEnvTrue)("PIPE_ECHO_ERRORS"))
@@ -155,6 +155,8 @@ const initializeInfinitymintConfig = () => {
             infinityMintConfig.hardhat.networks.ganache;
     if (infinityMintConfig.hardhat.paths === undefined)
         infinityMintConfig.hardhat.paths = {};
+    if (infinityMintConfig.console || (0, exports.isEnvTrue)("OVERWRITE_CONSOLE_METHODS"))
+        (0, exports.overwriteConsoleMethods)();
     //do
     let solidityModuleFolder = process.cwd() +
         "/node_modules/infinitymint/" +
@@ -167,11 +169,13 @@ const initializeInfinitymintConfig = () => {
         if (!fs_1.default.existsSync(solidityModuleFolder))
             throw new Error("please npm i infinitymint and make sure " + module + "exists");
         if (fs_1.default.existsSync(solidityFolder) &&
-            (0, exports.isEnvTrue)("SOLIDITY_CLEAN_NAMESPACE"))
+            (0, exports.isEnvTrue)("SOLIDITY_CLEAN_NAMESPACE")) {
+            (0, exports.debugLog)("cleaning " + solidityModuleFolder);
             fs_1.default.rmdirSync(solidityFolder, {
                 recursive: true,
                 force: true,
             });
+        }
         if (!fs_1.default.existsSync(solidityFolder)) {
             (0, exports.debugLog)("copying " + solidityModuleFolder + " to " + solidityFolder);
             fs_extra_1.default.copySync(solidityModuleFolder, solidityFolder);
@@ -182,8 +186,8 @@ const initializeInfinitymintConfig = () => {
     infinityMintConfig.hardhat.paths.sources = solidityFolder;
     //delete artifacts folder if namespace changes
     if (process.env.SOLIDITY_FOLDER !== undefined &&
-        session.environment.solidityNamespace !== undefined &&
-        session.environment.solidityNamespace !== process.env.SOLIDITY_FOLDER) {
+        session.environment.solidityFolder !== undefined &&
+        session.environment.solidityFolder !== process.env.SOLIDITY_FOLDER) {
         try {
             (0, exports.debugLog)("removing ./artifacts");
             fs_1.default.rmdirSync(process.cwd() + "/artifacts", {
@@ -204,11 +208,11 @@ const initializeInfinitymintConfig = () => {
         catch (error) {
             (0, exports.debugLog)("unable to delete folder: " + (error === null || error === void 0 ? void 0 : error.message) || error);
         }
-        session.environment.solidityNamespace = process.env.SOLIDITY_FOLDER;
+        session.environment.solidityFolder = process.env.SOLIDITY_FOLDER;
     }
     //set the solidity namespace
-    if (session.environment.solidityNamespace === undefined)
-        session.environment.solidityNamespace =
+    if (session.environment.solidityFolder === undefined)
+        session.environment.solidityFolder =
             process.env.SOLIDITY_FOLDER || "alpha";
     (0, exports.saveSession)(session);
     return infinityMintConfig;
@@ -226,7 +230,6 @@ const loadInfinityMint = (useJavascript, useInternalRequire) => {
     (0, exports.createInfinityMintConfig)(useJavascript, useInternalRequire);
     (0, exports.preInitialize)();
     (0, exports.initializeGanacheMnemonic)();
-    (0, exports.overwriteConsoleMethods)();
 };
 exports.loadInfinityMint = loadInfinityMint;
 const createDirs = (dirs) => {
@@ -320,14 +323,14 @@ const createInfinityMintConfig = (useJavascript, useInternalRequire) => {
     }
 };
 exports.createInfinityMintConfig = createInfinityMintConfig;
-const getSolidityNamespace = () => {
+const getsolidityFolder = () => {
     var _a;
     let session = (0, exports.readSession)();
-    return (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.solidityNamespace) ||
+    return (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.solidityFolder) ||
         process.env.SOLIDITY_FOLDER ||
         "alpha");
 };
-exports.getSolidityNamespace = getSolidityNamespace;
+exports.getsolidityFolder = getsolidityFolder;
 const saveSessionVariable = (session, key, value) => {
     if (session.environment === undefined)
         session.environment = {};

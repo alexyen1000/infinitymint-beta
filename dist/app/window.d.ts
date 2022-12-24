@@ -63,6 +63,7 @@ export declare class InfinityMintWindow {
     hide(): void;
     show(): void;
     setSize(width: number | string, height: number | string): void;
+    log(string?: string | string[], window?: any, returnString?: boolean): string;
     /**
      * Registers a new blessed element with the window.
      * @param key

@@ -105,7 +105,7 @@ class InfinityMintWindow {
     saveOptions() {
         let session = (0, helpers_1.readSession)();
         session.environment["Window_" + this.name] = this.options;
-        (0, helpers_1.debugLog)("saving settings to session for " + `<${this.name}>[${this.id}]`);
+        this.log("saving window options");
         (0, helpers_1.saveSession)(session);
     }
     getContainer() {
@@ -171,7 +171,7 @@ class InfinityMintWindow {
         return this.height;
     }
     hide() {
-        (0, helpers_1.debugLog)(`hiding <${this.name}>[${this.id}]`);
+        this.log("hiding");
         Object.values(this.elements).forEach((element) => {
             if (!element.hidden) {
                 element.shouldUnhide = true;
@@ -204,6 +204,14 @@ class InfinityMintWindow {
         this.width = width;
         this.height = height;
     }
+    log(string, window, returnString) {
+        window = window || this;
+        if (typeof string === typeof Array)
+            string = string.join(" ");
+        if (returnString)
+            return string + ` => <${window.name}>[${window.getId()}]`;
+        (0, helpers_1.debugLog)(string + ` => <${window.name}>[${window.getId()}]`);
+    }
     /**
      * Registers a new blessed element with the window.
      * @param key
@@ -213,17 +221,13 @@ class InfinityMintWindow {
     registerElement(key, element) {
         if (this.elements[key] !== undefined)
             throw new Error("key already registered in window: " + key);
-        if (this.elements[key].window !== undefined)
-            throw new Error("element (" +
+        if (element.window !== undefined)
+            throw new Error(this.log("element (" +
                 element.constructor.name +
-                ") is already registerd to " +
-                `<${element.window.name}>[${element.window.getId()}]`);
+                ") is already registered to ", null, true));
         if (element.parent === undefined)
             element.parent = this.screen;
-        (0, helpers_1.debugLog)("registering element (" +
-            element.constructor.name +
-            ") for " +
-            `<${this.name}>[${this.id}]`);
+        this.log("registering element (" + element.constructor.name + ")");
         element.window = this;
         //does the same a above
         element.oldOn = element.on;
@@ -264,13 +268,12 @@ class InfinityMintWindow {
         return this.screen;
     }
     destroy() {
-        (0, helpers_1.debugLog)(`destroying <${this.name}>[${this.id}]`);
+        this.log("destroying");
         this.destroyed = true; //window needs to be set as destroyed
         Object.keys(this.elements).forEach((index) => {
-            (0, helpers_1.debugLog)("destroying element (" +
+            this.log("destroying element (" +
                 this.elements[index].constructor.name +
-                ") for " +
-                `<${this.name}>[${this.id}]`);
+                ")");
             try {
                 this.elements[index].free(); //unsubscribes to events saving memory
             }
@@ -308,13 +311,13 @@ class InfinityMintWindow {
         let defaultSigner = await (0, web3_1.getDefaultSigner)();
         let balance = await defaultSigner.getBalance();
         let getAccountIndex = (0, web3_1.getDefaultAccountIndex)();
-        (0, helpers_1.debugLog)("main account: [" +
+        this.log("main account: [" +
             getAccountIndex +
             "] => " +
             defaultSigner.address);
         let etherBalance = hardhat_1.ethers.utils.formatEther(balance);
-        (0, helpers_1.debugLog)("balance of account: " + etherBalance);
-        this.getElement("frame").setContent(` {bold}${this.name}{/bold} | {yellow-fg}[${getAccountIndex}]{/yellow-fg} {underline}${defaultSigner.address}{/underline} | {magenta-bg}${hardhat_1.default.network.name}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${(0, helpers_1.getSolidityNamespace)()}{/cyan-fg}`);
+        this.log("balance of account: " + etherBalance);
+        this.getElement("frame").setContent(` {bold}${this.name}{/bold} | {yellow-fg}[${getAccountIndex}]{/yellow-fg} {underline}${defaultSigner.address}{/underline} | {magenta-bg}${hardhat_1.default.network.name}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${(0, helpers_1.getsolidityFolder)()}{/cyan-fg}`);
     }
     async create() {
         if (this.initialized && this.destroyed === false)
@@ -327,7 +330,7 @@ class InfinityMintWindow {
             (0, helpers_1.debugLog)(`old id <${this.name}>[${oldId}] destroyed`);
         }
         this.creation = Date.now();
-        (0, helpers_1.debugLog)(`creating <${this.name}>[${this.id}]`);
+        this.log(`creating`);
         //set the title
         this.screen.title = this.name;
         // Create the frame which all other components go into
@@ -386,14 +389,13 @@ class InfinityMintWindow {
             this.hide();
         });
         hide.focus();
-        (0, helpers_1.debugLog)(`calling initialize on <${this.name}>[${this.id}]`);
+        this.log("calling initialize");
         await this.initialize(this, frame, blessed);
         this.initialized = true;
         this.destroyed = false;
         //append each element
         Object.values(this.elements).forEach((element) => {
-            (0, helpers_1.debugLog)(`appending element to screen of <${this.name}>[${this.id}]: ` +
-                element.constructor.name);
+            this.log(`appending element (${element.constructor.name}) to screen`);
             this.screen.append(element);
         });
         //frame title

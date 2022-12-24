@@ -74,7 +74,7 @@ class InfinityMintDeployment {
     getIndex() {
         return this.deploymentScript.index || 10;
     }
-    getSolidityNamespace() {
+    getsolidityFolder() {
         return this.deploymentScript.solidityFolder || "alpha";
     }
     getKey() {

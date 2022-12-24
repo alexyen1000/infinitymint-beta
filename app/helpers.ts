@@ -192,7 +192,7 @@ export const overwriteConsoleMethods = () => {
 		if (setPipe && Pipes.logs[Pipes.currentPipe])
 			Pipes.getPipe(Pipes.currentPipe).error(error);
 
-		if (isEnvTrue("PIPE_NOTIFY_ERRORS"))
+		if (isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT"))
 			console.log("[error] " + error?.message);
 
 		if (
@@ -291,6 +291,9 @@ export const initializeInfinitymintConfig = () => {
 	if (infinityMintConfig.hardhat.paths === undefined)
 		infinityMintConfig.hardhat.paths = {};
 
+	if (infinityMintConfig.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
+		overwriteConsoleMethods();
+
 	//do
 	let solidityModuleFolder =
 		process.cwd() +
@@ -314,11 +317,13 @@ export const initializeInfinitymintConfig = () => {
 		if (
 			fs.existsSync(solidityFolder) &&
 			isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")
-		)
+		) {
+			debugLog("cleaning " + solidityModuleFolder);
 			fs.rmdirSync(solidityFolder, {
 				recursive: true,
 				force: true,
 			} as any);
+		}
 
 		if (!fs.existsSync(solidityFolder)) {
 			debugLog(
@@ -335,8 +340,8 @@ export const initializeInfinitymintConfig = () => {
 	//delete artifacts folder if namespace changes
 	if (
 		process.env.SOLIDITY_FOLDER !== undefined &&
-		session.environment.solidityNamespace !== undefined &&
-		session.environment.solidityNamespace !== process.env.SOLIDITY_FOLDER
+		session.environment.solidityFolder !== undefined &&
+		session.environment.solidityFolder !== process.env.SOLIDITY_FOLDER
 	) {
 		try {
 			debugLog("removing ./artifacts");
@@ -356,14 +361,16 @@ export const initializeInfinitymintConfig = () => {
 			} as any);
 		} catch (error: any) {
 			debugLog("unable to delete folder: " + error?.message || error);
+
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 		}
 
-		session.environment.solidityNamespace = process.env.SOLIDITY_FOLDER;
+		session.environment.solidityFolder = process.env.SOLIDITY_FOLDER;
 	}
 
 	//set the solidity namespace
-	if (session.environment.solidityNamespace === undefined)
-		session.environment.solidityNamespace =
+	if (session.environment.solidityFolder === undefined)
+		session.environment.solidityFolder =
 			process.env.SOLIDITY_FOLDER || "alpha";
 
 	saveSession(session);
@@ -385,7 +392,6 @@ export const loadInfinityMint = (
 	createInfinityMintConfig(useJavascript, useInternalRequire);
 	preInitialize();
 	initializeGanacheMnemonic();
-	overwriteConsoleMethods();
 };
 
 export const createDirs = (dirs: string[]) => {
@@ -497,11 +503,11 @@ export const createInfinityMintConfig = (
 	}
 };
 
-export const getSolidityNamespace = () => {
+export const getsolidityFolder = () => {
 	let session = readSession();
 
 	return (
-		session.environment?.solidityNamespace ||
+		session.environment?.solidityFolder ||
 		process.env.SOLIDITY_FOLDER ||
 		"alpha"
 	);

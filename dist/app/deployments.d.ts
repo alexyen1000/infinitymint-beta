@@ -63,7 +63,7 @@ export declare class InfinityMintDeployment {
      */
     off(event: string, callback: (...args: any[]) => void): events;
     getIndex(): number;
-    getSolidityNamespace(): string;
+    getsolidityFolder(): string;
     getKey(): string;
     getPermissions(): any[];
     getFilePath(): string;

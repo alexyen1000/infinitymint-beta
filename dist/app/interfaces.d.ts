@@ -40,7 +40,7 @@ export interface InfinityMintGemConfig {
     homepage?: string;
     git?: string;
     version: string;
-    solidityNamespace: string;
+    solidityFolder: string;
     author?: Dictionary<any> | Dictionary<any>[];
 }
 export interface InfinityMintApplicationConfig {

@@ -183,7 +183,7 @@ class InfinityConsole {
         this.screen.render();
     }
     errorHandler(error) {
-        if ((0, helpers_1.isEnvTrue)("CONSOLE_THROW_ERROR"))
+        if ((0, helpers_1.isEnvTrue)("THROW_ALL_ERRORS"))
             throw error;
         console.error(error);
         this.displayError(error, (errorBox) => {
@@ -408,7 +408,7 @@ class InfinityConsole {
         }
         catch (error) {
             pipes_1.default.getPipe(pipes_1.default.currentPipe).error(error);
-            if ((0, helpers_1.isEnvTrue)("CONSOLE_THROW_ERROR"))
+            if ((0, helpers_1.isEnvTrue)("THROW_ALL_ERRORS"))
                 throw error;
             else {
                 this.screen.destroy();

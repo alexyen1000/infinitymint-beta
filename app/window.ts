@@ -7,7 +7,7 @@ import {
 	debugLog,
 	readSession,
 	saveSession,
-	getSolidityNamespace,
+	getsolidityFolder,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -149,9 +149,7 @@ export class InfinityMintWindow {
 	public saveOptions() {
 		let session = readSession();
 		session.environment["Window_" + this.name] = this.options;
-		debugLog(
-			"saving settings to session for " + `<${this.name}>[${this.id}]`
-		);
+		this.log("saving window options");
 		saveSession(session);
 	}
 
@@ -237,7 +235,7 @@ export class InfinityMintWindow {
 	}
 
 	public hide() {
-		debugLog(`hiding <${this.name}>[${this.id}]`);
+		this.log("hiding");
 		Object.values(this.elements).forEach((element) => {
 			if (!element.hidden) {
 				element.shouldUnhide = true;
@@ -271,6 +269,21 @@ export class InfinityMintWindow {
 		this.height = height;
 	}
 
+	public log(
+		string?: string | string[],
+		window?: any,
+		returnString?: boolean
+	) {
+		window = window || this;
+		if (typeof string === typeof Array)
+			string = (string as string[]).join(" ");
+
+		if (returnString)
+			return string + ` => <${window.name}>[${window.getId()}]`;
+
+		debugLog(string + ` => <${window.name}>[${window.getId()}]`);
+	}
+
 	/**
 	 * Registers a new blessed element with the window.
 	 * @param key
@@ -286,20 +299,18 @@ export class InfinityMintWindow {
 
 		if (element.window !== undefined)
 			throw new Error(
-				"element (" +
-					element.constructor.name +
-					") is already registerd to " +
-					`<${element.window.name}>[${element.window.getId()}]`
+				this.log(
+					"element (" +
+						element.constructor.name +
+						") is already registered to ",
+					null,
+					true
+				)
 			);
 
 		if (element.parent === undefined) element.parent = this.screen;
 
-		debugLog(
-			"registering element (" +
-				element.constructor.name +
-				") for " +
-				`<${this.name}>[${this.id}]`
-		);
+		this.log("registering element (" + element.constructor.name + ")");
 
 		element.window = this;
 		//does the same a above
@@ -343,14 +354,13 @@ export class InfinityMintWindow {
 	}
 
 	public destroy() {
-		debugLog(`destroying <${this.name}>[${this.id}]`);
+		this.log("destroying");
 		this.destroyed = true; //window needs to be set as destroyed
 		Object.keys(this.elements).forEach((index) => {
-			debugLog(
+			this.log(
 				"destroying element (" +
 					this.elements[index].constructor.name +
-					") for " +
-					`<${this.name}>[${this.id}]`
+					")"
 			);
 
 			try {
@@ -395,14 +405,14 @@ export class InfinityMintWindow {
 		let defaultSigner = await getDefaultSigner();
 		let balance = await defaultSigner.getBalance();
 		let getAccountIndex = getDefaultAccountIndex();
-		debugLog(
+		this.log(
 			"main account: [" +
 				getAccountIndex +
 				"] => " +
 				defaultSigner.address
 		);
 		let etherBalance = ethers.utils.formatEther(balance);
-		debugLog("balance of account: " + etherBalance);
+		this.log("balance of account: " + etherBalance);
 		this.getElement("frame").setContent(
 			` {bold}${
 				this.name
@@ -410,7 +420,7 @@ export class InfinityMintWindow {
 				defaultSigner.address
 			}{/underline} | {magenta-bg}${
 				hre.network.name
-			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${getSolidityNamespace()}{/cyan-fg}`
+			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${getsolidityFolder()}{/cyan-fg}`
 		);
 	}
 
@@ -426,7 +436,7 @@ export class InfinityMintWindow {
 			debugLog(`old id <${this.name}>[${oldId}] destroyed`);
 		}
 		this.creation = Date.now();
-		debugLog(`creating <${this.name}>[${this.id}]`);
+		this.log(`creating`);
 
 		//set the title
 		this.screen.title = this.name;
@@ -497,16 +507,15 @@ export class InfinityMintWindow {
 		});
 		hide.focus();
 
-		debugLog(`calling initialize on <${this.name}>[${this.id}]`);
+		this.log("calling initialize");
 		await this.initialize(this, frame, blessed);
 		this.initialized = true;
 		this.destroyed = false;
 
 		//append each element
 		Object.values(this.elements).forEach((element) => {
-			debugLog(
-				`appending element to screen of <${this.name}>[${this.id}]: ` +
-					element.constructor.name
+			this.log(
+				`appending element (${element.constructor.name}) to screen`
 			);
 
 			this.screen.append(element);

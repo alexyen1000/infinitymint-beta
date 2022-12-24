@@ -242,7 +242,7 @@ export class InfinityConsole {
 	}
 
 	public errorHandler(error: Error | unknown) {
-		if (isEnvTrue("CONSOLE_THROW_ERROR")) throw error;
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 
 		console.error(error);
 		this.displayError(error, (errorBox: BlessedElement) => {
@@ -484,7 +484,7 @@ export class InfinityConsole {
 			this.currentWindow.show();
 		} catch (error: Error | any) {
 			Pipes.getPipe(Pipes.currentPipe).error(error as any);
-			if (isEnvTrue("CONSOLE_THROW_ERROR")) throw error;
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 			else {
 				this.screen.destroy();
 				this.screen = blessed.screen(
