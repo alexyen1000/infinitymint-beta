@@ -1,7 +1,10 @@
-import { InfinityMintGemParameters, InfinityMintGem } from "../interfaces";
+import {
+	InfinityMintGemParameters,
+	InfinityMintGemScript,
+} from "../interfaces";
 import Example from "./windows/example";
 
-const gem: InfinityMintGem = {
+const gem: InfinityMintGemScript = {
 	name: "Example Gem",
 	deploy: async () => {},
 	init: async (params: InfinityMintGemParameters) => {

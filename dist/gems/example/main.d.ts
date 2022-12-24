@@ -1,4 +1,4 @@
-import { InfinityMintGem } from "../interfaces";
-declare const gem: InfinityMintGem;
+import { InfinityMintGemScript } from "../interfaces";
+declare const gem: InfinityMintGemScript;
 export default gem;
 //# sourceMappingURL=main.d.ts.map

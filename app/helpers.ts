@@ -258,6 +258,7 @@ export const getProject = (projectName: string, isJavaScript?: boolean) => {
 		projectName +
 		(isJavaScript ? ".js" : ".ts"));
 	res = res.default || res;
+	res.javascript = isJavaScript === true;
 
 	if (isJavaScript) return res as InfinityMintProjectJavascript;
 	return res as InfinityMintProject;

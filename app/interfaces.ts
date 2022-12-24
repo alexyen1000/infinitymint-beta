@@ -5,11 +5,10 @@ import { FuncSingle } from "./helpers";
 import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import InfinityConsole from "./console";
-
 /**
  * Gems are our plugins. They allow you to easily extend the functionality of InfinityMint. Gems an contain solidity code, react code and more and integrate with every aspect of InfinityMint
  */
-export interface InfinityMintGem extends InfinityMintDeploymentScript {
+export interface InfinityMintGemScript extends InfinityMintDeploymentScript {
 	/**
 	 * the name of this gem, does not have to be the same name as the folder it sits in
 	 */
@@ -22,11 +21,19 @@ export interface InfinityMintGem extends InfinityMintDeploymentScript {
 }
 
 /**
- * Parameters which are passed into the deploy, setup and init methods inside of a {@link InfinityMintGem}.
+ * Parameters which are passed into the deploy, setup and init methods inside of a {@link InfinityMintGemScript}.
  */
 export interface InfinityMintGemParameters
 	extends InfinityMintDeploymentParameters {
-	gem: InfinityMintGem;
+	gem: InfinityMintGemScript;
+}
+
+/**
+ * passed to event functions
+ */
+export interface InfinityMintProjectEventParameters
+	extends InfinityMintDeploymentParameters {
+	gems: Dictionary<InfinityMintGemScript>;
 }
 
 /**
@@ -47,7 +54,7 @@ export interface InfinityMintApplicationConfig {
 }
 
 /**
- * Definition for the classic InfinityMint project, is used when projects are .js and not .ts, if they are .ts {@link InfinityMintProject} is used.
+ * For backwards compatability and JavaScript support. A Definition for the classic InfinityMint omega project. Iss used when projects are .js and not .ts before they have been compiled. When they get compiled they get turned into normal project interface. See {@link InfinityMintProject}.
  */
 export interface InfinityMintProjectJavascript
 	extends InfinityMintProject,
@@ -217,7 +224,7 @@ export interface InfinityMintProject {
 		tokenSymbol?: string;
 	};
 	/**
-	 * is true if this is a compiled infinitymint project
+	 * is true if this is a compiled infinitymint project.
 	 */
 	compiled?: boolean;
 	/**
@@ -231,10 +238,6 @@ export interface InfinityMintProject {
 	javascript?: boolean;
 }
 
-export interface InfinityMintProjectEvent<T, T2, T3, T4, TResult> {
-	(param0: T, param1: T2, param3: T3, param4: T4): TResult;
-}
-
 /**
  * Events can be defined which can then be called directly from the project file. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
  */
@@ -242,15 +245,15 @@ export interface InfinityMintProjectEvents extends Dictionary<any> {
 	/**
 	 * Will be called when setup is complete
 	 */
-	setup?: FuncSingle<InfinityMintProject, Promise<void>>;
+	setup?: FuncSingle<InfinityMintProjectEventParameters, Promise<void>>;
 	/**
 	 * Will be called when deployment is complete
 	 */
-	deploy?: FuncSingle<InfinityMintProject, Promise<void>>;
+	deploy?: FuncSingle<InfinityMintProjectEventParameters, Promise<void>>;
 	/**
 	 * Will be called when export is complete
 	 */
-	export?: FuncSingle<InfinityMintProject, Promise<void>>;
+	export?: FuncSingle<InfinityMintProjectEventParameters, Promise<void>>;
 	/**
 	 * Will be called when build is complete
 	 */
@@ -317,13 +320,13 @@ export interface InfinityMintProjectPermissions extends Dictionary<any> {
 /**
  * Holds settings and other information relating to a gem inside of the project file. This is not the gem file its self but simply a configuration option inside of the projects where users can state if a gem is enable or disabled and pass settings from the project directly to all of the gem scripts and windows for them to read and use.
  *
- * @see {@link InfinityMintGem}
+ * @see {@link InfinityMintGemScript}
  */
 export interface InfinityMintProjectGem {
 	/**
 	 * The name of the gem to enable/disable.
 	 *
-	 * @see {@link InfinityMintGem}
+	 * @see {@link InfinityMintGemScript}
 	 */
 	name: string;
 	/**
@@ -333,7 +336,7 @@ export interface InfinityMintProjectGem {
 	/**
 	 * The settings for the gem.
 	 *
-	 * @see {@link InfinityMintGem}
+	 * @see {@link InfinityMintGemScript}
 	 */
 	settings?: Dictionary<any>;
 }
@@ -782,7 +785,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	/**
 	 * Contains a list of current live deployments up to this deployment.
 	 */
-	deployments?: InfinityMintDeploymentParametersDeployments;
+	deployments?: Dictionary<InfinityMintDeploymentLive>;
 	log: FuncSingle<string, void>;
 	debugLog: FuncSingle<string, void>;
 }
