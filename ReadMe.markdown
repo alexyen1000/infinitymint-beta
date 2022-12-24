@@ -10,7 +10,7 @@
 
 `npm i infinitymint`
 
-InfinityMint also provides a working *Nix* setup out of the box for development.
+InfinityMint also provides a working [*Nix*](<https://nixos.org>) setup out of the box for development.
 This is to prevent conflicts in environment between the end developer & shipping to production.
 
 Access to the environment is provided via a *Nix Flake.* To enter;
