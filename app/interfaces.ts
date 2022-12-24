@@ -1,7 +1,7 @@
 import { BigNumber } from "ethers";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
-import { FuncSingle } from "./helpers";
+import { debugLog, FuncSingle, log } from "./helpers";
 import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import InfinityConsole from "./console";
@@ -752,9 +752,9 @@ export interface InfinityMintScriptParameters extends Dictionary<any> {
 	args?: Dictionary<InfinityMintScriptArguments>;
 	eventEmitter?: EventEmitter;
 	project?: InfinityMintProject;
-	log: FuncSingle<string, void>;
 	config: InfinityMintConfig;
-	debugLog: FuncSingle<string, void>;
+	log: typeof log;
+	debugLog: typeof debugLog;
 }
 
 export interface InfinityMintDeploymentParametersDeployments
@@ -786,8 +786,8 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	 * Contains a list of current live deployments up to this deployment.
 	 */
 	deployments?: Dictionary<InfinityMintDeploymentLive>;
-	log: FuncSingle<string, void>;
-	debugLog: FuncSingle<string, void>;
+	log: typeof log;
+	debugLog: typeof debugLog;
 }
 
 /**
