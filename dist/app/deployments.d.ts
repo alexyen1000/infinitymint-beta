@@ -65,7 +65,7 @@ export declare class InfinityMintDeployment {
     getIndex(): number;
     getsolidityFolder(): string;
     getKey(): string;
-    getPermissions(): any[];
+    getPermissions(): string[];
     getFilePath(): string;
     private read;
     getDeploymentByArtifactName(name: string): InfinityMintDeploymentLive[];

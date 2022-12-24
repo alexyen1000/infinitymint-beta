@@ -1,3 +1,4 @@
+import { log } from "../helpers";
 import {
 	InfinityMintGemParameters,
 	InfinityMintGemScript,
@@ -12,6 +13,14 @@ const gem: InfinityMintGemScript = {
 		params?.console?.addWindow(new Example());
 	},
 	setup: async () => {},
+	events: {
+		gemPostDeploy: async () => {
+			log("Example gem has deployed");
+		},
+		gemPostSetup: async () => {
+			log("Example gem has been set up");
+		},
+	},
 };
 
 export default gem;

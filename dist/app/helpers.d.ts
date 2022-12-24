@@ -1,4 +1,4 @@
-import { InfinityMintConfig, InfinityMintProject, InfinityMintProjectJavascript, InfinityMintSession } from "./interfaces";
+import { InfinityMintConfig, InfinityMintProject, InfinityMintSession } from "./interfaces";
 import { Dictionary } from "form-data";
 import { InfinityMintWindow } from "./window";
 export interface Vector {
@@ -149,7 +149,7 @@ export declare const getDeployedProject: (projectName: string, version?: any) =>
  * @param projectName
  * @param isJavaScript
  */
-export declare const getProject: (projectName: string, isJavaScript?: boolean) => InfinityMintProject | InfinityMintProjectJavascript;
+export declare const getProject: (projectName: string, isJavaScript?: boolean) => InfinityMintProject;
 /**
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns

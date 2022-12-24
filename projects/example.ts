@@ -22,6 +22,15 @@ const example: InfinityMintProject = {
 			fileName: "test.svg",
 		},
 	],
+	events: {
+		failure: async ({ log, event: error }) => {
+			log("failed to launch successfully");
+			console.error(error);
+		},
+		success: async ({ log }) => {
+			log("successfully launched example project");
+		},
+	},
 };
 
 export default example;

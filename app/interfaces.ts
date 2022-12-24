@@ -18,6 +18,10 @@ export interface InfinityMintGemScript extends InfinityMintDeploymentScript {
 	 * based on the load order of the gem. You get all of the same order of execution options as you would do with a {@link InfinityMintDeploymentScript}
 	 */
 	init?: FuncSingle<InfinityMintGemParameters, Promise<void>>;
+	/**
+	 * Allows event hooks to be defined the same as inside of the InfinityMint project file. *Please note that the context here in relation to pre build, pre set up and pre compile is in relation to the project and events will not be fired when the gem is set up, compiled or built. You need to use gemPostSetup and gemPreSetup if you would like to do calls when your gem is setup and after it has set up.
+	 */
+	events?: InfinityMintEvents;
 }
 
 /**
@@ -31,8 +35,10 @@ export interface InfinityMintGemParameters
 /**
  * passed to event functions
  */
-export interface InfinityMintProjectEventParameters
-	extends InfinityMintDeploymentParameters {
+export interface InfinityMintProjectEventParameters<T>
+	extends InfinityMintDeploymentParameters,
+		Dictionary<any> {
+	event?: T;
 	gems: Dictionary<InfinityMintGemScript>;
 }
 
@@ -171,15 +177,15 @@ export interface InfinityMintProject {
 	/**
 	 * Here you can specificy callbacks which will be fired when certain events are triggered.
 	 *
-	 * @see {@link InfinityMintProjectEvents}
+	 * @see {@link InfinityMintEvents}
 	 */
-	events?: InfinityMintProjectEvents;
+	events?: InfinityMintEvents;
 	/**
 	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well.
 	 *
 	 * @see {@link InfinityMintDeploymentLive}
 	 */
-	contracts?: Dictionary<InfinityMintDeploymentLive>;
+	deployments?: Dictionary<InfinityMintDeploymentLive>;
 	/**
 	 * Used in keeping track of temporary projects which fail in their deployment. keeps track of stages we have passed so we can continue where we left off if anything goes wrong.
 	 */
@@ -235,28 +241,119 @@ export interface InfinityMintProject {
 	 * @private
 	 */
 	javascript?: boolean;
+	/**
+	 * Only set when the project is compiled, the SolidityFolder this project was compiled with
+	 * @default undefined
+	 */
+	compiledSolidityFolder?: string;
 }
 
 /**
- * Events can be defined which can then be called directly from the project file. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
+ * Events can be defined which can then be called directly from the project file or a gem. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
  */
-export interface InfinityMintProjectEvents extends Dictionary<any> {
+export interface InfinityMintEvents
+	extends Dictionary<
+		FuncSingle<
+			InfinityMintProjectEventParameters<any>,
+			Promise<void | boolean>
+		>
+	> {
+	preCompile?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void | boolean>
+	>;
 	/**
-	 * Will be called when setup is complete
+	 * Will be called when project is compiled
 	 */
-	setup?: FuncSingle<InfinityMintProjectEventParameters, Promise<void>>;
+	postCompile?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void>
+	>;
 	/**
-	 * Will be called when deployment is complete
+	 * Will be called when setup is about to take place. Can return false to abort setup silently.
 	 */
-	deploy?: FuncSingle<InfinityMintProjectEventParameters, Promise<void>>;
+	preSetup?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void | boolean>
+	>;
+	postSetup?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void>
+	>;
 	/**
-	 * Will be called when export is complete
+	 * Will be called when deploy complete.
 	 */
-	export?: FuncSingle<InfinityMintProjectEventParameters, Promise<void>>;
+	postDeploy?: FuncSingle<
+		InfinityMintProjectEventParameters<
+			Dictionary<InfinityMintDeploymentLive[]>
+		>,
+		Promise<void>
+	>;
+	preDeploy?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void | boolean>
+	>;
+	gemPreSetup?: FuncSingle<
+		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		Promise<void>
+	>;
+	gemPostSetup?: FuncSingle<
+		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		Promise<void | boolean>
+	>;
+	gemPreDeploy?: FuncSingle<
+		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		Promise<void>
+	>;
+	gemPostDeploy?: FuncSingle<
+		InfinityMintProjectEventParameters<
+			InfinityMintDeploymentLive | InfinityMintDeploymentLive[]
+		>,
+		Promise<void | boolean>
+	>;
+	postGems?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void>
+	>;
+	preGems?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void | boolean>
+	>;
+	postGem?: FuncSingle<
+		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		Promise<void>
+	>;
+	preGem?: FuncSingle<
+		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		Promise<void | boolean>
+	>;
+	postExport?: FuncSingle<
+		InfinityMintProjectEventParameters<string[]>,
+		Promise<void>
+	>;
 	/**
-	 * Will be called when build is complete
+	 * Will be called when export is about to begin. Can return false to abort/skip export silently.
 	 */
-	build?: FuncSingle<InfinityMintProject, Promise<void>>;
+	preExport?: FuncSingle<
+		InfinityMintProjectEventParameters<string[]>,
+		Promise<void | boolean>
+	>;
+	preBuild?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void | boolean>
+	>;
+	postBuild?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void>
+	>;
+	success?: FuncSingle<
+		InfinityMintProjectEventParameters<void>,
+		Promise<void>
+	>;
+	failure?: FuncSingle<
+		InfinityMintProjectEventParameters<Error>,
+		Promise<void>
+	>;
 }
 
 /**
@@ -632,6 +729,10 @@ export interface InfinityMintConfigSettingsNetwork {
 	 * Allows you to specify an RPC to use for this network in a client setting. Does not equal the RPC which is used for hardhat to communicate in chain and is just used to create JsonStaticProvider on reacts end.
 	 */
 	rpc?: string;
+	/**
+	 * if true, will expose the hardhat rpc to be included in the project files network object. See {@link InfinityMintProject} specfically the member 'network'.
+	 */
+	exposeRpc?: boolean;
 }
 
 /**
@@ -742,8 +843,9 @@ export interface InfinityMintScript {
  * This is passed into the execute method of the script inside the scripts/ folder by default. See {@link InfinityMintScript}
  */
 export interface InfinityMintScriptParameters
-	extends InfinityMintProjectEventParameters,
+	extends InfinityMintDeploymentParameters,
 		Dictionary<any> {
+	gems?: Dictionary<InfinityMintGemScript>;
 	args?: Dictionary<InfinityMintScriptArguments>;
 }
 
@@ -773,11 +875,19 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	console?: InfinityConsole;
 	eventEmitter?: EventEmitter;
 	/**
+	 * Might have check if undefined depending on context
+	 */
+	project?: InfinityMintProject;
+	/**
 	 * Contains a list of current live deployments up to this deployment.
 	 */
 	deployments?: Dictionary<InfinityMintDeploymentLive>;
 	log: typeof log;
 	debugLog: typeof debugLog;
+	/**
+	 * is true if this is the first time running the setup
+	 */
+	isFirstTime?: boolean;
 }
 
 /**
@@ -857,9 +967,24 @@ export interface InfinityMintDeploymentScript {
 	deploy?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
 	/**
 	 * @async
+	 * Only called when the project has been deployed. Called when a live InfinityMint switches from key to the other particuarlly in the modules. See {@link InfinityMintProjectModules}. For instance if the minter was to change from SimpleSVG to SimpleImage then this method would be called. An example use would be to relink the newly asset controller to the minter.
+	 */
+	switch?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	/**
+	 * @async
 	 * Sets up the smart contract post deployment.
 	 */
 	setup?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	/**
+	 * @async
+	 * Called when a project has been deployed or has failed to deploy and is retrying. Defines how to clean up an active smart contract with the goal of running setup again to update changes.
+	 */
+	cleanup?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	/**
+	 * @async
+	 * Only called when the project has been deployed. Define custom update logic depending on the situation. By default if an update method is not defined in the deployment script InfinityMint will execute clean up and then set up in the deployment script.
+	 */
+	update?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
 	/**
 	 * The list of addresses or refrences which will be given admin access to this contract. Can be addresses or keys.
 	 *
@@ -870,7 +995,18 @@ export interface InfinityMintDeploymentScript {
 	 * ['approved', 'all', 'erc721']
 	 * ```
 	 */
-	permissions?: Array<any>;
+	permissions?: Array<string>;
+	/**
+	 * Only takes currently deployed contract names or module keys, will request that this contract is given permissions to any contract defined in the array
+	 *
+	 *
+	 * @example
+	 * ```js
+	 * //all will give requestPermissions to every contract InfinityMint can
+	 * ['all', 'erc721']
+	 * ```
+	 */
+	requestPermissions?: Array<string>;
 	/**
 	 * If important is true will prevent allow other deploy scripts from overwrite this key. If false will allow scripts to overwrite this key even if unique is true
 	 *
@@ -881,6 +1017,11 @@ export interface InfinityMintDeploymentScript {
 	 * if set to true, infinityMint will throw an error if similar key to another deployment is found
 	 */
 	unique?: boolean;
+
+	/**
+	 * On the even of a redeployment of an already established InfinityMint. If no cleanup method is defined, then InfinityMint will automatically try to redeploy the contract and run setup again unless this member is true. If this member is true then InfinityMint will run the setup method again.
+	 */
+	dontRedeploy?: boolean;
 	/**
 	 * Will run setup immediately after the deployment is succcessful
 	 *
