@@ -8,7 +8,8 @@
 		"scripts/*",
 		"deploy/*/*",
 		"gems/example/*/*",
-		"typechain-types/*/*/*/*/*",
+		"typechain-types/*",
+		"typechain-types/*/*",
 		"examples/*"
 	],
 	"theme": "hierarchy",
