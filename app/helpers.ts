@@ -1,8 +1,10 @@
 import Pipes, { Pipe } from "./pipes";
 import fsExtra from "fs-extra";
-import fs from "fs";
+import fs, { PathLike } from "fs";
 import {
 	InfinityMintConfig,
+	InfinityMintEnvironment,
+	InfinityMintEnvironmentKeys,
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
 	InfinityMintSession,
@@ -132,8 +134,9 @@ export interface Rectangle {
  * @param msg
  * @param pipe
  */
-export const log = (msg: string, pipe?: string) => {
-	Pipes.log(msg, pipe);
+export const log = (msg: string | object | number, pipe?: string) => {
+	if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+	Pipes.log(msg.toString(), pipe);
 };
 
 /**
@@ -141,7 +144,7 @@ export const log = (msg: string, pipe?: string) => {
  * @param msg
  * @param pipe
  */
-export const debugLog = (msg: string) => {
+export const debugLog = (msg: string | object | number) => {
 	log(msg, "debug");
 };
 
@@ -175,7 +178,9 @@ export const readSession = (): InfinityMintSession => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let consoleLog = console.log;
-	console.log = (msg: string, setPipe = true) => {
+	console.log = (msg: string | object, setPipe = true) => {
+		if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+
 		if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
 			Pipes.getPipe(Pipes.currentPipe).log(msg);
 
@@ -264,133 +269,135 @@ export const getProject = (projectName: string, isJavaScript?: boolean) => {
 	return res as InfinityMintProject;
 };
 
+export const copyContractsFromNodeModule = (
+	destination: PathLike,
+	source: PathLike
+) => {
+	if (
+		fs.existsSync(process.cwd() + "/package.json") &&
+		readJson(process.cwd() + "/package.json").name === "infinitymint"
+	)
+		throw new Error("cannot use node modules in InfinityMint package");
+
+	if (!fs.existsSync(source))
+		throw new Error(
+			"please npm i infinitymint and make sure " + module + "exists"
+		);
+
+	if (fs.existsSync(destination) && isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")) {
+		debugLog("cleaning " + source);
+		fs.rmdirSync(destination, {
+			recursive: true,
+			force: true,
+		} as any);
+	}
+
+	if (!fs.existsSync(destination)) {
+		debugLog("copying " + source + " to " + destination);
+		fsExtra.copySync(source, destination);
+		fs.chmodSync(destination, 0o777);
+	}
+};
+
+export const prepareHardhatConfig = (
+	session: InfinityMintSession,
+	config: InfinityMintConfig
+) => {
+	//fuck about with hardhat config
+	config.hardhat.defaultNetwork =
+		config.hardhat?.defaultNetwork || session.environment?.defaultNetwork;
+
+	if (config.hardhat.networks === undefined) config.hardhat.networks = {};
+
+	//copy ganache settings to localhost settings if ganache exists
+	if (
+		config.hardhat.networks.localhost === undefined &&
+		config.hardhat.networks.ganache !== undefined
+	)
+		config.hardhat.networks.localhost = config.hardhat.networks.ganache;
+
+	if (config.hardhat.paths === undefined) config.hardhat.paths = {};
+
+	return config;
+};
+
+export const cleanCompilations = () => {
+	try {
+		debugLog("removing ./artifacts");
+		fs.rmdirSync(process.cwd() + "/artifacts", {
+			recursive: true,
+			force: true,
+		} as any);
+		debugLog("removing ./cache");
+		fs.rmdirSync(process.cwd() + "/cache", {
+			recursive: true,
+			force: true,
+		} as any);
+		debugLog("removing ./typechain-types");
+		fs.rmdirSync(process.cwd() + ".typechain-types", {
+			recursive: true,
+			force: true,
+		} as any);
+	} catch (error: any) {
+		debugLog("unable to delete folder: " + error?.message || error);
+
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+	}
+};
+
 /**
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns
  */
 export const prepareConfig = () => {
 	//else, import the InfinityMint config
-	const infinityMintConfig = getConfigFile();
+	let config = getConfigFile();
+	let session = readSession();
+
+	//
+	prepareHardhatConfig(session, config);
 
 	//overwrite the console methods
-	if (infinityMintConfig.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
+	if (config.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
 		overwriteConsoleMethods();
 
-	let session = readSession();
-	//fuck about with hardhat config
-	infinityMintConfig.hardhat.defaultNetwork =
-		infinityMintConfig.hardhat?.defaultNetwork ||
-		session.environment?.defaultNetwork;
-
-	if (infinityMintConfig.hardhat.networks === undefined)
-		infinityMintConfig.hardhat.networks = {};
-
-	//copy ganache settings to localhost settings if ganache exists
-	if (
-		infinityMintConfig.hardhat.networks.localhost === undefined &&
-		infinityMintConfig.hardhat.networks.ganache !== undefined
-	)
-		infinityMintConfig.hardhat.networks.localhost =
-			infinityMintConfig.hardhat.networks.ganache;
-
-	if (infinityMintConfig.hardhat.paths === undefined)
-		infinityMintConfig.hardhat.paths = {};
-
-	//do
 	let solidityModuleFolder =
 		process.cwd() +
 		"/node_modules/infinitymint/" +
 		(process.env.DEFAULT_SOLIDITY_FOLDER || "alpha");
 	let solidityFolder =
 		process.cwd() + "/" + (process.env.DEFAULT_SOLIDITY_FOLDER || "alpha");
-	let cleanUp = () => {
-		try {
-			debugLog("removing ./artifacts");
-			fs.rmdirSync(process.cwd() + "/artifacts", {
-				recursive: true,
-				force: true,
-			} as any);
-			debugLog("removing ./cache");
-			fs.rmdirSync(process.cwd() + "/cache", {
-				recursive: true,
-				force: true,
-			} as any);
-			debugLog("removing ./typechain-types");
-			fs.rmdirSync(process.cwd() + ".typechain-types", {
-				recursive: true,
-				force: true,
-			} as any);
-		} catch (error: any) {
-			debugLog("unable to delete folder: " + error?.message || error);
 
-			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-		}
-	};
-
-	if (isEnvTrue("SOLIDITY_USE_NODE_MODULE")) {
-		if (
-			fs.existsSync(process.cwd() + "/package.json") &&
-			readJson(process.cwd() + "/package.json").name === "infinitymint"
-		)
-			throw new Error("cannot use node modules in InfinityMint package");
-
-		if (!fs.existsSync(solidityModuleFolder))
-			throw new Error(
-				"please npm i infinitymint and make sure " + module + "exists"
-			);
-
-		if (
-			fs.existsSync(solidityFolder) &&
-			isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")
-		) {
-			debugLog("cleaning " + solidityModuleFolder);
-			fs.rmdirSync(solidityFolder, {
-				recursive: true,
-				force: true,
-			} as any);
-		}
-
-		if (!fs.existsSync(solidityFolder)) {
-			debugLog(
-				"copying " + solidityModuleFolder + " to " + solidityFolder
-			);
-			fsExtra.copySync(solidityModuleFolder, solidityFolder);
-			fs.chmodSync(solidityFolder, 0o777);
-		}
-	}
+	if (isEnvTrue("SOLIDITY_USE_NODE_MODULE"))
+		copyContractsFromNodeModule(solidityFolder, solidityModuleFolder);
 
 	//if the sources is undefined, then set the solidityFolder to be the source foot
-	if (infinityMintConfig.hardhat.paths.sources === undefined)
+	if (config.hardhat.paths.sources === undefined) {
 		//set the sources
-		infinityMintConfig.hardhat.paths.sources = solidityFolder;
-	else {
-		//if we have changed the sources file then clean up old stuff
+		config.hardhat.paths.sources = solidityFolder;
+
+		//delete artifacts folder if namespace changes
 		if (
+			process.env.DEFAULT_SOLIDITY_FOLDER !== undefined &&
+			session.environment.solidityFolder !== undefined &&
 			session.environment.solidityFolder !==
-			infinityMintConfig.hardhat.paths.sources
+				process.env.DEFAULT_SOLIDITY_FOLDER
 		) {
-			cleanUp();
+			cleanCompilations();
+			session.environment.solidityFolder =
+				process.env.DEFAULT_SOLIDITY_FOLDER;
 		}
-		//if it is then set the solidityFolder to be the current value of the sources
-		session.environment.solidityFolder =
-			infinityMintConfig.hardhat.paths.sources;
 
 		saveSession(session);
+	} else {
+		//if we have changed the sources file then clean up old stuff
+		if (session.environment.solidityFolder !== config.hardhat.paths.sources)
+			cleanCompilations();
 
-		//just return the config
-		return infinityMintConfig as InfinityMintConfig;
-	}
+		//if it is then set the solidityFolder to be the current value of the sources
+		session.environment.solidityFolder = config.hardhat.paths.sources;
 
-	//delete artifacts folder if namespace changes
-	if (
-		process.env.DEFAULT_SOLIDITY_FOLDER !== undefined &&
-		session.environment.solidityFolder !== undefined &&
-		session.environment.solidityFolder !==
-			process.env.DEFAULT_SOLIDITY_FOLDER
-	) {
-		cleanUp();
-		session.environment.solidityFolder =
-			process.env.DEFAULT_SOLIDITY_FOLDER;
+		saveSession(session);
 	}
 
 	//set the solidityFolder in the environment if it is undefined
@@ -398,8 +405,7 @@ export const prepareConfig = () => {
 		session.environment.solidityFolder =
 			process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
 
-	saveSession(session);
-	return infinityMintConfig as InfinityMintConfig;
+	return config as InfinityMintConfig;
 };
 
 /**
@@ -433,6 +439,23 @@ export const readJson = (fileName: string) => {
 	);
 };
 
+export const createEnvFile = (source: any) => {
+	source = source?.default || source;
+
+	let stub = ``;
+	Object.keys(source).forEach((key) => {
+		stub = `${stub}${key.toUpperCase()}=${
+			typeof source[key] === "string"
+				? '"' + source[key] + '"'
+				: source[key] !== undefined
+				? source[key]
+				: ""
+		}\n`;
+	});
+
+	fs.writeFileSync(process.cwd() + "/.env", stub);
+};
+
 export const preInitialize = () => {
 	//creates dirs
 	createDirs([
@@ -445,15 +468,13 @@ export const preInitialize = () => {
 		"deployments",
 		"projects",
 	]);
-	//copy the .env file from example if there is none
+
+	//create env file from the example .ts script
 	if (
 		!fs.existsSync(process.cwd() + "/.env") &&
-		fs.existsSync(process.cwd() + "/.env.example")
+		fs.existsSync(process.cwd() + "/examples/example.env.ts")
 	)
-		fs.copyFileSync(
-			process.cwd() + "/.env.example",
-			process.cwd() + "/.env"
-		);
+		createEnvFile(require(process.cwd() + "/examples/example.env"));
 
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
@@ -558,11 +579,11 @@ export const error = (error: string | Error) => {
 	Pipes.log(error.toString());
 };
 
-export const isEnvTrue = (key: string): boolean => {
+export const isEnvTrue = (key: InfinityMintEnvironmentKeys[0]): boolean => {
 	return process.env[key] !== undefined && process.env[key] === "true";
 };
 
-export const isEnvSet = (key: string): boolean => {
+export const isEnvSet = (key: InfinityMintEnvironmentKeys[0]): boolean => {
 	return (
 		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
 	);

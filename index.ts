@@ -28,7 +28,7 @@ log("reading infinitymint.config.ts");
 export const config = getConfigFile();
 
 //function to launch the console
-const launchConsole = async () => {
+export const start = async () => {
 	log("starting infinitymint");
 	let session = readSession();
 
@@ -105,11 +105,9 @@ const launchConsole = async () => {
 	let infinityConsole = new InfinityConsole();
 	await infinityConsole.initialize();
 };
-export default launchConsole;
-
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (config.console)
-	launchConsole().catch((error) => {
+	start().catch((error) => {
 		console.error(error);
 		process.exit(1);
 	});

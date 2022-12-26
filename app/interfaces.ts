@@ -7,6 +7,8 @@ import { EventEmitter } from "events";
 import { Contract } from "@ethersproject/contracts";
 import InfinityConsole from "./console";
 import { InfinityMintDeployment } from "./deployments";
+import { PathLike } from "fs";
+import { InfinityMintSVGSettings } from "./content";
 /**
  * Gems are our plugins. They allow you to easily extend the functionality of InfinityMint. Gems an contain solidity code, react code and more and integrate with every aspect of InfinityMint
  */
@@ -163,7 +165,8 @@ export interface InfinityMintProject {
 	 */
 	assets?:
 		| Array<InfinityMintProjectAsset>
-		| InfinityMintProjectJavascriptAssets;
+		| InfinityMintProjectJavascriptAssets
+		| Dictionary<InfinityMintProjectAsset[]>;
 	/**
 	 * The settings of the project. The settings key is which deployment the settings should be for, and you can enter what ever you like here.
 	 *
@@ -247,7 +250,7 @@ export interface InfinityMintProject {
 	 * Only set when the project is compiled, the SolidityFolder this project was compiled with
 	 * @default undefined
 	 */
-	compiledSolidityFolder?: string;
+	compiledSolidityFolder?: PathLike;
 }
 
 /**
@@ -531,6 +534,32 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 }
 
 /**
+ * All of the InfinityMint environment variables
+ */
+export interface InfinityMintEnvironment {
+	INFINITYMINT_PROJECT?: string;
+	ETHERSCAN_API_KEY?: string;
+	POLYGONSCAN_API_KEY?: string;
+	PIPE_ECHO_DEFAULT?: boolean;
+	PIPE_ECHO_DEBUG?: boolean;
+	DEFAULT_WALLET_MNEMOMIC?: string;
+	BACKUP_WALLET_MNEMONIC?: string;
+	PIPE_ECHO_ERRORS?: boolean;
+	PIPE_LOG_ERRORS_TO_DEFAULT?: boolean;
+	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
+	OVERWRITE_CONSOLE_METHODS?: boolean;
+	GANACHE_PORT?: number;
+	THROW_ALL_ERRORS?: boolean;
+	INFINITYMINT_CONSOLE?: boolean;
+	DEFAULT_SOLIDITY_FOLDER?: PathLike;
+	GANACHE_EXTERNAL?: boolean;
+	SOLIDITY_CLEAN_NAMESPACE?: boolean;
+	SOLIDITY_USE_NODE_MODULE?: boolean;
+}
+
+export type InfinityMintEnvironmentKeys = Array<keyof InfinityMintEnvironment>;
+
+/**
  * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
  *
  * @see {@link InfinityMintProject}
@@ -573,6 +602,10 @@ export interface InfinityMintProjectSettings {
 	assets?: InfinityMintProjectSettingsAssets;
 }
 
+export type InfinityMintProjectSettingsKeys = Array<
+	keyof InfinityMintProjectSettings
+>;
+
 /**
  * The InfinityMint project modules are the solidity files InfinityMint will use for its token creation and royalty distribution. Here is where you can change what is used in each step of the InfinityMint chain. The assets key controls what type of content will be minted based on what type of content it is (svg, image, sound). The minter controls how to talk to the asset controller, and if the user needs to specify which path they would like or if it should be random or if it should be only one specific path id until you say anything different. The royalty controller will control who is paid what for what ever happens inside of the minter. From mints, to things that gems do the royalty controller decides how any incoming money will be split accordingly. The random controller decides how InfinityMint obtains its random numbers which it uses in the mint process. You can use VCF randomness with chainlink here or use keccack256 randomisation but beware of the security risks of doing so.
  *
@@ -601,10 +634,38 @@ export interface InfinityMintProjectModules extends Dictionary<any> {
 	/**
 	 * Should be the *fully quallified solidity artifact name* for a Random Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
 	 *
-	 * @example DefaultRoyalty, SplitRoyalty
+	 * @example SeededRandom, UnsafeRandom
 	 */
 	random: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name* for a Random Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @private
+	 */
+	utils?: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name*. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @private
+	 */
+	values?: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name*. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @private
+	 */
+	storage?: string;
+	/**
+	 * Should be the *fully quallified solidity artifact name*. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+	 *
+	 * @example InfinityMint, InfinityMint2
+	 */
+	erc721?: string;
 }
+
+export type InfinityMintProjectModulesKeys = Array<
+	keyof InfinityMintProjectModules
+>;
 
 export interface InfinityMintProjectPathExport {
 	data: string;
@@ -626,13 +687,16 @@ export interface InfinityMintProjectPathExport {
  */
 export interface InfinityMintProjectPath {
 	name: string;
-	fileName: string;
+	fileName: PathLike;
 	/**
-	 * is the mint data, this is copied to each token internally
+	 * is the mint data, this is copied to each token internally. Can be a path to a file
 	 */
-	data?: Dictionary<any>;
+	data?: Dictionary<any> | PathLike;
 	key?: string;
-	settings?: Dictionary<any>;
+	/**
+	 * can either contain an object of settings for the path or a link to the settings file or simply `true` to look for a settings file that matches the fileName import. See {@link app/content.InfinityMintSVGSettings}
+	 */
+	settings?: Dictionary<any> | PathLike | boolean | InfinityMintSVGSettings;
 	description?: string;
 	/**
 	 * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
@@ -649,7 +713,7 @@ export interface InfinityMintProjectPath {
 	 */
 	content?: Dictionary<InfinityMintProjectContent>;
 	/**
-	 * When the path has been exported this is filled.
+	 * When the path has been compiled this is filled.
 	 */
 	export?: InfinityMintProjectPathExport;
 	/**
@@ -712,7 +776,7 @@ export interface InfinityMintConfig {
 	/**
 	 * Other filesystem locations where IM will look for assets such as PNGs, Vectors etc.to create tokens with.
 	 */
-	imports?: Array<string>;
+	imports?: Array<PathLike>;
 	/**
 	 * InfinityMint-specific config settings. Configures settings such as how networks behave, what wallets to use by default, & if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*. Also determines what will be used to fetch `Gas Estimates` and *token prices*.
 	 *
@@ -752,7 +816,7 @@ export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {
 	/**
 	 * locations are relative to the cwd
 	 */
-	scriptFolders?: string[];
+	scriptFolders?: PathLike[];
 }
 
 /**
@@ -936,8 +1000,7 @@ export interface InfinityMintDeploymentLive extends Dictionary<any> {
 	 */
 	abi?: Array<any>;
 	/**
-	 * the key is the module name (see {@link InfinityMintProjectModules}) which is the name of the deployment script, or the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can pull this contract through code. Can be set to a custom value or left to be worked out.
-	 *
+	 * the key of this live deployment, by default will be the contract name
 	 */
 	key?: string;
 	/**
@@ -1070,7 +1133,7 @@ export interface InfinityMintDeploymentScript {
 	 *
 	 * @defaultValue alpha
 	 */
-	solidityFolder?: string;
+	solidityFolder?: PathLike;
 	/**
 	 * Refers to the name of the artifact/contract that this deployment script works with. Will be the same as the key if left undefined.
 	 */
@@ -1094,17 +1157,9 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
 	 */
-	module?:
-		| "assets"
-		| "royalty"
-		| "random"
-		| "minter"
-		| "utils"
-		| "values"
-		| "storage"
-		| "erc721";
+	module?: InfinityMintProjectModulesKeys[] | string;
 	/**
-	 * Will be the filename of the deploy script by default
+	 * Will be the filename of the deploy script by default.
 	 */
 	key?: string;
 	/**

@@ -27,6 +27,7 @@
 		"./gems",
 		"./scripts",
 		"./deploy",
+		"./imports",
 		"./examples",
 		"./typechain-types"
 	],
