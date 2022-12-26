@@ -259,7 +259,7 @@ const preInitialize = () => {
     //copy the .env file from example if there is none
     if (!fs_1.default.existsSync(process.cwd() + "/.env") &&
         fs_1.default.existsSync(process.cwd() + "/.env.example"))
-        fs_1.default.copyFileSync(process.cwd() + "/.env", process.cwd() + "/.env.example");
+        fs_1.default.copyFileSync(process.cwd() + "/.env.example", process.cwd() + "/.env");
     //will log console.log output to the default pipe
     if ((0, exports.isEnvTrue)("PIPE_ECHO_DEFAULT"))
         pipes_1.default.getPipe("default").listen = true;

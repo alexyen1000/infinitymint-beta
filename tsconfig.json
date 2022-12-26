@@ -5,7 +5,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
-		"outDir": "./dist",
+		"outDir": "./build",
 		"strict": false,
 		"allowJs": true,
 		"rootDirs": ["./app"],
@@ -15,19 +15,17 @@
 		"esModuleInterop": true
 	},
 	"exclude": [
-		"./dist",
-		"./node_modules",
-		"./gems/__",
-		"./gems/__cache",
-		"./gems/@",
-		"./projects"
+		"build",
+		"node_modules",
+		"gems/__",
+		"gems/__cache",
+		"gems/@",
+		"projects"
 	],
 	"include": [
-		"./test",
-		"./scripts",
 		"./app",
+		"./scripts",
 		"./deploy",
-		"./gems",
 		"./examples",
 		"./typechain-types"
 	],

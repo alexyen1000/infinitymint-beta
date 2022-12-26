@@ -8,7 +8,7 @@
 		"test": "tests"
 	},
 	"_moduleAliases": {
-		"@app": "dist/app/"
+		"@app": "build/app/"
 	},
 	"scripts": {
 		"test": "mocha",
