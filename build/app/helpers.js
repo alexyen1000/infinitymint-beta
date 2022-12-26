@@ -226,7 +226,7 @@ exports.initializeInfinitymintConfig = initializeInfinitymintConfig;
  * @see {@link app/interfaces.InfinityMintConfig}
  * @see {@link app/pipes.Pipe}
  * @param useJavascript Will return infinitymint.config.js instead of infinitymint.config.ts
- * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/dist/app/interfaces')
+ * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/build/app/interfaces')
  */
 const loadInfinityMint = (useJavascript, useInternalRequire) => {
     (0, exports.createInfinityMintConfig)(useJavascript, useInternalRequire);
@@ -299,7 +299,7 @@ const createInfinityMintConfig = (useJavascript, useInternalRequire) => {
     };
     let requireStatement = useInternalRequire
         ? "./app/interfaces"
-        : "infinitymint/dist/app/interfaces";
+        : "infinitymint/build/app/interfaces";
     let filename = useJavascript
         ? "infinitymint.config.js"
         : "infinitymint.config.ts";
