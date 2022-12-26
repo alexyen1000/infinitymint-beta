@@ -8,7 +8,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
-const helpers_1 = require("@app/helpers");
+const helpers_1 = require("infinitymint/dist/app/helpers");
 //require dotenv
 require("dotenv").config({
     override: false, //will not override already established environment variables

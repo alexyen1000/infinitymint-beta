@@ -11,7 +11,7 @@ import {
 	debugLog,
 	initializeInfinitymintConfig,
 	loadInfinityMint,
-} from "@app/helpers";
+} from "infinitymint/dist/app/helpers";
 
 //require dotenv
 require("dotenv").config({

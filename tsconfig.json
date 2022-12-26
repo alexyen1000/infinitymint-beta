@@ -10,7 +10,8 @@
 		"allowJs": true,
 		"rootDirs": ["./app"],
 		"paths": {
-			"@app/*": ["./app/*"]
+			"@app/*": ["./app/*"],
+			"@typechain/*": ["./typechain-types/*"]
 		},
 		"esModuleInterop": true
 	},
@@ -19,7 +20,8 @@
 		"./node_modules",
 		"./gems/__",
 		"./gems/__cache",
-		"./gems/@"
+		"./gems/@",
+		"./projects"
 	],
 	"include": [
 		"./test",
@@ -28,7 +30,6 @@
 		"./deploy",
 		"./gems",
 		"./examples",
-		"./projects",
 		"./typechain-types"
 	],
 	"files": ["./hardhat.config.ts", "./index.ts"]
