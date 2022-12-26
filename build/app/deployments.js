@@ -10,7 +10,7 @@ const glob_1 = require("glob");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const web3_1 = require("./web3");
-const __1 = require("..");
+const hardhat_1 = __importDefault(require("hardhat"));
 /**
  * Deployment class for InfinityMint deployments
  */
@@ -254,8 +254,8 @@ class InfinityMintDeployment {
         deployment.javascript = this.project.javascript;
         deployment.project = this.project.name;
         deployment.network = {
-            name: __1.hre.network.name,
-            chainId: __1.hre.network.config.chainId,
+            name: hardhat_1.default.network.name,
+            chainId: hardhat_1.default.network.config.chainId,
         };
         deployment.deploymentScript = this.deploymentScriptLocation;
         return deployment;

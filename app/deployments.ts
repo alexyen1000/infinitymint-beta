@@ -12,7 +12,7 @@ import fs from "fs";
 import path from "path";
 import { getContract, getDefaultSigner, logTransaction } from "./web3";
 import { Contract } from "@ethersproject/contracts";
-import { hre } from "..";
+import hre from "hardhat";
 import { Authentication } from "../typechain-types";
 
 /**

@@ -17,15 +17,9 @@ import {
 	getSolidityFolder,
 	getConfigFile,
 } from "./app/helpers";
+
 import * as Helpers from "./app/helpers";
-
-///NOTE: Might need a hardhat config file in the root where ever this is included externally?
-//export the config file
-export { GanacheServer, Helpers, InfinityConsole, hre, ethers };
-
-//export the interfaces app as default
-export * as Interfaces from "./app/interfaces";
-export * as Web3Helpers from "./app/web3";
+export default Helpers;
 
 //get the infinitymint config file
 let config = getConfigFile();
