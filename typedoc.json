@@ -4,7 +4,7 @@
 	"readme": "./ReadMe.markdown",
 	"entryPoints": [
 		"app/*",
-		"app/*/*",
+		"app/*/windows",
 		"scripts/*",
 		"deploy/*/*",
 		"gems/example/*/*",
