@@ -132,8 +132,9 @@ export interface Rectangle {
  * @param msg
  * @param pipe
  */
-export const log = (msg: string, pipe?: string) => {
-	Pipes.log(msg, pipe);
+export const log = (msg: string | object | number, pipe?: string) => {
+	if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+	Pipes.log(msg.toString(), pipe);
 };
 
 /**
@@ -141,7 +142,7 @@ export const log = (msg: string, pipe?: string) => {
  * @param msg
  * @param pipe
  */
-export const debugLog = (msg: string) => {
+export const debugLog = (msg: string | object | number) => {
 	log(msg, "debug");
 };
 
@@ -175,7 +176,9 @@ export const readSession = (): InfinityMintSession => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let consoleLog = console.log;
-	console.log = (msg: string, setPipe = true) => {
+	console.log = (msg: string | object, setPipe = true) => {
+		if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+
 		if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
 			Pipes.getPipe(Pipes.currentPipe).log(msg);
 
