@@ -3,13 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDeploymentClasses = exports.create = exports.getLiveDeployments = exports.getDeploymentClass = exports.hasDeploymentManifest = exports.readNetworkDeployment = exports.getNetworkDeployment = exports.InfinityMintDeployment = void 0;
+exports.getDeploymentClasses = exports.create = exports.getLiveDeployments = exports.getDeploymentClass = exports.hasDeploymentManifest = exports.readLocalDeployment = exports.getLocalDeployment = exports.InfinityMintDeployment = void 0;
 const events_1 = __importDefault(require("events"));
 const helpers_1 = require("./helpers");
 const glob_1 = require("glob");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const web3_1 = require("./web3");
+const __1 = require("..");
 /**
  * Deployment class for InfinityMint deployments
  */
@@ -79,6 +80,11 @@ class InfinityMintDeployment {
     }
     getKey() {
         return this.key;
+    }
+    getContractName(index) {
+        return this.liveDeployments.length !== 0
+            ? this.liveDeployments[index].name
+            : this.deploymentScript.contract;
     }
     getPermissions() {
         return this.deploymentScript.permissions;
@@ -155,12 +161,22 @@ class InfinityMintDeployment {
         fs_1.default.writeFileSync(this.getFilePath(), JSON.stringify(deployments));
     }
     /**
-     * Returns an ethers contract instance of this deployment for you to call methods on the smart contract
+     * Returns an ethers contract instance of this deployment for you to connect signers too.
      * @param index
      * @returns
      */
     getContract(index) {
         return (0, web3_1.getContract)(this.liveDeployments[index || 0]);
+    }
+    /**
+     * Returns a signed contract with the current account.
+     * @param index
+     * @returns
+     */
+    async getSignedContract(index) {
+        let contract = this.getContract(index);
+        let signer = await (0, web3_1.getDefaultSigner)();
+        return contract.connect(signer);
     }
     /**
      * used after deploy to set the the live deployments for this deployment. See {@link app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
@@ -213,23 +229,70 @@ class InfinityMintDeployment {
         }));
     }
     async deploy(...args) {
-        return await this.execute("deploy", args);
+        let result = await this.execute("deploy", args);
+        let contracts;
+        if (result instanceof Array !== true)
+            contracts = [result];
+        else
+            contracts = result;
+        let session = (0, helpers_1.readSession)();
+        contracts.forEach((contract) => {
+            var _a, _b;
+            if (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.deployments[contract.address]) === undefined)
+                throw new Error("contract " +
+                    contract.address +
+                    " is not in the .session file");
+            let deployment = (_b = session.environment) === null || _b === void 0 ? void 0 : _b.deployments[contract.address];
+            this.liveDeployments.push(this.populateLiveDeployment(deployment));
+        });
+        this.save();
+        return this.liveDeployments;
+    }
+    populateLiveDeployment(deployment) {
+        deployment = deployment;
+        deployment.key = this.deploymentScript.key;
+        deployment.javascript = this.project.javascript;
+        deployment.project = this.project.name;
+        deployment.network = {
+            name: __1.hre.network.name,
+            chainId: __1.hre.network.config.chainId,
+        };
+        deployment.deploymentScript = this.deploymentScriptLocation;
+        return deployment;
+    }
+    async setPermissions(addresses, log) {
+        let contract = await this.getSignedContract();
+        let authenticator = contract;
+        let tx = await authenticator.multiApprove(addresses);
+        if (web3_1.logTransaction)
+            await (0, web3_1.logTransaction)(tx, `setting ${addresses} permissions inside of ${this.key}`);
     }
     async setup(...args) {
-        return await this.execute("setup", args);
+        await this.execute("setup", args);
+        this.hasSetupDeployments = true;
     }
+    /**
+     * Executes a method on the deploy script and immediately returns the value. Setup will return ethers contracts.
+     * @param method
+     * @param args
+     * @returns
+     */
     async execute(method, args) {
         let params = Object.assign(Object.assign({}, args), { debugLog: helpers_1.debugLog, log: helpers_1.log, eventEmitter: this.emitter, deploy: this });
         (0, helpers_1.debugLog)("executing method " + method + " on " + this.key);
         switch (method) {
             case "deploy":
                 let deployResult = await this.deploymentScript.deploy(params);
-                this.hasDeployedAll = true;
                 return deployResult;
             case "setup":
-                let setupResult = await this.deploymentScript.setup(params);
-                this.hasSetupDeployments = true;
-                return setupResult;
+                await this.deploymentScript.setup(params);
+                return;
+            case "update":
+                await this.deploymentScript.update(params);
+                return;
+            case "switch":
+                await this.deploymentScript.switch(params);
+                return;
             default:
                 throw new Error("unknown method:" + this.execute);
         }
@@ -239,16 +302,16 @@ exports.InfinityMintDeployment = InfinityMintDeployment;
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
  */
-const getNetworkDeployment = (contractName, network) => {
-    return (0, exports.readNetworkDeployment)(contractName, network);
+const getLocalDeployment = (contractName, network) => {
+    return (0, exports.readLocalDeployment)(contractName, network);
 };
-exports.getNetworkDeployment = getNetworkDeployment;
+exports.getLocalDeployment = getLocalDeployment;
 /**
  * Returns the raw .json file in the /deployments/network/ folder
  * @param contractName
  * @returns
  */
-const readNetworkDeployment = (contractName, network) => {
+const readLocalDeployment = (contractName, network) => {
     let path = process.cwd() +
         "/deployments/" +
         network +
@@ -259,7 +322,7 @@ const readNetworkDeployment = (contractName, network) => {
         throw new Error(`${path} not found`);
     return JSON.parse(fs_1.default.readFileSync(path, { encoding: "utf-8" }));
 };
-exports.readNetworkDeployment = readNetworkDeployment;
+exports.readLocalDeployment = readLocalDeployment;
 /**
  * Returns true if a deployment manifest for this key/contractName is found
  * @param contractName - can be a key (erc721, assets) or a fully qualified contract name

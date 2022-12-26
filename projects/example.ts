@@ -1,4 +1,4 @@
-import { InfinityMintProject } from "../app/interfaces";
+import { InfinityMintProject } from "@app/interfaces";
 
 const example: InfinityMintProject = {
 	name: "example",

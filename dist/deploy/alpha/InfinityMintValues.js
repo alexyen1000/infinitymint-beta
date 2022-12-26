@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const web3_1 = require("@app/web3");
 const DefaultValues = {
     maxSupply: 10,
     linkWalletIndex: 0,
@@ -31,24 +32,14 @@ const Values = {
         });
         debugLog("found " +
             Object.values(cleanedVariables).length +
-            " on-chain variables");
-        let booleans = Object.keys(cleanedVariables)
-            .filter((key) => typeof cleanedVariables[key] === "boolean")
-            .map((key) => cleanedVariables[key]);
-        let numbers = Object.keys(cleanedVariables)
-            .filter((key) => typeof cleanedVariables[key] === "number")
-            .map((key) => cleanedVariables[key]);
-        let contract = deployment.getContract();
-        booleans = {
-            keys: Object.keys(booleans),
-            values: Object.values(booleans),
-        };
-        numbers = {
-            keys: Object.keys(numbers),
-            values: Object.values(numbers),
-        };
+            " values to set on chain");
+        Object.values(cleanedVariables).forEach((value, index) => debugLog(`[${index}] => {${value}}`));
+        let booleans = Object.keys(cleanedVariables).filter((key) => typeof cleanedVariables[key] === "boolean");
+        let numbers = Object.keys(cleanedVariables).filter((key) => typeof cleanedVariables[key] === "number");
+        let contract = (await deployment.getSignedContract());
+        await (0, web3_1.logTransaction)(contract.setupValues(Object.values(numbers), Object.values(numbers).map((key) => cleanedVariables[key]), Object.values(booleans), Object.values(booleans).map((key) => cleanedVariables[key])), "setting values on chain");
     },
-    dontRedeploy: true,
+    static: true,
     //going to give
     instantlySetup: true,
     unique: true,

@@ -445,8 +445,10 @@ export class InfinityMintDeployment {
 				await this.deploymentScript.setup(params);
 				return;
 			case "update":
+				await this.deploymentScript.update(params);
 				return;
 			case "switch":
+				await this.deploymentScript.switch(params);
 				return;
 			default:
 				throw new Error("unknown method:" + this.execute);

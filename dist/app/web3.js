@@ -26,9 +26,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getDeployment = exports.get = exports.getContract = exports.getProvider = exports.changeNetwork = exports.getDefaultSigner = void 0;
+exports.startNetworkPipe = exports.getPrivateKeys = exports.registerNetworkPipes = exports.getDefaultAccountIndex = exports.getNetworkSettings = exports.getDeployment = exports.get = exports.logTransaction = exports.getSignedContract = exports.getContract = exports.getProvider = exports.changeNetwork = exports.deployBytecode = exports.deployContract = exports.deploy = exports.getDefaultSigner = void 0;
 const hardhat_1 = __importStar(require("hardhat"));
 const helpers_1 = require("./helpers");
+const fs_1 = __importDefault(require("fs"));
 const pipes_1 = __importDefault(require("./pipes"));
 const ganacheServer_1 = __importDefault(require("./ganacheServer"));
 const deployments_1 = require("./deployments");
@@ -52,6 +53,82 @@ const getDefaultSigner = async () => {
     return signers[defaultAccount];
 };
 exports.getDefaultSigner = getDefaultSigner;
+/**
+ *
+ * @param artifactName
+ * @param args
+ * @returns
+ */
+const deploy = async (artifactName, signer, args, save, logDeployment, usePreviousDeployment) => {
+    var _a, _b;
+    signer = signer || (await (0, exports.getDefaultSigner)());
+    let artifact = await hardhat_1.artifacts.readArtifact(artifactName);
+    let fileName = process.cwd() +
+        `/deployments/${hardhat_1.default.network.name}/${artifact.contractName}.json`;
+    let buildInfo = await hardhat_1.artifacts.getBuildInfo(artifactName);
+    if (usePreviousDeployment && fs_1.default.existsSync(fileName)) {
+        let deployment = JSON.parse(fs_1.default.readFileSync(fileName, {
+            encoding: "utf-8",
+        }));
+        if (logDeployment)
+            (0, helpers_1.log)(`🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`);
+        let contract = await hardhat_1.ethers.getContractAt(artifact.contractName, deployment.address, signer);
+        let session = (0, helpers_1.readSession)();
+        if (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.deployments[contract.address]) === undefined) {
+            if (session.environment.deployments === undefined)
+                session.environment.deployments = {};
+            session.environment.deployments[contract.address] = Object.assign(Object.assign(Object.assign({}, artifact), buildInfo), { args: args, name: artifact.contractName, address: contract.address, transactionHash: contract.deployTransaction.hash, deployer: contract.deployTransaction.from, receipt: contract.deployTransaction });
+            (0, helpers_1.debugLog)(`saving deployment of ${artifact.contractName} to session`);
+            (0, helpers_1.saveSession)(session);
+        }
+        return contract;
+    }
+    let factory = await hardhat_1.ethers.getContractFactory(artifact.contractName, signer);
+    let contract = await (0, exports.deployContract)(factory, args);
+    (0, exports.logTransaction)(contract.deployTransaction);
+    if (!save)
+        return contract;
+    let savedDeployment = Object.assign(Object.assign(Object.assign({}, artifact), buildInfo), { args: args, name: artifact.contractName, address: contract.address, transactionHash: contract.deployTransaction.hash, deployer: contract.deployTransaction.from, receipt: contract.deployTransaction });
+    let session = (0, helpers_1.readSession)();
+    if (((_b = session.environment) === null || _b === void 0 ? void 0 : _b.deployments) === undefined)
+        session.environment.deployments = {};
+    (0, helpers_1.debugLog)(`saving deployment to session`);
+    session.environment.deployments[contract.address] = savedDeployment;
+    (0, helpers_1.saveSession)(session);
+    (0, helpers_1.debugLog)(`saving ${fileName}`);
+    (0, helpers_1.log)(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
+    if (!fs_1.default.existsSync(process.cwd() + "/deployments/" + hardhat_1.default.network.name + "/"))
+        fs_1.default.mkdirSync(process.cwd() + "/deployments/" + hardhat_1.default.network.name + "/");
+    fs_1.default.writeFileSync(fileName, JSON.stringify(savedDeployment, null, 2));
+    return contract;
+};
+exports.deploy = deploy;
+/**
+ * Deploys a contract, takes an ethers factory. Does not save the deployment.
+ * @param factory
+ * @param args
+ * @returns
+ */
+const deployContract = async (factory, args) => {
+    let contract = await factory.deploy(args);
+    let tx = await contract.deployed();
+    return contract;
+};
+exports.deployContract = deployContract;
+/**
+ * Deploys a contract via its bytecode. Does not save the deployment
+ * @param abi
+ * @param bytecode
+ * @param args
+ * @param signer
+ * @returns
+ */
+const deployBytecode = async (abi, bytecode, args, signer) => {
+    signer = signer || (await (0, exports.getDefaultSigner)());
+    let factory = await hardhat_1.ethers.getContractFactory(abi, bytecode, signer);
+    return await (0, exports.deployContract)(factory, args);
+};
+exports.deployBytecode = deployBytecode;
 const changeNetwork = (network) => {
     hardhat_1.default.changeNetwork(network);
     if (network !== "ganache")
@@ -86,6 +163,50 @@ const getContract = (deployment, provider) => {
 };
 exports.getContract = getContract;
 /**
+ * Returns an instance of a contract which is signed
+ * @param artifactOrDeployment
+ * @param signer
+ * @returns
+ */
+const getSignedContract = async (artifactOrDeployment, signer) => {
+    signer = signer || (await (0, exports.getDefaultSigner)());
+    if (typeof artifactOrDeployment === "string") {
+        let factory = await hardhat_1.ethers.getContractFactory(artifactOrDeployment);
+        return factory.connect(signer);
+    }
+    let contract = (0, exports.getContract)(artifactOrDeployment, signer.provider);
+    return contract.connect(signer);
+};
+exports.getSignedContract = getSignedContract;
+const logTransaction = async (execution, logMessage, printGasUsage) => {
+    if ((logMessage === null || logMessage === void 0 ? void 0 : logMessage.length) !== 0) {
+        (0, helpers_1.log)(`🏳️‍🌈 ${logMessage}`);
+    }
+    if (typeof execution === typeof Promise)
+        execution = await execution;
+    let tx = execution;
+    (0, helpers_1.log)(`🏷️ <${tx.hash}>(chainId: ${tx.chainId})`);
+    let receipt;
+    if (tx.wait !== undefined) {
+        receipt = await tx.wait();
+    }
+    else
+        receipt = await (0, exports.getProvider)().getTransactionReceipt(tx.blockHash);
+    (0, helpers_1.log)(`{green-fg}😊 Success{/green-fg}`);
+    let session = (0, helpers_1.readSession)();
+    if (session.environment.temporaryGasReceipts === undefined)
+        session.environment.temporaryGasReceipts = [];
+    let savedReceipt = Object.assign(Object.assign({}, receipt), { gasUsedEther: hardhat_1.ethers.utils.formatEther(receipt.gasUsed.toString()), gasUsedNumerical: parseInt(receipt.gasUsed.toString()) });
+    session.environment.temporaryGasReceipts.push({ savedReceipt });
+    if (printGasUsage)
+        (0, helpers_1.log)("{magenta-fg}⛽ gas: {/magenta-fg}" +
+            savedReceipt.gasUsedEther +
+            " ETH");
+    (0, helpers_1.saveSession)(session);
+    return receipt;
+};
+exports.logTransaction = logTransaction;
+/**
  * Returns an ethers contract which you can use to execute methods on a smart contraact.
  * @param contractName
  * @param network
@@ -94,7 +215,7 @@ exports.getContract = getContract;
  */
 const get = (contractName, network, provider) => {
     provider = provider || (0, exports.getProvider)();
-    return (0, exports.getContract)((0, deployments_1.getNetworkDeployment)(contractName, network), provider);
+    return (0, exports.getContract)((0, deployments_1.getLocalDeployment)(contractName, network), provider);
 };
 exports.get = get;
 /**
@@ -104,7 +225,7 @@ exports.get = get;
  * @returns
  */
 const getDeployment = (contractName, network) => {
-    return (0, deployments_1.create)((0, deployments_1.getNetworkDeployment)(contractName, network || hardhat_1.default.network.name));
+    return (0, deployments_1.create)((0, deployments_1.getLocalDeployment)(contractName, network || hardhat_1.default.network.name));
 };
 exports.getDeployment = getDeployment;
 const getNetworkSettings = (network) => {
@@ -156,6 +277,8 @@ const startNetworkPipe = (provider, network) => {
     }
     catch (error) {
         pipes_1.default.getPipe(settings.useDefaultPipe ? "default" : network).error(error);
+        if ((0, helpers_1.isEnvTrue)("THROW_ALL_ERRORS"))
+            throw error;
     }
     ProviderListeners[network].block = provider.on("block", (blockNumber) => {
         (0, helpers_1.log)("{green-fg}new block:{/green-fg} #" + blockNumber, settings.useDefaultPipe ? "default" : network);
@@ -166,6 +289,8 @@ const startNetworkPipe = (provider, network) => {
     }
     catch (error) {
         pipes_1.default.getPipe(settings.useDefaultPipe ? "default" : network).error(error);
+        if ((0, helpers_1.isEnvTrue)("THROW_ALL_ERRORS"))
+            throw error;
     }
     ProviderListeners[network].pending = provider.on("pending", (tx) => {
         (0, helpers_1.log)("{yellow-fg}new transaction pending:{/yellow-fg} " + tx.toString(), settings.useDefaultPipe ? "default" : network);
@@ -176,6 +301,8 @@ const startNetworkPipe = (provider, network) => {
     }
     catch (error) {
         pipes_1.default.getPipe(settings.useDefaultPipe ? "default" : network).error(error);
+        if ((0, helpers_1.isEnvTrue)("THROW_ALL_ERRORS"))
+            throw error;
     }
     ProviderListeners[network].error = provider.on("error", (tx) => {
         pipes_1.default.getPipe(settings.useDefaultPipe ? "default" : network).error("{red-fg}tx error:{/reg-fg} \n" + tx.toString());

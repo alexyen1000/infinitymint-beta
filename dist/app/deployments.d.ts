@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import events, { EventEmitter } from "events";
-import { InfinityMintDeploymentScript, InfinityMintDeploymentLive, InfinityMintProject } from "./interfaces";
+import { InfinityMintDeploymentScript, InfinityMintDeploymentLive, InfinityMintProject, InfinityMintDeploymentLocal } from "./interfaces";
+import { Contract } from "@ethersproject/contracts";
 /**
  * Deployment class for InfinityMint deployments
  */
@@ -65,6 +66,7 @@ export declare class InfinityMintDeployment {
     getIndex(): number;
     getsolidityFolder(): string;
     getKey(): string;
+    getContractName(index?: 0): string;
     getPermissions(): string[];
     getFilePath(): string;
     private read;
@@ -81,11 +83,17 @@ export declare class InfinityMintDeployment {
     hasSetup(): boolean;
     save(): void;
     /**
-     * Returns an ethers contract instance of this deployment for you to call methods on the smart contract
+     * Returns an ethers contract instance of this deployment for you to connect signers too.
      * @param index
      * @returns
      */
-    getContract(index?: number): import("ethers").Contract;
+    getContract(index?: number): Contract;
+    /**
+     * Returns a signed contract with the current account.
+     * @param index
+     * @returns
+     */
+    getSignedContract(index?: number): Promise<Contract>;
     /**
      * used after deploy to set the the live deployments for this deployment. See {@link app/interfaces.InfinityMintDeploymentLive}, Will check if each member has the same network and project name as the one this deployment class is attached too
      * @param liveDeployments
@@ -102,21 +110,29 @@ export declare class InfinityMintDeployment {
      * @param index
      * @returns
      */
-    getLocalDeployment(index?: number): InfinityMintDeploymentLive;
-    deploy(...args: any): Promise<void>;
+    getLocalDeployment(index?: number): InfinityMintDeploymentLocal;
+    deploy(...args: any): Promise<InfinityMintDeploymentLive[]>;
+    private populateLiveDeployment;
+    setPermissions(addresses: string[], log: boolean): Promise<void>;
     setup(...args: any): Promise<void>;
-    execute(method: string, args: any): Promise<void>;
+    /**
+     * Executes a method on the deploy script and immediately returns the value. Setup will return ethers contracts.
+     * @param method
+     * @param args
+     * @returns
+     */
+    execute(method: "setup" | "deploy" | "update" | "switch", args: any): Promise<Contract | Contract[]>;
 }
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
  */
-export declare const getNetworkDeployment: (contractName: string, network: string) => InfinityMintDeploymentLive;
+export declare const getLocalDeployment: (contractName: string, network: string) => InfinityMintDeploymentLocal;
 /**
  * Returns the raw .json file in the /deployments/network/ folder
  * @param contractName
  * @returns
  */
-export declare const readNetworkDeployment: (contractName: string, network: string) => any;
+export declare const readLocalDeployment: (contractName: string, network: string) => InfinityMintDeploymentLocal;
 /**
  * Returns true if a deployment manifest for this key/contractName is found
  * @param contractName - can be a key (erc721, assets) or a fully qualified contract name

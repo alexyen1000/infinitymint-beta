@@ -7,7 +7,6 @@ const helpers_1 = require("@app/helpers");
 const example_1 = __importDefault(require("./windows/example"));
 const gem = {
     name: "Example Gem",
-    deploy: async () => { },
     init: async (params) => {
         var _a;
         //add the example window to the InfinityConsole

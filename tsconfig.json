@@ -8,11 +8,10 @@
 		"outDir": "./dist",
 		"strict": false,
 		"allowJs": true,
-		"rootDirs": ["./test", "./app"],
+		"rootDirs": ["./app"],
 		"paths": {
 			"@app/*": ["./app/*"]
 		},
-		"listFiles": true,
 		"esModuleInterop": true
 	},
 	"exclude": [
