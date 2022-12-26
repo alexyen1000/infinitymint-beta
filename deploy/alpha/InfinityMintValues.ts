@@ -1,6 +1,6 @@
 import { InfinityMintDeploymentScript } from "@app/interfaces";
 import { logTransaction } from "@app/web3";
-import { InfinityMintValues } from "@typechain/InfinityMintValues";
+import { InfinityMintValues } from "../../typechain-types";
 
 const DefaultValues = {
 	maxSupply: 10,

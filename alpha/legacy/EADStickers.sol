@@ -59,7 +59,7 @@ contract EADStickers is Stickers, ERC721 {
 	) ERC721("EADS Sticker", "EADS") Stickers(valuesContract) {
 		erc721TokenId = tokenId;
 		erc721 = erc721Destination;
-		EASWallet = InfinityMintWallet(EASWalletAddress);
+		EASWallet = InfinityMintWallet(payable(EASWalletAddress));
 		versionType = "EADStickers"; // Should be the contract name
 	}
 
@@ -100,11 +100,12 @@ contract EADStickers is Stickers, ERC721 {
 	function setWalletAddresss(address EASWalletAddress) public onlyDeployer {
 		require(isContract(EASWalletAddress), "is not a contract");
 		require(
-			InfinityMintWallet(EASWalletAddress).deployer() == deployer,
+			InfinityMintWallet(payable(EASWalletAddress)).deployer() ==
+				deployer,
 			"the deployer for this contract and the wallet contract must be the same"
 		);
 
-		EASWallet = InfinityMintWallet(EASWalletAddress);
+		EASWallet = InfinityMintWallet(payable(EASWalletAddress));
 	}
 
 	/// @notice verifies that the current owner of this contract

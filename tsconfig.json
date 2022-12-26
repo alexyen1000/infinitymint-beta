@@ -10,8 +10,7 @@
 		"allowJs": true,
 		"rootDirs": ["./app"],
 		"paths": {
-			"@app/*": ["./app/*"],
-			"@typechain/*": ["./typechain-types/*"]
+			"@app/*": ["./app/*"]
 		},
 		"esModuleInterop": true
 	},
