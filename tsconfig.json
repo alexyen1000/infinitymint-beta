@@ -8,10 +8,11 @@
 		"outDir": "./dist",
 		"strict": false,
 		"allowJs": true,
-		"rootDirs": ["./scripts", "./test", "./app", "./gems", "./deploy"],
+		"rootDirs": ["./test", "./app"],
 		"paths": {
 			"@app/*": ["./app/*"]
 		},
+		"listFiles": true,
 		"esModuleInterop": true
 	},
 	"exclude": [
@@ -27,7 +28,8 @@
 		"./app",
 		"./deploy",
 		"./gems",
-		"./examples"
+		"./examples",
+		"./projects"
 	],
 	"files": ["./hardhat.config.ts", "./index.ts"]
 }

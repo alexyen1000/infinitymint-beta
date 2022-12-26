@@ -1,4 +1,4 @@
-import { InfinityMintDeploymentScript } from "../interfaces";
+import { InfinityMintDeploymentScript } from "@app/interfaces";
 
 const ERC721: InfinityMintDeploymentScript = {
 	deploy: async (params) => {},

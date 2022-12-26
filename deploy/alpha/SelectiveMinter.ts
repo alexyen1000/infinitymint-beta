@@ -1,4 +1,4 @@
-import { InfinityMintDeploymentScript } from "../interfaces";
+import { InfinityMintDeploymentScript } from "@app/interfaces";
 
 const SelectiveMinter: InfinityMintDeploymentScript = {
 	//going to give

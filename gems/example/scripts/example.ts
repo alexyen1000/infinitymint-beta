@@ -1,7 +1,7 @@
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
-} from "../../interfaces";
+} from "@app/interfaces";
 
 const Deploy: InfinityMintScript = {
 	name: "Example",

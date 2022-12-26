@@ -10,7 +10,7 @@ const example: InfinityMintProject = {
 		royalty: "DefaultRoyalty",
 	},
 	information: {
-		tokenSymbol: "EXAMPLE",
+		tokenSymbol: "†",
 		tokenSingular: "Example",
 	},
 	permissions: {

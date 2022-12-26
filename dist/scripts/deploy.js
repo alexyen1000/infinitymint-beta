@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const deployments_1 = require("./deployments");
+const deployments_1 = require("@app/deployments");
 const hardhat_1 = __importDefault(require("hardhat"));
 const fs_1 = __importDefault(require("fs"));
 const Deploy = {

@@ -5,6 +5,7 @@ import { debugLog, FuncSingle, log } from "./helpers";
 import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import InfinityConsole from "./console";
+import { InfinityMintDeployment } from "./deployments";
 /**
  * Gems are our plugins. They allow you to easily extend the functionality of InfinityMint. Gems an contain solidity code, react code and more and integrate with every aspect of InfinityMint
  */
@@ -872,16 +873,34 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	 * @defautValue false
 	 */
 	setup?: boolean;
+	/**
+	 * the current infinity console this is running from
+	 */
 	console?: InfinityConsole;
+	/**
+	 * the event emitter for you to emit events from
+	 */
 	eventEmitter?: EventEmitter;
 	/**
 	 * Might have check if undefined depending on context
 	 */
 	project?: InfinityMintProject;
 	/**
-	 * Contains a list of current live deployments up to this deployment.
+	 * Contains a list of InfinityMint deployment classes which have been deployed or about to be deployed up to this point
 	 */
-	deployments?: Dictionary<InfinityMintDeploymentLive>;
+	deployments?: Dictionary<InfinityMintDeployment>;
+	/**
+	 * Contains a list of only the deployed contracts up to this point, unlike deployments member which has all the deployments including none deployed
+	 */
+	contracts?: Dictionary<InfinityMintDeploymentLive>;
+	/**
+	 * the current script this method is being executed on
+	 */
+	script?: InfinityMintDeploymentScript;
+	/**
+	 * the current deployment
+	 */
+	deployment?: InfinityMintDeployment;
 	log: typeof log;
 	debugLog: typeof debugLog;
 	/**

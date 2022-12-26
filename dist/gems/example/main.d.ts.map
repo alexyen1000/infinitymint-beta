@@ -1,1 +1,1 @@
-{"version":3,"file":"main.d.ts","sourceRoot":"","sources":["../../../gems/example/main.ts"],"names":[],"mappings":"AACA,OAAO,EAEN,qBAAqB,EACrB,MAAM,eAAe,CAAC;AAGvB,QAAA,MAAM,GAAG,EAAE,qBAgBV,CAAC;AAEF,eAAe,GAAG,CAAC"}
+{"version":3,"file":"main.d.ts","sourceRoot":"","sources":["../../../gems/example/main.ts"],"names":[],"mappings":"AACA,OAAO,EAEN,qBAAqB,EACrB,MAAM,iBAAiB,CAAC;AAGzB,QAAA,MAAM,GAAG,EAAE,qBAgBV,CAAC;AAEF,eAAe,GAAG,CAAC"}

@@ -1,8 +1,8 @@
-import { log } from "../helpers";
+import { log } from "@app/helpers";
 import {
 	InfinityMintGemParameters,
 	InfinityMintGemScript,
-} from "../interfaces";
+} from "@app/interfaces";
 import Example from "./windows/example";
 
 const gem: InfinityMintGemScript = {

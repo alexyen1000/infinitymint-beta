@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const helpers_1 = require("../helpers");
+const helpers_1 = require("@app/helpers");
 const example_1 = __importDefault(require("./windows/example"));
 const gem = {
     name: "Example Gem",

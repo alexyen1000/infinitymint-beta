@@ -1,5 +1,8 @@
-import { InfinityMintScript, InfinityMintScriptParameters } from "./interfaces";
-import { getDeploymentClasses, InfinityMintDeployment } from "./deployments";
+import {
+	InfinityMintScript,
+	InfinityMintScriptParameters,
+} from "@app/interfaces";
+import { getDeploymentClasses, InfinityMintDeployment } from "@app/deployments";
 import hre from "hardhat";
 import fs from "fs";
 
