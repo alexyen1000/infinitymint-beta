@@ -3,7 +3,6 @@
 	"$schema": "https://typedoc.org/schema.json",
 	"readme": "./ReadMe.markdown",
 	"entryPoints": [
-		"app/*",
 		"app/*/*",
 		"scripts/*",
 		"deploy/*/*",
