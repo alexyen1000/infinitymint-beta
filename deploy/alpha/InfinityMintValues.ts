@@ -1,4 +1,6 @@
 import { InfinityMintDeploymentScript } from "@app/interfaces";
+import { logTransaction } from "@app/web3";
+import { InfinityMintValues } from "../../typechain-types";
 
 const DefaultValues = {
 	maxSupply: 10,
@@ -49,29 +51,33 @@ const Values: InfinityMintDeploymentScript = {
 		debugLog(
 			"found " +
 				Object.values(cleanedVariables).length +
-				" on-chain variables"
+				" values to set on chain"
+		);
+		Object.values(cleanedVariables).forEach((value, index) =>
+			debugLog(`[${index}] => {${value}}`)
 		);
 
-		let booleans = Object.keys(cleanedVariables)
-			.filter((key) => typeof cleanedVariables[key] === "boolean")
-			.map((key) => cleanedVariables[key]);
+		let booleans = Object.keys(cleanedVariables).filter(
+			(key) => typeof cleanedVariables[key] === "boolean"
+		);
 
-		let numbers = Object.keys(cleanedVariables)
-			.filter((key) => typeof cleanedVariables[key] === "number")
-			.map((key) => cleanedVariables[key]);
+		let numbers = Object.keys(cleanedVariables).filter(
+			(key) => typeof cleanedVariables[key] === "number"
+		);
+		let contract =
+			(await deployment.getSignedContract()) as InfinityMintValues;
 
-		let contract = deployment.getContract();
-
-		booleans = {
-			keys: Object.keys(booleans),
-			values: Object.values(booleans),
-		} as any;
-		numbers = {
-			keys: Object.keys(numbers),
-			values: Object.values(numbers),
-		} as any;
+		await logTransaction(
+			contract.setupValues(
+				Object.values(numbers),
+				Object.values(numbers).map((key) => cleanedVariables[key]),
+				Object.values(booleans),
+				Object.values(booleans).map((key) => cleanedVariables[key])
+			),
+			"setting values on chain"
+		);
 	},
-	dontRedeploy: true,
+	static: true,
 	//going to give
 	instantlySetup: true, //will run the set up for this contract instantly and not after everything else has deployed
 	unique: true,

@@ -4,12 +4,16 @@ import {
 	InfinityMintDeploymentParameters,
 	InfinityMintDeploymentLive,
 	InfinityMintProject,
+	InfinityMintDeploymentLocal,
 } from "./interfaces";
-import { debugLog, getProject, log } from "./helpers";
+import { debugLog, getProject, log, readSession } from "./helpers";
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
-import { getContract } from "./web3";
+import { getContract, getDefaultSigner, logTransaction } from "./web3";
+import { Contract } from "@ethersproject/contracts";
+import { hre } from "..";
+import { Authentication } from "../typechain-types";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -144,6 +148,12 @@ export class InfinityMintDeployment {
 		return this.key;
 	}
 
+	getContractName(index?: 0) {
+		return this.liveDeployments.length !== 0
+			? this.liveDeployments[index].name
+			: this.deploymentScript.contract;
+	}
+
 	getPermissions() {
 		return this.deploymentScript.permissions;
 	}
@@ -256,12 +266,23 @@ export class InfinityMintDeployment {
 	}
 
 	/**
-	 * Returns an ethers contract instance of this deployment for you to call methods on the smart contract
+	 * Returns an ethers contract instance of this deployment for you to connect signers too.
 	 * @param index
 	 * @returns
 	 */
 	getContract(index?: number) {
 		return getContract(this.liveDeployments[index || 0]);
+	}
+
+	/**
+	 * Returns a signed contract with the current account.
+	 * @param index
+	 * @returns
+	 */
+	async getSignedContract(index?: number) {
+		let contract = this.getContract(index);
+		let signer = await getDefaultSigner();
+		return contract.connect(signer);
 	}
 
 	/**
@@ -336,18 +357,76 @@ export class InfinityMintDeployment {
 			fs.readFileSync(path, {
 				encoding: "utf-8",
 			})
-		) as InfinityMintDeploymentLive;
+		) as InfinityMintDeploymentLocal;
 	}
 
 	async deploy(...args: any) {
-		return await this.execute("deploy", args);
+		let result = await this.execute("deploy", args);
+
+		let contracts: Contract[];
+		if (result instanceof Array !== true)
+			contracts = [result] as Contract[];
+		else contracts = result as Contract[];
+
+		let session = readSession();
+
+		contracts.forEach((contract) => {
+			if (
+				session.environment?.deployments[contract.address] === undefined
+			)
+				throw new Error(
+					"contract " +
+						contract.address +
+						" is not in the .session file"
+				);
+
+			let deployment = session.environment?.deployments[
+				contract.address
+			] as InfinityMintDeploymentLocal;
+			this.liveDeployments.push(this.populateLiveDeployment(deployment));
+		});
+
+		this.save();
+		return this.liveDeployments;
+	}
+
+	private populateLiveDeployment(deployment: InfinityMintDeploymentLocal) {
+		deployment = deployment as InfinityMintDeploymentLive;
+		deployment.key = this.deploymentScript.key;
+		deployment.javascript = this.project.javascript;
+		deployment.project = this.project.name;
+		deployment.network = {
+			name: hre.network.name,
+			chainId: hre.network.config.chainId,
+		};
+		deployment.deploymentScript = this.deploymentScriptLocation;
+		return deployment;
+	}
+
+	async setPermissions(addresses: string[], log: boolean) {
+		let contract = await this.getSignedContract();
+		let authenticator = contract as Authentication;
+		let tx = await authenticator.multiApprove(addresses);
+
+		if (logTransaction)
+			await logTransaction(
+				tx,
+				`setting ${addresses} permissions inside of ${this.key}`
+			);
 	}
 
 	async setup(...args: any) {
-		return await this.execute("setup", args);
+		await this.execute("setup", args);
+		this.hasSetupDeployments = true;
 	}
 
-	async execute(method: string, args: any) {
+	/**
+	 * Executes a method on the deploy script and immediately returns the value. Setup will return ethers contracts.
+	 * @param method
+	 * @param args
+	 * @returns
+	 */
+	async execute(method: "setup" | "deploy" | "update" | "switch", args: any) {
 		let params = {
 			...args,
 			debugLog: debugLog,
@@ -361,12 +440,14 @@ export class InfinityMintDeployment {
 		switch (method) {
 			case "deploy":
 				let deployResult = await this.deploymentScript.deploy(params);
-				this.hasDeployedAll = true;
 				return deployResult;
 			case "setup":
-				let setupResult = await this.deploymentScript.setup(params);
-				this.hasSetupDeployments = true;
-				return setupResult;
+				await this.deploymentScript.setup(params);
+				return;
+			case "update":
+				return;
+			case "switch":
+				return;
 			default:
 				throw new Error("unknown method:" + this.execute);
 		}
@@ -376,11 +457,8 @@ export class InfinityMintDeployment {
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
  */
-export const getNetworkDeployment = (contractName: string, network: string) => {
-	return readNetworkDeployment(
-		contractName,
-		network
-	) as InfinityMintDeploymentLive;
+export const getLocalDeployment = (contractName: string, network: string) => {
+	return readLocalDeployment(contractName, network);
 };
 
 /**
@@ -388,10 +466,7 @@ export const getNetworkDeployment = (contractName: string, network: string) => {
  * @param contractName
  * @returns
  */
-export const readNetworkDeployment = (
-	contractName: string,
-	network: string
-) => {
+export const readLocalDeployment = (contractName: string, network: string) => {
 	let path =
 		process.cwd() +
 		"/deployments/" +
@@ -401,7 +476,9 @@ export const readNetworkDeployment = (
 		".json";
 
 	if (!fs.existsSync(path)) throw new Error(`${path} not found`);
-	return JSON.parse(fs.readFileSync(path, { encoding: "utf-8" }));
+	return JSON.parse(
+		fs.readFileSync(path, { encoding: "utf-8" })
+	) as InfinityMintDeploymentLocal;
 };
 
 /**

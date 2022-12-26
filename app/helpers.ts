@@ -417,6 +417,7 @@ export const preInitialize = () => {
 		"temp/receipts",
 		"temp/deployments",
 		"temp/projects",
+		"deployments",
 		"projects",
 	]);
 	//copy the .env file from example if there is none

@@ -29,7 +29,8 @@
 		"./deploy",
 		"./gems",
 		"./examples",
-		"./projects"
+		"./projects",
+		"./typechain-types"
 	],
 	"files": ["./hardhat.config.ts", "./index.ts"]
 }

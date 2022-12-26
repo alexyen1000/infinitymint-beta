@@ -1,12 +1,29 @@
-import hre, { ethers } from "hardhat";
-import { debugLog, getConfigFile, isEnvTrue, log } from "./helpers";
+import hre, { ethers, artifacts } from "hardhat";
+import {
+	debugLog,
+	getConfigFile,
+	isEnvTrue,
+	log,
+	readSession,
+	saveSession,
+} from "./helpers";
+import fs from "fs";
 import Pipes from "./pipes";
-import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
-import { HardhatEthersHelpers } from "@nomiclabs/hardhat-ethers/types";
+import {
+	Web3Provider,
+	JsonRpcProvider,
+	TransactionReceipt,
+	Provider,
+} from "@ethersproject/providers";
 import GanacheServer from "./ganacheServer";
+import {
+	ContractFactory,
+	ContractReceipt,
+	ContractTransaction,
+} from "@ethersproject/contracts";
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getNetworkDeployment, create } from "./deployments";
+import { getLocalDeployment, create } from "./deployments";
 import { InfinityMintDeploymentLive } from "./interfaces";
 
 //stores listeners for the providers
@@ -37,6 +54,142 @@ export const getDefaultSigner = async () => {
 		);
 
 	return signers[defaultAccount];
+};
+
+/**
+ *
+ * @param artifactName
+ * @param args
+ * @returns
+ */
+export const deploy = async (
+	artifactName: string,
+	signer?: SignerWithAddress,
+	args?: [],
+	save?: boolean,
+	logDeployment?: boolean,
+	usePreviousDeployment?: boolean
+) => {
+	signer = signer || (await getDefaultSigner());
+	let artifact = await artifacts.readArtifact(artifactName);
+	let fileName =
+		process.cwd() +
+		`/deployments/${hre.network.name}/${artifact.contractName}.json`;
+	let buildInfo = await artifacts.getBuildInfo(artifactName);
+
+	if (usePreviousDeployment && fs.existsSync(fileName)) {
+		let deployment = JSON.parse(
+			fs.readFileSync(fileName, {
+				encoding: "utf-8",
+			})
+		);
+
+		if (logDeployment)
+			log(
+				`🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`
+			);
+
+		let contract = await ethers.getContractAt(
+			artifact.contractName,
+			deployment.address,
+			signer
+		);
+
+		let session = readSession();
+
+		if (session.environment?.deployments[contract.address] === undefined) {
+			if (session.environment.deployments === undefined)
+				session.environment.deployments = {};
+
+			session.environment.deployments[contract.address] = {
+				...artifact,
+				...buildInfo,
+				args: args,
+				name: artifact.contractName,
+				address: contract.address,
+				transactionHash: contract.deployTransaction.hash,
+				deployer: contract.deployTransaction.from,
+				receipt: contract.deployTransaction,
+			};
+			debugLog(
+				`saving deployment of ${artifact.contractName} to session`
+			);
+			saveSession(session);
+		}
+
+		return contract;
+	}
+
+	let factory = await ethers.getContractFactory(
+		artifact.contractName,
+		signer
+	);
+	let contract = await deployContract(factory, args);
+	logTransaction(contract.deployTransaction);
+
+	if (!save) return contract;
+
+	let savedDeployment = {
+		...artifact,
+		...buildInfo,
+		args: args,
+		name: artifact.contractName,
+		address: contract.address,
+		transactionHash: contract.deployTransaction.hash,
+		deployer: contract.deployTransaction.from,
+		receipt: contract.deployTransaction,
+	};
+
+	let session = readSession();
+
+	if (session.environment?.deployments === undefined)
+		session.environment.deployments = {};
+
+	debugLog(`saving deployment to session`);
+	session.environment.deployments[contract.address] = savedDeployment;
+	saveSession(session);
+
+	debugLog(`saving ${fileName}`);
+	log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
+
+	if (
+		!fs.existsSync(process.cwd() + "/deployments/" + hre.network.name + "/")
+	)
+		fs.mkdirSync(process.cwd() + "/deployments/" + hre.network.name + "/");
+
+	fs.writeFileSync(fileName, JSON.stringify(savedDeployment, null, 2));
+	return contract;
+};
+
+/**
+ * Deploys a contract, takes an ethers factory. Does not save the deployment.
+ * @param factory
+ * @param args
+ * @returns
+ */
+export const deployContract = async (factory: ContractFactory, args?: []) => {
+	let contract = await factory.deploy(args);
+	let tx = await contract.deployed();
+	return contract;
+};
+
+/**
+ * Deploys a contract via its bytecode. Does not save the deployment
+ * @param abi
+ * @param bytecode
+ * @param args
+ * @param signer
+ * @returns
+ */
+export const deployBytecode = async (
+	abi: string[],
+	bytecode: string,
+	args?: [],
+	signer?: SignerWithAddress
+) => {
+	signer = signer || (await getDefaultSigner());
+	let factory = await ethers.getContractFactory(abi, bytecode, signer);
+	return await deployContract(factory, args);
 };
 
 export const changeNetwork = (network: string) => {
@@ -72,10 +225,74 @@ export const getProvider = () => {
  */
 export const getContract = (
 	deployment: InfinityMintDeploymentLive,
-	provider?: any
+	provider?: Provider | JsonRpcProvider
 ) => {
 	provider = provider || getProvider();
 	return new ethers.Contract(deployment.address, deployment.abi, provider);
+};
+
+/**
+ * Returns an instance of a contract which is signed
+ * @param artifactOrDeployment
+ * @param signer
+ * @returns
+ */
+export const getSignedContract = async (
+	artifactOrDeployment: InfinityMintDeploymentLive | string,
+	signer?: SignerWithAddress
+) => {
+	signer = signer || (await getDefaultSigner());
+	if (typeof artifactOrDeployment === "string") {
+		let factory = await ethers.getContractFactory(artifactOrDeployment);
+		return factory.connect(signer);
+	}
+
+	let contract = getContract(artifactOrDeployment, signer.provider);
+	return contract.connect(signer);
+};
+
+export const logTransaction = async (
+	execution: Promise<ContractTransaction> | ContractTransaction,
+	logMessage?: string,
+	printGasUsage?: boolean
+) => {
+	if (logMessage?.length !== 0) {
+		log(`🏳️‍🌈 ${logMessage}`);
+	}
+
+	if (typeof execution === typeof Promise)
+		execution = await (execution as Promise<ContractTransaction>);
+
+	let tx = execution as ContractTransaction;
+	log(`🏷️ <${tx.hash}>(chainId: ${tx.chainId})`);
+	let receipt: TransactionReceipt;
+	if (tx.wait !== undefined) {
+		receipt = await tx.wait();
+	} else receipt = await getProvider().getTransactionReceipt(tx.blockHash);
+
+	log(`{green-fg}😊 Success{/green-fg}`);
+
+	let session = readSession();
+
+	if (session.environment.temporaryGasReceipts === undefined)
+		session.environment.temporaryGasReceipts = [];
+
+	let savedReceipt = {
+		...receipt,
+		gasUsedEther: ethers.utils.formatEther(receipt.gasUsed.toString()),
+		gasUsedNumerical: parseInt(receipt.gasUsed.toString()),
+	};
+	session.environment.temporaryGasReceipts.push({ savedReceipt });
+
+	if (printGasUsage)
+		log(
+			"{magenta-fg}⛽ gas: {/magenta-fg}" +
+				savedReceipt.gasUsedEther +
+				" ETH"
+		);
+
+	saveSession(session);
+	return receipt;
 };
 
 /**
@@ -87,7 +304,7 @@ export const getContract = (
  */
 export const get = (contractName: string, network?: string, provider?: any) => {
 	provider = provider || getProvider();
-	return getContract(getNetworkDeployment(contractName, network), provider);
+	return getContract(getLocalDeployment(contractName, network), provider);
 };
 
 /**
@@ -98,7 +315,7 @@ export const get = (contractName: string, network?: string, provider?: any) => {
  */
 export const getDeployment = (contractName: string, network?: string) => {
 	return create(
-		getNetworkDeployment(contractName, network || hre.network.name)
+		getLocalDeployment(contractName, network || hre.network.name)
 	);
 };
 
@@ -154,6 +371,8 @@ export const startNetworkPipe = (
 		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
 			error
 		);
+
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 	}
 
 	ProviderListeners[network].block = provider.on(
@@ -173,6 +392,7 @@ export const startNetworkPipe = (
 		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
 			error
 		);
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 	}
 
 	ProviderListeners[network].pending = provider.on("pending", (tx: any) => {
@@ -189,6 +409,7 @@ export const startNetworkPipe = (
 		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
 			error
 		);
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 	}
 
 	ProviderListeners[network].error = provider.on("error", (tx: any) => {

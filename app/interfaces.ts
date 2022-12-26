@@ -4,6 +4,7 @@ import { HardhatUserConfig } from "hardhat/types";
 import { debugLog, FuncSingle, log } from "./helpers";
 import { Server, ServerOptions } from "ganache";
 import { EventEmitter } from "events";
+import { Contract } from "@ethersproject/contracts";
 import InfinityConsole from "./console";
 import { InfinityMintDeployment } from "./deployments";
 /**
@@ -863,6 +864,20 @@ export interface InfinityMintDeploymentParametersDeployments
 	InfinityMintProject: InfinityMintDeploymentLive;
 }
 
+export interface InfinityMintDeploymentLocal extends Dictionary<any> {
+	abi?: any[];
+	name?: string;
+	address?: string;
+	args?: any[];
+	transactionHash?: string;
+	receipt?: Dictionary<any>;
+	input?: Dictionary<any>;
+	output?: Dictionary<any>;
+	sourceName?: string;
+	contractName?: string;
+	deployer?: string;
+}
+
 /**
  * Parameters which are passed into every deploy script. See {@link InfinityMintDeploymentScript}
  */
@@ -983,7 +998,10 @@ export interface InfinityMintDeploymentScript {
 	 * @async
 	 * Deploys the smart contract or smart contracts.
 	 */
-	deploy?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	deploy?: FuncSingle<
+		InfinityMintDeploymentParameters,
+		Promise<Contract | Contract[]>
+	>;
 	/**
 	 * @async
 	 * Only called when the project has been deployed. Called when a live InfinityMint switches from key to the other particuarlly in the modules. See {@link InfinityMintProjectModules}. For instance if the minter was to change from SimpleSVG to SimpleImage then this method would be called. An example use would be to relink the newly asset controller to the minter.
@@ -1038,9 +1056,9 @@ export interface InfinityMintDeploymentScript {
 	unique?: boolean;
 
 	/**
-	 * On the even of a redeployment of an already established InfinityMint. If no cleanup method is defined, then InfinityMint will automatically try to redeploy the contract and run setup again unless this member is true. If this member is true then InfinityMint will run the setup method again.
+	 * Will prevent redeployment of this contract. If no cleanup method is defined, then InfinityMint will automatically try to redeploy the contract and run setup again unless this member is true. If this member is true then InfinityMint will run the setup method again.
 	 */
-	dontRedeploy?: boolean;
+	static?: boolean;
 	/**
 	 * Will run setup immediately after the deployment is succcessful
 	 *
@@ -1056,7 +1074,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * Refers to the name of the artifact/contract that this deployment script works with. Will be the same as the key if left undefined.
 	 */
-	contractName?: string;
+	contract?: string;
 	/**
 	 * used in auto deployment configuration (when no deploy field is set and contractName is of valid artifact), will pass these arguments to the constructor of the smart contract.
 	 *
@@ -1086,9 +1104,7 @@ export interface InfinityMintDeploymentScript {
 		| "storage"
 		| "erc721";
 	/**
-	 * the name of the artifact name of the solidity contract (eg: Gem_Redemption) if it is a gem. This is going to be the key which is then set inside of the contracts key (see {@link InfinityMintProject}) and how you can find this contracts address.
-	 *
-	 * @see {@link InfinityMintDeploymentLive}
+	 * Will be the filename of the deploy script by default
 	 */
 	key?: string;
 	/**
