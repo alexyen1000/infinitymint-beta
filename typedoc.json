@@ -16,6 +16,6 @@
 	"name": "InfinityMint",
 	"entryPointStrategy": "expand",
 	"gitRemote": "origin",
-	"exclude": ["node_modules"],
+	"exclude": ["node_modules", "imports/"],
 	"out": "docs"
 }
