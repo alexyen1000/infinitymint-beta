@@ -426,8 +426,8 @@ export const preInitialize = () => {
 		fs.existsSync(process.cwd() + "/.env.example")
 	)
 		fs.copyFileSync(
-			process.cwd() + "/.env",
-			process.cwd() + "/.env.example"
+			process.cwd() + "/.env.example",
+			process.cwd() + "/.env"
 		);
 
 	//will log console.log output to the default pipe
