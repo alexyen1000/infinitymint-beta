@@ -6,8 +6,8 @@ coverage.json
 /typechain-types
 
 # Hardhat files
-cache
-artifacts
+cache/
+artifacts/
 
 # InfinityMint files
 infinitymint.config.ts
@@ -19,6 +19,7 @@ infinitymint.config.ts
 /*/__gems/
 
 .DS_Store
+dist/
 
 # Docs
 _www/
