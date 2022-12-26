@@ -40,6 +40,7 @@
 		"@openzeppelin/contracts": "^4.8.0",
 		"bip39": "^3.0.4",
 		"blessed": "^0.1.81",
+		"blessed-contrib": "^4.11.0",
 		"dotenv": "^16.0.3",
 		"fs-extra": "^11.1.0",
 		"ganache": "^7.7.1",
