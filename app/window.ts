@@ -420,7 +420,7 @@ export class InfinityMintWindow {
 				defaultSigner.address
 			}{/underline} | {magenta-bg}${
 				hre.network.name
-			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Namespace: {cyan-fg}${getSolidityFolder()}{/cyan-fg}`
+			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Root: {cyan-fg}${getSolidityFolder()}{/cyan-fg}`
 		);
 	}
 

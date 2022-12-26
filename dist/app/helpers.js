@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityFolder = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.initializeInfinitymintConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
+exports.isEnvSet = exports.isEnvTrue = exports.error = exports.saveSession = exports.saveSessionVariable = exports.getSolidityFolder = exports.createInfinityMintConfig = exports.initializeGanacheMnemonic = exports.preInitialize = exports.readJson = exports.createDirs = exports.loadInfinityMint = exports.prepareConfig = exports.getProject = exports.getDeployedProject = exports.getCompiledProject = exports.getConfigFile = exports.overwriteConsoleMethods = exports.readSession = exports.debugLog = exports.log = void 0;
 const pipes_1 = __importDefault(require("./pipes"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const fs_1 = __importDefault(require("fs"));
@@ -138,10 +138,13 @@ exports.getProject = getProject;
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns
  */
-const initializeInfinitymintConfig = () => {
+const prepareConfig = () => {
     var _a, _b;
     //else, import the InfinityMint config
     const infinityMintConfig = (0, exports.getConfigFile)();
+    //overwrite the console methods
+    if (infinityMintConfig.console || (0, exports.isEnvTrue)("OVERWRITE_CONSOLE_METHODS"))
+        (0, exports.overwriteConsoleMethods)();
     let session = (0, exports.readSession)();
     //fuck about with hardhat config
     infinityMintConfig.hardhat.defaultNetwork =
@@ -149,45 +152,19 @@ const initializeInfinitymintConfig = () => {
             ((_b = session.environment) === null || _b === void 0 ? void 0 : _b.defaultNetwork);
     if (infinityMintConfig.hardhat.networks === undefined)
         infinityMintConfig.hardhat.networks = {};
+    //copy ganache settings to localhost settings if ganache exists
     if (infinityMintConfig.hardhat.networks.localhost === undefined &&
         infinityMintConfig.hardhat.networks.ganache !== undefined)
         infinityMintConfig.hardhat.networks.localhost =
             infinityMintConfig.hardhat.networks.ganache;
     if (infinityMintConfig.hardhat.paths === undefined)
         infinityMintConfig.hardhat.paths = {};
-    if (infinityMintConfig.console || (0, exports.isEnvTrue)("OVERWRITE_CONSOLE_METHODS"))
-        (0, exports.overwriteConsoleMethods)();
     //do
     let solidityModuleFolder = process.cwd() +
         "/node_modules/infinitymint/" +
-        (process.env.SOLIDITY_FOLDER || "alpha");
-    let solidityFolder = process.cwd() + "/" + (process.env.SOLIDITY_FOLDER || "alpha");
-    if ((0, exports.isEnvTrue)("SOLIDITY_USE_NODE_MODULE")) {
-        if (fs_1.default.existsSync(process.cwd() + "/package.json") &&
-            (0, exports.readJson)(process.cwd() + "/package.json").name === "infinitymint")
-            throw new Error("cannot use node modules in InfinityMint package");
-        if (!fs_1.default.existsSync(solidityModuleFolder))
-            throw new Error("please npm i infinitymint and make sure " + module + "exists");
-        if (fs_1.default.existsSync(solidityFolder) &&
-            (0, exports.isEnvTrue)("SOLIDITY_CLEAN_NAMESPACE")) {
-            (0, exports.debugLog)("cleaning " + solidityModuleFolder);
-            fs_1.default.rmdirSync(solidityFolder, {
-                recursive: true,
-                force: true,
-            });
-        }
-        if (!fs_1.default.existsSync(solidityFolder)) {
-            (0, exports.debugLog)("copying " + solidityModuleFolder + " to " + solidityFolder);
-            fs_extra_1.default.copySync(solidityModuleFolder, solidityFolder);
-            fs_1.default.chmodSync(solidityFolder, 0o777);
-        }
-    }
-    //set the sources
-    infinityMintConfig.hardhat.paths.sources = solidityFolder;
-    //delete artifacts folder if namespace changes
-    if (process.env.SOLIDITY_FOLDER !== undefined &&
-        session.environment.solidityFolder !== undefined &&
-        session.environment.solidityFolder !== process.env.SOLIDITY_FOLDER) {
+        (process.env.DEFAULT_SOLIDITY_FOLDER || "alpha");
+    let solidityFolder = process.cwd() + "/" + (process.env.DEFAULT_SOLIDITY_FOLDER || "alpha");
+    let cleanUp = () => {
         try {
             (0, exports.debugLog)("removing ./artifacts");
             fs_1.default.rmdirSync(process.cwd() + "/artifacts", {
@@ -210,16 +187,61 @@ const initializeInfinitymintConfig = () => {
             if ((0, exports.isEnvTrue)("THROW_ALL_ERRORS"))
                 throw error;
         }
-        session.environment.solidityFolder = process.env.SOLIDITY_FOLDER;
+    };
+    if ((0, exports.isEnvTrue)("SOLIDITY_USE_NODE_MODULE")) {
+        if (fs_1.default.existsSync(process.cwd() + "/package.json") &&
+            (0, exports.readJson)(process.cwd() + "/package.json").name === "infinitymint")
+            throw new Error("cannot use node modules in InfinityMint package");
+        if (!fs_1.default.existsSync(solidityModuleFolder))
+            throw new Error("please npm i infinitymint and make sure " + module + "exists");
+        if (fs_1.default.existsSync(solidityFolder) &&
+            (0, exports.isEnvTrue)("SOLIDITY_CLEAN_NAMESPACE")) {
+            (0, exports.debugLog)("cleaning " + solidityModuleFolder);
+            fs_1.default.rmdirSync(solidityFolder, {
+                recursive: true,
+                force: true,
+            });
+        }
+        if (!fs_1.default.existsSync(solidityFolder)) {
+            (0, exports.debugLog)("copying " + solidityModuleFolder + " to " + solidityFolder);
+            fs_extra_1.default.copySync(solidityModuleFolder, solidityFolder);
+            fs_1.default.chmodSync(solidityFolder, 0o777);
+        }
     }
-    //set the solidity namespace
+    //if the sources is undefined, then set the solidityFolder to be the source foot
+    if (infinityMintConfig.hardhat.paths.sources === undefined)
+        //set the sources
+        infinityMintConfig.hardhat.paths.sources = solidityFolder;
+    else {
+        //if we have changed the sources file then clean up old stuff
+        if (session.environment.solidityFolder !==
+            infinityMintConfig.hardhat.paths.sources) {
+            cleanUp();
+        }
+        //if it is then set the solidityFolder to be the current value of the sources
+        session.environment.solidityFolder =
+            infinityMintConfig.hardhat.paths.sources;
+        (0, exports.saveSession)(session);
+        //just return the config
+        return infinityMintConfig;
+    }
+    //delete artifacts folder if namespace changes
+    if (process.env.DEFAULT_SOLIDITY_FOLDER !== undefined &&
+        session.environment.solidityFolder !== undefined &&
+        session.environment.solidityFolder !==
+            process.env.DEFAULT_SOLIDITY_FOLDER) {
+        cleanUp();
+        session.environment.solidityFolder =
+            process.env.DEFAULT_SOLIDITY_FOLDER;
+    }
+    //set the solidityFolder in the environment if it is undefined
     if (session.environment.solidityFolder === undefined)
         session.environment.solidityFolder =
-            process.env.SOLIDITY_FOLDER || "alpha";
+            process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
     (0, exports.saveSession)(session);
     return infinityMintConfig;
 };
-exports.initializeInfinitymintConfig = initializeInfinitymintConfig;
+exports.prepareConfig = prepareConfig;
 /**
  * Loaded when hardhat is being initialized, essentially creates an infinitymint.config if one is not available, generates a new ganache mnemonic and overwrites console.log and console.error to be piped to what ever pipe is currently default.
  *
@@ -330,7 +352,7 @@ const getSolidityFolder = () => {
     var _a;
     let session = (0, exports.readSession)();
     return (((_a = session.environment) === null || _a === void 0 ? void 0 : _a.solidityFolder) ||
-        process.env.SOLIDITY_FOLDER ||
+        process.env.DEFAULT_SOLIDITY_FOLDER ||
         "alpha");
 };
 exports.getSolidityFolder = getSolidityFolder;

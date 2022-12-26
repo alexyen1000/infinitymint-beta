@@ -263,6 +263,13 @@ class InfinityMintDeployment {
     async setPermissions(addresses, log) {
         let contract = await this.getSignedContract();
         let authenticator = contract;
+        if ((authenticator === null || authenticator === void 0 ? void 0 : authenticator.multiApprove) === undefined) {
+            if ((0, helpers_1.isEnvTrue)("THROW_ALL_ERRORS"))
+                throw new Error(`${this.key} does not have an approve method`);
+            else
+                (0, helpers_1.debugLog)(`${this.key} does not have an approve method`);
+            return;
+        }
         let tx = await authenticator.multiApprove(addresses);
         if (web3_1.logTransaction)
             await (0, web3_1.logTransaction)(tx, `setting ${addresses} permissions inside of ${this.key}`);

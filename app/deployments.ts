@@ -6,14 +6,13 @@ import {
 	InfinityMintProject,
 	InfinityMintDeploymentLocal,
 } from "./interfaces";
-import { debugLog, getProject, log, readSession } from "./helpers";
+import { debugLog, getProject, isEnvTrue, log, readSession } from "./helpers";
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
 import { getContract, getDefaultSigner, logTransaction } from "./web3";
 import { Contract } from "@ethersproject/contracts";
 import hre from "hardhat";
-import { Authentication } from "../typechain-types";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -405,7 +404,15 @@ export class InfinityMintDeployment {
 
 	async setPermissions(addresses: string[], log: boolean) {
 		let contract = await this.getSignedContract();
-		let authenticator = contract as Authentication;
+		let authenticator = contract;
+
+		if (authenticator?.multiApprove === undefined) {
+			if (isEnvTrue("THROW_ALL_ERRORS"))
+				throw new Error(`${this.key} does not have an approve method`);
+			else debugLog(`${this.key} does not have an approve method`);
+
+			return;
+		}
 		let tx = await authenticator.multiApprove(addresses);
 
 		if (logTransaction)

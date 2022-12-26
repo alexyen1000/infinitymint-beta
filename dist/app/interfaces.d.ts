@@ -40,7 +40,7 @@ export interface InfinityMintProjectEventParameters<T> extends InfinityMintDeplo
     gems: Dictionary<InfinityMintGemScript>;
 }
 /**
- * returned from the .json file inside of a gem folder. Contains metadata information about the gem as well as its git location and verison and solidity namespace
+ * returned from the .json file inside of a gem folder. Contains metadata information about the gem as well as its git location and verison and solidity root
  */
 export interface InfinityMintGemConfig {
     name?: string;
@@ -478,25 +478,25 @@ export interface InfinityMintProjectSettings {
  */
 export interface InfinityMintProjectModules extends Dictionary<any> {
     /**
-     * Should be the *fully quallified solidity artifact name* for an Asset Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+     * Should be the *fully quallified solidity artifact name* for an Asset Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
      *
      * @example RaritySVG, SimpleSVG, RarityImage, SimpleImage
      */
     assets: string;
     /**
-     * Should be the *fully quallified solidity artifact name* for a Mint Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+     * Should be the *fully quallified solidity artifact name* for a Mint Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
      *
      * @example DefaultMinter, SelectiveMinter, LockedMinter
      */
     minter: string;
     /**
-     * Should be the *fully quallified solidity artifact name* for a Royalty Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+     * Should be the *fully quallified solidity artifact name* for a Royalty Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
      *
      * @example DefaultRoyalty, SplitRoyalty
      */
     royalty: string;
     /**
-     * Should be the *fully quallified solidity artifact name* for a Random Controller. Solidity artifacts are compiled based on the current solidity namespace which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
+     * Should be the *fully quallified solidity artifact name* for a Random Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
      *
      * @example DefaultRoyalty, SplitRoyalty
      */
@@ -934,7 +934,7 @@ export interface InfinityMintDeploymentScript {
      */
     instantlySetup?: boolean;
     /**
-     * The current solidity namespace this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint or to launch completely custom code bases.
+     * The current solidity root this contract is designed for. Solidity namespace refers to the current folder the solc is compiling from and is usually `./alpha`. You can change it in the *.env* and it is used to prototype new versions if InfinityMint or to launch completely custom code bases.
      *
      * @defaultValue alpha
      */

@@ -13,7 +13,7 @@
 	"scripts": {
 		"test": "mocha",
 		"build": "rm -R -f ./dist && npx tsc",
-		"start": "npx hardhat && npx ts-node index.ts",
+		"start": "npx hardhat compile && npx ts-node index.ts",
 		"doc": "npx typedoc --options ./typedoc.json"
 	},
 	"repository": {

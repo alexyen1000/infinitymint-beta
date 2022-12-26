@@ -20,7 +20,7 @@ require("hardhat-change-network"); //allows hre.changeNetwork to occur
 //load infinitymint and create default files
 (0, helpers_1.loadInfinityMint)(false, true);
 //return the infinitymint config file
-let config = (0, helpers_1.initializeInfinitymintConfig)();
+let config = (0, helpers_1.prepareConfig)();
 (0, helpers_1.debugLog)("loaded hardhat.config.ts");
 exports.default = config.hardhat; //export the infinity mint configuration file
 //# sourceMappingURL=hardhat.config.js.map

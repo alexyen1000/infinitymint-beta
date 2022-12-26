@@ -268,9 +268,13 @@ export const getProject = (projectName: string, isJavaScript?: boolean) => {
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns
  */
-export const initializeInfinitymintConfig = () => {
+export const prepareConfig = () => {
 	//else, import the InfinityMint config
 	const infinityMintConfig = getConfigFile();
+
+	//overwrite the console methods
+	if (infinityMintConfig.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
+		overwriteConsoleMethods();
 
 	let session = readSession();
 	//fuck about with hardhat config
@@ -281,6 +285,7 @@ export const initializeInfinitymintConfig = () => {
 	if (infinityMintConfig.hardhat.networks === undefined)
 		infinityMintConfig.hardhat.networks = {};
 
+	//copy ganache settings to localhost settings if ganache exists
 	if (
 		infinityMintConfig.hardhat.networks.localhost === undefined &&
 		infinityMintConfig.hardhat.networks.ganache !== undefined
@@ -291,16 +296,36 @@ export const initializeInfinitymintConfig = () => {
 	if (infinityMintConfig.hardhat.paths === undefined)
 		infinityMintConfig.hardhat.paths = {};
 
-	if (infinityMintConfig.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
-		overwriteConsoleMethods();
-
 	//do
 	let solidityModuleFolder =
 		process.cwd() +
 		"/node_modules/infinitymint/" +
-		(process.env.SOLIDITY_FOLDER || "alpha");
+		(process.env.DEFAULT_SOLIDITY_FOLDER || "alpha");
 	let solidityFolder =
-		process.cwd() + "/" + (process.env.SOLIDITY_FOLDER || "alpha");
+		process.cwd() + "/" + (process.env.DEFAULT_SOLIDITY_FOLDER || "alpha");
+	let cleanUp = () => {
+		try {
+			debugLog("removing ./artifacts");
+			fs.rmdirSync(process.cwd() + "/artifacts", {
+				recursive: true,
+				force: true,
+			} as any);
+			debugLog("removing ./cache");
+			fs.rmdirSync(process.cwd() + "/cache", {
+				recursive: true,
+				force: true,
+			} as any);
+			debugLog("removing ./typechain-types");
+			fs.rmdirSync(process.cwd() + ".typechain-types", {
+				recursive: true,
+				force: true,
+			} as any);
+		} catch (error: any) {
+			debugLog("unable to delete folder: " + error?.message || error);
+
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+		}
+	};
 
 	if (isEnvTrue("SOLIDITY_USE_NODE_MODULE")) {
 		if (
@@ -334,44 +359,44 @@ export const initializeInfinitymintConfig = () => {
 		}
 	}
 
-	//set the sources
-	infinityMintConfig.hardhat.paths.sources = solidityFolder;
+	//if the sources is undefined, then set the solidityFolder to be the source foot
+	if (infinityMintConfig.hardhat.paths.sources === undefined)
+		//set the sources
+		infinityMintConfig.hardhat.paths.sources = solidityFolder;
+	else {
+		//if we have changed the sources file then clean up old stuff
+		if (
+			session.environment.solidityFolder !==
+			infinityMintConfig.hardhat.paths.sources
+		) {
+			cleanUp();
+		}
+		//if it is then set the solidityFolder to be the current value of the sources
+		session.environment.solidityFolder =
+			infinityMintConfig.hardhat.paths.sources;
+
+		saveSession(session);
+
+		//just return the config
+		return infinityMintConfig as InfinityMintConfig;
+	}
 
 	//delete artifacts folder if namespace changes
 	if (
-		process.env.SOLIDITY_FOLDER !== undefined &&
+		process.env.DEFAULT_SOLIDITY_FOLDER !== undefined &&
 		session.environment.solidityFolder !== undefined &&
-		session.environment.solidityFolder !== process.env.SOLIDITY_FOLDER
+		session.environment.solidityFolder !==
+			process.env.DEFAULT_SOLIDITY_FOLDER
 	) {
-		try {
-			debugLog("removing ./artifacts");
-			fs.rmdirSync(process.cwd() + "/artifacts", {
-				recursive: true,
-				force: true,
-			} as any);
-			debugLog("removing ./cache");
-			fs.rmdirSync(process.cwd() + "/cache", {
-				recursive: true,
-				force: true,
-			} as any);
-			debugLog("removing ./typechain-types");
-			fs.rmdirSync(process.cwd() + ".typechain-types", {
-				recursive: true,
-				force: true,
-			} as any);
-		} catch (error: any) {
-			debugLog("unable to delete folder: " + error?.message || error);
-
-			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-		}
-
-		session.environment.solidityFolder = process.env.SOLIDITY_FOLDER;
+		cleanUp();
+		session.environment.solidityFolder =
+			process.env.DEFAULT_SOLIDITY_FOLDER;
 	}
 
-	//set the solidity namespace
+	//set the solidityFolder in the environment if it is undefined
 	if (session.environment.solidityFolder === undefined)
 		session.environment.solidityFolder =
-			process.env.SOLIDITY_FOLDER || "alpha";
+			process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
 
 	saveSession(session);
 	return infinityMintConfig as InfinityMintConfig;
@@ -509,7 +534,7 @@ export const getSolidityFolder = () => {
 
 	return (
 		session.environment?.solidityFolder ||
-		process.env.SOLIDITY_FOLDER ||
+		process.env.DEFAULT_SOLIDITY_FOLDER ||
 		"alpha"
 	);
 };

@@ -154,7 +154,7 @@ export declare const getProject: (projectName: string, isJavaScript?: boolean) =
  * Loads the infinitymint.config.js and prepares the hardhat response. Only to be used inside of hardhat.config.ts.
  * @returns
  */
-export declare const initializeInfinitymintConfig: () => InfinityMintConfig;
+export declare const prepareConfig: () => InfinityMintConfig;
 /**
  * Loaded when hardhat is being initialized, essentially creates an infinitymint.config if one is not available, generates a new ganache mnemonic and overwrites console.log and console.error to be piped to what ever pipe is currently default.
  *
