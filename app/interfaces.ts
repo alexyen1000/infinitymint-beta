@@ -2,13 +2,15 @@ import { BigNumber } from "ethers";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 import { debugLog, FuncSingle, log } from "./helpers";
-import { Server, ServerOptions } from "ganache";
+import { ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import { Contract } from "@ethersproject/contracts";
 import InfinityConsole from "./console";
 import { InfinityMintDeployment } from "./deployments";
 import { PathLike } from "fs";
 import { InfinityMintSVGSettings } from "./content";
+import { GasPriceFunction, TokenPriceFunction } from "./gasAndPrices";
+
 /**
  * Gems are our plugins. They allow you to easily extend the functionality of InfinityMint. Gems an contain solidity code, react code and more and integrate with every aspect of InfinityMint
  */
@@ -802,7 +804,9 @@ export interface InfinityMintConfig {
 }
 
 /**
+ * Network specific settings for InfinityMint.
  * @see {@link InfinityMintConfigSettings}
+ * @see {@link InfinityMintConfigSettingsNetworks}
  */
 export interface InfinityMintConfigSettingsNetwork {
 	defaultAccount?: number;
@@ -815,6 +819,31 @@ export interface InfinityMintConfigSettingsNetwork {
 	 * if true, will expose the hardhat rpc to be included in the project files network object. See {@link InfinityMintProject} specfically the member 'network'.
 	 */
 	exposeRpc?: boolean;
+	/**
+	 * if true, will write the current mnemonic to the .mnemonic file
+	 */
+	writeMnemonic?: boolean;
+	/**
+	 * define handlers for situations such as getting the gas price on this network and the token price
+	 */
+	handlers?: {
+		/**
+		 * will register a gas price handler for this network
+		 */
+		gasPrice?: GasPriceFunction;
+		/**
+		 * will register a token price handler for this network
+		 */
+		tokenPrice?: TokenPriceFunction;
+	};
+
+	/**
+	 * if true, InfinityMint will treat this chain as a test chain.
+	 *
+	 * @default
+	 * false //true if chainId 1337 and chainId 31337
+	 */
+	testnet?: boolean;
 }
 
 /**
@@ -840,6 +869,20 @@ export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {
  */
 export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
 
+/**
+ * A mutable object containing infinity mint specific settings for each network. Based off of the networks which are defined in the hardhat member of the InfinityMintConfig Settings.
+ * @see {@link InfinityMintConfigSettings}
+ * @see {@link InfinityMintConfigNetwork}
+ */
+export interface InfinityMintConfigSettingsNetworks
+	extends Dictionary<InfinityMintConfigSettingsNetwork> {
+	ganache?: InfinityMintConfigSettingsNetwork;
+	hardhat?: InfinityMintConfigSettingsNetwork;
+	ethereum?: InfinityMintConfigSettingsNetwork;
+	polygon?: InfinityMintConfigSettingsNetwork;
+	mumbai?: InfinityMintConfigSettingsNetwork;
+	goreli?: InfinityMintConfigSettingsNetwork;
+}
 /**
  * @see {@link InfinityMintConfigSettings}
  */
@@ -871,7 +914,7 @@ export interface InfinityMintConfigSettings extends Dictionary<any> {
 	 *	},
 	 * ```
 	 */
-	networks: Dictionary<InfinityMintConfigSettingsNetwork>;
+	networks: InfinityMintConfigSettingsNetworks;
 	/**
 	 * Configure InfinityMints deploy stage here.
 	 *

@@ -468,7 +468,6 @@ export class InfinityConsole {
 
 			debugLog(`registering keyboard shortcut method on [${key}]`);
 			this.screen.key([key], (ch: string, _key: string) => {
-				debugLog(`executing methods for key (${key})'`);
 				this.inputKeys[key].forEach((method, index) => {
 					method();
 				});
@@ -487,7 +486,7 @@ export class InfinityConsole {
 	public key(key: string, cb: Function) {
 		if (this.inputKeys === undefined) this.inputKeys = {};
 
-		debugLog(`registering keyboard shortcut [${key}]`);
+		debugLog(`registering keyboard shortcut method on [${key}]`);
 		if (this.inputKeys[key] === undefined) {
 			this.inputKeys[key] = [];
 			this.screen.key([key], (ch: string, _key: string) => {
@@ -555,6 +554,7 @@ export class InfinityConsole {
 				this.options?.blessed || {
 					smartCRS: true,
 					dockBorders: true,
+					sendFocus: true,
 				}
 			);
 

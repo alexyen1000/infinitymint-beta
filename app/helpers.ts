@@ -13,6 +13,10 @@ import { generateMnemonic } from "bip39";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 import { InfinityMintWindow } from "./window";
+import {
+	registerGasPriceHandler,
+	registerTokenPriceHandler,
+} from "./gasAndPrices";
 
 export interface Vector {
 	x: number;
@@ -435,7 +439,45 @@ export const prepareConfig = () => {
 		session.environment.solidityFolder =
 			process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
 
+	registerGasAndPriceHandlers(config);
+
 	return config as InfinityMintConfig;
+};
+
+export const getPackageJson = () => {
+	if (
+		!fs.existsSync("./../package.json") &&
+		!fs.existsSync(process.cwd() + "/package.json")
+	)
+		throw new Error("no package.json");
+
+	return JSON.parse(
+		fs.readFileSync(
+			fs.existsSync("./../package.json")
+				? "./../package.json"
+				: process.cwd() + "/package.json",
+			{
+				encoding: "utf-8",
+			}
+		)
+	);
+};
+
+/**
+ * Reads InfinityMint configuration file and and registers any gas and price handlers we have for each network
+ * @param config
+ */
+export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
+	Object.keys(config?.settings?.networks || {}).forEach((key) => {
+		let network = config?.settings?.networks[key];
+		if (network.handlers === undefined) return;
+
+		if (network.handlers.gasPrice)
+			registerGasPriceHandler(key, network.handlers.gasPrice);
+
+		if (network.handlers.tokenPrice)
+			registerTokenPriceHandler(key, network.handlers.tokenPrice);
+	});
 };
 
 /**

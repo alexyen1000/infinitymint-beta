@@ -1,5 +1,12 @@
-import { calculateWidth, debugLog } from "../helpers";
+import {
+	calculateWidth,
+	debugLog,
+	getPackageJson,
+	isEnvTrue,
+	warning,
+} from "../helpers";
 import { InfinityMintWindow } from "../window";
+import fs from "fs";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
@@ -17,30 +24,7 @@ const Menu = new InfinityMintWindow(
 
 Menu.think = (window, frame, blessed) => {};
 
-Menu.initialize = async (window, frame, blessed) => {
-	let background = window.createElement("background", {
-		width: frame.width,
-		height: "100%-" + (frame.top + frame.bottom + 8),
-		padding: 1,
-		top: 4,
-		label: "{bold}{white-fg}Menu{/white-fg}{/bold}",
-		left: "center",
-		keys: true,
-		tags: true,
-		scrollable: true,
-		mouse: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
-		style: {
-			fg: "white",
-			bg: "transparent",
-			border: {
-				fg: "#f0f0f0",
-			},
-		},
-	});
-	background.setBack();
-
+let createButtons = (window) => {
 	let deploy = window.createElement("deploy", {
 		bottom: 0,
 		left: 0,
@@ -233,6 +217,133 @@ Menu.initialize = async (window, frame, blessed) => {
 	networks.on("click", async () => {
 		await window.openWindow("Networks");
 	});
+};
+
+Menu.initialize = async (window, frame, blessed) => {
+	let background = window.createElement("background", {
+		width: "100%",
+		height: "100%-" + (frame.top + frame.bottom + 8),
+		padding: 1,
+		top: 4,
+		label: "{bold}{white-fg}Menu{/white-fg}{/bold}",
+		left: "center",
+		keys: true,
+		tags: true,
+		scrollable: true,
+		mouse: true,
+		scrollbar: window.getScrollbar() || {},
+		border: window.getBorder() || {},
+		style: {
+			fg: "white",
+			bg: "transparent",
+			border: {
+				fg: "#f0f0f0",
+			},
+		},
+	});
+
+	createButtons(window);
+
+	let packageVersion = "1.0.1";
+	try {
+		packageVersion = getPackageJson()?.version || "1.0.1";
+	} catch (error) {
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+
+		window.warning("could not get package json: " + error.name);
+	}
+
+	let container = window.createElement("container", {
+		width: "100%-" + (frame.left + frame.right + 10),
+		height: "100%-" + (frame.top + frame.bottom + 12),
+		top: 6,
+		left: 4,
+		style: {
+			fg: "white",
+			bg: "yellow",
+			border: {
+				fg: "#f0f0f0",
+			},
+		},
+	});
+
+	window.createElement("stripe", {
+		width: 8,
+		height: "100%-" + (container.top + container.bottom - 2),
+		parent: container,
+		top: -2,
+		left: -2,
+		style: {
+			fg: "white",
+			bg: "white",
+			border: {
+				fg: "#f0f0f0",
+			},
+		},
+	});
+
+	let logoWidth = Math.floor(151 * 0.375);
+	if (container.height > 10) {
+		window.createElement(
+			"logo",
+			{
+				top: container.top - 2,
+				left: frame.left + frame.right + 16,
+				width: logoWidth,
+				height: container.height / 2 + 6,
+				file: "./resources/logo.gif",
+				animate: true,
+				style: {
+					bg: "white",
+				},
+				search: true,
+			},
+			"image"
+		);
+
+		window.createElement(
+			"title",
+			{
+				right: container.right,
+				bottom: container.bottom + 2,
+				width: "shrink",
+				height: "shrink",
+				tags: true,
+				bold: true,
+				style: {
+					fg: "white",
+				},
+				content: `infinitymint`,
+			},
+			"bigtext"
+		);
+	} else
+		window.createElement("tonyTitle", {
+			right: container.right,
+			bottom: container.bottom + 3,
+			width: "shrink",
+			height: "shrink",
+			tags: true,
+			bold: true,
+			style: {
+				fg: "white",
+			},
+			content: `infinitymint`,
+		});
+
+	window.createElement("subTitle", {
+		right: container.right,
+		bottom: container.bottom + 2,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		bold: true,
+		style: {
+			fg: "white",
+		},
+		content: `version ${packageVersion}`,
+	});
+	background.setBack();
 };
 
 export default Menu;

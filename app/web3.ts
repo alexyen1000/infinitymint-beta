@@ -25,7 +25,10 @@ import {
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getLocalDeployment, create } from "./deployments";
-import { InfinityMintDeploymentLive } from "./interfaces";
+import {
+	InfinityMintConfigSettingsNetwork,
+	InfinityMintDeploymentLive,
+} from "./interfaces";
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -194,7 +197,7 @@ export const deployBytecode = async (
 };
 
 export const changeNetwork = (network: string) => {
-	stopPipe(ethers.provider, hre.network.name);
+	stopNetworkPipe(ethers.provider, hre.network.name);
 	hre.changeNetwork(network);
 	if (network !== "ganache") startNetworkPipe(ethers.provider, network);
 };
@@ -322,7 +325,10 @@ export const getDeployment = (contractName: string, network?: string) => {
 
 export const getNetworkSettings = (network: string) => {
 	let config = getConfigFile();
-	return config?.settings?.networks[network] || {};
+	return (
+		config?.settings?.networks[network] ||
+		({} as InfinityMintConfigSettingsNetwork)
+	);
 };
 
 export const getDefaultAccountIndex = () => {
@@ -354,7 +360,7 @@ export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
 	return keys;
 };
 
-export const stopPipe = (
+export const stopNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any
 ) => {
@@ -370,7 +376,7 @@ export const stopPipe = (
 		warning("failed to stop pipe: " + network);
 	}
 	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
-		"{red-fg}stopped pipe{red-fg}"
+		"{red-fg}stopped pipe{/red-fg}"
 	);
 	delete ProviderListeners[network];
 };
@@ -383,19 +389,20 @@ export const startNetworkPipe = (
 	let settings = getNetworkSettings(network);
 
 	if (provider === undefined) provider = ethers.provider;
-	if (ProviderListeners[network] !== undefined) stopPipe(provider, network);
+	if (ProviderListeners[network] !== undefined)
+		stopNetworkPipe(provider, network);
 
 	ProviderListeners[network] = ProviderListeners[network] || {};
 	ProviderListeners[network].block = (blockNumber: any) => {
 		log(
-			"{green-fg}new block => {/green-fg} [" + blockNumber + "]",
+			"{green-fg}new block{/green-fg} => [" + blockNumber + "]",
 			settings.useDefaultPipe ? "default" : network
 		);
 	};
 
 	ProviderListeners[network].pending = (tx: any) => {
 		log(
-			"{yellow-fg}new transaction pending:{/yellow-fg} " +
+			"{yellow-fg}new transaction pending{/yellow-fg} => " +
 				JSON.stringify(tx, null, 2),
 			settings.useDefaultPipe ? "default" : network
 		);
@@ -403,16 +410,16 @@ export const startNetworkPipe = (
 
 	ProviderListeners[network].error = (tx: any) => {
 		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
-			"{red-fg}tx error:{/reg-fg} " + JSON.stringify(tx, null, 2)
+			"{red-fg}tx error{/reg-fg} => " + JSON.stringify(tx, null, 2)
 		);
 	};
 
+	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
+		"{cyan-fg}started pipe{/cyan-fg}"
+	);
 	Object.keys(ProviderListeners[network]).forEach((key) => {
 		provider.on(key, ProviderListeners[network][key]);
 	});
 
-	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
-		"{cyan-fg}started pipe{cyan-fg}"
-	);
 	debugLog("registered provider event hooks for " + network);
 };

@@ -68,7 +68,7 @@ export class InfinityMintWindow {
 	protected hideCloseButton: boolean;
 	protected hideMinimizeButton: boolean;
 	protected z: number;
-	protected screen: any;
+	protected screen: BlessedElement;
 	protected container?: InfinityConsole;
 	protected inputKeys?: Dictionary<Array<Function>>;
 
@@ -611,7 +611,11 @@ export class InfinityMintWindow {
 	 * @param type - default of `box`
 	 * @returns
 	 */
-	public createElement(key: string, options: any, type?: "box" | "list") {
+	public createElement(
+		key: string,
+		options: any,
+		type?: "box" | "list" | "image" | "bigtext"
+	) {
 		type = type || "box";
 		if (this.elements["frame"] === undefined && options?.parent)
 			throw new Error("no frame or parent for this element");
@@ -620,6 +624,9 @@ export class InfinityMintWindow {
 			throw new Error("bad blessed element: " + type);
 
 		let base = options?.parent || this.getElement("frame");
+
+		if (options.left === undefined && options.right === undefined)
+			options.left = 0;
 
 		(options.left !== undefined ||
 			(options.left === undefined && options.right === undefined)) &&
@@ -652,6 +659,26 @@ export class InfinityMintWindow {
 					(options.bottom || 0) +
 					(typeof this.padding === "number" ? this.padding : 0))
 			: false;
+
+		//deducts the base left and base right starting positions from the options width so it is 100% of the frame/base not the screen
+		if (
+			options.width !== undefined &&
+			typeof options.width === "string" &&
+			options.width?.indexOf("%") !== -1 &&
+			(options.width?.indexOf("-") === -1 ||
+				options.width?.indexOf("+") === -1)
+		)
+			options.width = options.width + "-" + (base.left + base.right);
+
+		//if its just a percentage then add the base onto it, if not leave it and have them do it
+		if (
+			options.height !== undefined &&
+			typeof options.height === "string" &&
+			options.height?.indexOf("%") !== -1 &&
+			(options.height?.indexOf("-") === -1 ||
+				options.height?.indexOf("+") === -1)
+		)
+			options.height = options.height + "-" + (base.top + base.bottom);
 
 		return this.registerElement(key, blessed[type](options));
 	}
