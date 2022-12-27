@@ -1,21 +1,23 @@
-import { InfinityMintConsoleOptions } from "./interfaces";
+import { InfinityMintConsoleOptions, InfinityMintScript } from "./interfaces";
 import {
 	Blessed,
 	BlessedElement,
 	debugLog,
+	findScripts,
 	FuncSingle,
 	isEnvSet,
 	isEnvTrue,
+	isTypescript,
 	log,
+	requireScript,
 	warning,
 } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getDefaultSigner, getProvider } from "./web3";
+import { changeNetwork, getDefaultSigner, getProvider } from "./web3";
 import Pipes from "./pipes";
-import { FuncDouble } from "./helpers";
 import { Dictionary } from "form-data";
 import { BigNumber } from "ethers";
 
@@ -58,6 +60,7 @@ export class InfinityConsole {
 	private chainId: number;
 	private account: SignerWithAddress;
 	private balance: BigNumber;
+	private scripts: InfinityMintScript[];
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -95,6 +98,18 @@ export class InfinityConsole {
 
 	public getCurrentChainId() {
 		return this.chainId;
+	}
+
+	public getPipes() {
+		return Pipes;
+	}
+
+	public log(...strings: string[]) {
+		console.log(...strings);
+	}
+
+	public error(...strings: string[]) {
+		console.error(...strings);
 	}
 
 	public registerDefaultKeys() {
@@ -499,6 +514,17 @@ export class InfinityConsole {
 		return this.allowExit;
 	}
 
+	/**
+	 * Changes
+	 * @param string
+	 * @returns
+	 */
+	public async changeNetwork(string: string) {
+		changeNetwork(string);
+		await this.reload();
+		return ethers.provider;
+	}
+
 	public key(key: string, cb: Function) {
 		if (this.inputKeys === undefined) this.inputKeys = {};
 
@@ -557,11 +583,57 @@ export class InfinityConsole {
 		this.balance = await this.account.getBalance();
 	}
 
+	public getScripts() {
+		return this.scripts;
+	}
+
+	public async refreshScripts() {
+		//call reloads
+		if (this.scripts !== undefined && this.scripts.length !== 0) {
+			for (let i = 0; i < this.scripts.length; i++) {
+				let script = this.scripts[i];
+
+				if (script?.reloaded !== undefined)
+					await script.reloaded({ log, debugLog, console: this });
+			}
+		}
+
+		let scripts = await findScripts();
+		if (isTypescript())
+			scripts = [...scripts, ...(await findScripts(".js"))];
+
+		debugLog("found " + scripts.length + " deployment scripts");
+
+		this.scripts = [];
+		debugLog("requiring scripts and storing inside console instance...");
+		for (let i = 0; i < scripts.length; i++) {
+			let script = scripts[i];
+
+			try {
+				debugLog(`[${i}] requiring script <${script.name}>`);
+				this.scripts.push(
+					await requireScript(script.dir + "/" + script.base)
+				);
+				debugLog(`{green-fg}Success!{/green-fg}`);
+			} catch (error) {
+				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+
+				Pipes.getPipe(Pipes.currentPipe).error(error);
+				debugLog(
+					`{red-fg}Failure: ${
+						(error?.message || "literally unknown").split("\n")[0]
+					}{/red-fg}`
+				);
+			}
+		}
+	}
+
 	public async initialize() {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
 		await this.refreshWeb3();
+		await this.refreshScripts();
 
 		log(
 			"initializing InfinityConsole chainId " +

@@ -29,7 +29,7 @@ export class Pipe {
 		this.appendDate = false;
 		this.created = Date.now();
 		this.logHandler = (str: string) => {
-			if (this.listen) console.log(str, false);
+			if (this.listen) console.log("<#DONT_LOG_ME$>" + str);
 			if (this.appendDate)
 				str =
 					`{underline}${new Date(

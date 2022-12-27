@@ -256,7 +256,11 @@ export class InfinityMintWindow {
 		saveSession(session);
 	}
 
-	public getContainer() {
+	/**
+	 * Get the infinity console this window is contained in. Through the InfinityConsole you can change the network, refresh web3 and do a lot more!
+	 * @returns
+	 */
+	public getInfinityConsole() {
 		if (this.container === undefined)
 			throw new Error("container is undefined");
 
@@ -449,7 +453,7 @@ export class InfinityMintWindow {
 					try {
 						await cb(...any);
 					} catch (error) {
-						this.getContainer().errorHandler(error);
+						this.getInfinityConsole().errorHandler(error);
 					}
 				});
 			else
@@ -457,7 +461,7 @@ export class InfinityMintWindow {
 					try {
 						cb(...any);
 					} catch (error) {
-						this.getContainer().errorHandler(error);
+						this.getInfinityConsole().errorHandler(error);
 					}
 				});
 		};
@@ -523,7 +527,7 @@ export class InfinityMintWindow {
 	public key(key: string, cb: Function) {
 		if (this.inputKeys === undefined) this.inputKeys = {};
 
-		this.getContainer().key(key, cb);
+		this.getInfinityConsole().key(key, cb);
 
 		if (this.inputKeys[key] === undefined) this.inputKeys[key] = [];
 		this.inputKeys[key].push(cb);
@@ -539,11 +543,11 @@ export class InfinityMintWindow {
 		if (this.inputKeys === undefined || this.inputKeys[key] === undefined)
 			return;
 
-		if (cb !== undefined) this.getContainer().unkey(key, cb);
+		if (cb !== undefined) this.getInfinityConsole().unkey(key, cb);
 		else {
 			//unmap all keys
 			Object.values(this.inputKeys[key]).forEach((cb) => {
-				this.getContainer().unkey(key, cb);
+				this.getInfinityConsole().unkey(key, cb);
 			});
 			this.inputKeys[key] = [];
 			return;
@@ -582,8 +586,8 @@ export class InfinityMintWindow {
 	}
 
 	public async updateFrameTitle() {
-		let account = this.getContainer().getAccount();
-		let balance = this.getContainer().getBalance();
+		let account = this.getInfinityConsole().getAccount();
+		let balance = this.getInfinityConsole().getBalance();
 		let getAccountIndex = getDefaultAccountIndex();
 		this.log(
 			"main account: [" + getAccountIndex + "] => " + account.address
@@ -593,7 +597,7 @@ export class InfinityMintWindow {
 		this.getElement("frame").setContent(
 			`{bold}{yellow-fg}${
 				hre.network.name
-			} [${this.getContainer().getCurrentChainId()}]{/bold} {underline}${
+			} [${this.getInfinityConsole().getCurrentChainId()}]{/bold} {underline}${
 				account.address
 			}{/underline}{/yellow-fg} {black-bg}{white-fg}{bold}${etherBalance} ETH ($${(
 				parseFloat(etherBalance) * 2222

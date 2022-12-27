@@ -48,14 +48,9 @@ Networks.initialize = async (window, frame, blessed) => {
 	form.setItems(keys);
 	form.on("select", async (el: any, selected: any) => {
 		let session = readSession();
-		try {
-			changeNetwork(keys[selected]);
-		} catch (error) {
-			console.error(error);
-		}
+		await window.getInfinityConsole().changeNetwork(keys[selected]);
 		session.environment.defaultNetwork = keys[selected];
 		saveSession(session);
-		await window.getContainer().reload();
 	});
 };
 

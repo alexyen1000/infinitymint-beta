@@ -1,7 +1,7 @@
 import { BigNumber } from "ethers";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
-import { debugLog, FuncSingle, log } from "./helpers";
+import { debugLog, FuncDouble, FuncSingle, log } from "./helpers";
 import { ServerOptions } from "ganache";
 import { EventEmitter } from "events";
 import { Contract } from "@ethersproject/contracts";
@@ -555,6 +555,7 @@ export interface InfinityMintEnvironment {
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
 	OVERWRITE_CONSOLE_METHODS?: boolean;
 	INFINITYMINT_DONT_INCLUDE_DEPLOY?: boolean;
+	INFINITYMINT_DONT_INCLUDE_SCRIPTS?: boolean;
 	GANACHE_PORT?: number;
 	THROW_ALL_ERRORS?: boolean;
 	INFINITYMINT_CONSOLE?: boolean;
@@ -987,7 +988,9 @@ export interface InfinityMintConsoleOptions {
 export interface InfinityMintScript {
 	name?: string;
 	description?: string;
-	execute: FuncSingle<InfinityMintScriptParameters, Promise<void>>;
+	execute: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
+	loaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
+	reloaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
 	arguments?: InfinityMintScriptArguments[];
 }
 
@@ -999,6 +1002,13 @@ export interface InfinityMintScriptParameters
 		Dictionary<any> {
 	gems?: Dictionary<InfinityMintGemScript>;
 	args?: Dictionary<InfinityMintScriptArguments>;
+}
+
+export interface InfinityMintScriptEventParameters {
+	console?: InfinityConsole;
+	log: typeof log;
+	debugLog: typeof debugLog;
+	script?: InfinityMintDeploymentScript;
 }
 
 export interface InfinityMintDeploymentParametersDeployments

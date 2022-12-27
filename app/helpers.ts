@@ -1,12 +1,14 @@
 import Pipes, { Pipe } from "./pipes";
 import fsExtra from "fs-extra";
 import fs, { PathLike } from "fs";
+import path from "path";
 import {
 	InfinityMintConfig,
 	InfinityMintEnvironment,
 	InfinityMintEnvironmentKeys,
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
+	InfinityMintScript,
 	InfinityMintSession,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
@@ -17,6 +19,8 @@ import {
 	registerGasPriceHandler,
 	registerTokenPriceHandler,
 } from "./gasAndPrices";
+import { glob } from "glob";
+import { InfinityConsole } from "./console";
 
 export interface Vector {
 	x: number;
@@ -213,10 +217,14 @@ export const readSession = (): InfinityMintSession => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let consoleLog = console.log;
-	console.log = (msg: string | object, setPipe = true) => {
+
+	console.log = (msg: string | object) => {
 		if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
 
-		if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
+		if (
+			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
+			Pipes.logs[Pipes.currentPipe] !== undefined
+		)
 			Pipes.getPipe(Pipes.currentPipe).log(msg);
 
 		if (
@@ -224,12 +232,12 @@ export const overwriteConsoleMethods = () => {
 			(Pipes.logs[Pipes.currentPipe] === undefined &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
-			consoleLog(msg);
+			consoleLog(msg.replace("<#DONT_LOG_ME$>", ""));
 	};
 
 	let consoleError = console.error;
-	console.error = (error: any | Error, setPipe = true) => {
-		if (setPipe && Pipes.logs[Pipes.currentPipe])
+	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
+		if (Pipes.logs[Pipes.currentPipe] && dontSendToPipe !== true)
 			Pipes.getPipe(Pipes.currentPipe).error(error);
 
 		if (isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT"))
@@ -461,6 +469,93 @@ export const getPackageJson = () => {
 			}
 		)
 	);
+};
+
+export const findFiles = (globPattern: string) => {
+	return new Promise<string[]>((resolve, reject) => {
+		glob(globPattern, (err: Error, matches: string[]) => {
+			if (err) throw err;
+
+			resolve(matches);
+		});
+	});
+};
+
+export const isTypescript = () => {
+	let session = readSession();
+
+	return session.environment?.javascript !== true;
+};
+
+export const getFileImportExtension = () => {
+	let session = readSession();
+
+	if (session.environment?.javascript) return ".js";
+
+	return ".ts";
+};
+
+/**
+ * looks for scripts inside of cwd /scripts/ and if we aren't infinityMint and the env variable INFINITYMINT_s
+ * @param extension
+ * @param roots
+ * @returns
+ */
+export const findScripts = async (extension?: string, roots?: string[]) => {
+	roots = roots || [process.cwd() + "/"];
+
+	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_SCRIPTS"))
+		roots.push(process.cwd() + "/node_modules/infinitymint/");
+
+	let scanned = [];
+	for (let i = 0; i < roots.length; i++) {
+		let location = roots[i];
+		let path =
+			location + "scripts/**/*" + (extension || getFileImportExtension());
+
+		debugLog("scanning " + path);
+		scanned = [...scanned, ...(await findFiles(path))];
+	}
+
+	scanned = scanned.map((fullPath) => {
+		return path.parse(fullPath);
+	});
+
+	return scanned as path.ParsedPath[];
+};
+
+/**
+ * Checks cwd for a /script/ folder and looks for a script with that name. if it can't find it will look in this repos deploy scripts and try and return that
+ * @param fileName
+ * @param root
+ * @returns
+ */
+export const requireScript = async (
+	fullPath: string,
+	console?: InfinityConsole
+) => {
+	if (!fs.existsSync(fullPath))
+		throw new Error("cannot find script: " + fullPath);
+
+	if (require.cache[fullPath]) {
+		debugLog("deleting old cache of " + fullPath);
+		delete require.cache[fullPath];
+	}
+
+	let result = await require(fullPath);
+	result = result.default || result;
+
+	if (result?.loaded !== undefined) {
+		debugLog("calling (loaded) on " + fullPath);
+		await (result as InfinityMintScript).loaded({
+			log,
+			debugLog,
+			console,
+			script: result,
+		});
+	}
+
+	return result as InfinityMintScript;
 };
 
 export const isInfinityMint = () => {

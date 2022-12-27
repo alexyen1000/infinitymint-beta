@@ -9,6 +9,7 @@ import {
 import {
 	debugLog,
 	getCompiledProject,
+	getFileImportExtension,
 	getProject,
 	initializeGanacheMnemonic,
 	isEnvTrue,
@@ -81,10 +82,7 @@ export class InfinityMintDeployment {
 		if (
 			fs.existsSync(process.cwd() + "/deploy/" + deploymentScriptLocation)
 		)
-			this.deploymentScript = require(process.cwd() +
-				"/deploy/" +
-				deploymentScriptLocation)
-				.default as InfinityMintDeploymentScript;
+			this.reloadScript();
 		else
 			debugLog(
 				`deploy script for [${this.key}]<${this.project}> not found`
@@ -123,9 +121,16 @@ export class InfinityMintDeployment {
 	/**
 	 * reloads the source file script
 	 */
-	reload() {
-		this.deploymentScript = require("./../" + this.deploymentScriptLocation)
-			.default as InfinityMintDeploymentScript;
+	async reloadScript() {
+		let location = process.cwd() + this.deploymentScriptLocation;
+		if (require.cache[location] !== undefined) {
+			debugLog("deleting old cache of " + location);
+			delete require.cache[location];
+			debugLog(`reloading <${location}>`);
+		} else debugLog(`loading <${location}>`);
+
+		let requirement = require(location);
+		this.deploymentScript = requirement.default || requirement;
 	}
 
 	/**
@@ -379,6 +384,7 @@ export class InfinityMintDeployment {
 	}
 
 	async deploy(...args: any) {
+		this.reloadScript();
 		let result = await this.execute("deploy", args);
 
 		let contracts: Contract[];
@@ -442,6 +448,7 @@ export class InfinityMintDeployment {
 	}
 
 	async setup(...args: any) {
+		this.reloadScript();
 		await this.execute("setup", args);
 		this.hasSetupDeployments = true;
 	}
@@ -687,7 +694,10 @@ export const getDeploymentClasses = (
 		if (network === undefined)
 			throw new Error("unable to automatically determain network");
 
-		let filePath = (root || process.cwd() + "/") + "deploy/**/*.ts";
+		let filePath =
+			(root || process.cwd() + "/") +
+			"deploy/**/*." +
+			getFileImportExtension();
 		debugLog("finding deployment scripts in: " + filePath);
 		glob(filePath, (err: Error | null, matches: any[]) => {
 			if (err) throw err;

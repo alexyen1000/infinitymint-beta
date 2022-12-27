@@ -4,6 +4,7 @@ import {
 	getPackageJson,
 	getSolidityFolder,
 	isEnvTrue,
+	isTypescript,
 	warning,
 } from "../helpers";
 import { InfinityMintWindow } from "../window";
@@ -348,7 +349,11 @@ Menu.initialize = async (window, frame, blessed) => {
 		style: {
 			fg: "white",
 		},
-		content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidityFolder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}defaultAccount =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}`,
+		content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
+			window.getInfinityConsole().getScripts().length
+		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
+			isTypescript() ? "true" : "false"
+		}{/white-fg}{/gray-bg}`,
 	});
 
 	window.createElement("networkLabel", {
