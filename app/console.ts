@@ -425,11 +425,11 @@ export class InfinityConsole {
 			width: "80%",
 			height: "shrink",
 			padding: 1,
-			content: `{white-bg}CRITICAL ERROR - SYSTEM MALFUCTION: ${
+			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION: ${
 				error.message
-			} at ${Date.now()}{/white-bg}\n\n ${
+			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
 				error.stack
-			} \n\n {white-bg}infinitymint-beta{/white-bg}`,
+			} \n\n {white-bg}{black-fg}infinitymint-beta{/black-fg}{/white-bg}`,
 			tags: true,
 			border: {
 				type: "line",

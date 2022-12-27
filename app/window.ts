@@ -776,6 +776,10 @@ export class InfinityMintWindow {
 
 			this.screen.append(element);
 		});
+		this.screen.render();
+
+		this.hideButton.setFront();
+		this.closeButton.setFront();
 		//frame title
 		await this.updateFrameTitle();
 	}

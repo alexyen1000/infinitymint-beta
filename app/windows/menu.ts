@@ -6,7 +6,7 @@ import {
 	warning,
 } from "../helpers";
 import { InfinityMintWindow } from "../window";
-import fs from "fs";
+import hre from "hardhat";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
@@ -22,8 +22,6 @@ const Menu = new InfinityMintWindow(
 	}
 );
 
-Menu.think = (window, frame, blessed) => {};
-
 let createButtons = (window) => {
 	let deploy = window.createElement("deploy", {
 		bottom: 0,
@@ -32,14 +30,14 @@ let createButtons = (window) => {
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Deploy",
+		content: "Deploy Projects",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "green",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -52,21 +50,21 @@ let createButtons = (window) => {
 		await window.openWindow("Deploy");
 	});
 
-	let test = window.createElement("test", {
+	let browser = window.createElement("browser", {
 		bottom: 0,
 		left: calculateWidth(deploy),
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Test",
+		content: "Download Projects",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "yellow",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -75,25 +73,25 @@ let createButtons = (window) => {
 			},
 		},
 	});
-	test.on("click", async () => {
-		await window.openWindow("Test");
+	browser.on("click", async () => {
+		await window.openWindow("Browser");
 	});
 
-	let exportButton = window.createElement("export", {
+	let compile = window.createElement("compile", {
 		bottom: 0,
-		left: calculateWidth(deploy, test),
+		left: calculateWidth(deploy, browser),
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Export",
+		content: "Compile Projects",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "blue",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -105,12 +103,12 @@ let createButtons = (window) => {
 
 	let scripts = window.createElement("scripts", {
 		bottom: 0,
-		left: calculateWidth(deploy, test, exportButton),
+		left: calculateWidth(deploy, browser, compile),
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Scripts",
+		content: "Run Scripts",
 		tags: true,
 		border: {
 			type: "line",
@@ -130,41 +128,14 @@ let createButtons = (window) => {
 		await window.openWindow("Scripts");
 	});
 
-	let projects = window.createElement("projects", {
-		bottom: 0,
-		left: calculateWidth(deploy, test, exportButton, scripts),
-		shrink: true,
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Projects",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-	projects.on("click", async () => {
-		await window.openWindow("Projects");
-	});
-
 	let deployments = window.createElement("deployments", {
 		bottom: 0,
-		left: calculateWidth(deploy, test, exportButton, scripts, projects),
+		left: calculateWidth(deploy, browser, compile, scripts),
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Deployments",
+		content: "All Deployments",
 		tags: true,
 		border: {
 			type: "line",
@@ -186,26 +157,19 @@ let createButtons = (window) => {
 
 	let networks = window.createElement("networks", {
 		bottom: 0,
-		left: calculateWidth(
-			deploy,
-			test,
-			exportButton,
-			scripts,
-			projects,
-			deployments
-		),
+		right: 0,
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Networks",
+		content: "Change Network",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "black",
+			bg: "cyan",
 			border: {
 				fg: "#ffffff",
 			},
@@ -217,6 +181,18 @@ let createButtons = (window) => {
 	networks.on("click", async () => {
 		await window.openWindow("Networks");
 	});
+};
+
+Menu.think = (window, frame, blessed) => {
+	if (window.getElement("timeLabel")) {
+		window
+			.getElement("timeLabel")
+			.setContent(
+				`{white-bg}{black-fg}${new Date(
+					Date.now()
+				).toString()}{/black-fg}{/white-bg}`
+			);
+	}
 };
 
 Menu.initialize = async (window, frame, blessed) => {
@@ -241,8 +217,7 @@ Menu.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-
-	createButtons(window);
+	background.setBack();
 
 	let packageVersion = "1.0.1";
 	try {
@@ -260,7 +235,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		left: 4,
 		style: {
 			fg: "white",
-			bg: "yellow",
+			bg: Math.random() * 10 > 5 ? "blue" : "cyan",
 			border: {
 				fg: "#f0f0f0",
 			},
@@ -272,40 +247,42 @@ Menu.initialize = async (window, frame, blessed) => {
 		height: "100%-" + (container.top + container.bottom - 2),
 		parent: container,
 		top: -2,
-		left: -2,
 		style: {
 			fg: "white",
-			bg: "white",
+			bg: "black",
 			border: {
 				fg: "#f0f0f0",
 			},
 		},
 	});
 
-	let logoWidth = Math.floor(151 * 0.375);
-	if (container.height > 10) {
-		window.createElement(
-			"logo",
-			{
-				top: container.top - 2,
-				left: frame.left + frame.right + 16,
-				width: logoWidth,
-				height: container.height / 2 + 6,
-				file: "./resources/logo.gif",
-				animate: true,
-				style: {
-					bg: "white",
+	let logoWidth =
+		Math.floor(151 * 0.22) + container.height * 0.2 + container.width * 0.1;
+	if (container.height > 18) {
+		//hide logo if screen too small
+		if (container.width > 120)
+			window.createElement(
+				"logo",
+				{
+					top: container.top - 2,
+					left: frame.left + frame.right + 20,
+					width: logoWidth,
+					height: logoWidth / 2.7,
+					file: "./resources/logo.gif",
+					animate: true,
+					style: {
+						bg: "white",
+					},
+					search: true,
 				},
-				search: true,
-			},
-			"image"
-		);
+				"image"
+			);
 
 		window.createElement(
 			"title",
 			{
 				right: container.right,
-				bottom: container.bottom + 2,
+				bottom: container.bottom + 4,
 				width: "shrink",
 				height: "shrink",
 				tags: true,
@@ -318,9 +295,9 @@ Menu.initialize = async (window, frame, blessed) => {
 			"bigtext"
 		);
 	} else
-		window.createElement("tonyTitle", {
+		window.createElement("tinyTitle", {
 			right: container.right,
-			bottom: container.bottom + 3,
+			bottom: container.bottom + 4,
 			width: "shrink",
 			height: "shrink",
 			tags: true,
@@ -328,12 +305,12 @@ Menu.initialize = async (window, frame, blessed) => {
 			style: {
 				fg: "white",
 			},
-			content: `infinitymint`,
+			content: `I N F I N I T Y  M I N T by {underline}0x0zAgency{/underline}`,
 		});
 
 	window.createElement("subTitle", {
 		right: container.right,
-		bottom: container.bottom + 2,
+		bottom: container.bottom + 3,
 		width: "shrink",
 		height: "shrink",
 		tags: true,
@@ -343,7 +320,48 @@ Menu.initialize = async (window, frame, blessed) => {
 		},
 		content: `version ${packageVersion}`,
 	});
-	background.setBack();
+
+	window.createElement("company", {
+		left: container.left + 2,
+		top: container.top,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		bold: true,
+		style: {
+			fg: "white",
+		},
+		content: `0x0z`,
+	});
+
+	window.createElement("networkLabel", {
+		right: container.right,
+		bottom: container.bottom + 1,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		bold: true,
+		style: {
+			fg: "white",
+		},
+		content: `{white-bg}{black-fg}${hre.network.name}{/black-fg}{/white-bg}`,
+	});
+	window.createElement("timeLabel", {
+		right: container.right,
+		bottom: container.bottom,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		bold: true,
+		style: {
+			fg: "white",
+		},
+		content: `{white-bg}{black-fg}${new Date(
+			Date.now()
+		).toString()}{/black-fg}{/white-bg}`,
+	});
+
+	createButtons(window);
 };
 
 export default Menu;
