@@ -77,6 +77,10 @@ export class InfinityConsole {
 			CloseBox,
 		];
 
+		this.registerDefaultKeys();
+	}
+
+	public registerDefaultKeys() {
 		//default input keys
 		this.inputKeys = {
 			"C-l": [
@@ -130,7 +134,7 @@ export class InfinityConsole {
 
 						this.setWindow("CloseBox");
 						//if the closeBox aka the current window is visible and we press control-c again just exit
-					} else {
+					} else if (this.currentWindow?.name === "CloseBox") {
 						if (this.currentWindow.isVisible()) process.exit(0);
 						else this.currentWindow.show();
 					}
@@ -206,6 +210,9 @@ export class InfinityConsole {
 	}
 
 	public async reload() {
+		Object.keys(this.inputKeys).forEach((key) => {
+			this.unkey(key);
+		});
 		this.currentWindow = undefined;
 		this.windows.forEach((window) => window.destroy());
 		this.windowManager.destroy();
@@ -213,6 +220,7 @@ export class InfinityConsole {
 		this.screen.render();
 		this.network = undefined;
 		this.windowManager = undefined;
+		this.registerDefaultKeys();
 		await this.initialize();
 		this.updateWindowsList();
 	}
@@ -442,6 +450,7 @@ export class InfinityConsole {
 		errorBox.setFront();
 		this.screen.append(errorBox);
 		this.screen.render();
+		errorBox.focus();
 	}
 
 	public registerKeys() {
@@ -507,6 +516,8 @@ export class InfinityConsole {
 				(cb) => cb.toString() !== cb.toString()
 			);
 		}
+
+		if (this.inputKeys[key].length === 0) this.screen.unkey([key]);
 	}
 
 	public errorHandler(error: Error | string) {
