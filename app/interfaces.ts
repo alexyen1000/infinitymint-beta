@@ -907,6 +907,18 @@ export interface InfinityMintScriptArguments {
 export interface InfinityMintConsoleOptions {
 	blessed?: Dictionary<any>;
 	/**
+	 * custom think method
+	 */
+	think: Function;
+	/**
+	 * number of ms to wait before running think again
+	 */
+	tickRate: number;
+	/**
+	 * if to throw errors outside of the console
+	 */
+	throwErrors: boolean;
+	/**
 	 * the initial window the console should open into
 	 */
 	initialWindow?: string | Window;

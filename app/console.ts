@@ -39,19 +39,21 @@ const blessed = require("blessed");
 export type InfinityConsoleInputOn = Array<Function>;
 export type InfinityConsoleInputKey = Array<Function>;
 
+/**
+ * Powered by Blessed-cli the InfinityConsole is the container of InfinityMintWindows. See {@link app/window.InfinityMintWindow}.
+ */
 export class InfinityConsole {
-	private screen: BlessedElement;
-	private options?: InfinityMintConsoleOptions;
+	public think?: any;
 
 	protected currentWindow?: InfinityMintWindow;
 	protected windows: InfinityMintWindow[];
-	protected canExit: boolean;
+	protected allowExit: boolean;
 
-	private interval?: any;
+	private screen: BlessedElement;
+	private options?: InfinityMintConsoleOptions;
 	private network?: HardhatRuntimeEnvironment["network"];
 	private signers?: SignerWithAddress[];
 	private windowManager?: any;
-	private optionsBox?: any;
 	private inputKeys: Dictionary<
 		InfinityConsoleInputOn | InfinityConsoleInputKey
 	>;
@@ -59,7 +61,7 @@ export class InfinityConsole {
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
 		this.windows = [];
-		this.canExit = true;
+		this.allowExit = true;
 		this.options = options;
 		this.windows = [
 			Menu,
@@ -112,6 +114,11 @@ export class InfinityConsole {
 			],
 			"C-c": [
 				(ch: string, key: string) => {
+					if (!this.allowExit) {
+						debugLog("not showing CloseBox as allowExit is false");
+						return;
+					}
+
 					this.windowManager.setBack();
 
 					if (this.currentWindow?.name !== "CloseBox") {
@@ -250,6 +257,9 @@ export class InfinityConsole {
 		);
 	};
 
+	/**
+	 * updates the window list with options
+	 */
 	public updateWindowsList() {
 		this.windowManager.setItems(
 			[...this.windows].map(
@@ -271,6 +281,9 @@ export class InfinityConsole {
 		);
 	}
 
+	/**
+	 * Creates the windows list which lets you select which window you want to open
+	 */
 	public createWindowManager() {
 		//incase this is ran again, delete the old windowManager
 		if (this.windowManager !== undefined) {
@@ -346,9 +359,10 @@ export class InfinityConsole {
 		this.windowManager.setBack();
 	}
 
+	/**
+	 * This basically captures errors which occur on keys/events and still pipes them to the current pipe overwrites the key method to capture errors and actually console.error them instead of swallowing them
+	 */
 	public captureEventErrors() {
-		//This basically captures errors which occur on keys/events and still pipes them to the current pipe
-		//overwrites the key method to capture errors and actually console.error them instead of swallowing them
 		this.screen.oldKey = this.screen.key;
 		this.screen.key = (param1: any, cb: any) => {
 			if (typeof cb === typeof Promise)
@@ -450,6 +464,14 @@ export class InfinityConsole {
 		});
 	}
 
+	public setAllowExit(canExit: boolean) {
+		this.allowExit = canExit;
+	}
+
+	public canExit() {
+		return this.allowExit;
+	}
+
 	public key(key: string, cb: Function) {
 		if (this.inputKeys === undefined) this.inputKeys = {};
 
@@ -487,9 +509,10 @@ export class InfinityConsole {
 	}
 
 	public errorHandler(error: Error | unknown) {
-		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-
 		console.error(error);
+		if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
+			throw error;
+
 		this.displayError(error, (errorBox: BlessedElement) => {
 			errorBox.destroy();
 		});
@@ -569,8 +592,8 @@ export class InfinityConsole {
 				this.registerEvents();
 			}
 
-			//update interval for thinks
-			this.interval = setInterval(() => {
+			//the think method for this console
+			let int = () => {
 				this.windows.forEach((window) => {
 					if (
 						window.isAlive() &&
@@ -582,7 +605,11 @@ export class InfinityConsole {
 				});
 
 				this.screen.render();
-			}, 33);
+			};
+			this.think = setInterval(
+				this.options?.think || int,
+				this.options?.tickRate
+			);
 
 			//render
 			this.screen.render();
@@ -591,29 +618,27 @@ export class InfinityConsole {
 			//show the current window
 			this.currentWindow.show();
 		} catch (error: Error | any) {
-			Pipes.getPipe(Pipes.currentPipe).error(error as any);
-			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-			else {
-				this.screen.destroy();
-				this.screen = blessed.screen(
-					this.options?.blessed || {
-						smartCRS: true,
-						dockBorders: true,
-						debug: true,
-						sendFocus: true,
-					}
-				);
+			console.error(error);
 
-				this.displayError(error);
+			if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
+				throw error;
 
-				//register escape key
-				this.screen.key(
-					["escape", "C-c"],
-					(ch: string, key: string) => {
-						process.exit(0);
-					}
-				);
-			}
+			this.screen.destroy();
+			this.screen = blessed.screen(
+				this.options?.blessed || {
+					smartCRS: true,
+					dockBorders: true,
+					debug: true,
+					sendFocus: true,
+				}
+			);
+
+			this.displayError(error);
+
+			//register escape key
+			this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
+				process.exit(0);
+			});
 		}
 	}
 }

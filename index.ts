@@ -109,6 +109,7 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 
 	let infinityConsole = new InfinityConsole(options);
 	await infinityConsole.initialize();
+	return infinityConsole;
 };
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (config.console)

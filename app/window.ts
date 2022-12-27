@@ -380,11 +380,12 @@ export class InfinityMintWindow {
 		});
 
 		//unkeys everything to do with the window
-		Object.keys(this.inputKeys).forEach((key) => {
-			Object.values(this.inputKeys[key]).forEach((cb) => {
-				this.unkey(key, cb);
+		if (this.inputKeys !== undefined)
+			Object.keys(this.inputKeys).forEach((key) => {
+				Object.values(this.inputKeys[key]).forEach((cb) => {
+					this.unkey(key, cb);
+				});
 			});
-		});
 
 		this.elements = {};
 	}
