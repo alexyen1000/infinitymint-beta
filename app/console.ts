@@ -439,7 +439,7 @@ export class InfinityConsole {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 			}
 
-			debugLog(`registering key command for key {${key}}`);
+			debugLog(`registering keyboard shortcut method on [${key}]`);
 			this.screen.key([key], (ch: string, _key: string) => {
 				debugLog(`executing methods for key (${key})'`);
 				this.inputKeys[key].forEach((method, index) => {
@@ -453,7 +453,7 @@ export class InfinityConsole {
 	public key(key: string, cb: Function) {
 		if (this.inputKeys === undefined) this.inputKeys = {};
 
-		debugLog(`registering key command for key [${key}]`);
+		debugLog(`registering keyboard shortcut [${key}]`);
 		if (this.inputKeys[key] === undefined) {
 			this.inputKeys[key] = [];
 			this.screen.key([key], (ch: string, _key: string) => {

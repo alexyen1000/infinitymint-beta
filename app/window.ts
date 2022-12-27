@@ -42,7 +42,7 @@ export class InfinityMintWindow {
 	protected x: number;
 	protected y: number;
 	protected z: number;
-	//blessed
+
 	private screen: any;
 	private style: any;
 	private border: any;
@@ -137,6 +137,12 @@ export class InfinityMintWindow {
 		return this.initialCreation;
 	}
 
+	/**
+	 * A fully mutable object which can hold options which persist between InfinityMint terminal sessions. You can use this along with saveOptions to write variables to the .session file.
+	 *
+	 * See {@link app/interfaces.InfinityMintSession}
+	 * @param defaultOptions
+	 */
 	public loadOptions(defaultOptions: Dictionary<any>) {
 		let session = readSession();
 		this.options = session.environment["Window_" + this.name] || {};
