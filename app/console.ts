@@ -7,6 +7,7 @@ import {
 	isEnvSet,
 	isEnvTrue,
 	log,
+	warning,
 } from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
@@ -462,6 +463,7 @@ export class InfinityConsole {
 				this.screen.unkey([key]);
 			} catch (error) {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+				warning("could not unkey " + key);
 			}
 
 			debugLog(`registering keyboard shortcut method on [${key}]`);
@@ -517,7 +519,10 @@ export class InfinityConsole {
 			);
 		}
 
-		if (this.inputKeys[key].length === 0) this.screen.unkey([key]);
+		if (this.inputKeys[key].length === 0) {
+			this.screen.unkey([key]);
+			delete this.inputKeys[key];
+		}
 	}
 
 	public errorHandler(error: Error | string) {

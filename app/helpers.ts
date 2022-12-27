@@ -150,6 +150,18 @@ export const debugLog = (msg: string | object | number) => {
 	log(msg, "debug");
 };
 
+/**
+ * Logs a debug message to the current pipe.
+ * @param msg
+ * @param pipe
+ */
+export const warning = (msg: string | object | number) => {
+	log(
+		`{yellow-fg}⚠️${msg}{/yellow-fg}`,
+		isEnvTrue("PIPE_SEPERATE_WARNINGS") ? "warning" : "debug"
+	);
+};
+
 export const calculateWidth = (...elements: BlessedElement[]) => {
 	let fin = 0;
 	elements
@@ -358,9 +370,8 @@ export const cleanCompilations = () => {
 			force: true,
 		} as any);
 	} catch (error: any) {
-		debugLog("unable to delete folder: " + error?.message || error);
-
 		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+		warning("unable to delete folder: " + error?.message || error);
 	}
 };
 
@@ -508,6 +519,12 @@ export const preInitialize = () => {
 		listen: isEnvTrue("PIPE_ECHO_DEBUG"),
 		save: true,
 	});
+
+	if (isEnvTrue("PIPE_SEPERATE_WARNINGS"))
+		Pipes.registerSimplePipe("warnings", {
+			listen: isEnvTrue("PIPE_ECHO_WARNINGS"),
+			save: true,
+		});
 };
 
 export const initializeGanacheMnemonic = () => {

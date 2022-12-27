@@ -545,6 +545,8 @@ export interface InfinityMintEnvironment {
 	DEFAULT_WALLET_MNEMOMIC?: string;
 	BACKUP_WALLET_MNEMONIC?: string;
 	PIPE_ECHO_ERRORS?: boolean;
+	PIPE_ECHO_WARNINGS?: boolean;
+	PIPE_SEPERATE_WARNINGS?: boolean;
 	PIPE_LOG_ERRORS_TO_DEFAULT?: boolean;
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
 	OVERWRITE_CONSOLE_METHODS?: boolean;

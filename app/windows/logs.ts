@@ -87,50 +87,48 @@ Logs.think = (window, frame, blessed) => {
 
 //initializes the console
 Logs.initialize = async (window, frame, blessed) => {
-	/**
-	 * method to register command keys for this window
-	 * @param onlyDelete
-	 */
-	let registerKeys = (onlyDelete?: boolean) => {
-		window.unkey("up");
+	window.unkey("up");
+	window.key("up", (ch: string, key: string) => {
+		//don't if we are invisible
+		if (window.isVisible() === false) return;
 
-		if (onlyDelete !== true)
-			window.key("up", (ch: string, key: string) => {
-				if (window.options.alwaysScroll) {
-					window.options.alwaysScroll = false;
-					alwaysScrollUpdate();
-					window.saveOptions();
-				}
+		if (window.options.alwaysScroll) {
+			window.options.alwaysScroll = false;
+			alwaysScrollUpdate();
+			window.saveOptions();
+		}
 
-				window.options.selectedLine = Math.max(
-					0,
-					window.options.selectedLine - 1
-				);
-			});
+		window.options.selectedLine = Math.max(
+			0,
+			window.options.selectedLine - 1
+		);
+	});
 
-		window.unkey("down");
-		if (onlyDelete !== true)
-			window.key("down", (ch: string, key: string) => {
-				window.options.selectedLine = Math.min(
-					(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
-					window.options.selectedLine + 1
-				);
-			});
+	window.unkey("down");
+	window.key("down", (ch: string, key: string) => {
+		if (window.isVisible() === false) return;
 
-		//centers the scroll of the console to the selected line position when you do Control-Q
-		window.unkey("C-q");
-		if (onlyDelete !== true)
-			window.key("C-q", (ch: string, key: string) => {
-				let selectedLinePosition = [
-					...(Pipes.logs[window.options.pipe]?.logs || [""]),
-				]
-					.slice(0, window.options.selectedLine)
-					.join("\n")
-					.split("\n").length;
+		window.options.selectedLine = Math.min(
+			(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
+			window.options.selectedLine + 1
+		);
+	});
 
-				console.setScroll(selectedLinePosition);
-			});
-	};
+	//centers the scroll of the console to the selected line position when you do Control-Q
+	window.unkey("C-q");
+	window.key("C-q", (ch: string, key: string) => {
+		if (window.isVisible() === false) return;
+
+		let selectedLinePosition = [
+			...(Pipes.logs[window.options.pipe]?.logs || [""]),
+		]
+			.slice(0, window.options.selectedLine)
+			.join("\n")
+			.split("\n").length;
+
+		console.setScroll(selectedLinePosition);
+	});
+
 	//load the options with default values
 	window.loadOptions({
 		alwaysScroll: true,
@@ -409,7 +407,6 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.saveOptions();
 	});
 
-	registerKeys(true);
 	window.think(window, frame, blessed); //do think once
 
 	//save when the window is destroyed
@@ -419,12 +416,7 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	//save when the window is hidden
 	window.on("hide", () => {
-		registerKeys(true);
 		window.saveOptions();
-	});
-
-	window.on("show", () => {
-		registerKeys();
 	});
 };
 

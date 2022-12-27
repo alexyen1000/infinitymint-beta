@@ -10,6 +10,7 @@ import {
 	getSolidityFolder,
 	isEnvTrue,
 	calculateWidth,
+	warning,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -136,7 +137,7 @@ export class InfinityMintWindow {
 			}
 		} catch (error) {
 			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-			this.log(
+			this.warning(
 				"failed to edit visiblity of close button: " + error.message
 			);
 		}
@@ -160,7 +161,7 @@ export class InfinityMintWindow {
 			}
 		} catch (error) {
 			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-			this.log(
+			this.warning(
 				"failed to edit visiblity of minimize button: " + error.message
 			);
 		}
@@ -390,6 +391,21 @@ export class InfinityMintWindow {
 			return string + ` => <${window.name}>[${window.getId()}]`;
 
 		debugLog(string + ` => <${window.name}>[${window.getId()}]`);
+	}
+
+	public warning(
+		string?: string | string[],
+		window?: any,
+		returnString?: boolean
+	) {
+		window = window || this;
+		if (typeof string === typeof Array)
+			string = (string as string[]).join(" ");
+
+		if (returnString)
+			return string + ` => <${window.name}>[${window.getId()}]`;
+
+		warning(string + ` => <${window.name}>[${window.getId()}]`);
 	}
 
 	/**
