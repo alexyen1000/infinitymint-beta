@@ -2,11 +2,13 @@ import {
 	calculateWidth,
 	debugLog,
 	getPackageJson,
+	getSolidityFolder,
 	isEnvTrue,
 	warning,
 } from "../helpers";
 import { InfinityMintWindow } from "../window";
 import hre from "hardhat";
+import { getDefaultAccountIndex } from "../web3";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
@@ -256,9 +258,10 @@ Menu.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	let logoWidth =
-		Math.floor(151 * 0.22) + container.height * 0.2 + container.width * 0.1;
-	if (container.height > 18) {
+	let logoWidth = Math.floor(
+		Math.floor(151 * 0.2) + container.height * 0.2 + container.width * 0.1
+	);
+	if (container.height >= 18) {
 		//hide logo if screen too small
 		if (container.width > 120)
 			window.createElement(
@@ -267,11 +270,11 @@ Menu.initialize = async (window, frame, blessed) => {
 					top: container.top - 2,
 					left: frame.left + frame.right + 20,
 					width: logoWidth,
-					height: logoWidth / 2.7,
+					height: logoWidth / 3,
 					file: "./resources/logo.gif",
 					animate: true,
 					style: {
-						bg: "white",
+						bg: "gray",
 					},
 					search: true,
 				},
@@ -282,7 +285,7 @@ Menu.initialize = async (window, frame, blessed) => {
 			"title",
 			{
 				right: container.right,
-				bottom: container.bottom + 4,
+				bottom: container.bottom + 3,
 				width: "shrink",
 				height: "shrink",
 				tags: true,
@@ -297,7 +300,7 @@ Menu.initialize = async (window, frame, blessed) => {
 	} else
 		window.createElement("tinyTitle", {
 			right: container.right,
-			bottom: container.bottom + 4,
+			bottom: container.bottom + 3,
 			width: "shrink",
 			height: "shrink",
 			tags: true,
@@ -308,9 +311,9 @@ Menu.initialize = async (window, frame, blessed) => {
 			content: `I N F I N I T Y  M I N T by {underline}0x0zAgency{/underline}`,
 		});
 
-	window.createElement("subTitle", {
+	window.createElement("versionLabel", {
 		right: container.right,
-		bottom: container.bottom + 3,
+		bottom: container.bottom + 2,
 		width: "shrink",
 		height: "shrink",
 		tags: true,
@@ -321,7 +324,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		content: `version ${packageVersion}`,
 	});
 
-	window.createElement("company", {
+	window.createElement("companyLabel", {
 		left: container.left + 2,
 		top: container.top,
 		width: "shrink",
@@ -332,6 +335,20 @@ Menu.initialize = async (window, frame, blessed) => {
 			fg: "white",
 		},
 		content: `0x0z`,
+	});
+
+	window.createElement("cwdAndSolidityLabel", {
+		left: 2,
+		bottom: 1,
+		parent: container,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		bold: true,
+		style: {
+			fg: "white",
+		},
+		content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidityFolder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}defaultAccount =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}`,
 	});
 
 	window.createElement("networkLabel", {

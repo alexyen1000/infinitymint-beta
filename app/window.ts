@@ -582,25 +582,24 @@ export class InfinityMintWindow {
 	}
 
 	public async updateFrameTitle() {
-		let defaultSigner = await getDefaultSigner();
-		let balance = await defaultSigner.getBalance();
+		let account = this.getContainer().getAccount();
+		let balance = this.getContainer().getBalance();
 		let getAccountIndex = getDefaultAccountIndex();
 		this.log(
-			"main account: [" +
-				getAccountIndex +
-				"] => " +
-				defaultSigner.address
+			"main account: [" + getAccountIndex + "] => " + account.address
 		);
 		let etherBalance = ethers.utils.formatEther(balance);
 		this.log("balance of account: " + etherBalance);
 		this.getElement("frame").setContent(
-			` {bold}${
-				this.name
-			}{/bold} | {yellow-fg}[${getAccountIndex}]{/yellow-fg} {underline}${
-				defaultSigner.address
-			}{/underline} | {magenta-bg}${
+			`{bold}{yellow-fg}${
 				hre.network.name
-			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Root: {cyan-fg}${getSolidityFolder()}{/cyan-fg}`
+			} [${this.getContainer().getCurrentChainId()}]{/bold} {underline}${
+				account.address
+			}{/underline}{/yellow-fg} {black-bg}{white-fg}{bold}${etherBalance} ETH ($${(
+				parseFloat(etherBalance) * 2222
+			).toFixed(
+				2
+			)}){/bold}{/white-fg}{/black-bg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/red-fg}{/green-bg}`
 		);
 	}
 

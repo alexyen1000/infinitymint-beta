@@ -13,10 +13,11 @@ import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getProvider } from "./web3";
+import { getDefaultSigner, getProvider } from "./web3";
 import Pipes from "./pipes";
 import { FuncDouble } from "./helpers";
 import { Dictionary } from "form-data";
+import { BigNumber } from "ethers";
 
 //core windows
 import Logs from "./windows/logs";
@@ -54,6 +55,9 @@ export class InfinityConsole {
 	private signers?: SignerWithAddress[];
 	private windowManager?: BlessedElement;
 	private inputKeys: Dictionary<Array<Function>>;
+	private chainId: number;
+	private account: SignerWithAddress;
+	private balance: BigNumber;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -79,6 +83,18 @@ export class InfinityConsole {
 		];
 
 		this.registerDefaultKeys();
+	}
+
+	public getAccount() {
+		return this.account;
+	}
+
+	public getBalance() {
+		return this.balance;
+	}
+
+	public getCurrentChainId() {
+		return this.chainId;
 	}
 
 	public registerDefaultKeys() {
@@ -534,16 +550,22 @@ export class InfinityConsole {
 		});
 	}
 
+	public async refreshWeb3() {
+		this.network = hre.network;
+		this.chainId = (await getProvider().getNetwork()).chainId;
+		this.account = await getDefaultSigner();
+		this.balance = await this.account.getBalance();
+	}
+
 	public async initialize() {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
-		this.network = hre.network;
+		await this.refreshWeb3();
 
-		let chainId = (await getProvider().getNetwork()).chainId;
 		log(
 			"initializing InfinityConsole chainId " +
-				(this.network.config?.chainId || chainId) +
+				this.chainId +
 				" network name " +
 				this.network.name
 		);
