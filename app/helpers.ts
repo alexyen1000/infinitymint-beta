@@ -542,20 +542,21 @@ export const preInitialize = (isJavascript?: boolean) => {
 	]);
 
 	if (!fs.existsSync(process.cwd() + "/.env")) {
-		let path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
-			? process.cwd() + "/examples/example.env.ts"
-			: process.cwd() +
-			  "/node_modules/infinitymint/examples/example.env.ts";
-
-		if (!fs.existsSync(path))
-			throw new Error(
-				"could not find: " + path + " to create .env file with"
-			);
-
 		//if it isn't javascript we can just include the .env.ts file, else if we aren't just copy the .env from the examples/js folder instead
-		if (!isJavascript) createEnvFile(require(path));
-		else {
-			let path = fs.existsSync(process.cwd() + "/examples/js/example.env")
+		let path: PathLike;
+		if (!isJavascript) {
+			path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
+				? process.cwd() + "/examples/example.env.ts"
+				: process.cwd() +
+				  "/node_modules/infinitymint/examples/example.env.ts";
+
+			if (!fs.existsSync(path))
+				throw new Error(
+					"could not find: " + path + " to create .env file with"
+				);
+			createEnvFile(require(path));
+		} else {
+			path = fs.existsSync(process.cwd() + "/examples/js/example.env")
 				? process.cwd() + "/examples/js/example.env"
 				: process.cwd() +
 				  "/node_modules/infinitymint/examples/js/example.env";
@@ -567,6 +568,8 @@ export const preInitialize = (isJavascript?: boolean) => {
 
 			fs.copyFileSync(path, "./.env");
 		}
+
+		debugLog("made ./env from " + path);
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
