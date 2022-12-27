@@ -10,7 +10,13 @@
 		"gems/example/*/*",
 		"typechain-types/*",
 		"typechain-types/*/*",
-		"examples/*"
+		"examples/*",
+		"imports/*",
+		"imports/*/*",
+		"tests/*",
+		"tests/alpha/*",
+		"tests/beta/*",
+		"tests/*/*"
 	],
 	"theme": "hierarchy",
 	"name": "InfinityMint",
