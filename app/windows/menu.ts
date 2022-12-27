@@ -186,6 +186,33 @@ let createButtons = (window) => {
 	});
 };
 
+let colours = [
+	"blue",
+	"cyan",
+	"magenta",
+	"red",
+	"green",
+	"yellow",
+	"white",
+	"gray",
+];
+
+let files = [
+	"/resources/logos/fractal.gif",
+	"/resources/logos/infinity.png",
+	"/resources/logos/hypercube.gif",
+	"/resources/logos/sectionz.png",
+	"/resources/logos/terry.gif",
+	"/resources/logos/pizza.gif",
+	"/resources/logos/techno.gif",
+	"/resources/logos/eva.gif",
+	"/resources/logos/aperture.gif",
+	"/resources/logos/bio.gif",
+	"/resources/logos/audio.gif",
+	"/resources/logos/2032.gif",
+	"/resources/logos/acid.gif",
+];
+
 Menu.think = (window, frame, blessed) => {
 	if (window.getElement("timeLabel")) {
 		window
@@ -238,7 +265,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		left: 4,
 		style: {
 			fg: "white",
-			bg: Math.random() * 10 > 5 ? "blue" : "cyan",
+			bg: "gray",
 			border: {
 				fg: "#f0f0f0",
 			},
@@ -259,10 +286,15 @@ Menu.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	let logoWidth = Math.floor(
-		Math.floor(151 * 0.2) + container.height * 0.2 + container.width * 0.1
-	);
-	if (container.height >= 18) {
+	//render screen
+	window.getScreen().render();
+
+	let logoWidth =
+		Math.floor(
+			Math.floor(151 / 1.61803398875) +
+				container.width * container.height * 0.01
+		) / 2.5;
+	if (container.height >= 20) {
 		//hide logo if screen too small
 		if (container.width > 120)
 			window.createElement(
@@ -271,8 +303,8 @@ Menu.initialize = async (window, frame, blessed) => {
 					top: container.top - 2,
 					left: frame.left + frame.right + 20,
 					width: logoWidth,
-					height: logoWidth / 3,
-					file: "./resources/logo.gif",
+					height: Math.floor(logoWidth / 2.5),
+					file: "." + files[Math.floor(Math.random() * files.length)],
 					animate: true,
 					style: {
 						bg: "gray",
@@ -327,7 +359,7 @@ Menu.initialize = async (window, frame, blessed) => {
 
 	window.createElement("companyLabel", {
 		left: container.left + 2,
-		top: container.top,
+		top: container.top - 1,
 		width: "shrink",
 		height: "shrink",
 		tags: true,
@@ -353,6 +385,8 @@ Menu.initialize = async (window, frame, blessed) => {
 			window.getInfinityConsole().getScripts().length
 		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
 			isTypescript() ? "true" : "false"
+		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
+			Object.keys(hre.tasks).length
 		}{/white-fg}{/gray-bg}`,
 	});
 

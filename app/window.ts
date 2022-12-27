@@ -637,14 +637,14 @@ export class InfinityMintWindow {
 			? (options.left =
 					base.left +
 					(options.left || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
+					(typeof this.padding === "number" ? this.padding : 1))
 			: false;
 
 		options.right !== undefined && typeof options.right === "number"
 			? (options.right =
 					base.right +
 					(options.right || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
+					(typeof this.padding === "number" ? this.padding : 1))
 			: false;
 
 		(options.top !== undefined ||
@@ -653,14 +653,14 @@ export class InfinityMintWindow {
 			? (options.top =
 					base.top +
 					(options.top || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
+					(typeof this.padding === "number" ? this.padding : 1))
 			: false;
 
 		options.bottom !== undefined && typeof options.bottom === "number"
 			? (options.bottom =
 					base.bottom +
 					(options.bottom || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
+					(typeof this.padding === "number" ? this.padding : 1))
 			: false;
 
 		//deducts the base left and base right starting positions from the options width so it is 100% of the frame/base not the screen

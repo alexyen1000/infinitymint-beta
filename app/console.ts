@@ -61,6 +61,7 @@ export class InfinityConsole {
 	private account: SignerWithAddress;
 	private balance: BigNumber;
 	private scripts: InfinityMintScript[];
+	private tick: number;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -84,7 +85,7 @@ export class InfinityConsole {
 			Deploy,
 			CloseBox,
 		];
-
+		this.tick = 0;
 		this.registerDefaultKeys();
 	}
 
@@ -280,6 +281,10 @@ export class InfinityConsole {
 
 	public getWindowsByName(name: string) {
 		return this.windows.filter((thatWindow) => thatWindow.name === name);
+	}
+
+	public getTick() {
+		return this.tick;
 	}
 
 	public addWindow(window: InfinityMintWindow) {
@@ -717,10 +722,10 @@ export class InfinityConsole {
 
 				this.screen.render();
 			};
-			this.think = setInterval(
-				this.options?.think || int,
-				this.options?.tickRate
-			);
+			this.think = setInterval(() => {
+				(this.options?.think || int)();
+				this.tick++;
+			}, this.options?.tickRate);
 
 			//render
 			this.screen.render();
