@@ -8,6 +8,9 @@ import {
 	readSession,
 	saveSession,
 	getSolidityFolder,
+	isEnvTrue,
+	calculateWidth,
+	warning,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -36,39 +39,68 @@ export class InfinityMintWindow {
 	public name: string;
 	public elements: Dictionary<BlessedElement>;
 	public options: any;
-
+	/**
+	 * @default "100%"
+	 */
 	protected width: number | string;
+	/**
+	 * @default "100%"
+	 */
 	protected height: number | string;
-	protected x: number;
-	protected y: number;
+	protected hideButton: BlessedElement;
+	protected closeButton: BlessedElement;
+	protected frame: BlessedElement;
+	/**
+	 * @default 1
+	 */
+	protected padding: number | string;
+	protected style: any;
+	protected border: any;
+	/**
+	 * @default "center"
+	 */
+	protected x: number | string;
+	/**
+	 * @default "center"
+	 */
+	protected y: number | string;
+	protected scrollbar: any;
+	protected hideCloseButton: boolean;
+	protected hideMinimizeButton: boolean;
 	protected z: number;
-	//blessed
-	private screen: any;
-	private style: any;
-	private border: any;
+	protected screen: BlessedElement;
+	protected container?: InfinityConsole;
+	protected inputKeys?: Dictionary<Array<Function>>;
+
 	private id: any;
 	private destroyed: boolean;
 	private backgroundThink: boolean;
 	private destroyId: boolean;
-	private scrollbar: any;
 	private initialized: boolean;
 	private creation: any;
 	private initialCreation: any;
 	private autoInstantiate: boolean;
-	private container?: InfinityConsole;
 
 	constructor(
 		name?: string,
 		style?: any,
 		border?: any,
 		scrollbar?: any,
+		position?: {
+			x: string | number;
+			y: string | number;
+		},
+		size?: {
+			width: string | number;
+			height: string | number;
+		},
 		options?: any
 	) {
 		this.name = name || this.constructor.name;
-		this.width = 100;
-		this.height = 100;
-		this.x = 1;
-		this.y = 1;
+		this.width = size?.width || "100%";
+		this.height = size?.height || "100%";
+		this.x = position?.x || "center";
+		this.y = position?.y || "center";
 		this.destroyed = false;
 		this.z = 0;
 		this.style = style;
@@ -87,12 +119,72 @@ export class InfinityMintWindow {
 		this.think = () => {};
 	}
 
+	/**
+	 * Will hide the close button if true, can be called when ever but be aware screen must be re-rendered in some circumstances.
+	 * @param hideCloseButton
+	 */
+	public setHideCloseButton(hideCloseButton: boolean) {
+		this.hideCloseButton = hideCloseButton;
+
+		try {
+			if (this.hideCloseButton && this.closeButton !== undefined) {
+				this.closeButton.hide();
+			} else if (
+				!this.hideCloseButton &&
+				this.closeButton !== undefined
+			) {
+				this.closeButton.show();
+			}
+		} catch (error) {
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			this.warning(
+				"failed to edit visiblity of close button: " + error.message
+			);
+		}
+	}
+
+	/**
+	 * Will hide the minimize button if true, can be called when ever but be aware screen must be re-rendered in some circumstances
+	 * @param hideMinimizeButton
+	 */
+	public setHideMinimizeButton(hideMinimizeButton: boolean) {
+		this.hideMinimizeButton = hideMinimizeButton;
+
+		try {
+			if (this.hideMinimizeButton && this.hideButton !== undefined) {
+				this.hideButton.hide();
+			} else if (
+				!this.hideMinimizeButton &&
+				this.hideButton !== undefined
+			) {
+				this.hideButton.show();
+			}
+		} catch (error) {
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			this.warning(
+				"failed to edit visiblity of minimize button: " + error.message
+			);
+		}
+	}
+
 	private generateId() {
 		return uuidv4();
 	}
 
 	public setScreen(screen: any) {
+		if (this.screen !== undefined)
+			throw new Error(
+				"cannot change screen of window with out destroying it first"
+			);
+
 		this.screen = screen;
+	}
+
+	public setScrollbar(scrollbar: any) {
+		this.scrollbar = scrollbar;
+
+		if (this.elements["frame"] !== undefined)
+			this.getElement("frame").scrollbar = scrollbar;
 	}
 
 	public setBackgroundThink(backgroundThink: boolean) {
@@ -121,6 +213,11 @@ export class InfinityMintWindow {
 	}
 
 	public setContainer(container: InfinityConsole) {
+		if (this.container !== undefined)
+			throw new Error(
+				"cannot set container with out destroying window first"
+			);
+
 		this.container = container;
 	}
 
@@ -136,6 +233,12 @@ export class InfinityMintWindow {
 		return this.initialCreation;
 	}
 
+	/**
+	 * A fully mutable object which can hold options which persist between InfinityMint terminal sessions. You can use this along with saveOptions to write variables to the .session file.
+	 *
+	 * See {@link app/interfaces.InfinityMintSession}
+	 * @param defaultOptions
+	 */
 	public loadOptions(defaultOptions: Dictionary<any>) {
 		let session = readSession();
 		this.options = session.environment["Window_" + this.name] || {};
@@ -162,6 +265,9 @@ export class InfinityMintWindow {
 
 	public setBorder(border: any) {
 		this.border = border;
+
+		if (this.elements["frame"] !== undefined)
+			this.getElement("frame").border = border;
 	}
 
 	public getBorder(): object {
@@ -170,6 +276,10 @@ export class InfinityMintWindow {
 
 	public setWidth(num: number | string) {
 		this.width = num;
+	}
+
+	public setPadding(num: number | string) {
+		this.padding = num;
 	}
 
 	public getId() {
@@ -193,12 +303,12 @@ export class InfinityMintWindow {
 			startX: this.x,
 			endX:
 				typeof this.width === "number"
-					? this.x + (this.width as number)
+					? parseInt(this.x.toString()) + (this.width as number)
 					: this.width,
 			startY: this.y,
 			endY:
 				typeof this.height === "number"
-					? this.y + (this.height as number)
+					? parseInt(this.y.toString()) + (this.height as number)
 					: this.height,
 			width: this.width,
 			height: this.height,
@@ -212,6 +322,9 @@ export class InfinityMintWindow {
 
 	public setStyle(style: any) {
 		this.style = style;
+
+		if (this.elements["frame"] !== undefined)
+			this.getElement("frame").style = style;
 	}
 
 	public getWidth() {
@@ -220,10 +333,6 @@ export class InfinityMintWindow {
 
 	public getX() {
 		return this.x;
-	}
-
-	public get(): Vector {
-		return { x: this.y, y: this.y, z: this.z };
 	}
 
 	public getY() {
@@ -284,6 +393,21 @@ export class InfinityMintWindow {
 		debugLog(string + ` => <${window.name}>[${window.getId()}]`);
 	}
 
+	public warning(
+		string?: string | string[],
+		window?: any,
+		returnString?: boolean
+	) {
+		window = window || this;
+		if (typeof string === typeof Array)
+			string = (string as string[]).join(" ");
+
+		if (returnString)
+			return string + ` => <${window.name}>[${window.getId()}]`;
+
+		warning(string + ` => <${window.name}>[${window.getId()}]`);
+	}
+
 	/**
 	 * Registers a new blessed element with the window.
 	 * @param key
@@ -308,7 +432,11 @@ export class InfinityMintWindow {
 				)
 			);
 
-		if (element.parent === undefined) element.parent = this.screen;
+		if (
+			this.frame !== undefined &&
+			(element.parent === undefined || element.parent === null)
+		)
+			element.parent = this.frame;
 
 		this.log("registering element (" + element.constructor.name + ")");
 
@@ -333,6 +461,7 @@ export class InfinityMintWindow {
 					}
 				});
 		};
+		element?.focus();
 		this.elements[key] = element;
 		return this.elements[key];
 	}
@@ -372,10 +501,61 @@ export class InfinityMintWindow {
 			delete this.elements[index];
 		});
 
+		//unkeys everything to do with the window
+		if (this.inputKeys !== undefined)
+			Object.keys(this.inputKeys).forEach((key) => {
+				Object.values(this.inputKeys[key]).forEach((cb) => {
+					this.unkey(key, cb);
+				});
+			});
+
+		this.container = undefined;
+		this.screen = undefined;
 		this.elements = {};
 	}
 
-	public registerKey() {}
+	/**
+	 * Registers a key command to the window which then executes a function
+	 * @param key
+	 * @param cb
+	 */
+
+	public key(key: string, cb: Function) {
+		if (this.inputKeys === undefined) this.inputKeys = {};
+
+		this.getContainer().key(key, cb);
+
+		if (this.inputKeys[key] === undefined) this.inputKeys[key] = [];
+		this.inputKeys[key].push(cb);
+	}
+
+	/**
+	 * Removes a key binding on the window, pass it a callback of the key to only remove that one. Else will remove all keys
+	 * @param key
+	 * @param cb
+	 * @returns
+	 */
+	public unkey(key: string, cb?: Function) {
+		if (this.inputKeys === undefined || this.inputKeys[key] === undefined)
+			return;
+
+		if (cb !== undefined) this.getContainer().unkey(key, cb);
+		else {
+			//unmap all keys
+			Object.values(this.inputKeys[key]).forEach((cb) => {
+				this.getContainer().unkey(key, cb);
+			});
+			this.inputKeys[key] = [];
+			return;
+		}
+
+		if (this.inputKeys[key].length <= 1) this.inputKeys[key] = [];
+		else {
+			this.inputKeys[key] = this.inputKeys[key].filter(
+				(thatCb) => thatCb.toString() === cb.toString()
+			);
+		}
+	}
 
 	public isAlive() {
 		return this.destroyed === false && this.initialized;
@@ -402,26 +582,104 @@ export class InfinityMintWindow {
 	}
 
 	public async updateFrameTitle() {
-		let defaultSigner = await getDefaultSigner();
-		let balance = await defaultSigner.getBalance();
+		let account = this.getContainer().getAccount();
+		let balance = this.getContainer().getBalance();
 		let getAccountIndex = getDefaultAccountIndex();
 		this.log(
-			"main account: [" +
-				getAccountIndex +
-				"] => " +
-				defaultSigner.address
+			"main account: [" + getAccountIndex + "] => " + account.address
 		);
 		let etherBalance = ethers.utils.formatEther(balance);
 		this.log("balance of account: " + etherBalance);
 		this.getElement("frame").setContent(
-			` {bold}${
-				this.name
-			}{/bold} | {yellow-fg}[${getAccountIndex}]{/yellow-fg} {underline}${
-				defaultSigner.address
-			}{/underline} | {magenta-bg}${
+			`{bold}{yellow-fg}${
 				hre.network.name
-			}{/magenta-bg} | gas: {red-fg}50gwei{/red-fg} balance: {green-fg}${etherBalance} ETH{/green-fg} | Solidity Root: {cyan-fg}${getSolidityFolder()}{/cyan-fg}`
+			} [${this.getContainer().getCurrentChainId()}]{/bold} {underline}${
+				account.address
+			}{/underline}{/yellow-fg} {black-bg}{white-fg}{bold}${etherBalance} ETH ($${(
+				parseFloat(etherBalance) * 2222
+			).toFixed(
+				2
+			)}){/bold}{/white-fg}{/black-bg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/red-fg}{/green-bg}`
 		);
+	}
+
+	/**
+	 *
+	 * @param key
+	 * @param options
+	 * @param type - default of `box`
+	 * @returns
+	 */
+	public createElement(
+		key: string,
+		options: any,
+		type?: "box" | "list" | "image" | "bigtext"
+	) {
+		type = type || "box";
+		if (this.elements["frame"] === undefined && options?.parent)
+			throw new Error("no frame or parent for this element");
+
+		if (blessed[type] === undefined || typeof blessed[type] !== "function")
+			throw new Error("bad blessed element: " + type);
+
+		let base = options?.parent || this.getElement("frame");
+
+		if (options.left === undefined && options.right === undefined)
+			options.left = 0;
+
+		(options.left !== undefined ||
+			(options.left === undefined && options.right === undefined)) &&
+		typeof options.left === "number"
+			? (options.left =
+					base.left +
+					(options.left || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		options.right !== undefined && typeof options.right === "number"
+			? (options.right =
+					base.right +
+					(options.right || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		(options.top !== undefined ||
+			(options.top === undefined && options.bottom === undefined)) &&
+		typeof options.top === "number"
+			? (options.top =
+					base.top +
+					(options.top || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		options.bottom !== undefined && typeof options.bottom === "number"
+			? (options.bottom =
+					base.bottom +
+					(options.bottom || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		//deducts the base left and base right starting positions from the options width so it is 100% of the frame/base not the screen
+		if (
+			options.width !== undefined &&
+			typeof options.width === "string" &&
+			options.width?.indexOf("%") !== -1 &&
+			(options.width?.indexOf("-") === -1 ||
+				options.width?.indexOf("+") === -1)
+		)
+			options.width = options.width + "-" + (base.left + base.right);
+
+		//if its just a percentage then add the base onto it, if not leave it and have them do it
+		if (
+			options.height !== undefined &&
+			typeof options.height === "string" &&
+			options.height?.indexOf("%") !== -1 &&
+			(options.height?.indexOf("-") === -1 ||
+				options.height?.indexOf("+") === -1)
+		)
+			options.height = options.height + "-" + (base.top + base.bottom);
+
+		return this.registerElement(key, blessed[type](options));
 	}
 
 	public async create() {
@@ -441,74 +699,71 @@ export class InfinityMintWindow {
 		//set the title
 		this.screen.title = this.name;
 		// Create the frame which all other components go into
-		let frame = this.registerElement(
+		this.frame = this.registerElement(
 			"frame",
 			blessed.box({
-				top: "center",
-				left: "center",
-				width: "100%",
-				height: "100%",
+				top: this.x,
+				left: this.y,
+				width: this.width,
+				height: this.height,
 				tags: true,
 				parent: this.screen,
-				padding: 1,
+				padding: this.padding || 1,
 				scrollbar: this.scrollbar || {},
 				border: this.border || {},
 				style: this.style || {},
 			})
 		);
-		frame.setBack();
+		this.frame.setBack();
 
-		let close = this.registerElement(
-			"closeButton",
-			blessed.box({
-				top: 0,
-				right: 0,
-				width: "shrink",
-				height: "shrink",
-				tags: true,
-				padding: 1,
-				content: "[x]",
-				border: this.border || {},
-				style: {
-					bg: "red",
-					fg: "white",
-					hover: {
-						bg: "grey",
-					},
+		this.closeButton = this.createElement("closeButton", {
+			top: 0,
+			right: 0,
+			width: 7,
+			height: 5,
+			tags: true,
+			padding: 1,
+			content: "[x]",
+			border: this.border || {},
+			style: {
+				bg: "red",
+				fg: "white",
+				hover: {
+					bg: "grey",
 				},
-			})
-		);
-		close.on("click", () => {
+			},
+		});
+		this.closeButton.on("click", () => {
 			this.destroy();
 		});
-		close.focus();
-		let hide = this.registerElement(
-			"hideButton",
-			blessed.box({
-				top: 0,
-				right: 6,
-				width: "shrink",
-				height: "shrink",
-				tags: true,
-				padding: 1,
-				content: "[-]",
-				border: this.border || {},
-				style: {
-					bg: "yellow",
-					fg: "white",
-					hover: {
-						bg: "grey",
-					},
+		this.closeButton.focus();
+		this.hideButton = this.createElement("hideButton", {
+			top: 0,
+			right: this.hideCloseButton ? 0 : calculateWidth(this.closeButton),
+			width: 7,
+			height: 5,
+			tags: true,
+			padding: 1,
+			content: "[-]",
+			border: this.border || {},
+			style: {
+				bg: "yellow",
+				fg: "white",
+				hover: {
+					bg: "grey",
 				},
-			})
-		);
-		hide.on("click", () => {
+			},
+		});
+		this.hideButton.on("click", () => {
 			this.hide();
 		});
-		hide.focus();
+		this.hideButton.focus();
+
+		if (this.hideCloseButton) this.closeButton.hide();
+		if (this.hideMinimizeButton) this.hideButton.hide();
 
 		this.log("calling initialize");
-		await this.initialize(this, frame, blessed);
+		await this.initialize(this, this.frame, blessed);
 		this.initialized = true;
 		this.destroyed = false;
 
@@ -520,6 +775,10 @@ export class InfinityMintWindow {
 
 			this.screen.append(element);
 		});
+		this.screen.render();
+
+		this.hideButton.setFront();
+		this.closeButton.setFront();
 		//frame title
 		await this.updateFrameTitle();
 	}

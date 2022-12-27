@@ -13,6 +13,10 @@ import { generateMnemonic } from "bip39";
 import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 import { InfinityMintWindow } from "./window";
+import {
+	registerGasPriceHandler,
+	registerTokenPriceHandler,
+} from "./gasAndPrices";
 
 export interface Vector {
 	x: number;
@@ -64,6 +68,8 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	height: number;
 	shouldUnhide: boolean;
 	style: any;
+	scrollbar: any;
+	border: any;
 	setContent: Function;
 	setLabel: Function;
 	enableMouse: Function;
@@ -82,10 +88,10 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	 * Doesn't appear to function
 	 */
 	insertLine: FuncDouble<number, string, Function>;
-	key: FuncDouble<string[], Function, Function>;
+	key: Function;
 	onceKey: FuncDouble<string[], Function, Function>;
 	onScreenEvent: FuncDouble<string, Function, Function>;
-	unkey: FuncDouble<string[], Function, Function>;
+	unkey: Function;
 }
 
 /**
@@ -146,6 +152,35 @@ export const log = (msg: string | object | number, pipe?: string) => {
  */
 export const debugLog = (msg: string | object | number) => {
 	log(msg, "debug");
+};
+
+/**
+ * Logs a debug message to the current pipe.
+ * @param msg
+ * @param pipe
+ */
+export const warning = (msg: string | object | number) => {
+	log(
+		`{yellow-fg}⚠️${msg}{/yellow-fg}`,
+		isEnvTrue("PIPE_SEPERATE_WARNINGS") ? "warning" : "debug"
+	);
+};
+
+export const calculateWidth = (...elements: BlessedElement[]) => {
+	let fin = 0;
+	elements
+		.map(
+			(element) =>
+				element.strWidth(element.content) +
+				//for the border
+				(element.border !== undefined ? 2 : 0) +
+				(typeof element.padding?.left === "number" ||
+				!isNaN(element.padding?.left)
+					? element.padding.left * 2
+					: 0)
+		)
+		.forEach((num) => (fin += num));
+	return fin;
 };
 
 /**
@@ -339,9 +374,8 @@ export const cleanCompilations = () => {
 			force: true,
 		} as any);
 	} catch (error: any) {
-		debugLog("unable to delete folder: " + error?.message || error);
-
 		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+		warning("unable to delete folder: " + error?.message || error);
 	}
 };
 
@@ -405,7 +439,45 @@ export const prepareConfig = () => {
 		session.environment.solidityFolder =
 			process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
 
+	registerGasAndPriceHandlers(config);
+
 	return config as InfinityMintConfig;
+};
+
+export const getPackageJson = () => {
+	if (
+		!fs.existsSync("./../package.json") &&
+		!fs.existsSync(process.cwd() + "/package.json")
+	)
+		throw new Error("no package.json");
+
+	return JSON.parse(
+		fs.readFileSync(
+			fs.existsSync("./../package.json")
+				? "./../package.json"
+				: process.cwd() + "/package.json",
+			{
+				encoding: "utf-8",
+			}
+		)
+	);
+};
+
+/**
+ * Reads InfinityMint configuration file and and registers any gas and price handlers we have for each network
+ * @param config
+ */
+export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
+	Object.keys(config?.settings?.networks || {}).forEach((key) => {
+		let network = config?.settings?.networks[key];
+		if (network.handlers === undefined) return;
+
+		if (network.handlers.gasPrice)
+			registerGasPriceHandler(key, network.handlers.gasPrice);
+
+		if (network.handlers.tokenPrice)
+			registerTokenPriceHandler(key, network.handlers.tokenPrice);
+	});
 };
 
 /**
@@ -469,13 +541,19 @@ export const preInitialize = () => {
 		"projects",
 	]);
 
-	//create env file from the example .ts script
-	if (
-		!fs.existsSync(process.cwd() + "/.env") &&
-		fs.existsSync(process.cwd() + "/examples/example.env.ts")
-	)
-		createEnvFile(require(process.cwd() + "/examples/example.env"));
+	if (!fs.existsSync(process.cwd() + "/.env")) {
+		let path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
+			? process.cwd() + "/examples/example.env.ts"
+			: process.cwd() +
+			  "/node_modules/infinitymint/examples/example.env.ts";
 
+		if (!fs.existsSync(path))
+			throw new Error(
+				"could not find: " + path + " to create .env file with"
+			);
+
+		createEnvFile(require(path));
+	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
 	//create the debug pipe
@@ -483,6 +561,12 @@ export const preInitialize = () => {
 		listen: isEnvTrue("PIPE_ECHO_DEBUG"),
 		save: true,
 	});
+
+	if (isEnvTrue("PIPE_SEPERATE_WARNINGS"))
+		Pipes.registerSimplePipe("warnings", {
+			listen: isEnvTrue("PIPE_ECHO_WARNINGS"),
+			save: true,
+		});
 };
 
 export const initializeGanacheMnemonic = () => {

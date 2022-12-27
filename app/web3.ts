@@ -6,6 +6,7 @@ import {
 	log,
 	readSession,
 	saveSession,
+	warning,
 } from "./helpers";
 import fs from "fs";
 import Pipes from "./pipes";
@@ -24,7 +25,10 @@ import {
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getLocalDeployment, create } from "./deployments";
-import { InfinityMintDeploymentLive } from "./interfaces";
+import {
+	InfinityMintConfigSettingsNetwork,
+	InfinityMintDeploymentLive,
+} from "./interfaces";
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -193,9 +197,9 @@ export const deployBytecode = async (
 };
 
 export const changeNetwork = (network: string) => {
+	stopNetworkPipe(ethers.provider, hre.network.name);
 	hre.changeNetwork(network);
-
-	if (network !== "ganache") startNetworkPipe(hre.network.provider, network);
+	if (network !== "ganache") startNetworkPipe(ethers.provider, network);
 };
 
 /**
@@ -321,7 +325,10 @@ export const getDeployment = (contractName: string, network?: string) => {
 
 export const getNetworkSettings = (network: string) => {
 	let config = getConfigFile();
-	return config?.settings?.networks[network] || {};
+	return (
+		config?.settings?.networks[network] ||
+		({} as InfinityMintConfigSettingsNetwork)
+	);
 };
 
 export const getDefaultAccountIndex = () => {
@@ -353,69 +360,65 @@ export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
 	return keys;
 };
 
+export const stopNetworkPipe = (
+	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
+	network?: any
+) => {
+	if (network === undefined) network = hre.network.name;
+	let settings = getNetworkSettings(network);
+	//register events
+	try {
+		Object.keys(ProviderListeners[network]).forEach((key) => {
+			provider.off(key, ProviderListeners[network][key]);
+		});
+	} catch (error) {
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+		warning("failed to stop pipe: " + network);
+	}
+	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
+		"{red-fg}stopped pipe{/red-fg}"
+	);
+	delete ProviderListeners[network];
+};
+
 export const startNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any
 ) => {
-	let settings = getNetworkSettings(hre.network.name);
 	if (network === undefined) network = hre.network.name;
+	let settings = getNetworkSettings(network);
+
 	if (provider === undefined) provider = ethers.provider;
+	if (ProviderListeners[network] !== undefined)
+		stopNetworkPipe(provider, network);
 
 	ProviderListeners[network] = ProviderListeners[network] || {};
-
-	//register events
-	try {
-		if (ProviderListeners[network].block)
-			provider.off("block", ProviderListeners[network].block);
-	} catch (error: any | Error) {
-		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
-			error
-		);
-
-		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-	}
-
-	ProviderListeners[network].block = provider.on(
-		"block",
-		(blockNumber: any) => {
-			log(
-				"{green-fg}new block:{/green-fg} #" + blockNumber,
-				settings.useDefaultPipe ? "default" : network
-			);
-		}
-	);
-
-	try {
-		if (ProviderListeners[network].pending)
-			provider.off("pending", ProviderListeners[network].pending);
-	} catch (error: any | Error) {
-		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
-			error
-		);
-		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-	}
-
-	ProviderListeners[network].pending = provider.on("pending", (tx: any) => {
+	ProviderListeners[network].block = (blockNumber: any) => {
 		log(
-			"{yellow-fg}new transaction pending:{/yellow-fg} " + tx.toString(),
+			"{green-fg}new block{/green-fg} => [" + blockNumber + "]",
 			settings.useDefaultPipe ? "default" : network
 		);
-	});
+	};
 
-	try {
-		if (ProviderListeners[network].error)
-			provider.off("error", ProviderListeners[network].error);
-	} catch (error: any | Error) {
-		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
-			error
+	ProviderListeners[network].pending = (tx: any) => {
+		log(
+			"{yellow-fg}new transaction pending{/yellow-fg} => " +
+				JSON.stringify(tx, null, 2),
+			settings.useDefaultPipe ? "default" : network
 		);
-		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-	}
+	};
 
-	ProviderListeners[network].error = provider.on("error", (tx: any) => {
+	ProviderListeners[network].error = (tx: any) => {
 		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
-			"{red-fg}tx error:{/reg-fg} \n" + tx.toString()
+			"{red-fg}tx error{/reg-fg} => " + JSON.stringify(tx, null, 2)
 		);
+	};
+
+	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
+		"{cyan-fg}started pipe{/cyan-fg}"
+	);
+	Object.keys(ProviderListeners[network]).forEach((key) => {
+		provider.on(key, ProviderListeners[network][key]);
 	});
 
 	debugLog("registered provider event hooks for " + network);

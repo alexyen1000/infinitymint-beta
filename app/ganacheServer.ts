@@ -12,15 +12,12 @@ export class GanacheServer {
 
 	start(options: ServerOptions, port?: number): Promise<Web3Provider> {
 		return new Promise((resolve, reject) => {
-			let session = readSession();
 			this.server = ganache.server(options as any);
 			this.options = options;
 			this.port = parseInt(
 				(port || process.env.GANACHE_PORT || 8545).toString()
 			);
-			debugLog(
-				"starting ganache server on http://localhost:" + this.port
-			);
+			log("starting ganache server on http://localhost:" + this.port);
 			//start the listen server on that port
 			this.server.listen(this.port, async (err: any) => {
 				if (err) throw err;
@@ -57,6 +54,7 @@ export class GanacheServer {
 					}) as any
 				);
 				this.provider = provider;
+				log("ganache has started on http://localhost:" + this.port);
 				resolve(this.provider);
 			});
 		});
