@@ -988,7 +988,10 @@ export interface InfinityMintConsoleOptions {
 export interface InfinityMintScript {
 	name?: string;
 	description?: string;
-	execute: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
+	/**
+	 * called when the script is executed, is passed {@link InfinityMintScriptParameters}. Return false to signify that this script failed.
+	 */
+	execute: FuncSingle<InfinityMintScriptParameters, Promise<boolean | void>>;
 	loaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
 	reloaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
 	arguments?: InfinityMintScriptArguments[];
