@@ -1,5 +1,6 @@
 import { InfinityMintConsoleOptions } from "./interfaces";
 import {
+	Blessed,
 	BlessedElement,
 	debugLog,
 	FuncSingle,
@@ -34,10 +35,7 @@ import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
 
 //blessed
-const blessed = require("blessed");
-
-export type InfinityConsoleInputOn = Array<Function>;
-export type InfinityConsoleInputKey = Array<Function>;
+const blessed = require("blessed") as Blessed;
 
 /**
  * Powered by Blessed-cli the InfinityConsole is the container of InfinityMintWindows. See {@link app/window.InfinityMintWindow}.
@@ -53,10 +51,8 @@ export class InfinityConsole {
 	private options?: InfinityMintConsoleOptions;
 	private network?: HardhatRuntimeEnvironment["network"];
 	private signers?: SignerWithAddress[];
-	private windowManager?: any;
-	private inputKeys: Dictionary<
-		InfinityConsoleInputOn | InfinityConsoleInputKey
-	>;
+	private windowManager?: BlessedElement;
+	private inputKeys: Dictionary<Array<Function>>;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -121,12 +117,18 @@ export class InfinityConsole {
 
 					this.windowManager.setBack();
 
+					if (this?.currentWindow === undefined) {
+						this.setWindow("CloseBox");
+						return;
+					}
+
 					if (this.currentWindow?.name !== "CloseBox") {
 						let windows = this.getWindowsByName("CloseBox");
 						if (windows.length !== 0)
 							windows[0].options.currentWindow =
 								this.currentWindow?.name;
-						this.currentWindow?.openWindow("CloseBox");
+
+						this.setWindow("CloseBox");
 						//if the closeBox aka the current window is visible and we press control-c again just exit
 					} else {
 						if (this.currentWindow.isVisible()) process.exit(0);
@@ -405,7 +407,7 @@ export class InfinityConsole {
 		};
 	}
 
-	public displayError(error: any, onClick?: any) {
+	public displayError(error: Error, onClick?: any) {
 		let errorBox = blessed.box({
 			top: "center",
 			left: "center",
@@ -430,7 +432,7 @@ export class InfinityConsole {
 					fg: "#ffffff",
 				},
 			},
-		});
+		}) as BlessedElement;
 
 		if (onClick !== undefined)
 			errorBox.on("click", () => {
@@ -457,7 +459,6 @@ export class InfinityConsole {
 			this.screen.key([key], (ch: string, _key: string) => {
 				debugLog(`executing methods for key (${key})'`);
 				this.inputKeys[key].forEach((method, index) => {
-					debugLog(`executing method [${index}]`);
 					method();
 				});
 			});
@@ -508,12 +509,12 @@ export class InfinityConsole {
 		}
 	}
 
-	public errorHandler(error: Error | unknown) {
+	public errorHandler(error: Error | string) {
 		console.error(error);
 		if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
 			throw error;
 
-		this.displayError(error, (errorBox: BlessedElement) => {
+		this.displayError(error as Error, (errorBox: BlessedElement) => {
 			errorBox.destroy();
 		});
 	}

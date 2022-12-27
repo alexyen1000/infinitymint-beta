@@ -64,6 +64,8 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	height: number;
 	shouldUnhide: boolean;
 	style: any;
+	scrollbar: any;
+	border: any;
 	setContent: Function;
 	setLabel: Function;
 	enableMouse: Function;
@@ -146,6 +148,23 @@ export const log = (msg: string | object | number, pipe?: string) => {
  */
 export const debugLog = (msg: string | object | number) => {
 	log(msg, "debug");
+};
+
+export const calculateWidth = (...elements: BlessedElement[]) => {
+	let fin = 0;
+	elements
+		.map(
+			(element) =>
+				element.strWidth(element.content) +
+				//for the border
+				(element.border !== undefined ? 2 : 0) +
+				(typeof element.padding?.left === "number" ||
+				!isNaN(element.padding?.left)
+					? element.padding.left * 2
+					: 0)
+		)
+		.forEach((num) => (fin += num));
+	return fin;
 };
 
 /**

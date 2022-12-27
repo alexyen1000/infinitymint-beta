@@ -8,10 +8,12 @@ import {
 	readSession,
 	saveSession,
 	getSolidityFolder,
+	isEnvTrue,
+	calculateWidth,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
-import InfinityConsole, { InfinityConsoleInputKey } from "./console";
+import InfinityConsole from "./console";
 import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const { v4: uuidv4 } = require("uuid");
@@ -36,40 +38,68 @@ export class InfinityMintWindow {
 	public name: string;
 	public elements: Dictionary<BlessedElement>;
 	public options: any;
-
+	/**
+	 * @default "100%"
+	 */
 	protected width: number | string;
+	/**
+	 * @default "100%"
+	 */
 	protected height: number | string;
-	protected x: number;
-	protected y: number;
+	protected hideButton: BlessedElement;
+	protected closeButton: BlessedElement;
+	protected frame: BlessedElement;
+	/**
+	 * @default 1
+	 */
+	protected padding: number | string;
+	protected style: any;
+	protected border: any;
+	/**
+	 * @default "center"
+	 */
+	protected x: number | string;
+	/**
+	 * @default "center"
+	 */
+	protected y: number | string;
+	protected scrollbar: any;
+	protected hideCloseButton: boolean;
+	protected hideMinimizeButton: boolean;
 	protected z: number;
+	protected screen: any;
+	protected container?: InfinityConsole;
+	protected inputKeys?: Dictionary<Array<Function>>;
 
-	private screen: any;
-	private style: any;
-	private border: any;
 	private id: any;
 	private destroyed: boolean;
 	private backgroundThink: boolean;
 	private destroyId: boolean;
-	private scrollbar: any;
 	private initialized: boolean;
 	private creation: any;
 	private initialCreation: any;
 	private autoInstantiate: boolean;
-	private container?: InfinityConsole;
-	private inputKeys?: Dictionary<InfinityConsoleInputKey>;
 
 	constructor(
 		name?: string,
 		style?: any,
 		border?: any,
 		scrollbar?: any,
+		position?: {
+			x: string | number;
+			y: string | number;
+		},
+		size?: {
+			width: string | number;
+			height: string | number;
+		},
 		options?: any
 	) {
 		this.name = name || this.constructor.name;
-		this.width = 100;
-		this.height = 100;
-		this.x = 1;
-		this.y = 1;
+		this.width = size?.width || "100%";
+		this.height = size?.height || "100%";
+		this.x = position?.x || "center";
+		this.y = position?.y || "center";
 		this.destroyed = false;
 		this.z = 0;
 		this.style = style;
@@ -88,12 +118,72 @@ export class InfinityMintWindow {
 		this.think = () => {};
 	}
 
+	/**
+	 * Will hide the close button if true, can be called when ever but be aware screen must be re-rendered in some circumstances.
+	 * @param hideCloseButton
+	 */
+	public setHideCloseButton(hideCloseButton: boolean) {
+		this.hideCloseButton = hideCloseButton;
+
+		try {
+			if (this.hideCloseButton && this.closeButton !== undefined) {
+				this.closeButton.hide();
+			} else if (
+				!this.hideCloseButton &&
+				this.closeButton !== undefined
+			) {
+				this.closeButton.show();
+			}
+		} catch (error) {
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			this.log(
+				"failed to edit visiblity of close button: " + error.message
+			);
+		}
+	}
+
+	/**
+	 * Will hide the minimize button if true, can be called when ever but be aware screen must be re-rendered in some circumstances
+	 * @param hideMinimizeButton
+	 */
+	public setHideMinimizeButton(hideMinimizeButton: boolean) {
+		this.hideMinimizeButton = hideMinimizeButton;
+
+		try {
+			if (this.hideMinimizeButton && this.hideButton !== undefined) {
+				this.hideButton.hide();
+			} else if (
+				!this.hideMinimizeButton &&
+				this.hideButton !== undefined
+			) {
+				this.hideButton.show();
+			}
+		} catch (error) {
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			this.log(
+				"failed to edit visiblity of minimize button: " + error.message
+			);
+		}
+	}
+
 	private generateId() {
 		return uuidv4();
 	}
 
 	public setScreen(screen: any) {
+		if (this.screen !== undefined)
+			throw new Error(
+				"cannot change screen of window with out destroying it first"
+			);
+
 		this.screen = screen;
+	}
+
+	public setScrollbar(scrollbar: any) {
+		this.scrollbar = scrollbar;
+
+		if (this.elements["frame"] !== undefined)
+			this.getElement("frame").scrollbar = scrollbar;
 	}
 
 	public setBackgroundThink(backgroundThink: boolean) {
@@ -122,6 +212,11 @@ export class InfinityMintWindow {
 	}
 
 	public setContainer(container: InfinityConsole) {
+		if (this.container !== undefined)
+			throw new Error(
+				"cannot set container with out destroying window first"
+			);
+
 		this.container = container;
 	}
 
@@ -169,6 +264,9 @@ export class InfinityMintWindow {
 
 	public setBorder(border: any) {
 		this.border = border;
+
+		if (this.elements["frame"] !== undefined)
+			this.getElement("frame").border = border;
 	}
 
 	public getBorder(): object {
@@ -177,6 +275,10 @@ export class InfinityMintWindow {
 
 	public setWidth(num: number | string) {
 		this.width = num;
+	}
+
+	public setPadding(num: number | string) {
+		this.padding = num;
 	}
 
 	public getId() {
@@ -200,12 +302,12 @@ export class InfinityMintWindow {
 			startX: this.x,
 			endX:
 				typeof this.width === "number"
-					? this.x + (this.width as number)
+					? parseInt(this.x.toString()) + (this.width as number)
 					: this.width,
 			startY: this.y,
 			endY:
 				typeof this.height === "number"
-					? this.y + (this.height as number)
+					? parseInt(this.y.toString()) + (this.height as number)
 					: this.height,
 			width: this.width,
 			height: this.height,
@@ -219,6 +321,9 @@ export class InfinityMintWindow {
 
 	public setStyle(style: any) {
 		this.style = style;
+
+		if (this.elements["frame"] !== undefined)
+			this.getElement("frame").style = style;
 	}
 
 	public getWidth() {
@@ -227,10 +332,6 @@ export class InfinityMintWindow {
 
 	public getX() {
 		return this.x;
-	}
-
-	public get(): Vector {
-		return { x: this.y, y: this.y, z: this.z };
 	}
 
 	public getY() {
@@ -315,7 +416,11 @@ export class InfinityMintWindow {
 				)
 			);
 
-		if (element.parent === undefined) element.parent = this.screen;
+		if (
+			this.frame !== undefined &&
+			(element.parent === undefined || element.parent === null)
+		)
+			element.parent = this.frame;
 
 		this.log("registering element (" + element.constructor.name + ")");
 
@@ -340,6 +445,7 @@ export class InfinityMintWindow {
 					}
 				});
 		};
+		element?.focus();
 		this.elements[key] = element;
 		return this.elements[key];
 	}
@@ -387,6 +493,8 @@ export class InfinityMintWindow {
 				});
 			});
 
+		this.container = undefined;
+		this.screen = undefined;
 		this.elements = {};
 	}
 
@@ -480,6 +588,58 @@ export class InfinityMintWindow {
 		);
 	}
 
+	/**
+	 *
+	 * @param key
+	 * @param options
+	 * @param type - default of `box`
+	 * @returns
+	 */
+	public createElement(key: string, options: any, type?: "box" | "list") {
+		type = type || "box";
+		if (this.elements["frame"] === undefined && options?.parent)
+			throw new Error("no frame or parent for this element");
+
+		if (blessed[type] === undefined || typeof blessed[type] !== "function")
+			throw new Error("bad blessed element: " + type);
+
+		let base = options?.parent || this.getElement("frame");
+
+		(options.left !== undefined ||
+			(options.left === undefined && options.right === undefined)) &&
+		typeof options.left === "number"
+			? (options.left =
+					base.left +
+					(options.left || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		options.right !== undefined && typeof options.right === "number"
+			? (options.right =
+					base.right +
+					(options.right || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		(options.top !== undefined ||
+			(options.top === undefined && options.bottom === undefined)) &&
+		typeof options.top === "number"
+			? (options.top =
+					base.top +
+					(options.top || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		options.bottom !== undefined && typeof options.bottom === "number"
+			? (options.bottom =
+					base.bottom +
+					(options.bottom || 0) +
+					(typeof this.padding === "number" ? this.padding : 0))
+			: false;
+
+		return this.registerElement(key, blessed[type](options));
+	}
+
 	public async create() {
 		if (this.initialized && this.destroyed === false)
 			throw new Error("already initialized");
@@ -497,74 +657,71 @@ export class InfinityMintWindow {
 		//set the title
 		this.screen.title = this.name;
 		// Create the frame which all other components go into
-		let frame = this.registerElement(
+		this.frame = this.registerElement(
 			"frame",
 			blessed.box({
-				top: "center",
-				left: "center",
-				width: "100%",
-				height: "100%",
+				top: this.x,
+				left: this.y,
+				width: this.width,
+				height: this.height,
 				tags: true,
 				parent: this.screen,
-				padding: 1,
+				padding: this.padding || 1,
 				scrollbar: this.scrollbar || {},
 				border: this.border || {},
 				style: this.style || {},
 			})
 		);
-		frame.setBack();
+		this.frame.setBack();
 
-		let close = this.registerElement(
-			"closeButton",
-			blessed.box({
-				top: 0,
-				right: 0,
-				width: "shrink",
-				height: "shrink",
-				tags: true,
-				padding: 1,
-				content: "[x]",
-				border: this.border || {},
-				style: {
-					bg: "red",
-					fg: "white",
-					hover: {
-						bg: "grey",
-					},
+		this.closeButton = this.createElement("closeButton", {
+			top: 0,
+			right: 0,
+			width: 7,
+			height: 5,
+			tags: true,
+			padding: 1,
+			content: "[x]",
+			border: this.border || {},
+			style: {
+				bg: "red",
+				fg: "white",
+				hover: {
+					bg: "grey",
 				},
-			})
-		);
-		close.on("click", () => {
+			},
+		});
+		this.closeButton.on("click", () => {
 			this.destroy();
 		});
-		close.focus();
-		let hide = this.registerElement(
-			"hideButton",
-			blessed.box({
-				top: 0,
-				right: 6,
-				width: "shrink",
-				height: "shrink",
-				tags: true,
-				padding: 1,
-				content: "[-]",
-				border: this.border || {},
-				style: {
-					bg: "yellow",
-					fg: "white",
-					hover: {
-						bg: "grey",
-					},
+		this.closeButton.focus();
+		this.hideButton = this.createElement("hideButton", {
+			top: 0,
+			right: this.hideCloseButton ? 0 : calculateWidth(this.closeButton),
+			width: 7,
+			height: 5,
+			tags: true,
+			padding: 1,
+			content: "[-]",
+			border: this.border || {},
+			style: {
+				bg: "yellow",
+				fg: "white",
+				hover: {
+					bg: "grey",
 				},
-			})
-		);
-		hide.on("click", () => {
+			},
+		});
+		this.hideButton.on("click", () => {
 			this.hide();
 		});
-		hide.focus();
+		this.hideButton.focus();
+
+		if (this.hideCloseButton) this.closeButton.hide();
+		if (this.hideMinimizeButton) this.hideButton.hide();
 
 		this.log("calling initialize");
-		await this.initialize(this, frame, blessed);
+		await this.initialize(this, this.frame, blessed);
 		this.initialized = true;
 		this.destroyed = false;
 
