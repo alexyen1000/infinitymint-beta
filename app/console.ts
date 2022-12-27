@@ -1,13 +1,22 @@
 import { InfinityMintConsoleOptions } from "./interfaces";
-import { BlessedElement, debugLog, isEnvSet, isEnvTrue, log } from "./helpers";
+import {
+	BlessedElement,
+	debugLog,
+	FuncSingle,
+	isEnvSet,
+	isEnvTrue,
+	log,
+} from "./helpers";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getProvider } from "./web3";
 import Pipes from "./pipes";
+import { FuncDouble } from "./helpers";
+import { Dictionary } from "form-data";
 
-//windows
+//core windows
 import Logs from "./windows/logs";
 import Menu from "./windows/menu";
 import Browser from "./windows/browser";
@@ -24,9 +33,14 @@ import Music from "./windows/music";
 import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
 
+//blessed
 const blessed = require("blessed");
+
+export type InfinityConsoleInputOn = Array<Function>;
+export type InfinityConsoleInputKey = Array<Function>;
+
 export class InfinityConsole {
-	private screen: any;
+	private screen: BlessedElement;
 	private options?: InfinityMintConsoleOptions;
 
 	protected currentWindow?: InfinityMintWindow;
@@ -38,6 +52,9 @@ export class InfinityConsole {
 	private signers?: SignerWithAddress[];
 	private windowManager?: any;
 	private optionsBox?: any;
+	private inputKeys: Dictionary<
+		InfinityConsoleInputOn | InfinityConsoleInputKey
+	>;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -61,6 +78,56 @@ export class InfinityConsole {
 			Deploy,
 			CloseBox,
 		];
+
+		//default input keys
+		this.inputKeys = {
+			"C-l": [
+				(ch: string, key: string) => {
+					if (this.currentWindow?.name !== "Logs")
+						this.screen.lastWindow = this.currentWindow;
+
+					this.currentWindow?.openWindow("Logs");
+					this.windowManager.setBack();
+				},
+			],
+			"C-r": [
+				(ch: string, key: string) => {
+					if (this.screen.lastWindow !== undefined) {
+						this.currentWindow?.hide();
+						this.currentWindow = this.screen.lastWindow;
+						delete this.screen.lastWindow;
+					}
+
+					this.updateWindowsList();
+					if (this.windowManager?.hidden === false)
+						this.currentWindow?.show();
+				},
+			],
+			"C-z": [
+				(ch: string, key: string) => {
+					this.updateWindowsList();
+					this.currentWindow?.hide();
+					this.windowManager.show();
+				},
+			],
+			"C-c": [
+				(ch: string, key: string) => {
+					this.windowManager.setBack();
+
+					if (this.currentWindow?.name !== "CloseBox") {
+						let windows = this.getWindowsByName("CloseBox");
+						if (windows.length !== 0)
+							windows[0].options.currentWindow =
+								this.currentWindow?.name;
+						this.currentWindow?.openWindow("CloseBox");
+						//if the closeBox aka the current window is visible and we press control-c again just exit
+					} else {
+						if (this.currentWindow.isVisible()) process.exit(0);
+						else this.currentWindow.show();
+					}
+				},
+			],
+		};
 	}
 
 	public getSigner(): SignerWithAddress {
@@ -81,7 +148,7 @@ export class InfinityConsole {
 		return this.signers;
 	}
 
-	public registerWindowsListEvents(window?: InfinityMintWindow) {
+	public registerEvents(window?: InfinityMintWindow) {
 		if (this.currentWindow === undefined && window === undefined) return;
 		window = window || this.currentWindow;
 
@@ -123,7 +190,7 @@ export class InfinityConsole {
 				this.currentWindow.setScreen(this.screen);
 				this.currentWindow.setContainer(this);
 				await this.currentWindow.create();
-				this.registerWindowsListEvents();
+				this.registerEvents();
 			}
 			this.currentWindow.show();
 		}
@@ -204,6 +271,126 @@ export class InfinityConsole {
 		);
 	}
 
+	public createWindowManager() {
+		//incase this is ran again, delete the old windowManager
+		if (this.windowManager !== undefined) {
+			this.windowManager?.free();
+			this.windowManager?.destroy();
+			this.windowManager === undefined;
+		}
+
+		//creating window manager
+		this.windowManager = blessed.list({
+			label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
+			tags: true,
+			top: "center",
+			left: "center",
+			width: "95%",
+			height: "95%",
+			padding: 2,
+			parent: this.screen,
+			keys: true,
+			mouse: true,
+			vi: true,
+			border: "line",
+			scrollbar: {
+				ch: " ",
+				track: {
+					bg: "black",
+				},
+				style: {
+					inverse: true,
+				},
+			},
+			style: {
+				bg: "grey",
+				fg: "white",
+				item: {
+					hover: {
+						bg: "white",
+					},
+				},
+				selected: {
+					bg: "white",
+					bold: true,
+				},
+			},
+		});
+		//when an item is selected form the list box, attempt to show or hide that Windoiw.
+		this.windowManager.on("select", async (_el: Element, selected: any) => {
+			//disable the select if the current window is visible
+			if (this.currentWindow?.isVisible()) return;
+			//set the current window to the one that was selected
+			this.currentWindow = this.windows[selected];
+			if (!this.currentWindow.hasInitialized()) {
+				//sets blessed screen for this window
+				this.currentWindow.setScreen(this.screen);
+				//set the container of this window ( the console, which is this)
+				this.currentWindow.setContainer(this);
+				await this.currentWindow.create();
+				//registers events on the window
+				this.registerEvents();
+			} else if (!this.currentWindow.isVisible())
+				this.currentWindow.show();
+			else this.currentWindow.hide();
+			await this.currentWindow.updateFrameTitle();
+			//set the window manager to the back of the screne
+			this.windowManager.setBack();
+		});
+
+		//update the list
+		this.updateWindowsList();
+		//append window manager to the screen
+		this.screen.append(this.windowManager);
+		//set to the back of the screen
+		this.windowManager.setBack();
+	}
+
+	public captureEventErrors() {
+		//This basically captures errors which occur on keys/events and still pipes them to the current pipe
+		//overwrites the key method to capture errors and actually console.error them instead of swallowing them
+		this.screen.oldKey = this.screen.key;
+		this.screen.key = (param1: any, cb: any) => {
+			if (typeof cb === typeof Promise)
+				this.screen.oldKey(param1, async (...any: any[]) => {
+					try {
+						await cb(...any);
+					} catch (error) {
+						this.errorHandler(error);
+					}
+				});
+			else
+				this.screen.oldKey(param1, (...any: any[]) => {
+					try {
+						cb(...any);
+					} catch (error) {
+						this.errorHandler(error);
+					}
+				});
+		};
+
+		//does the same a above, since for sone reason the on events aren't emitting errors, we can still get them like this
+		this.screen.oldOn = this.screen.on;
+		this.screen.on = (param1: any, cb: any) => {
+			if (typeof cb === typeof Promise)
+				this.screen.oldOn(param1, async (...any: any[]) => {
+					try {
+						await cb(...any);
+					} catch (error) {
+						this.errorHandler(error);
+					}
+				});
+			else
+				this.screen.oldOn(param1, (...any: any[]) => {
+					try {
+						cb(...any);
+					} catch (error) {
+						this.errorHandler(error);
+					}
+				});
+		};
+	}
+
 	public displayError(error: any, onClick?: any) {
 		let errorBox = blessed.box({
 			top: "center",
@@ -241,6 +428,64 @@ export class InfinityConsole {
 		this.screen.render();
 	}
 
+	public registerKeys() {
+		if (this.inputKeys === undefined) return;
+
+		let keys = Object.keys(this.inputKeys);
+		keys.forEach((key) => {
+			try {
+				this.screen.unkey([key]);
+			} catch (error) {
+				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			}
+
+			debugLog(`registering key command for key {${key}}`);
+			this.screen.key([key], (ch: string, _key: string) => {
+				debugLog(`executing methods for key (${key})'`);
+				this.inputKeys[key].forEach((method, index) => {
+					debugLog(`executing method [${index}]`);
+					method();
+				});
+			});
+		});
+	}
+
+	public key(key: string, cb: Function) {
+		if (this.inputKeys === undefined) this.inputKeys = {};
+
+		debugLog(`registering key command for key [${key}]`);
+		if (this.inputKeys[key] === undefined) {
+			this.inputKeys[key] = [];
+			this.screen.key([key], (ch: string, _key: string) => {
+				this.inputKeys[key].forEach((method, index) => {
+					method();
+				});
+			});
+		}
+
+		this.inputKeys[key].push(cb);
+		return cb;
+	}
+
+	/**
+	 * unmaps a key combination from the console, if no cb is passed then will delete all keys under that key
+	 * @param key
+	 * @param cb
+	 */
+	public unkey(key: string, cb?: Function) {
+		if (
+			this?.inputKeys[key] === undefined ||
+			this.inputKeys[key].length <= 1 ||
+			cb === undefined
+		)
+			this.inputKeys[key] = [];
+		else {
+			this.inputKeys[key] = this.inputKeys[key].filter(
+				(cb) => cb.toString() !== cb.toString()
+			);
+		}
+	}
+
 	public errorHandler(error: Error | unknown) {
 		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 
@@ -273,52 +518,22 @@ export class InfinityConsole {
 				}
 			);
 
-			//This basically captures errors which occur on keys/events and still pipes them to the current pipe
-			//overwrites the key method to capture errors and actually console.error them instead of swallowing them
-			this.screen.oldKey = this.screen.key;
-			this.screen.key = (param1: any, cb: any) => {
-				if (typeof cb === typeof Promise)
-					this.screen.oldKey(param1, async (...any: any[]) => {
-						try {
-							await cb(...any);
-						} catch (error) {
-							this.errorHandler(error);
-						}
-					});
-				else
-					this.screen.oldKey(param1, (...any: any[]) => {
-						try {
-							cb(...any);
-						} catch (error) {
-							this.errorHandler(error);
-						}
-					});
-			};
+			//captures errors which happen in key events in the window
+			this.captureEventErrors();
 
-			//does the same a above, since for sone reason the on events aren't emitting errors, we can still get them like this
-			this.screen.oldOn = this.screen.on;
-			this.screen.on = (param1: any, cb: any) => {
-				if (typeof cb === typeof Promise)
-					this.screen.oldOn(param1, async (...any: any[]) => {
-						try {
-							await cb(...any);
-						} catch (error) {
-							this.errorHandler(error);
-						}
-					});
-				else
-					this.screen.oldOn(param1, (...any: any[]) => {
-						try {
-							cb(...any);
-						} catch (error) {
-							this.errorHandler(error);
-						}
-					});
-			};
-
-			//set the current window
-			this.currentWindow = this.windows[0];
-
+			//set the current window from the
+			if (this.options?.initialWindow === undefined)
+				this.currentWindow = this.windows[0];
+			else if (
+				typeof this.options.initialWindow === typeof InfinityMintWindow
+			) {
+				let potentialWindow = this.options.initialWindow as unknown;
+				this.currentWindow = potentialWindow as InfinityMintWindow;
+			} else {
+				this.currentWindow = this.getWindowsByName(
+					this.options.initialWindow as string
+				)[0];
+			}
 			//instantly instante windows which seek such a thing
 			let instantInstantiate = this.windows.filter((thatWindow) =>
 				thatWindow.shouldInstantiate()
@@ -338,8 +553,11 @@ export class InfinityConsole {
 				await instantInstantiate[i].create();
 				instantInstantiate[i].hide();
 				//register events
-				this.registerWindowsListEvents(instantInstantiate[i]);
+				this.registerEvents(instantInstantiate[i]);
 			}
+
+			//create the window manager
+			this.createWindowManager();
 
 			//if the current window still hasn't been initialized, t
 			if (!this.currentWindow.hasInitialized()) {
@@ -348,77 +566,9 @@ export class InfinityConsole {
 				//create window
 				await this.currentWindow.create();
 				//register events for the windowManager with the currentWindow
-				this.registerWindowsListEvents();
+				this.registerEvents();
 			}
 
-			//creating window manager
-			this.windowManager = blessed.list({
-				label: " {bold}{white-fg}Windows{/white-fg} (Enter/Double-Click to hide/show){/bold}",
-				tags: true,
-				top: "center",
-				left: "center",
-				width: "95%",
-				height: "95%",
-				padding: 2,
-				parent: this.screen,
-				keys: true,
-				mouse: true,
-				vi: true,
-				border: "line",
-				scrollbar: {
-					ch: " ",
-					track: {
-						bg: "black",
-					},
-					style: {
-						inverse: true,
-					},
-				},
-				style: {
-					bg: "grey",
-					fg: "white",
-					item: {
-						hover: {
-							bg: "white",
-						},
-					},
-					selected: {
-						bg: "white",
-						bold: true,
-					},
-				},
-			});
-			//when an item is selected form the list box, attempt to show or hide that Windoiw.
-			this.windowManager.on(
-				"select",
-				async (_el: Element, selected: any) => {
-					//disable the select if the current window is visible
-					if (this.currentWindow?.isVisible()) return;
-					//set the current window to the one that was selected
-					this.currentWindow = this.windows[selected];
-					if (!this.currentWindow.hasInitialized()) {
-						//sets blessed screen for this window
-						this.currentWindow.setScreen(this.screen);
-						//set the container of this window ( the console, which is this)
-						this.currentWindow.setContainer(this);
-						await this.currentWindow.create();
-						//registers events on the window
-						this.registerWindowsListEvents();
-					} else if (!this.currentWindow.isVisible())
-						this.currentWindow.show();
-					else this.currentWindow.hide();
-					await this.currentWindow.updateFrameTitle();
-					//set the window manager to the back of the screne
-					this.windowManager.setBack();
-				}
-			);
-
-			//update the list
-			this.updateWindowsList();
-			//append window manager to the screen
-			this.screen.append(this.windowManager);
-			//set to the back of the screen
-			this.windowManager.setBack();
 			//update interval for thinks
 			this.interval = setInterval(() => {
 				this.windows.forEach((window) => {
@@ -434,52 +584,10 @@ export class InfinityConsole {
 				this.screen.render();
 			}, 33);
 
-			//register escape key
-			this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
-				this.windowManager.setBack();
-
-				if (this.currentWindow?.name !== "CloseBox") {
-					let windows = this.getWindowsByName("CloseBox");
-					if (windows.length !== 0)
-						windows[0].options.currentWindow =
-							this.currentWindow?.name;
-					this.currentWindow?.openWindow("CloseBox");
-					//if the closeBox aka the current window is visible and we press control-c again just exit
-				} else {
-					if (this.currentWindow.isVisible()) process.exit(0);
-					else this.currentWindow.show();
-				}
-			});
-
-			//shows the logs
-			this.screen.key(["C-l"], (ch: string, key: string) => {
-				if (this.currentWindow?.name !== "Logs")
-					this.screen.lastWindow = this.currentWindow;
-
-				this.currentWindow?.openWindow("Logs");
-				this.windowManager.setBack();
-			});
-
-			//shows the list
-			this.screen.key(["C-z"], (ch: string, key: string) => {
-				this.updateWindowsList();
-				this.currentWindow?.hide();
-				this.windowManager.show();
-			});
-			//restores the current window
-			this.screen.key(["C-r"], (ch: string, key: string) => {
-				if (this.screen.lastWindow !== undefined) {
-					this.currentWindow?.hide();
-					this.currentWindow = this.screen.lastWindow;
-					delete this.screen.lastWindow;
-				}
-
-				this.updateWindowsList();
-				if (this.windowManager?.hidden === false)
-					this.currentWindow?.show();
-			});
 			//render
 			this.screen.render();
+			//register core key events
+			this.registerKeys();
 			//show the current window
 			this.currentWindow.show();
 		} catch (error: Error | any) {

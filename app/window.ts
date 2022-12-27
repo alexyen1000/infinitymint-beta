@@ -11,7 +11,7 @@ import {
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
-import InfinityConsole from "./console";
+import InfinityConsole, { InfinityConsoleInputKey } from "./console";
 import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const { v4: uuidv4 } = require("uuid");
@@ -56,6 +56,7 @@ export class InfinityMintWindow {
 	private initialCreation: any;
 	private autoInstantiate: boolean;
 	private container?: InfinityConsole;
+	private inputKeys?: Dictionary<InfinityConsoleInputKey>;
 
 	constructor(
 		name?: string,
@@ -372,10 +373,58 @@ export class InfinityMintWindow {
 			delete this.elements[index];
 		});
 
+		//unkeys everything to do with the window
+		Object.keys(this.inputKeys).forEach((key) => {
+			Object.values(this.inputKeys[key]).forEach((cb) => {
+				this.unkey(key, cb);
+			});
+		});
+
 		this.elements = {};
 	}
 
-	public registerKey() {}
+	/**
+	 * Registers a key command to the window which then executes a function
+	 * @param key
+	 * @param cb
+	 */
+
+	public key(key: string, cb: Function) {
+		if (this.inputKeys === undefined) this.inputKeys = {};
+
+		this.getContainer().key(key, cb);
+
+		if (this.inputKeys[key] === undefined) this.inputKeys[key] = [];
+		this.inputKeys[key].push(cb);
+	}
+
+	/**
+	 * Removes a key binding on the window, pass it a callback of the key to only remove that one. Else will remove all keys
+	 * @param key
+	 * @param cb
+	 * @returns
+	 */
+	public unkey(key: string, cb?: Function) {
+		if (this.inputKeys === undefined || this.inputKeys[key] === undefined)
+			return;
+
+		if (cb !== undefined) this.getContainer().unkey(key, cb);
+		else {
+			//unmap all keys
+			Object.values(this.inputKeys[key]).forEach((cb) => {
+				this.getContainer().unkey(key, cb);
+			});
+			this.inputKeys[key] = [];
+			return;
+		}
+
+		if (this.inputKeys[key].length <= 1) this.inputKeys[key] = [];
+		else {
+			this.inputKeys[key] = this.inputKeys[key].filter(
+				(thatCb) => thatCb.toString() === cb.toString()
+			);
+		}
+	}
 
 	public isAlive() {
 		return this.destroyed === false && this.initialized;

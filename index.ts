@@ -19,6 +19,7 @@ import {
 	getSolidityFolder,
 	getConfigFile,
 } from "./app/helpers";
+import { InfinityMintConsoleOptions } from "@app/interfaces";
 
 //export helpers
 export * as Helpers from "./app/helpers";
@@ -28,7 +29,11 @@ log("reading infinitymint.config.ts");
 export const config = getConfigFile();
 
 //function to launch the console
-export const start = async () => {
+export const start = async (options?: InfinityMintConsoleOptions) => {
+	options = {
+		...(options || {}),
+		...(typeof config?.console === "object" ? config.console : {}),
+	} as InfinityMintConsoleOptions;
 	log("starting infinitymint");
 	let session = readSession();
 
@@ -102,7 +107,7 @@ export const start = async () => {
 		"starting InfinityConsole with solidity root of " + getSolidityFolder()
 	);
 
-	let infinityConsole = new InfinityConsole();
+	let infinityConsole = new InfinityConsole(options);
 	await infinityConsole.initialize();
 };
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports

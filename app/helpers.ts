@@ -82,10 +82,10 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	 * Doesn't appear to function
 	 */
 	insertLine: FuncDouble<number, string, Function>;
-	key: FuncDouble<string[], Function, Function>;
+	key: Function;
 	onceKey: FuncDouble<string[], Function, Function>;
 	onScreenEvent: FuncDouble<string, Function, Function>;
-	unkey: FuncDouble<string[], Function, Function>;
+	unkey: Function;
 }
 
 /**
@@ -469,13 +469,19 @@ export const preInitialize = () => {
 		"projects",
 	]);
 
-	//create env file from the example .ts script
-	if (
-		!fs.existsSync(process.cwd() + "/.env") &&
-		fs.existsSync(process.cwd() + "/examples/example.env.ts")
-	)
-		createEnvFile(require(process.cwd() + "/examples/example.env"));
+	if (!fs.existsSync(process.cwd() + "/.env")) {
+		let path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
+			? process.cwd() + "/examples/example.env.ts"
+			: process.cwd() +
+			  "/node_modules/infinitymint/examples/example.env.ts";
 
+		if (!fs.existsSync(path))
+			throw new Error(
+				"could not find: " + path + " to create .env file with"
+			);
+
+		createEnvFile(require(path));
+	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
 	//create the debug pipe

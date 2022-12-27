@@ -389,10 +389,10 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 
 	let registerKeys = (onlyDelete?: boolean) => {
-		window.getScreen().unkey(["up", "w"]);
+		window.unkey("up");
 
 		if (onlyDelete !== true)
-			window.getScreen().key(["up", "w"], (ch: string, key: string) => {
+			window.key("up", (ch: string, key: string) => {
 				if (window.options.alwaysScroll) {
 					window.options.alwaysScroll = false;
 					alwaysScrollUpdate();
@@ -405,10 +405,9 @@ Logs.initialize = async (window, frame, blessed) => {
 				);
 			});
 
-		window.getScreen().unkey(["down", "s"]);
-
+		window.unkey("down");
 		if (onlyDelete !== true)
-			window.getScreen().key(["down", "s"], (ch: string, key: string) => {
+			window.key("down", (ch: string, key: string) => {
 				window.options.selectedLine = Math.min(
 					(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
 					window.options.selectedLine + 1
@@ -416,10 +415,9 @@ Logs.initialize = async (window, frame, blessed) => {
 			});
 
 		//centers the scroll of the console to the selected line position when you do Control-Q
-		window.getScreen().unkey(["C-q"]);
-
+		window.unkey("C-q");
 		if (onlyDelete !== true)
-			window.getScreen().key(["C-q"], (ch: string, key: string) => {
+			window.key("C-q", (ch: string, key: string) => {
 				let selectedLinePosition = [
 					...(Pipes.logs[window.options.pipe]?.logs || [""]),
 				]

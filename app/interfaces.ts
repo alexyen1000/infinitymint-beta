@@ -758,9 +758,23 @@ export interface InfinityMintConfig {
 	 */
 	project?: string;
 	/**
-	 * if to launch into the InfinityConsole. See {@link app/console.InfinityConsole}
+	 * Will launch into the infinitymint console if the value of this member is true or equals an object,
+	 *
+	 * @example
+	 * ```js
+	 * //set console options
+	 * console: {
+	 * 	blessed: {
+	 * 		//blessed screen options (see blessed api)
+	 * 	},
+	 * 	initialWindow: 'Logs'
+	 * }
+	 *
+	 * //or you can just set it to true
+	 * console: true
+	 * ```
 	 */
-	console?: boolean;
+	console?: InfinityMintConsoleOptions | boolean;
 	/**
 	 * The hardhat configuration, the same as hre.config. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/hardhat>
 	 */
@@ -892,6 +906,10 @@ export interface InfinityMintScriptArguments {
  */
 export interface InfinityMintConsoleOptions {
 	blessed?: Dictionary<any>;
+	/**
+	 * the initial window the console should open into
+	 */
+	initialWindow?: string | Window;
 }
 
 /**
