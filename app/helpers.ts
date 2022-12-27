@@ -493,7 +493,7 @@ export const loadInfinityMint = (
 	useInternalRequire?: boolean
 ) => {
 	createInfinityMintConfig(useJavascript, useInternalRequire);
-	preInitialize();
+	preInitialize(useJavascript);
 	initializeGanacheMnemonic();
 };
 
@@ -528,7 +528,7 @@ export const createEnvFile = (source: any) => {
 	fs.writeFileSync(process.cwd() + "/.env", stub);
 };
 
-export const preInitialize = () => {
+export const preInitialize = (isJavascript?: boolean) => {
 	//creates dirs
 	createDirs([
 		"gems",
@@ -552,7 +552,21 @@ export const preInitialize = () => {
 				"could not find: " + path + " to create .env file with"
 			);
 
-		createEnvFile(require(path));
+		//if it isn't javascript we can just include the .env.ts file, else if we aren't just copy the .env from the examples/js folder instead
+		if (!isJavascript) createEnvFile(require(path));
+		else {
+			let path = fs.existsSync(process.cwd() + "/examples/js/example.env")
+				? process.cwd() + "/examples/js/example.env"
+				: process.cwd() +
+				  "/node_modules/infinitymint/examples/js/example.env";
+
+			if (!fs.existsSync(path))
+				throw new Error(
+					"could not find: " + path + " to create .env file with"
+				);
+
+			fs.copyFileSync(path, "./.env");
+		}
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
