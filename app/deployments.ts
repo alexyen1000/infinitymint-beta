@@ -8,8 +8,11 @@ import {
 } from "./interfaces";
 import {
 	debugLog,
+	getCompiledProject,
 	getProject,
+	initializeGanacheMnemonic,
 	isEnvTrue,
+	isInfinityMint,
 	log,
 	readSession,
 	warning,
@@ -17,7 +20,12 @@ import {
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
-import { getContract, getDefaultSigner, logTransaction } from "./web3";
+import {
+	getContract,
+	getDefaultSigner,
+	getNetworkSettings,
+	logTransaction,
+} from "./web3";
 import { Contract } from "@ethersproject/contracts";
 import hre from "hardhat";
 
@@ -152,6 +160,10 @@ export class InfinityMintDeployment {
 
 	getKey() {
 		return this.key;
+	}
+
+	getModule() {
+		return this.deploymentScript.module;
 	}
 
 	getContractName(index?: 0) {
@@ -469,6 +481,90 @@ export class InfinityMintDeployment {
 		}
 	}
 }
+
+/**
+ *
+ * @param project
+ * @returns
+ */
+export const loadDeploymentClasses = async (project: InfinityMintProject) => {
+	let deployments = [...(await getDeploymentClasses(project))];
+
+	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_DEPLOY"))
+		deployments = [
+			...deployments,
+			...(await getDeploymentClasses(
+				project,
+				process.cwd() + "/node_modules/infinitymint/deploy/**/*.ts"
+			)),
+		];
+
+	return deployments;
+};
+
+/**
+ * Returns a list of deployment classes relating to a project in order to deploy it ready to be steped through
+ * @param project
+ * @param loadedDeploymentClasses
+ * @returns
+ */
+export const getProjectDeploymentClasses = async (
+	project: string,
+	loadedDeploymentClasses?: InfinityMintDeployment[]
+) => {
+	let compiledProject: InfinityMintProject;
+	if (typeof project === "string")
+		compiledProject = getCompiledProject(project);
+	else compiledProject = project;
+
+	loadedDeploymentClasses =
+		loadedDeploymentClasses ||
+		(await loadDeploymentClasses(compiledProject));
+
+	let setings = getNetworkSettings(hre.network.name);
+
+	if (!compiledProject.compiled)
+		throw new Error(
+			"please compile " + compiledProject.name + " before launching it"
+		);
+
+	let moduleDeployments = loadedDeploymentClasses.filter(
+		(deployment) =>
+			Object.keys(compiledProject.modules).filter(
+				(key) =>
+					key === deployment.getModule() &&
+					compiledProject.modules[key] ===
+						deployment.getContractName()
+			).length !== 0
+	);
+
+	let otherDeployments = loadedDeploymentClasses.filter(
+		(deployment) =>
+			moduleDeployments.filter(
+				(thatDeployment) =>
+					deployment.getContractName() ===
+					thatDeployment.getContractName()
+			).length !== 0 &&
+			[
+				...(setings?.disabledContracts || []),
+				...(compiledProject?.settings?.disabledContracts || []),
+			].filter(
+				(value) =>
+					value === deployment.getContractName() ||
+					value === deployment.getKey()
+			).length === 0
+	);
+
+	let deployments = [...moduleDeployments, ...otherDeployments];
+
+	//now we need to sort the deployments ranked on their index, then put libraries first, then put important first
+	deployments = deployments
+		.sort((a, b) => a.getIndex() - b.getIndex())
+		.sort((a, b) => (a.isLibrary() ? deployments.length : 0))
+		.sort((a, b) => (a.isImportant() ? deployments.length : 0));
+
+	return deployments;
+};
 
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive

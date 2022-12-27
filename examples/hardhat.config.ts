@@ -20,7 +20,7 @@ import "@nomiclabs/hardhat-ethers";
 import "hardhat-change-network"; //allows hre.changeNetwork to occur
 
 //load infinitymint and create default files
-loadInfinityMint(false, true);
+loadInfinityMint();
 //return the infinitymint config file
 let config = prepareConfig();
 debugLog("loaded hardhat.config.ts");

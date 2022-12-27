@@ -363,6 +363,8 @@ export interface InfinityMintEvents
 	>;
 }
 
+export type InfinityMintEventKeys = Array<keyof InfinityMintEvents>;
+
 /**
  * The project information is where you can set the token symbol, other language definitions such as the full name of your project, short name and a brief description for metadata purposes.
  */
@@ -552,6 +554,7 @@ export interface InfinityMintEnvironment {
 	PIPE_LOG_ERRORS_TO_DEFAULT?: boolean;
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
 	OVERWRITE_CONSOLE_METHODS?: boolean;
+	INFINITYMINT_DONT_INCLUDE_DEPLOY?: boolean;
 	GANACHE_PORT?: number;
 	THROW_ALL_ERRORS?: boolean;
 	INFINITYMINT_CONSOLE?: boolean;
@@ -604,6 +607,10 @@ export interface InfinityMintProjectSettings {
 	 * @see {@link InfinityMintProjectSettingsAssets}
 	 */
 	assets?: InfinityMintProjectSettingsAssets;
+	/**
+	 * List of contracts which are disabled, will check if member equals contract name or key
+	 */
+	disabledContracts?: string;
 }
 
 export type InfinityMintProjectSettingsKeys = Array<
@@ -820,6 +827,10 @@ export interface InfinityMintConfigSettingsNetwork {
 	 */
 	exposeRpc?: boolean;
 	/**
+	 * disabled contracts for this network, takes fully qualified contract name or the key name, see {@link InfinityMintDeployment}.
+	 */
+	disabledContracts?: string[];
+	/**
 	 * if true, will write the current mnemonic to the .mnemonic file
 	 */
 	writeMnemonic?: boolean;
@@ -872,7 +883,7 @@ export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
 /**
  * A mutable object containing infinity mint specific settings for each network. Based off of the networks which are defined in the hardhat member of the InfinityMintConfig Settings.
  * @see {@link InfinityMintConfigSettings}
- * @see {@link InfinityMintConfigNetwork}
+ * @see {@link InfinityMintConfigSettingsNetwork}
  */
 export interface InfinityMintConfigSettingsNetworks
 	extends Dictionary<InfinityMintConfigSettingsNetwork> {
@@ -886,7 +897,7 @@ export interface InfinityMintConfigSettingsNetworks
 /**
  * @see {@link InfinityMintConfigSettings}
  */
-export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
+export interface InfinityMintConfigSettingsCompile extends Dictionary<any> {}
 
 /**
  * here you can specify the infinity mint settings for the `networks`, `deploy` and `build` and `export` steps. You can configure infinity mint here.
@@ -894,7 +905,7 @@ export interface InfinityMintConfigSettingsExport extends Dictionary<any> {}
  * @see {@link InfinityMintConfigSettingsNetwork}
  * @see {@link InfinityMintConfigSettingsDeploy}
  * @see {@link InfinityMintConfigSettingsBuild}
- * @see {@link InfinityMintConfigSettingsExport}
+ * @see {@link InfinityMintConfigSettingsCompile}
  */
 export interface InfinityMintConfigSettings extends Dictionary<any> {
 	/**
@@ -929,11 +940,11 @@ export interface InfinityMintConfigSettings extends Dictionary<any> {
 	 */
 	build?: InfinityMintConfigSettingsBuild;
 	/**
-	 * Configure InfinityMints deploy stage here.
+	 * Configure InfinityMints compile stage here.
 	 *
-	 * @see {@link InfinityMintConfigSettingsExport}
+	 * @see {@link InfinityMintConfigSettingsCompile}
 	 */
-	export?: InfinityMintConfigSettingsExport;
+	compile?: InfinityMintConfigSettingsCompile;
 }
 
 /**

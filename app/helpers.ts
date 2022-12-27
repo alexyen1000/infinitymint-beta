@@ -463,6 +463,17 @@ export const getPackageJson = () => {
 	);
 };
 
+export const isInfinityMint = () => {
+	try {
+		let packageJson = getPackageJson();
+		if (packageJson?.name === "infinitymint") return true;
+	} catch (error) {
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+
+		return false;
+	}
+};
+
 /**
  * Reads InfinityMint configuration file and and registers any gas and price handlers we have for each network
  * @param config
