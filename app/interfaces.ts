@@ -39,13 +39,20 @@ export interface InfinityMintGemParameters
 }
 
 /**
- * passed to event functions
+ * This is what is passed into the callback methods which you assign to events. Event is the event data whcich was emitted. Script might be accessible depending on the context this event was emitted. Events can be emitted inside and outside of InfinityMint scripts as well as in deploy scripts, so make sure to check if the members you are trying to access are not undefined.
  */
-export interface InfinityMintProjectEventParameters<T>
+export interface InfinityMintEventEmit<T>
 	extends InfinityMintDeploymentParameters,
 		Dictionary<any> {
 	event?: T;
-	gems: Dictionary<InfinityMintGemScript>;
+	/**
+	 * might be accessible depending on the context of the event
+	 */
+	gems?: Dictionary<InfinityMintGemScript>;
+	/**
+	 *  Depending on the context of the event, either script or deploy script will be accessible
+	 */
+	script?: InfinityMintScript;
 }
 
 /**
@@ -256,111 +263,176 @@ export interface InfinityMintProject {
 }
 
 /**
+ * @event preDeploy
+ * @event postDeploy
+ */
+export interface InfinityMintEventEmitter extends EventEmitter {
+	/**
+	 * Adds the `listener` function to the end of the listeners array for the
+	 * event named `eventName`. No checks are made to see if the `listener` has
+	 * already been added. Multiple calls passing the same combination of `eventName`and `listener` will result in the `listener` being added, and called, multiple
+	 * times.
+	 *
+	 * ```js
+	 * server.on('connection', (stream) => {
+	 *   console.log('someone connected!');
+	 * });
+	 * ```
+	 *
+	 * Returns a reference to the `EventEmitter`, so that calls can be chained.
+	 *
+	 * By default, event listeners are invoked in the order they are added. The`emitter.prependListener()` method can be used as an alternative to add the
+	 * event listener to the beginning of the listeners array.
+	 *
+	 * ```js
+	 * const myEE = new EventEmitter();
+	 * myEE.on('foo', () => console.log('a'));
+	 * myEE.prependListener('foo', () => console.log('b'));
+	 * myEE.emit('foo');
+	 * // Prints:
+	 * //   b
+	 * //   a
+	 * ```
+	 * @since v0.1.101
+	 * @param eventName The name of the event.
+	 * @param listener The callback function
+	 * @event test test
+	 */
+	on(
+		eventName: InfinityMintEventKeys[0] | string | symbol,
+		listener: (...args: any[]) => void
+	): this;
+}
+
+/**
  * Events can be defined which can then be called directly from the project file or a gem. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
  */
 export interface InfinityMintEvents
 	extends Dictionary<
-		FuncSingle<
-			InfinityMintProjectEventParameters<any>,
-			Promise<void | boolean>
-		>
+		FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>
 	> {
+	/**
+	 * @event
+	 */
 	preCompile?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
+		InfinityMintEventEmit<void>,
 		Promise<void | boolean>
 	>;
 	/**
 	 * Will be called when project is compiled
+	 * @event
 	 */
-	postCompile?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
-		Promise<void>
-	>;
+	postCompile?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
 	/**
 	 * Will be called when setup is about to take place. Can return false to abort setup silently.
+	 * @event
 	 */
 	preSetup?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
+		InfinityMintEventEmit<InfinityMintDeployment>,
 		Promise<void | boolean>
 	>;
+	/**
+	 * @event
+	 */
 	postSetup?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
+		InfinityMintEventEmit<InfinityMintDeployment>,
 		Promise<void>
 	>;
 	/**
 	 * Will be called when deploy complete.
+	 * @event
 	 */
 	postDeploy?: FuncSingle<
-		InfinityMintProjectEventParameters<
-			Dictionary<InfinityMintDeploymentLive[]>
-		>,
+		InfinityMintEventEmit<InfinityMintDeploymentLive[]>,
 		Promise<void>
 	>;
+	/**
+	 * @event
+	 */
 	preDeploy?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
+		InfinityMintEventEmit<InfinityMintDeployment>,
 		Promise<void | boolean>
 	>;
+	/**
+	 * @event
+	 */
 	gemPreSetup?: FuncSingle<
-		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		InfinityMintEventEmit<InfinityMintGemScript>,
 		Promise<void>
 	>;
+	/**
+	 * @event
+	 */
 	gemPostSetup?: FuncSingle<
-		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		InfinityMintEventEmit<InfinityMintGemScript>,
 		Promise<void | boolean>
 	>;
+	/**
+	 * @event
+	 */
 	gemPreDeploy?: FuncSingle<
-		InfinityMintProjectEventParameters<InfinityMintGemScript>,
+		InfinityMintEventEmit<InfinityMintGemScript>,
 		Promise<void>
 	>;
+	/**
+	 * @event
+	 */
 	gemPostDeploy?: FuncSingle<
-		InfinityMintProjectEventParameters<
+		InfinityMintEventEmit<
 			InfinityMintDeploymentLive | InfinityMintDeploymentLive[]
 		>,
 		Promise<void | boolean>
 	>;
-	postGems?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
-		Promise<void>
-	>;
-	preGems?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
-		Promise<void | boolean>
-	>;
+	/**
+	 * @event
+	 */
+	postGems?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	/**
+	 * @event
+	 */
+	preGems?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
+	/**
+	 * @event
+	 */
 	postGem?: FuncSingle<
-		InfinityMintProjectEventParameters<InfinityMintGemScript>,
-		Promise<void>
-	>;
-	preGem?: FuncSingle<
-		InfinityMintProjectEventParameters<InfinityMintGemScript>,
-		Promise<void | boolean>
-	>;
-	postExport?: FuncSingle<
-		InfinityMintProjectEventParameters<string[]>,
+		InfinityMintEventEmit<InfinityMintGemScript>,
 		Promise<void>
 	>;
 	/**
+	 * @event
+	 */
+	preGem?: FuncSingle<
+		InfinityMintEventEmit<InfinityMintGemScript>,
+		Promise<void | boolean>
+	>;
+	/**
+	 * @event
+	 */
+	postExport?: FuncSingle<InfinityMintEventEmit<string[]>, Promise<void>>;
+	/**
 	 * Will be called when export is about to begin. Can return false to abort/skip export silently.
+	 * @event
 	 */
 	preExport?: FuncSingle<
-		InfinityMintProjectEventParameters<string[]>,
+		InfinityMintEventEmit<string[]>,
 		Promise<void | boolean>
 	>;
-	preBuild?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
-		Promise<void | boolean>
-	>;
-	postBuild?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
-		Promise<void>
-	>;
-	success?: FuncSingle<
-		InfinityMintProjectEventParameters<void>,
-		Promise<void>
-	>;
-	failure?: FuncSingle<
-		InfinityMintProjectEventParameters<Error>,
-		Promise<void>
-	>;
+	/**
+	 * @event
+	 */
+	preBuild?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
+	/**
+	 * @event
+	 */
+	postBuild?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	/**
+	 * @event
+	 */
+	success?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	/**
+	 * @event
+	 */
+	failure?: FuncSingle<InfinityMintEventEmit<Error>, Promise<void>>;
 }
 
 export type InfinityMintEventKeys = Array<keyof InfinityMintEvents>;
@@ -828,7 +900,7 @@ export interface InfinityMintConfigSettingsNetwork {
 	 */
 	exposeRpc?: boolean;
 	/**
-	 * disabled contracts for this network, takes fully qualified contract name or the key name, see {@link InfinityMintDeployment}.
+	 * disabled contracts for this network, takes fully qualified contract name or the key name, see {@link app/deployments.InfinityMintDeployment}.
 	 */
 	disabledContracts?: string[];
 	/**
@@ -955,6 +1027,8 @@ export interface InfinityMintScriptArguments {
 	name: string;
 	optional?: boolean;
 	validator?: Function;
+	//defines which type of UI element to render for this element, also takes over as a basic validator if no validor function is defined
+	type?: "boolean" | "string" | "number";
 	value?: any;
 }
 
@@ -995,6 +1069,7 @@ export interface InfinityMintScript {
 	loaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
 	reloaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
 	arguments?: InfinityMintScriptArguments[];
+	events?: InfinityMintEvents;
 }
 
 /**
@@ -1003,6 +1078,10 @@ export interface InfinityMintScript {
 export interface InfinityMintScriptParameters
 	extends InfinityMintDeploymentParameters,
 		Dictionary<any> {
+	/**
+	 * Refers to the current script of which the parameters values come from. Could not be available due to the fact this extends InfinityMintDeploymentParameters and InfinityMintEventEmit
+	 */
+	script?: InfinityMintScript;
 	gems?: Dictionary<InfinityMintGemScript>;
 	args?: Dictionary<InfinityMintScriptArguments>;
 }
@@ -1042,7 +1121,7 @@ export interface InfinityMintDeploymentLocal extends Dictionary<any> {
 }
 
 /**
- * Parameters which are passed into every deploy script. See {@link InfinityMintDeploymentScript}
+ * Parameters which are passed into every deploy script method which is called by InfinityMint. See {@link InfinityMintDeploymentScript}
  */
 export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	/**
@@ -1056,9 +1135,18 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	 */
 	console?: InfinityConsole;
 	/**
-	 * the event emitter for you to emit events from
+	 * the event emitter for you to emit events from, usually provided by the InfinityConsole. See {@link app/console.InfinityConsole}.
+	 *
+	 * For events, see {@link InfinityMintEvents}.
+	 *
+	 * @event preDeploy
+	 * @event postDeploy
+	 * @event preSetup
+	 * @event postSetup
+	 * @event failure
+	 * @event success
 	 */
-	eventEmitter?: EventEmitter;
+	eventEmitter?: InfinityMintEventEmitter;
 	/**
 	 * Might have check if undefined depending on context
 	 */
@@ -1074,9 +1162,11 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	/**
 	 * the current script this method is being executed on
 	 */
-	script?: InfinityMintDeploymentScript;
+	deploymentScript?: InfinityMintDeploymentScript;
 	/**
-	 * the current deployment
+	 * refers to the current InfinityMintDeployment class from which the value of the current parameters are from. Might not be available since this is inhereted by InfinityMintEventEmit.
+	 *
+	 * See {@link InfinityMintEventEmit}
 	 */
 	deployment?: InfinityMintDeployment;
 	log: typeof log;
@@ -1084,7 +1174,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	/**
 	 * is true if this is the first time running the setup
 	 */
-	isFirstTime?: boolean;
+	deployed?: boolean;
 }
 
 /**

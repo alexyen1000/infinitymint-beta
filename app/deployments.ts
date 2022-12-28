@@ -383,6 +383,14 @@ export class InfinityMintDeployment {
 		) as InfinityMintDeploymentLocal;
 	}
 
+	public getDeploymentScript() {
+		return this.deploymentScript;
+	}
+
+	public getDeploymentScriptLocation() {
+		return this.deploymentScriptLocation;
+	}
+
 	async deploy(...args: any) {
 		this.reloadScript();
 		let result = await this.execute("deploy", args);

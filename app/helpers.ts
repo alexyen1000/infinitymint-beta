@@ -29,12 +29,51 @@ export interface Vector {
 }
 
 export interface Blessed {
-	screen: any;
-	box: any;
-	button: any;
-	list: any;
-	image: any;
-	form: any;
+	screen: (options: any) => BlessedElement;
+	box: (options: BlessedElementOptions) => BlessedElement;
+	button: (options: BlessedElementOptions) => BlessedElement;
+	list: (options: BlessedElementOptions) => BlessedElement;
+	image: (options: BlessedElementOptions) => BlessedElement;
+	form: (options: BlessedElementOptions) => BlessedElement;
+}
+
+export type BlessedElementPadding = {
+	top: string | number;
+	left: string | number;
+	right: string | number;
+	bottom: string | number;
+};
+
+export interface BlessedElementOptions extends Dictionary<any> {
+	/**
+	 * will always run the think hook of this blessed element even if it is hidden
+	 */
+	alwaysUpdate?: boolean;
+	/**
+	 * will make sure the element is always brung to the front
+	 */
+	alwaysFront?: boolean;
+	/**
+	 * will make sure the element is always at the back
+	 */
+	alwaysBack?: boolean;
+	draggable?: boolean;
+	tags?: boolean;
+	bold?: boolean;
+	mouse?: boolean;
+	keyboard?: boolean;
+	think?: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, void>;
+	width?: string | number;
+	height?: string | number;
+	padding?: BlessedElementPadding | string | number;
+	file?: PathLike;
+	parent?: BlessedElement;
+	style?: Dictionary<any>;
+	scrollbar?: Dictionary<any>;
+	label?: string;
+	animate?: boolean;
+	border?: Dictionary<any> | string;
+	content?: any;
 }
 
 /**
@@ -43,7 +82,7 @@ export interface Blessed {
  *
  * @experimental
  */
-export interface BlessedElement extends Element, Dictionary<any> {
+export interface BlessedElement extends BlessedElementOptions, Dictionary<any> {
 	focus: Function;
 	render: Function;
 	hide: Function;
@@ -58,7 +97,6 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	 */
 	pushLine: Function;
 	disableMouse: Function;
-	content: any;
 	/**
 	 * Returns the current window this element is assigned too. Will be undefined if the element has not been registered with an InfinityMintWindow
 	 */
@@ -67,13 +105,14 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	setItems: Function;
 	enterSelected: Function;
 	enableKeys: Function;
-	width: number;
+	/**
+	 * true if the window is hidden
+	 */
 	hidden: boolean;
-	height: number;
+	/**
+	 * ture if the window should hide when the window is shown again, applied to elements which are hidden initially when the window is initialized and used to keep them hidden when we reshow the window later on.
+	 */
 	shouldUnhide: boolean;
-	style: any;
-	scrollbar: any;
-	border: any;
 	setContent: Function;
 	setLabel: Function;
 	enableMouse: Function;
@@ -170,6 +209,17 @@ export const warning = (msg: string | object | number) => {
 	);
 };
 
+export const getElementPadding = (
+	element: BlessedElement,
+	type: "left" | "right" | "up" | "down"
+) => {
+	if (element?.padding === undefined) return 0;
+
+	if (element?.padding[type] === undefined) return 0;
+
+	return parseInt(element?.padding[type].toString());
+};
+
 export const calculateWidth = (...elements: BlessedElement[]) => {
 	let fin = 0;
 	elements
@@ -178,10 +228,8 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
 				element.strWidth(element.content) +
 				//for the border
 				(element.border !== undefined ? 2 : 0) +
-				(typeof element.padding?.left === "number" ||
-				!isNaN(element.padding?.left)
-					? element.padding.left * 2
-					: 0)
+				getElementPadding(element, "left") +
+				getElementPadding(element, "right")
 		)
 		.forEach((num) => (fin += num));
 	return fin;
@@ -275,6 +323,61 @@ export const getCompiledProject = (projectName: string) => {
 	if (res.compiled !== true)
 		throw new Error(`project ${projectName} has not been compiled`);
 
+	return res as InfinityMintProject;
+};
+
+export const hasTempDeployedProject = (projectName: string) => {
+	return fs.existsSync(
+		process.cwd() + "/temp/projects/" + projectName + ".temp.json"
+	);
+};
+
+export const hasTempCompiledProject = (projectName: string) => {
+	return fs.existsSync(
+		process.cwd() + "/temp/projects/" + projectName + ".compiled.temp.json"
+	);
+};
+
+export const saveTempDeployedProject = (project: InfinityMintProject) => {
+	fs.writeFileSync(
+		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
+		JSON.stringify(project)
+	);
+};
+
+export const saveTempCompiledProject = (project: InfinityMintProject) => {
+	fs.writeFileSync(
+		process.cwd() +
+			"/temp/projects/" +
+			project.name +
+			".compiled.temp.json",
+		JSON.stringify(project)
+	);
+};
+
+/**
+ * Returns a temporary deployed InfinityMintProject which can be picked up and completed.
+ * @param projectName
+ */
+export const getTempDeployedProject = (projectName: string) => {
+	let res = require(process.cwd() +
+		"/temp/projects/" +
+		projectName +
+		".temp.json");
+	res = res.default || res;
+	return res as InfinityMintProject;
+};
+
+/**
+ * Returns a temporary compiled InfinityMintProject which can be picked up and completed.
+ * @param projectName
+ */
+export const getTempCompiledProject = (projectName: string) => {
+	let res = require(process.cwd() +
+		"/temp/projects/" +
+		projectName +
+		".temp.compiled.json");
+	res = res.default || res;
 	return res as InfinityMintProject;
 };
 

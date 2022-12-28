@@ -725,6 +725,27 @@ export class InfinityConsole {
 			this.think = setInterval(() => {
 				(this.options?.think || int)();
 				this.tick++;
+
+				//bit of a hacky solution but keeps these buttons forward
+				if (this.currentWindow !== undefined) {
+					Object.values(this.currentWindow.elements).forEach(
+						(element) => {
+							if (element.alwaysFront) element.setFront();
+							if (element.alwaysBack) element.setBack();
+
+							if (
+								element.think &&
+								typeof element.think === "function" &&
+								(!element.hidden || element.alwaysUpdate)
+							)
+								element.think(
+									this.currentWindow,
+									this.currentWindow.getElement("frame"),
+									blessed
+								);
+						}
+					);
+				}
 			}, this.options?.tickRate);
 
 			//render

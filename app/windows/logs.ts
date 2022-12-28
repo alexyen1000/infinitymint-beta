@@ -142,7 +142,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	let console = window.createElement("console", {
 		width: "100%",
 		height: "100%-" + (frame.top + frame.bottom + 8),
-		padding: 1,
+		padding: 0,
 		top: 4,
 		label: `{bold}{white-fg}Pipe: {/white-fg}${
 			window.options?.pipe || "undefined"

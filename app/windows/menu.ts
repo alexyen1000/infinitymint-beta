@@ -4,6 +4,7 @@ import {
 	getPackageJson,
 	getSolidityFolder,
 	isEnvTrue,
+	isInfinityMint,
 	isTypescript,
 	warning,
 } from "../helpers";
@@ -31,6 +32,7 @@ let createButtons = (window) => {
 		left: 0,
 		shrink: true,
 		width: "shrink",
+		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
 		content: "Deploy Projects",
@@ -57,6 +59,7 @@ let createButtons = (window) => {
 		bottom: 0,
 		left: calculateWidth(deploy),
 		shrink: true,
+		alwaysFront: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
@@ -84,6 +87,7 @@ let createButtons = (window) => {
 		bottom: 0,
 		left: calculateWidth(deploy, browser),
 		shrink: true,
+		alwaysFront: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
@@ -109,6 +113,7 @@ let createButtons = (window) => {
 		left: calculateWidth(deploy, browser, compile),
 		shrink: true,
 		width: "shrink",
+		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
 		content: "Run Scripts",
@@ -137,6 +142,7 @@ let createButtons = (window) => {
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
+		alwaysFront: true,
 		padding: 1,
 		content: "All Deployments",
 		tags: true,
@@ -163,6 +169,7 @@ let createButtons = (window) => {
 		right: 0,
 		shrink: true,
 		width: "shrink",
+		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
 		content: "Change Network",
@@ -186,31 +193,15 @@ let createButtons = (window) => {
 	});
 };
 
-let colours = [
-	"blue",
-	"cyan",
-	"magenta",
-	"red",
-	"green",
-	"yellow",
-	"white",
-	"gray",
-];
-
-let files = [
+const files = [
 	"/resources/logos/fractal.gif",
-	"/resources/logos/infinity.png",
 	"/resources/logos/hypercube.gif",
 	"/resources/logos/sectionz.png",
-	"/resources/logos/terry.gif",
 	"/resources/logos/pizza.gif",
 	"/resources/logos/techno.gif",
-	"/resources/logos/eva.gif",
-	"/resources/logos/aperture.gif",
 	"/resources/logos/bio.gif",
 	"/resources/logos/audio.gif",
 	"/resources/logos/2032.gif",
-	"/resources/logos/acid.gif",
 ];
 
 Menu.think = (window, frame, blessed) => {
@@ -259,24 +250,10 @@ Menu.initialize = async (window, frame, blessed) => {
 	}
 
 	let container = window.createElement("container", {
-		width: "100%-" + (frame.left + frame.right + 10),
-		height: "100%-" + (frame.top + frame.bottom + 12),
-		top: 6,
-		left: 4,
-		style: {
-			fg: "white",
-			bg: "gray",
-			border: {
-				fg: "#f0f0f0",
-			},
-		},
-	});
-
-	window.createElement("stripe", {
-		width: 8,
-		height: "100%-" + (container.top + container.bottom - 2),
-		parent: container,
-		top: -2,
+		width: "100%",
+		height: "100%-" + (frame.top + frame.bottom + 10),
+		top: 5,
+		left: 1,
 		style: {
 			fg: "white",
 			bg: "black",
@@ -286,30 +263,57 @@ Menu.initialize = async (window, frame, blessed) => {
 		},
 	});
 
+	let logoWidth = Math.floor(
+		Math.floor(
+			Math.floor(150 / 1.61803398875) +
+				parseInt(container.width.toString()) *
+					parseInt(container.height.toString()) *
+					0.0115
+		) / 2.25
+	);
+	let logoHeight = Math.floor(logoWidth / 2.25);
+
+	window.createElement("stripe", {
+		width: 8,
+		height: "100%-" + (frame.top + frame.bottom + 10),
+		left: 1,
+		top: 5,
+		style: {
+			fg: "white",
+			bg: "gray",
+		},
+	});
+
 	//render screen
 	window.getScreen().render();
 
-	let logoWidth =
-		Math.floor(
-			Math.floor(151 / 1.61803398875) +
-				container.width * container.height * 0.01
-		) / 2.5;
-	if (container.height >= 20) {
+	if (container.height > 16) {
 		//hide logo if screen too small
 		if (container.width > 120)
 			window.createElement(
 				"logo",
 				{
-					top: container.top - 2,
-					left: frame.left + frame.right + 20,
+					top: -1,
+					parent: container,
+					left: 8,
+					draggable: true,
 					width: logoWidth,
-					height: Math.floor(logoWidth / 2.5),
-					file: "." + files[Math.floor(Math.random() * files.length)],
+					height: logoHeight,
+					padding: 0,
+					file: isInfinityMint()
+						? process.cwd() +
+						  files[Math.floor(Math.random() * files.length)]
+						: process.cwd() +
+						  "/node_modules/infinitymint" +
+						  files[Math.floor(Math.random() * files.length)],
 					animate: true,
 					style: {
 						bg: "gray",
+						border: {
+							fg: "#f0f0f0",
+						},
 					},
-					search: true,
+					border: window.getBorder(),
 				},
 				"image"
 			);
@@ -322,11 +326,11 @@ Menu.initialize = async (window, frame, blessed) => {
 				width: "shrink",
 				height: "shrink",
 				tags: true,
-				bold: true,
 				style: {
-					fg: "white",
+					fg: "green",
+					bg: "black",
 				},
-				content: `infinitymint`,
+				content: `∞mint`,
 			},
 			"bigtext"
 		);
@@ -341,7 +345,7 @@ Menu.initialize = async (window, frame, blessed) => {
 			style: {
 				fg: "white",
 			},
-			content: `I N F I N I T Y  M I N T by {underline}0x0zAgency{/underline}`,
+			content: `{bold}{green-fg}I N F I N I T Y  M I N T by {underline}0x0zAgency{/underline}{/green-fg}{/bold}`,
 		});
 
 	window.createElement("versionLabel", {
@@ -358,7 +362,7 @@ Menu.initialize = async (window, frame, blessed) => {
 	});
 
 	window.createElement("companyLabel", {
-		left: container.left + 2,
+		left: container.left,
 		top: container.top - 1,
 		width: "shrink",
 		height: "shrink",
@@ -368,26 +372,6 @@ Menu.initialize = async (window, frame, blessed) => {
 			fg: "white",
 		},
 		content: `0x0z`,
-	});
-
-	window.createElement("cwdAndSolidityLabel", {
-		left: 2,
-		bottom: 1,
-		parent: container,
-		width: "shrink",
-		height: "shrink",
-		tags: true,
-		bold: true,
-		style: {
-			fg: "white",
-		},
-		content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
-			window.getInfinityConsole().getScripts().length
-		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
-			isTypescript() ? "true" : "false"
-		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
-			Object.keys(hre.tasks).length
-		}{/white-fg}{/gray-bg}`,
 	});
 
 	window.createElement("networkLabel", {
@@ -402,6 +386,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		},
 		content: `{white-bg}{black-fg}${hre.network.name}{/black-fg}{/white-bg}`,
 	});
+
 	window.createElement("timeLabel", {
 		right: container.right,
 		bottom: container.bottom,
@@ -415,6 +400,31 @@ Menu.initialize = async (window, frame, blessed) => {
 		content: `{white-bg}{black-fg}${new Date(
 			Date.now()
 		).toString()}{/black-fg}{/white-bg}`,
+	});
+
+	window.createElement("infoLabel", {
+		left: -1,
+		bottom: 1,
+		parent: container,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		alwaysFront: true,
+		bold: true,
+		padding: 1,
+		style: {
+			border: {
+				fg: "#f0f0f0",
+			},
+		},
+		border: window.getBorder(),
+		content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
+			window.getInfinityConsole().getScripts().length
+		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
+			isTypescript() ? "true" : "false"
+		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
+			Object.keys(hre.tasks).length
+		}{/white-fg}{/gray-bg}`,
 	});
 
 	createButtons(window);
