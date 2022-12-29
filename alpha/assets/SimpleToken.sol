@@ -16,7 +16,7 @@ contract SimpleToken is InfinityMintAsset {
 		InfinityMintAsset(valuesContract)
 	{
 		tokenName = _tokenName;
-		assetsType = "json";
+		typeOf = "object";
 	}
 
 	function getNextPathId(RandomNumber randomNumberController)
@@ -28,7 +28,7 @@ contract SimpleToken is InfinityMintAsset {
 		if (pathCount == 1 && disabledPaths[safeDefaultReturnPath])
 			revert("No valid paths");
 
-		if (valuesController.isTrue("incrementalMode")) {
+		if (valuesController.isTrue("incremental")) {
 			nextPath = lastPath++;
 			if (nextPath >= pathCount) {
 				lastPath = uint32(safeDefaultReturnPath);

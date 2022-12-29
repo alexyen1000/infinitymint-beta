@@ -23,7 +23,7 @@ abstract contract RandomNumber {
 			++salt;
 		}
 
-		return returnNumber(valuesController.getValue("maxRandomNumber"), salt);
+		return unsafeNumber(valuesController.getValue("maxRandomNumber"), salt);
 	}
 
 	function getMaxNumber(uint256 maxNumber) external returns (uint256) {
@@ -31,17 +31,17 @@ abstract contract RandomNumber {
 			++salt;
 		}
 
-		return returnNumber(maxNumber, salt);
+		return unsafeNumber(maxNumber, salt);
 	}
 
 	/// @notice cheap return number
-	function returnNumber(uint256 maxNumber, uint256 _salt)
+	function unsafeNumber(uint256 maxNumber, uint256 _salt)
 		public
 		view
 		virtual
 		returns (uint256)
 	{
 		if (maxNumber <= 0) maxNumber = 1;
-		return (_salt + 3) % maxNumber;
+		return (_salt + salt + block.timestamp) % maxNumber;
 	}
 }

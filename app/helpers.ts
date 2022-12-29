@@ -271,13 +271,13 @@ export const overwriteConsoleMethods = () => {
 
 		if (
 			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
-			Pipes.logs[Pipes.currentPipe] !== undefined
+			Pipes.pipes[Pipes.currentPipeKey] !== undefined
 		)
-			Pipes.getPipe(Pipes.currentPipe).log(msg);
+			Pipes.getPipe(Pipes.currentPipeKey).log(msg);
 
 		if (
-			Pipes.logs[Pipes.currentPipe]?.listen ||
-			(Pipes.logs[Pipes.currentPipe] === undefined &&
+			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
+			(Pipes.pipes[Pipes.currentPipeKey] === undefined &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
 			consoleLog(msg.replace("<#DONT_LOG_ME$>", ""));
@@ -285,14 +285,14 @@ export const overwriteConsoleMethods = () => {
 
 	let consoleError = console.error;
 	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
-		if (Pipes.logs[Pipes.currentPipe] && dontSendToPipe !== true)
-			Pipes.getPipe(Pipes.currentPipe).error(error);
+		if (Pipes.pipes[Pipes.currentPipeKey] && dontSendToPipe !== true)
+			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
 		if (isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT"))
 			console.log("[error] " + error?.message);
 
 		if (
-			Pipes.logs[Pipes.currentPipe]?.listen ||
+			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
 			isEnvTrue("PIPE_ECHO_ERRORS")
 		)
 			consoleError(error);
@@ -339,6 +339,7 @@ export const hasTempCompiledProject = (projectName: string) => {
 };
 
 export const saveTempDeployedProject = (project: InfinityMintProject) => {
+	debugLog("saving " + project.name + ".temp.json");
 	fs.writeFileSync(
 		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
 		JSON.stringify(project)
@@ -346,6 +347,7 @@ export const saveTempDeployedProject = (project: InfinityMintProject) => {
 };
 
 export const saveTempCompiledProject = (project: InfinityMintProject) => {
+	debugLog("saving " + project.name + ".compiled.temp.json");
 	fs.writeFileSync(
 		process.cwd() +
 			"/temp/projects/" +
@@ -744,8 +746,10 @@ export const preInitialize = (isJavascript?: boolean) => {
 		"temp",
 		"temp/settings",
 		"temp/receipts",
+		"temp/pipes",
 		"temp/deployments",
 		"temp/projects",
+		"imports",
 		"deployments",
 		"projects",
 	]);

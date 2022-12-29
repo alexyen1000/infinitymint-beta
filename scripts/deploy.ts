@@ -28,12 +28,25 @@ const deploy: InfinityMintScript = {
 	execute: async (params: InfinityMintScriptParameters) => {
 		let project: InfinityMintProject;
 
+		//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
+		if (params.args?.setPipe?.value === true) {
+			let pipeName = "deploy_" + project.name;
+			if (params.console.getPipes().pipes[pipeName] === undefined)
+				params.console.getPipes().registerSimplePipe(pipeName, {
+					listen: true,
+				});
+
+			//all log messages will now go to deploy
+			params.console.getPipes().setCurrentPipe(pipeName);
+		}
+
 		if (
 			params.args.useTemp.value === true &&
 			hasTempDeployedProject(params.args.project.value)
-		)
+		) {
+			params.log("");
 			project = getTempDeployedProject(params.args.project.value);
-		else project = getCompiledProject(params.args.project.value);
+		} else project = getCompiledProject(params.args.project.value);
 
 		//make sure stages are created
 		project.stages = project.stages || {};
@@ -112,11 +125,16 @@ const deploy: InfinityMintScript = {
 					params.args?.redeploy?.value !== true
 				) {
 					let previousContracts = deployment.getDeployments();
-					previousContracts.forEach((contract) => {
+					previousContracts.forEach((contract, index) => {
 						params.debugLog(
 							`already deployed ${contract.name} => <${contract.address}>`
 						);
-						contracts[contract.key] = contract;
+						contracts[contract.name] = contract;
+						contracts[
+							index === 0
+								? contract.key
+								: contract.key + ":" + index
+						] = contract;
 					});
 
 					continue;
@@ -132,10 +150,14 @@ const deploy: InfinityMintScript = {
 					...params,
 				} as InfinityMintDeploymentParameters);
 
-				deployedContracts.forEach((contract) => {
+				deployedContracts.forEach((contract, index) => {
 					params.debugLog(
-						`deployed ${contract.name} => <${contract.address}>`
+						`[${index}] deployed ${contract.name} => <${contract.address}>`
 					);
+					contracts[contract.name] = contract;
+					contracts[
+						index === 0 ? contract.key : contract.key + ":" + index
+					] = contract;
 				});
 
 				params.eventEmitter.emit("postDeploy", {
@@ -161,16 +183,24 @@ const deploy: InfinityMintScript = {
 						...params,
 					} as InfinityMintEventEmit<InfinityMintDeployment>);
 
-					await deployment.setup({
-						project: project,
-						deployments: deployments,
-						deployment: deployment,
-						event: deployment,
-						contracts: contracts,
-						deployed: deployment.hasDeployed(),
-						deploymentScript: deployment.getDeploymentScript(),
-						...params,
-					} as InfinityMintDeploymentParameters);
+					project.stages["setup_" + deployment.getKey()] = false;
+					try {
+						await deployment.setup({
+							project: project,
+							deployments: deployments,
+							deployment: deployment,
+							event: deployment,
+							contracts: contracts,
+							deployed: deployment.hasDeployed(),
+							deploymentScript: deployment.getDeploymentScript(),
+							...params,
+						} as InfinityMintDeploymentParameters);
+					} catch (error) {
+						project.stages["setup_" + deployment.getKey()] = error;
+						throw error;
+					}
+
+					project.stages["setup_" + deployment.getKey()] = true;
 
 					params.eventEmitter.emit("postSetup", {
 						project: project,
@@ -209,6 +239,12 @@ const deploy: InfinityMintScript = {
 			name: "redeploy",
 			type: "boolean",
 			optional: true,
+		},
+		{
+			name: "setPipe",
+			type: "boolean",
+			optional: true,
+			value: true,
 		},
 	],
 };

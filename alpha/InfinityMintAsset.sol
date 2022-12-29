@@ -11,10 +11,9 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 
 	//user values
 	InfinityMintValues internal valuesController;
-
 	//the token name
 	string internal tokenName = "asset";
-	string public assetsType = "default"; //the type of assetId is default
+	string public typeOf = "any"; //the type of assetId is default
 
 	//path stuff
 	uint256 internal pathCount;
@@ -140,9 +139,8 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 	{
 		string memory defaultName = getDefaultName();
 
-		// matched and incremental use nextPath to get their name
+		// incremental and incremental use nextPath to get their name
 		if (
-			!valuesController.isTrue("matchedMode") &&
 			!valuesController.isTrue("incrementalMode")
 		) {
 			if (nameCount <= 0 && valuesController.isTrue("mustGenerateName"))
@@ -302,7 +300,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 					if (
 						(rarity == 100 ||
 							rarity >
-							randomNumberController.returnNumber(
+							randomNumberController.unsafeNumber(
 								100,
 								i +
 									index +
@@ -323,7 +321,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 
 				if (count <= 1) assetsId[indexPosition++] = selectedPaths[0];
 				else if (count >= 2) {
-					result = randomNumberController.returnNumber(
+					result = randomNumberController.unsafeNumber(
 						count,
 						selectedPaths.length + count + indexPosition + salt
 					);

@@ -268,10 +268,10 @@ Menu.initialize = async (window, frame, blessed) => {
 			Math.floor(150 / 1.61803398875) +
 				parseInt(container.width.toString()) *
 					parseInt(container.height.toString()) *
-					0.0115
-		) / 2.25
+					0.0125
+		) / 2.75
 	);
-	let logoHeight = Math.floor(logoWidth / 2.25);
+	let logoHeight = Math.floor(logoWidth / 2.45);
 
 	window.createElement("stripe", {
 		width: 8,

@@ -109,7 +109,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		if (window.isVisible() === false) return;
 
 		window.options.selectedLine = Math.min(
-			(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1,
+			(Pipes.pipes[window.options.pipe]?.logs || [""]).length - 1,
 			window.options.selectedLine + 1
 		);
 	});
@@ -120,7 +120,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		if (window.isVisible() === false) return;
 
 		let selectedLinePosition = [
-			...(Pipes.logs[window.options.pipe]?.logs || [""]),
+			...(Pipes.pipes[window.options.pipe]?.logs || [""]),
 		]
 			.slice(0, window.options.selectedLine)
 			.join("\n")
@@ -238,7 +238,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	gotoEnd.on("click", () => {
 		console.setScroll(lastLength);
 		window.options.selectedLine =
-			(Pipes.logs[window.options.pipe]?.logs || [""]).length - 1;
+			(Pipes.pipes[window.options.pipe]?.logs || [""]).length - 1;
 	});
 
 	let gotoTop = window.createElement("gotoTop", {
@@ -293,7 +293,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 	gotoSelected.on("click", () => {
 		let selectedLinePosition = [
-			...(Pipes.logs[window.options.pipe]?.logs || [""]),
+			...(Pipes.pipes[window.options.pipe]?.logs || [""]),
 		]
 			.slice(0, window.options.selectedLine)
 			.join("\n")
@@ -364,7 +364,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 		"list"
 	);
-	let keys = Object.keys(Pipes.logs);
+	let keys = Object.keys(Pipes.pipes);
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
 		window.options.pipe = keys[selected];

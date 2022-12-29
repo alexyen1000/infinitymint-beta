@@ -4,8 +4,6 @@ import {
 	BlessedElement,
 	debugLog,
 	findScripts,
-	FuncSingle,
-	isEnvSet,
 	isEnvTrue,
 	isTypescript,
 	log,
@@ -20,6 +18,9 @@ import { changeNetwork, getDefaultSigner, getProvider } from "./web3";
 import Pipes from "./pipes";
 import { Dictionary } from "form-data";
 import { BigNumber } from "ethers";
+
+//const
+const { v4: uuidv4 } = require("uuid");
 
 //core windows
 import Logs from "./windows/logs";
@@ -87,6 +88,10 @@ export class InfinityConsole {
 		];
 		this.tick = 0;
 		this.registerDefaultKeys();
+	}
+
+	private generateId() {
+		return uuidv4();
 	}
 
 	public getAccount() {
@@ -623,7 +628,7 @@ export class InfinityConsole {
 			} catch (error) {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 
-				Pipes.getPipe(Pipes.currentPipe).error(error);
+				Pipes.getPipe(Pipes.currentPipeKey).error(error);
 				debugLog(
 					`{red-fg}Failure: ${
 						(error?.message || "literally unknown").split("\n")[0]

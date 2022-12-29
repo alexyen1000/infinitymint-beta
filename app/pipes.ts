@@ -1,16 +1,18 @@
 import { ChildProcess } from "child_process";
 import { Dictionary } from "form-data";
+import { debugLog, isEnvTrue, warning } from "./helpers";
+import fs from "fs";
 
 /**
  * The log pipe class
  */
 export class Pipe {
 	public logs: String[];
+	public errors: Error[];
 	public listen: boolean;
 	public save: boolean;
 	public appendDate?: boolean;
 	private pipe: string;
-	private errors: String[];
 	private created: number;
 	public logHandler: Function;
 	public errorHandler: Function;
@@ -37,9 +39,9 @@ export class Pipe {
 					).toLocaleTimeString()}{/underline} ` + str;
 			this.logs.push(str);
 		};
-		this.errorHandler = (str: string) => {
-			if (this.listen) console.error(str, false);
-			this.errors.push(str);
+		this.errorHandler = (err: Error) => {
+			if (this.listen) console.error(err, false);
+			this.errors.push(err);
 		};
 		this.terminationHandler = () => {};
 	}
@@ -56,8 +58,8 @@ export class Pipe {
 		this.logHandler(msg);
 	}
 
-	error(error: string) {
-		this.errorHandler(error);
+	error(err: Error | string) {
+		this.errorHandler(err);
 	}
 }
 
@@ -69,48 +71,48 @@ export interface PipeOptions {
 	listen?: boolean;
 	setAsCurrentPipe?: boolean;
 	appendDate?: boolean;
-	autoClose?: boolean;
+	cleanup?: boolean;
 }
 
 /**
  * Logging factory class
  */
 export class Pipes {
-	public logs: Dictionary<Pipe>;
-	public currentPipe: string;
+	public pipes: Dictionary<Pipe>;
+	public currentPipeKey: string;
 	constructor() {
-		this.logs = {};
-		this.currentPipe = "default";
+		this.pipes = {};
+		this.currentPipeKey = "default";
 		//registers the default pipe
 		this.registerSimplePipe("default");
 	}
 
 	public setCurrentPipe(key: string) {
-		if (this.logs[key] === undefined)
+		if (this.pipes[key] === undefined)
 			throw new Error("undefined pipe key: " + key);
 
-		this.currentPipe = key;
+		this.currentPipeKey = key;
 	}
 
 	public error(error: any) {
 		//go back to the default pipe
 		if (
-			this.currentPipe === undefined ||
-			this.logs[this.currentPipe] === undefined
+			this.currentPipeKey === undefined ||
+			this.pipes[this.currentPipeKey] === undefined
 		)
-			this.currentPipe = "default";
+			this.currentPipeKey = "default";
 
-		this.logs[this.currentPipe].error(error.toString());
+		this.pipes[this.currentPipeKey].error(error);
 	}
 
 	public log(msg: string, pipe?: string, dontHighlight?: boolean) {
-		let actualPipe = pipe || this.currentPipe;
+		let actualPipe = pipe || this.currentPipeKey;
 		if (
-			this.logs[actualPipe] === undefined &&
-			this.logs["default"] === undefined
+			this.pipes[actualPipe] === undefined &&
+			this.pipes["default"] === undefined
 		)
 			throw new Error("bad pipe: " + actualPipe);
-		else if (this.logs[actualPipe] === undefined)
+		else if (this.pipes[actualPipe] === undefined)
 			return this.log(msg, "default");
 
 		if (dontHighlight !== true)
@@ -123,20 +125,53 @@ export class Pipes {
 				.replace(/\)/g, "){/cyan-fg}")
 				.replace(/=>/g, "{magenta-fg}=>{/magenta-fg}");
 
-		this.logs[actualPipe].log(msg);
+		this.pipes[actualPipe].log(msg);
 	}
 
 	public getPipe(key: string) {
-		return this.logs[key];
+		return this.pipes[key];
 	}
 
 	public registerSimplePipe(key: string, options?: PipeOptions): Pipe {
+		if (this.pipes["debug"] !== undefined)
+			this.log("creating simple pipe => (" + key + ")", "debug");
+
 		let pipe = this.createPipe(key, options);
 		return pipe;
 	}
 
-	public closePipe(pipe: string | Pipe) {
-		delete this.logs[pipe.toString()];
+	public deletePipe(pipe: string | Pipe) {
+		if (this.pipes["debug"] !== undefined)
+			this.log("deleting pipe => (" + pipe.toString() + ")", "debug");
+
+		delete this.pipes[pipe.toString()];
+	}
+
+	public savePipe(pipe: string | Pipe) {
+		if (this.pipes[pipe.toString()] === undefined) {
+			if (isEnvTrue("THROW_ALL_ERRORS"))
+				throw new Error("invalid pipe cannot save");
+
+			if (this.pipes["debug"] !== undefined)
+				warning("failed to delete pipe => (" + pipe.toString() + ")");
+
+			return;
+		}
+
+		if (this.pipes["debug"] !== undefined)
+			debugLog("saving pipe => (" + pipe.toString() + ")");
+
+		fs.writeFileSync(
+			process.cwd() +
+				"/temp/pipes/" +
+				pipe.toString() +
+				`.${Date.now()}.json`,
+			JSON.stringify({
+				name: pipe.toString(),
+				logs: this.pipes[pipe.toString()].logs,
+				errors: this.pipes[pipe.toString()].errors,
+			})
+		);
 	}
 
 	public registerPipe(
@@ -145,6 +180,14 @@ export class Pipes {
 		options?: PipeOptions
 	): Pipe {
 		let pipe = this.createPipe(key, options);
+
+		if (this.pipes["debug"] !== undefined)
+			this.log(
+				`creating pipe to process ${process.pid}=> (` +
+					pipe.toString() +
+					")",
+				"debug"
+			);
 
 		process.stdout?.on("data", (str: string) => {
 			pipe.log(str);
@@ -158,21 +201,22 @@ export class Pipes {
 			if (code === 1) pipe.error("exited with code 1 probably error");
 
 			pipe.log("execited with code: " + code);
-			if (options?.autoClose) this.closePipe(pipe);
+			if (options?.cleanup) this.deletePipe(pipe);
 		});
+
 		return pipe;
 	}
 
 	public createPipe(key: string, options?: PipeOptions): Pipe {
-		this.logs[key] = new Pipe(key);
-		this.logs[key].save = options?.save || true;
-		this.logs[key].listen = options?.listen || false;
-		this.logs[key].appendDate = options?.appendDate || true;
+		this.pipes[key] = new Pipe(key);
+		this.pipes[key].save = options?.save || true;
+		this.pipes[key].listen = options?.listen || false;
+		this.pipes[key].appendDate = options?.appendDate || true;
 
-		if (this.currentPipe === "" || options?.setAsCurrentPipe)
-			this.currentPipe = key;
+		if (this.currentPipeKey === "" || options?.setAsCurrentPipe)
+			this.currentPipeKey = key;
 
-		return this.logs[key];
+		return this.pipes[key];
 	}
 }
 export default new Pipes();

@@ -45,6 +45,18 @@ contract InfinityMintProject is InfinityMintObject, Authentication {
 		outputVersion = version;
 	}
 
+	function getVersion(uint256 version)
+		external
+		view
+		returns (
+			bytes memory encodedProject,
+			bytes memory encodedTag,
+			bytes memory encodedInitialProject
+		)
+	{
+		return (projects[version], tags[version], projects[0]);
+	}
+
 	function getProject() external view returns (bytes memory) {
 		bytes memory result = projects[outputVersion];
 		if (result.length == 0) return bytes("{'local':true}"); //try and force local infinity mint mode

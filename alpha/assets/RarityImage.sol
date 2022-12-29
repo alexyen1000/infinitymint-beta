@@ -9,6 +9,6 @@ contract RarityImage is RaritySVG {
 		RaritySVG(_tokenName, valuesContract)
 	{
 		tokenName = _tokenName;
-		assetsType = "image"; //returns an image (png, jpeg)
+		typeOf = "image"; //returns an image (png, jpeg)
 	}
 }
