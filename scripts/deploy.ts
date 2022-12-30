@@ -6,10 +6,7 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from "@app/interfaces";
-import {
-	getProjectDeploymentClasses,
-	InfinityMintDeployment,
-} from "@app/deployments";
+import { InfinityMintDeployment } from "@app/deployments";
 import {
 	getCompiledProject,
 	getTempDeployedProject,
@@ -31,28 +28,33 @@ const deploy: InfinityMintScript = {
 		//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 		if (params.args?.setPipe?.value === true) {
 			let pipeName = "deploy_" + project.name;
-			if (params.console.getPipes().pipes[pipeName] === undefined)
-				params.console.getPipes().registerSimplePipe(pipeName, {
+			if (params.infinityConsole.getPipes().pipes[pipeName] === undefined)
+				params.infinityConsole.getPipes().registerSimplePipe(pipeName, {
 					listen: true,
 				});
 
 			//all log messages will now go to deploy
-			params.console.getPipes().setCurrentPipe(pipeName);
+			params.infinityConsole.getPipes().setCurrentPipe(pipeName);
 		}
 
 		if (
 			params.args.useTemp.value === true &&
 			hasTempDeployedProject(params.args.project.value)
 		) {
-			params.log("");
+			params.log("picking up project => " + params.args.project.value);
 			project = getTempDeployedProject(params.args.project.value);
 		} else project = getCompiledProject(params.args.project.value);
 
+		params.log(
+			"{green-fg}deploying project{/green-fg} (" +
+				params.args.project.value +
+				")"
+		);
 		//make sure stages are created
 		project.stages = project.stages || {};
 
-		let deployments = await getProjectDeploymentClasses(
-			params.args.project.value
+		let deployments = await params.infinityConsole.getDeploymentClasses(
+			params.args?.project.value
 		);
 
 		let notUniqueAndImportant = deployments
@@ -95,7 +97,7 @@ const deploy: InfinityMintScript = {
 					deployment.getKey() !== params.args?.contract.value &&
 					deployment.getContractName() !== params.args.contract.value
 				) {
-					params.debugLog(
+					params.log(
 						`[${i}] skipping <` +
 							deployment.getKey() +
 							">(" +
@@ -104,14 +106,6 @@ const deploy: InfinityMintScript = {
 					);
 					continue;
 				}
-
-				params.debugLog(
-					`[${i}] deploying <` +
-						deployment.getKey() +
-						">(" +
-						deployment.getContractName() +
-						")"
-				);
 
 				params.eventEmitter.emit("preDeploy", {
 					project: project,
@@ -126,8 +120,8 @@ const deploy: InfinityMintScript = {
 				) {
 					let previousContracts = deployment.getDeployments();
 					previousContracts.forEach((contract, index) => {
-						params.debugLog(
-							`already deployed ${contract.name} => <${contract.address}>`
+						params.log(
+							`[${i}] => (${index}) {yellow-fg}already deployed ${contract.name}{/yellow-fg} => <${contract.address}>`
 						);
 						contracts[contract.name] = contract;
 						contracts[
@@ -140,6 +134,14 @@ const deploy: InfinityMintScript = {
 					continue;
 				}
 
+				params.log(
+					`[${i}] deploying <` +
+						deployment.getKey() +
+						">(" +
+						deployment.getContractName() +
+						")"
+				);
+
 				let deployedContracts = await deployment.deploy({
 					project: project,
 					deployments: deployments,
@@ -151,8 +153,8 @@ const deploy: InfinityMintScript = {
 				} as InfinityMintDeploymentParameters);
 
 				deployedContracts.forEach((contract, index) => {
-					params.debugLog(
-						`[${index}] deployed ${contract.name} => <${contract.address}>`
+					params.log(
+						`[${i}] => (${index}_ deployed ${contract.name} => <${contract.address}>`
 					);
 					contracts[contract.name] = contract;
 					contracts[
@@ -168,7 +170,7 @@ const deploy: InfinityMintScript = {
 				} as InfinityMintEventEmit<InfinityMintDeploymentLive[]>);
 
 				if (deployment.getDeploymentScript().instantlySetup === true) {
-					params.debugLog(
+					params.log(
 						`[${i}] setting up <` +
 							deployment.getKey() +
 							">(" +
@@ -213,10 +215,21 @@ const deploy: InfinityMintScript = {
 			} catch (error) {
 				project.stages["deploy_" + deployment.getKey()] = error;
 				saveTempCompiledProject(project);
+				params.log(
+					`{red-fg}failed deployment: ${error?.message}{/red-fg} (` +
+						params.args.project.value +
+						")"
+				);
 				throw error;
 			} finally {
 				saveTempCompiledProject(project);
 			}
+
+			params.log(
+				"{green-fg}successfully deployed{/green-fg} (" +
+					params.args.project.value +
+					")"
+			);
 		}
 	},
 	arguments: [

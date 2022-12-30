@@ -21,6 +21,7 @@ import {
 } from "./gasAndPrices";
 import { glob } from "glob";
 import { InfinityConsole } from "./console";
+import { EventEmitter } from "events";
 
 export interface Vector {
 	x: number;
@@ -204,7 +205,7 @@ export const debugLog = (msg: string | object | number) => {
  */
 export const warning = (msg: string | object | number) => {
 	log(
-		`{yellow-fg}⚠️${msg}{/yellow-fg}`,
+		`{yellow-fg}{underline}⚠️{/underline} ${msg}{/yellow-fg}`,
 		isEnvTrue("PIPE_SEPERATE_WARNINGS") ? "warning" : "debug"
 	);
 };
@@ -267,7 +268,11 @@ export const overwriteConsoleMethods = () => {
 	let consoleLog = console.log;
 
 	console.log = (msg: string | object) => {
-		if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+		try {
+			if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+		} catch (error) {
+			msg = msg.toString();
+		}
 
 		if (
 			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
@@ -893,11 +898,11 @@ export const error = (error: string | Error) => {
 	Pipes.log(error.toString());
 };
 
-export const isEnvTrue = (key: InfinityMintEnvironmentKeys[0]): boolean => {
+export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {
 	return process.env[key] !== undefined && process.env[key] === "true";
 };
 
-export const isEnvSet = (key: InfinityMintEnvironmentKeys[0]): boolean => {
+export const isEnvSet = (key: InfinityMintEnvironmentKeys): boolean => {
 	return (
 		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
 	);

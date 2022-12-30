@@ -590,18 +590,32 @@ export class InfinityMintWindow {
 		let account = this.getInfinityConsole().getAccount();
 		let balance = this.getInfinityConsole().getBalance();
 		let etherBalance = ethers.utils.formatEther(balance);
+		let musicOptions = this.getInfinityConsole().windowExists("Music")
+			? this.getInfinityConsole().getWindow("Music").options
+			: {
+					currentTrack: "nothing",
+			  };
+		let seconds = musicOptions.clock || 0;
+		let minutes = seconds <= 0 ? 0 : Math.floor(musicOptions.clock / 60);
+
 		this.getElement("frame").setContent(
 			`{bold}{yellow-fg}${
 				hre.network.name
 			} [${this.getInfinityConsole().getCurrentChainId()}]{/bold} {underline}${account.address.substring(
 				0,
 				14
-			)}...{/underline}{/yellow-fg} {black-bg}{white-fg}{bold}${etherBalance.substring(
+			)}...{/underline}{/yellow-fg} {white-fg}{bold}${etherBalance.substring(
 				0,
 				8
 			)} ETH ($${(parseFloat(etherBalance) * 2222).toFixed(
 				2
-			)}){/bold}{/white-fg}{/black-bg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/red-fg}{/green-bg}`
+			)}){/bold}{/white-fg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/green-fg}{/black-bg} {bold}{cyan-fg}♫{/cyan-fg}{/bold} {underline}{cyan-fg}${
+				musicOptions.currentTrack
+			}{/cyan-fg}{/underline} {black-bg}{white-fg}${(minutes % 60)
+				.toString()
+				.padStart(2, "0")}:${(seconds % 60)
+				.toString()
+				.padStart(2, "0")}{/white-fg}{/black-bg}`
 		);
 	}
 

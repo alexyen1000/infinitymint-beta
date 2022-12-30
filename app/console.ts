@@ -10,6 +10,7 @@ import {
 	requireScript,
 	warning,
 } from "./helpers";
+import { InfinityMintEventEmitter } from "./interfaces";
 import { InfinityMintWindow } from "./window";
 import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -21,6 +22,8 @@ import { BigNumber } from "ethers";
 
 //const
 const { v4: uuidv4 } = require("uuid");
+//node audio
+const player = require("play-sound")({ player: "afplay" });
 
 //core windows
 import Logs from "./windows/logs";
@@ -38,6 +41,7 @@ import Projects from "./windows/projects";
 import Music from "./windows/music";
 import Ganache from "./windows/ganache";
 import CloseBox from "./windows/closeBox";
+import { getProjectDeploymentClasses } from "./deployments";
 
 //blessed
 const blessed = require("blessed") as Blessed;
@@ -59,10 +63,15 @@ export class InfinityConsole {
 	private windowManager?: BlessedElement;
 	private inputKeys: Dictionary<Array<Function>>;
 	private chainId: number;
+	private eventEmitter: InfinityMintEventEmitter;
 	private account: SignerWithAddress;
 	private balance: BigNumber;
 	private scripts: InfinityMintScript[];
+	private sessionId: string;
 	private tick: number;
+	private currentAudio: any;
+	private currentAudioKilled: boolean;
+	private currentAudioAwaitingKill: boolean;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -86,12 +95,54 @@ export class InfinityConsole {
 			Deploy,
 			CloseBox,
 		];
+
 		this.tick = 0;
 		this.registerDefaultKeys();
+		this.sessionId = this.generateId();
 	}
 
 	private generateId() {
 		return uuidv4();
+	}
+
+	/**
+	 * Sets the event emitter of another console to this console. Will not destroy the old event emitter, simply return it.
+	 * @param otherConsole
+	 */
+	public setEventEmitter(otherConsole: InfinityConsole) {
+		let oldEmitter = this.eventEmitter;
+		this.eventEmitter = otherConsole.eventEmitter;
+		return oldEmitter;
+	}
+
+	/**
+	 * Creates a new event emitter, will remove all listeners on the old event emitter unless first param is true.
+	 * @returns
+	 */
+	public createEventEmitter(dontCleanListeners: boolean) {
+		if (dontCleanListeners !== true)
+			try {
+				if (
+					this.eventEmitter !== undefined &&
+					this.eventEmitter !== null
+				)
+					this.eventEmitter?.removeAllListeners();
+			} catch (error) {
+				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+
+				warning("unable to remove all listeners on eventEMitter");
+			}
+
+		this.eventEmitter = new InfinityMintEventEmitter();
+		return this.eventEmitter;
+	}
+
+	public getSessionId() {
+		return this.sessionId;
+	}
+
+	public getEventEmitter() {
+		return this.eventEmitter;
 	}
 
 	public getAccount() {
@@ -143,6 +194,11 @@ export class InfinityConsole {
 						this.currentWindow?.show();
 				},
 			],
+			m: [
+				(ch: string, key: string) => {
+					this.currentAudio?.kill();
+				},
+			],
 			"C-z": [
 				(ch: string, key: string) => {
 					this.updateWindowsList();
@@ -173,8 +229,10 @@ export class InfinityConsole {
 						this.setWindow("CloseBox");
 						//if the closeBox aka the current window is visible and we press control-c again just exit
 					} else if (this.currentWindow?.name === "CloseBox") {
-						if (this.currentWindow.isVisible()) process.exit(0);
-						else this.currentWindow.show();
+						if (this.currentWindow.isVisible()) {
+							this.currentAudio?.kill();
+							process.exit(0);
+						} else this.currentWindow.show();
 					}
 				},
 			],
@@ -299,6 +357,80 @@ export class InfinityConsole {
 			);
 
 		this.windows.push(window);
+	}
+
+	public isAwaitingKill() {
+		return this.currentAudioAwaitingKill;
+	}
+
+	/**
+	 *
+	 * @param windowName
+	 * @returns
+	 */
+	public getWindow(windowName: string) {
+		return this.getWindowsByName(windowName)[0];
+	}
+
+	public windowExists(windowName: string) {
+		return this.getWindowsByName(windowName).length !== 0;
+	}
+
+	public hasAudio() {
+		return this.currentAudio !== undefined && this.currentAudio !== null;
+	}
+
+	public async stopAudio() {
+		this.currentAudio?.kill();
+		await this.audioKilled();
+	}
+
+	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {
+		this.currentAudioKilled = false;
+		debugLog("playing => " + process.cwd() + path);
+		// configure arguments for executable if any
+		this.currentAudio = player.play(
+			process.cwd() + path,
+			{ afplay: ["-v", 1] /* lower volume for afplay on OSX */ },
+			(err: Error | any) => {
+				if (err && !this.currentAudio.killed) {
+					if (isEnvTrue("THROW_ALL_ERRORS")) throw err;
+					else warning("cannot play file: " + err?.message);
+					return;
+				}
+
+				if (this.currentAudio.killed) {
+					debugLog("killed => " + process.cwd() + path);
+					this.currentAudio = null;
+					this.currentAudioKilled = true;
+					if (onKilled) onKilled(this.currentWindow, this);
+				} else {
+					debugLog("finished playing => " + process.cwd() + path);
+					this.currentAudio = null;
+					if (onFinished) onFinished(this.currentWindow, this);
+				}
+			}
+		);
+	}
+
+	public getCurrentWindow() {
+		return this.currentWindow;
+	}
+
+	public async audioKilled() {
+		if (this.currentAudioKilled) return;
+
+		this.currentAudioAwaitingKill = true;
+		await new Promise((resolve, reject) => {
+			let int = setInterval(() => {
+				if (this.currentAudioKilled) {
+					clearInterval(int);
+					resolve(true);
+					this.currentAudioAwaitingKill = false;
+					return;
+				}
+			}, 1000);
+		});
 	}
 
 	public hasWindow = (window: InfinityMintWindow) => {
@@ -593,8 +725,26 @@ export class InfinityConsole {
 		this.balance = await this.account.getBalance();
 	}
 
+	/**
+	 * Returns the current web3 provider for the console, you should use this over getProvider at all times
+	 * @returns
+	 */
+
+	public async getProvider() {
+		return getProvider();
+	}
+
 	public getScripts() {
 		return this.scripts;
+	}
+
+	/**
+	 * Gets all the deployment classes relating to a project. You should use this over getting projectDeploymentClasses directly
+	 * @param projectName
+	 * @returns
+	 */
+	public async getDeploymentClasses(projectName: string) {
+		return await getProjectDeploymentClasses(projectName);
 	}
 
 	public async refreshScripts() {
@@ -645,143 +795,153 @@ export class InfinityConsole {
 		await this.refreshWeb3();
 		await this.refreshScripts();
 
-		log(
-			"initializing InfinityConsole chainId " +
-				this.chainId +
-				" network name " +
-				this.network.name
-		);
+		log(`initializing InfinityConsole<${this.sessionId}>`);
 
-		try {
-			//create the screen
-			this.screen = blessed.screen(
-				this.options?.blessed || {
-					smartCRS: true,
-					dockBorders: true,
-					sendFocus: true,
-				}
-			);
-
-			//captures errors which happen in key events in the window
-			this.captureEventErrors();
-
-			//set the current window from the
-			if (this.options?.initialWindow === undefined)
-				this.currentWindow = this.windows[0];
-			else if (
-				typeof this.options.initialWindow === typeof InfinityMintWindow
-			) {
-				let potentialWindow = this.options.initialWindow as unknown;
-				this.currentWindow = potentialWindow as InfinityMintWindow;
-			} else {
-				this.currentWindow = this.getWindowsByName(
-					this.options.initialWindow as string
-				)[0];
-			}
-			//instantly instante windows which seek such a thing
-			let instantInstantiate = this.windows.filter((thatWindow) =>
-				thatWindow.shouldInstantiate()
-			);
-
-			for (let i = 0; i < instantInstantiate.length; i++) {
+		if (this.options?.dontDraw !== true)
+			try {
 				debugLog(
-					"initializing <" +
-						instantInstantiate[i].name +
-						`>[${instantInstantiate[i].getId()}]`
+					`starting blessed on InfinityConsole<${this.sessionId}>`
+				);
+				//create the screen
+				this.screen = blessed.screen(
+					this.options?.blessed || {
+						smartCRS: true,
+						dockBorders: true,
+						sendFocus: true,
+					}
 				);
 
-				if (!instantInstantiate[i].hasContainer())
-					instantInstantiate[i].setContainer(this);
+				//captures errors which happen in key events in the window
+				this.captureEventErrors();
 
-				instantInstantiate[i].setScreen(this.screen);
-				await instantInstantiate[i].create();
-				instantInstantiate[i].hide();
-				//register events
-				this.registerEvents(instantInstantiate[i]);
-			}
+				//set the current window from the
+				if (this.options?.initialWindow === undefined)
+					this.currentWindow = this.windows[0];
+				else if (
+					typeof this.options.initialWindow ===
+					typeof InfinityMintWindow
+				) {
+					let potentialWindow = this.options.initialWindow as unknown;
+					this.currentWindow = potentialWindow as InfinityMintWindow;
+				} else {
+					this.currentWindow = this.getWindowsByName(
+						this.options.initialWindow as string
+					)[0];
+				}
+				//instantly instante windows which seek such a thing
+				let instantInstantiate = this.windows.filter((thatWindow) =>
+					thatWindow.shouldInstantiate()
+				);
 
-			//create the window manager
-			this.createWindowManager();
-
-			//if the current window still hasn't been initialized, t
-			if (!this.currentWindow.hasInitialized()) {
-				this.currentWindow.setContainer(this);
-				this.currentWindow.setScreen(this.screen);
-				//create window
-				await this.currentWindow.create();
-				//register events for the windowManager with the currentWindow
-				this.registerEvents();
-			}
-
-			//the think method for this console
-			let int = () => {
-				this.windows.forEach((window) => {
-					if (
-						window.isAlive() &&
-						(window.shouldBackgroundThink() ||
-							(!window.shouldBackgroundThink() &&
-								window.isVisible()))
-					)
-						window.update();
-				});
-
-				this.screen.render();
-			};
-			this.think = setInterval(() => {
-				(this.options?.think || int)();
-				this.tick++;
-
-				//bit of a hacky solution but keeps these buttons forward
-				if (this.currentWindow !== undefined) {
-					Object.values(this.currentWindow.elements).forEach(
-						(element) => {
-							if (element.alwaysFront) element.setFront();
-							if (element.alwaysBack) element.setBack();
-
-							if (
-								element.think &&
-								typeof element.think === "function" &&
-								(!element.hidden || element.alwaysUpdate)
-							)
-								element.think(
-									this.currentWindow,
-									this.currentWindow.getElement("frame"),
-									blessed
-								);
-						}
+				for (let i = 0; i < instantInstantiate.length; i++) {
+					debugLog(
+						"initializing <" +
+							instantInstantiate[i].name +
+							`>[${instantInstantiate[i].getId()}]`
 					);
+
+					if (!instantInstantiate[i].hasContainer())
+						instantInstantiate[i].setContainer(this);
+
+					instantInstantiate[i].setScreen(this.screen);
+					await instantInstantiate[i].create();
+					instantInstantiate[i].hide();
+					//register events
+					this.registerEvents(instantInstantiate[i]);
 				}
-			}, this.options?.tickRate);
 
-			//render
-			this.screen.render();
-			//register core key events
-			this.registerKeys();
-			//show the current window
-			this.currentWindow.show();
-		} catch (error: Error | any) {
-			console.error(error);
+				//create the window manager
+				this.createWindowManager();
 
-			if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
-				throw error;
-
-			this.screen.destroy();
-			this.screen = blessed.screen(
-				this.options?.blessed || {
-					smartCRS: true,
-					dockBorders: true,
-					debug: true,
-					sendFocus: true,
+				//if the current window still hasn't been initialized, t
+				if (!this.currentWindow.hasInitialized()) {
+					this.currentWindow.setContainer(this);
+					this.currentWindow.setScreen(this.screen);
+					//create window
+					await this.currentWindow.create();
+					//register events for the windowManager with the currentWindow
+					this.registerEvents();
 				}
+
+				//the think method for this console
+				let int = () => {
+					this.windows.forEach((window) => {
+						if (
+							window.isAlive() &&
+							(window.shouldBackgroundThink() ||
+								(!window.shouldBackgroundThink() &&
+									window.isVisible()))
+						)
+							window.update();
+					});
+
+					this.screen.render();
+				};
+				this.think = setInterval(() => {
+					(this.options?.think || int)();
+					this.tick++;
+
+					//bit of a hacky solution but keeps these buttons forward
+					if (this.currentWindow !== undefined) {
+						Object.values(this.currentWindow.elements).forEach(
+							(element) => {
+								if (element.alwaysFront) element.setFront();
+								if (element.alwaysBack) element.setBack();
+
+								if (
+									element.think &&
+									typeof element.think === "function" &&
+									(!element.hidden || element.alwaysUpdate)
+								)
+									element.think(
+										this.currentWindow,
+										this.currentWindow.getElement("frame"),
+										blessed
+									);
+							}
+						);
+					}
+				}, this.options?.tickRate);
+
+				//render
+				this.screen.render();
+				//register core key events
+				this.registerKeys();
+				//show the current window
+				this.currentWindow.show();
+			} catch (error: Error | any) {
+				console.error(error);
+
+				if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
+					throw error;
+
+				this.screen.destroy();
+				this.screen = blessed.screen(
+					this.options?.blessed || {
+						smartCRS: true,
+						dockBorders: true,
+						debug: true,
+						sendFocus: true,
+					}
+				);
+
+				this.displayError(error);
+
+				//register escape key
+				this.screen.key(
+					["escape", "C-c"],
+					(ch: string, key: string) => {
+						this.currentAudio?.kill();
+						process.exit(0);
+					}
+				);
+			}
+		else
+			warning(
+				`not starting blessed on InfinityConsole<${this.sessionId}>`
 			);
 
-			this.displayError(error);
-
-			//register escape key
-			this.screen.key(["escape", "C-c"], (ch: string, key: string) => {
-				process.exit(0);
-			});
-		}
+		log(`initialized InfinityConsole<${this.sessionId}>`);
 	}
 }
 export default InfinityConsole;

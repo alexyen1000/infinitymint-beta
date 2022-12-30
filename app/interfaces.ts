@@ -263,47 +263,84 @@ export interface InfinityMintProject {
 }
 
 /**
- * @event preDeploy
- * @event postDeploy
+ * The InfinityMint event emitter interface is combined with the eventEmitter class to create our own class which simply adds autocompletion features to on and emit.
+ *
+ * See {@link InfinityMintEvents} for a more complete list of all the events,
+ *
+ * @event preDeploy called when a deployment is about to be deployed
+ * @event postDeploy called when a deployment has been deployed
+ * @event preSetup called when a deployment is about to be setup
+ * @event postSetup called when a deployment has been fully setup
+ * @event preBuild
+ * @event postBuild
+ * @event success
+ * @event failure
  */
-export interface InfinityMintEventEmitter extends EventEmitter {
+export declare interface InfinityMintEventEmitter {
 	/**
-	 * Adds the `listener` function to the end of the listeners array for the
-	 * event named `eventName`. No checks are made to see if the `listener` has
-	 * already been added. Multiple calls passing the same combination of `eventName`and `listener` will result in the `listener` being added, and called, multiple
-	 * times.
+	 * Synchronously calls each of the listeners registered for the event named`eventName`, in the order they were registered, passing the supplied arguments
+	 * to each.
+	 *
+	 * Returns `true` if the event had listeners, `false` otherwise.
 	 *
 	 * ```js
-	 * server.on('connection', (stream) => {
-	 *   console.log('someone connected!');
+	 * const EventEmitter = require('events');
+	 * const myEmitter = new EventEmitter();
+	 *
+	 * // First listener
+	 * myEmitter.on('event', function firstListener() {
+	 *   console.log('Helloooo! first listener');
 	 * });
-	 * ```
+	 * // Second listener
+	 * myEmitter.on('event', function secondListener(arg1, arg2) {
+	 *   console.log(`event with parameters ${arg1}, ${arg2} in second listener`);
+	 * });
+	 * // Third listener
+	 * myEmitter.on('event', function thirdListener(...args) {
+	 *   const parameters = args.join(', ');
+	 *   console.log(`event with parameters ${parameters} in third listener`);
+	 * });
 	 *
-	 * Returns a reference to the `EventEmitter`, so that calls can be chained.
+	 * console.log(myEmitter.listeners('event'));
 	 *
-	 * By default, event listeners are invoked in the order they are added. The`emitter.prependListener()` method can be used as an alternative to add the
-	 * event listener to the beginning of the listeners array.
+	 * myEmitter.emit('event', 1, 2, 3, 4, 5);
 	 *
-	 * ```js
-	 * const myEE = new EventEmitter();
-	 * myEE.on('foo', () => console.log('a'));
-	 * myEE.prependListener('foo', () => console.log('b'));
-	 * myEE.emit('foo');
 	 * // Prints:
-	 * //   b
-	 * //   a
+	 * // [
+	 * //   [Function: firstListener],
+	 * //   [Function: secondListener],
+	 * //   [Function: thirdListener]
+	 * // ]
+	 * // Helloooo! first listener
+	 * // event with parameters 1, 2 in second listener
+	 * // event with parameters 1, 2, 3, 4, 5 in third listener
 	 * ```
-	 * @since v0.1.101
-	 * @param eventName The name of the event.
-	 * @param listener The callback function
-	 * @event test test
+	 * @since v0.1.26
 	 */
-	on(
-		eventName: InfinityMintEventKeys[0] | string | symbol,
-		listener: (...args: any[]) => void
-	): this;
+	emit(eventName: string, ...args: any[]): boolean;
+
+	//keyof won't work for some reason here :(
+	emit(eventName: "preDeploy", ...args: any[]): boolean;
+	emit(eventName: "postDeploy", ...args: any[]): boolean;
+	emit(eventName: "preScript", ...args: any[]): boolean;
+	emit(eventName: "postScript", ...args: any[]): boolean;
+	emit(eventName: "preCompile", ...args: any[]): boolean;
+	emit(eventName: "postCompile", ...args: any[]): boolean;
+	emit(eventName: "gemPreSetup", ...args: any[]): boolean;
+	emit(eventName: "gemPostSetup", ...args: any[]): boolean;
+	emit(eventName: "gemPreDeploy", ...args: any[]): boolean;
+	emit(eventName: "gemPostDeploy", ...args: any[]): boolean;
+	emit(eventName: "preSetup", ...args: any[]): boolean;
+	emit(eventName: "postSetup", ...args: any[]): boolean;
+	emit(eventName: "preBuild", ...args: any[]): boolean;
+	emit(eventName: "postBuild", ...args: any[]): boolean;
+	emit(eventName: "preGem", ...args: any[]): boolean;
+	emit(eventName: "postGem", ...args: any[]): boolean;
+	emit(eventName: "success", ...args: any[]): boolean;
+	emit(eventName: "failure", ...args: any[]): boolean;
 }
 
+export class InfinityMintEventEmitter extends EventEmitter {}
 /**
  * Events can be defined which can then be called directly from the project file or a gem. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
  */
@@ -428,6 +465,17 @@ export interface InfinityMintEvents
 	/**
 	 * @event
 	 */
+	preScript?: FuncSingle<
+		InfinityMintEventEmit<void>,
+		Promise<void | boolean>
+	>;
+	/**
+	 * @event
+	 */
+	postScript?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	/**
+	 * @event
+	 */
 	success?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
 	/**
 	 * @event
@@ -435,7 +483,7 @@ export interface InfinityMintEvents
 	failure?: FuncSingle<InfinityMintEventEmit<Error>, Promise<void>>;
 }
 
-export type InfinityMintEventKeys = Array<keyof InfinityMintEvents>;
+export type InfinityMintEventKeys = keyof InfinityMintEvents;
 
 /**
  * The project information is where you can set the token symbol, other language definitions such as the full name of your project, short name and a brief description for metadata purposes.
@@ -637,7 +685,7 @@ export interface InfinityMintEnvironment {
 	SOLIDITY_USE_NODE_MODULE?: boolean;
 }
 
-export type InfinityMintEnvironmentKeys = Array<keyof InfinityMintEnvironment>;
+export type InfinityMintEnvironmentKeys = keyof InfinityMintEnvironment;
 
 /**
  * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
@@ -686,9 +734,7 @@ export interface InfinityMintProjectSettings {
 	disabledContracts?: string;
 }
 
-export type InfinityMintProjectSettingsKeys = Array<
-	keyof InfinityMintProjectSettings
->;
+export type InfinityMintProjectSettingsKeys = keyof InfinityMintProjectSettings;
 
 /**
  * The InfinityMint project modules are the solidity files InfinityMint will use for its token creation and royalty distribution. Here is where you can change what is used in each step of the InfinityMint chain. The assets key controls what type of content will be minted based on what type of content it is (svg, image, sound). The minter controls how to talk to the asset controller, and if the user needs to specify which path they would like or if it should be random or if it should be only one specific path id until you say anything different. The royalty controller will control who is paid what for what ever happens inside of the minter. From mints, to things that gems do the royalty controller decides how any incoming money will be split accordingly. The random controller decides how InfinityMint obtains its random numbers which it uses in the mint process. You can use VCF randomness with chainlink here or use keccack256 randomisation but beware of the security risks of doing so.
@@ -747,9 +793,7 @@ export interface InfinityMintProjectModules extends Dictionary<any> {
 	erc721?: string;
 }
 
-export type InfinityMintProjectModulesKeys = Array<
-	keyof InfinityMintProjectModules
->;
+export type Iincremental = keyof InfinityMintProjectModules;
 
 export interface InfinityMintProjectPathExport {
 	data: string;
@@ -1053,6 +1097,8 @@ export interface InfinityMintConsoleOptions {
 	 * the initial window the console should open into
 	 */
 	initialWindow?: string | Window;
+	//will not start blessed and draw nothing to this console.
+	dontDraw?: boolean;
 }
 
 /**
@@ -1070,6 +1116,10 @@ export interface InfinityMintScript {
 	reloaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
 	arguments?: InfinityMintScriptArguments[];
 	events?: InfinityMintEvents;
+	/**
+	 * registers this InfinityMint script as a hardhat task as well.
+	 */
+	task?: true;
 }
 
 /**
@@ -1133,7 +1183,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	/**
 	 * the current infinity console this is running from
 	 */
-	console?: InfinityConsole;
+	infinityConsole?: InfinityConsole;
 	/**
 	 * the event emitter for you to emit events from, usually provided by the InfinityConsole. See {@link app/console.InfinityConsole}.
 	 *
@@ -1146,7 +1196,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
 	 * @event failure
 	 * @event success
 	 */
-	eventEmitter?: InfinityMintEventEmitter;
+	eventEmitter: InfinityMintEventEmitter;
 	/**
 	 * Might have check if undefined depending on context
 	 */
@@ -1346,7 +1396,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
 	 */
-	module?: InfinityMintProjectModulesKeys[] | string;
+	module?: Iincremental[] | string;
 	/**
 	 * Will be the filename of the deploy script by default.
 	 */

@@ -29,6 +29,7 @@ import {
 } from "./web3";
 import { Contract } from "@ethersproject/contracts";
 import hre from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -302,9 +303,9 @@ export class InfinityMintDeployment {
 	 * @param index
 	 * @returns
 	 */
-	async getSignedContract(index?: number) {
+	async getSignedContract(index?: number, signer?: SignerWithAddress) {
 		let contract = this.getContract(index);
-		let signer = await getDefaultSigner();
+		signer = signer || (await getDefaultSigner());
 		return contract.connect(signer);
 	}
 
@@ -573,10 +574,11 @@ export const getProjectDeploymentClasses = async (
 	let deployments = [...moduleDeployments, ...otherDeployments];
 
 	//now we need to sort the deployments ranked on their index, then put libraries first, then put important first
-	deployments = deployments
-		.sort((a, b) => a.getIndex() - b.getIndex())
-		.sort((a, b) => (a.isLibrary() ? deployments.length : 0))
-		.sort((a, b) => (a.isImportant() ? deployments.length : 0));
+	deployments = deployments.sort((a, b) =>
+		a.isLibrary() || a.isImportant()
+			? deployments.length
+			: a.getIndex() - b.getIndex()
+	);
 
 	return deployments;
 };

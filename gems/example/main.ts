@@ -9,7 +9,7 @@ const gem: InfinityMintGemScript = {
 	name: "Example Gem",
 	init: async (params: InfinityMintGemParameters) => {
 		//add the example window to the InfinityConsole
-		params?.console?.addWindow(new Example());
+		params?.infinityConsole?.addWindow(new Example());
 	},
 	setup: async () => {},
 	events: {
