@@ -2,31 +2,6 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-/**
-
-		UNITYISM
-		by Llydia Cross
-		----------------------------
-
-		Once in a life time do people ever get the chance to write messages which potentially could exist thousands of years from now. The most
-		awesome thing about the development of blockchain technology is that we are finally able to for the first time send distance messages
-		potentially thousands of years into the future. I'm talking about the fact that people could be reading this on etherscan potentially
-		thousands of years from now and I don't have to be a grand lord, or somebody important.
-
-		We can get lost trying to make money and we forget about the humanism behind this all. The futurism that powers us to
-		move forward and keep on building. We are founders of a grand new vision. I'm so thankful to be just a small part of that.
-		
-		In order to build a bright future for everyone the techology of the future has to be completely free and open source. Its a no brainer really. The foundation
-		for content ownership and monetization should be accessible to everyone completely free and in a way they can expand upon it. 
-		As the world moves forward I believe it will move forward into a bright and amazing creative era powered by the rage and anger and depression of the late 2010s. 
-		Its our job to ensure that this new era isn't controlled by big corporations like Microsoft or idiots like Elon Musk.
-		InfinityMint is deisgned to be a contribution to this goal. It is my contribution to this grand new vision. A small contribution but one which will
-		pave the way for many more alike it. I know I won't be able to do this myself. Which is why I am writing this now.
-
-		Our deployments are the foundations for future generations to build upon. Our architecture and our code are the weapons 
-
- */
-
 //
 import "./ERC721.sol";
 import "./InfinityMintStorage.sol";
@@ -206,12 +181,10 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 			"max supply has been reached raise it before minting"
 		);
 
-		//if we are incremental or matched mode we want to set the last path id (which is actually the next one) to be plus one of the current
+		//if we are incrementmode we want to set the last path id (which is actually the next one) to be plus one of the current
 		//path id in case an on chain mint occurs
-		if (
-			valuesController.isTrue("incrementalMode") ||
-			valuesController.isTrue("matchedMode")
-		) minterController.assetController().setLastPathId(pathId + 1);
+		if (valuesController.isTrue("incremental"))
+			minterController.assetController().setLastPathId(pathId + 1);
 
 		completeMint(
 			createInfinityObject(

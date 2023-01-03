@@ -19,7 +19,7 @@ import {
 	getSolidityFolder,
 	getConfigFile,
 } from "./app/helpers";
-import { InfinityMintConsoleOptions } from "@app/interfaces";
+import { InfinityMintConsoleOptions } from "./app/interfaces";
 
 //export helpers
 export * as Helpers from "./app/helpers";

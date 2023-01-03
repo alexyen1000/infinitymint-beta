@@ -11,7 +11,7 @@ contract RaritySVG is InfinityMintAsset {
 		InfinityMintAsset(valuesContract)
 	{
 		tokenName = _tokenName;
-		assetsType = "svg"; //returns scalable vector asset
+		typeOf = "svg"; //returns scalable vector asset
 	}
 
 	//save the last path so we may get its name later

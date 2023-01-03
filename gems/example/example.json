@@ -9,5 +9,6 @@
 			"email": "llydia@0x0z.me"
 		}
 	],
+	"supportedFramework": "react",
 	"solidityFolder": "alpha"
 }

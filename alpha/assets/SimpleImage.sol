@@ -12,7 +12,7 @@ contract SimpleImage is InfinityMintAsset {
 		InfinityMintAsset(valuesContract)
 	{
 		tokenName = _tokenName;
-		assetsType = "image";
+		typeOf = "image";
 	}
 
 	function getNextPathId(RandomNumber randomNumberController)
@@ -24,7 +24,7 @@ contract SimpleImage is InfinityMintAsset {
 		if (pathCount == 1 && disabledPaths[safeDefaultReturnPath])
 			revert("No valid paths");
 
-		if (valuesController.isTrue("incrementalMode")) {
+		if (valuesController.isTrue("incremental")) {
 			nextPath = lastPath++;
 			if (nextPath >= pathCount) {
 				lastPath = uint32(safeDefaultReturnPath);

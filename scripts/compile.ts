@@ -3,10 +3,10 @@ import {
 	InfinityMintScriptParameters,
 } from "@app/interfaces";
 
-const Deploy: InfinityMintScript = {
+const compile: InfinityMintScript = {
 	name: "Compile",
 	description: "Compiles a project",
-	execute: async (params: InfinityMintScriptParameters) => {},
+	execute: async (script: InfinityMintScriptParameters) => {},
 	arguments: [
 		{
 			name: "project",
@@ -14,4 +14,4 @@ const Deploy: InfinityMintScript = {
 		},
 	],
 };
-export default Deploy;
+export default compile;

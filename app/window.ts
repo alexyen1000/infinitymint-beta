@@ -11,6 +11,7 @@ import {
 	isEnvTrue,
 	calculateWidth,
 	warning,
+	BlessedElementOptions,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -18,7 +19,7 @@ import InfinityConsole from "./console";
 import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const { v4: uuidv4 } = require("uuid");
-const blessed = require("blessed");
+const blessed = require("blessed") as Blessed;
 
 /**
  * @experimental
@@ -256,7 +257,11 @@ export class InfinityMintWindow {
 		saveSession(session);
 	}
 
-	public getContainer() {
+	/**
+	 * Get the infinity console this window is contained in. Through the InfinityConsole you can change the network, refresh web3 and do a lot more!
+	 * @returns
+	 */
+	public getInfinityConsole() {
 		if (this.container === undefined)
 			throw new Error("container is undefined");
 
@@ -449,7 +454,7 @@ export class InfinityMintWindow {
 					try {
 						await cb(...any);
 					} catch (error) {
-						this.getContainer().errorHandler(error);
+						this.getInfinityConsole().errorHandler(error);
 					}
 				});
 			else
@@ -457,7 +462,7 @@ export class InfinityMintWindow {
 					try {
 						cb(...any);
 					} catch (error) {
-						this.getContainer().errorHandler(error);
+						this.getInfinityConsole().errorHandler(error);
 					}
 				});
 		};
@@ -523,7 +528,7 @@ export class InfinityMintWindow {
 	public key(key: string, cb: Function) {
 		if (this.inputKeys === undefined) this.inputKeys = {};
 
-		this.getContainer().key(key, cb);
+		this.getInfinityConsole().key(key, cb);
 
 		if (this.inputKeys[key] === undefined) this.inputKeys[key] = [];
 		this.inputKeys[key].push(cb);
@@ -539,11 +544,11 @@ export class InfinityMintWindow {
 		if (this.inputKeys === undefined || this.inputKeys[key] === undefined)
 			return;
 
-		if (cb !== undefined) this.getContainer().unkey(key, cb);
+		if (cb !== undefined) this.getInfinityConsole().unkey(key, cb);
 		else {
 			//unmap all keys
 			Object.values(this.inputKeys[key]).forEach((cb) => {
-				this.getContainer().unkey(key, cb);
+				this.getInfinityConsole().unkey(key, cb);
 			});
 			this.inputKeys[key] = [];
 			return;
@@ -582,24 +587,35 @@ export class InfinityMintWindow {
 	}
 
 	public async updateFrameTitle() {
-		let account = this.getContainer().getAccount();
-		let balance = this.getContainer().getBalance();
-		let getAccountIndex = getDefaultAccountIndex();
-		this.log(
-			"main account: [" + getAccountIndex + "] => " + account.address
-		);
+		let account = this.getInfinityConsole().getAccount();
+		let balance = this.getInfinityConsole().getBalance();
 		let etherBalance = ethers.utils.formatEther(balance);
-		this.log("balance of account: " + etherBalance);
+		let musicOptions = this.getInfinityConsole().windowExists("Music")
+			? this.getInfinityConsole().getWindow("Music").options
+			: {
+					currentTrack: "nothing",
+			  };
+		let seconds = musicOptions.clock || 0;
+		let minutes = seconds <= 0 ? 0 : Math.floor(musicOptions.clock / 60);
+
 		this.getElement("frame").setContent(
 			`{bold}{yellow-fg}${
 				hre.network.name
-			} [${this.getContainer().getCurrentChainId()}]{/bold} {underline}${
-				account.address
-			}{/underline}{/yellow-fg} {black-bg}{white-fg}{bold}${etherBalance} ETH ($${(
-				parseFloat(etherBalance) * 2222
-			).toFixed(
+			} [${this.getInfinityConsole().getCurrentChainId()}]{/bold} {underline}${account.address.substring(
+				0,
+				14
+			)}...{/underline}{/yellow-fg} {white-fg}{bold}${etherBalance.substring(
+				0,
+				8
+			)} ETH ($${(parseFloat(etherBalance) * 2222).toFixed(
 				2
-			)}){/bold}{/white-fg}{/black-bg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/red-fg}{/green-bg}`
+			)}){/bold}{/white-fg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/green-fg}{/black-bg} {bold}{cyan-fg}♫{/cyan-fg}{/bold} {underline}{cyan-fg}${
+				musicOptions.currentTrack
+			}{/cyan-fg}{/underline} {black-bg}{white-fg}${(minutes % 60)
+				.toString()
+				.padStart(2, "0")}:${(seconds % 60)
+				.toString()
+				.padStart(2, "0")}{/white-fg}{/black-bg}`
 		);
 	}
 
@@ -612,7 +628,7 @@ export class InfinityMintWindow {
 	 */
 	public createElement(
 		key: string,
-		options: any,
+		options: BlessedElementOptions,
 		type?: "box" | "list" | "image" | "bigtext"
 	) {
 		type = type || "box";
@@ -664,22 +680,29 @@ export class InfinityMintWindow {
 			options.width !== undefined &&
 			typeof options.width === "string" &&
 			options.width?.indexOf("%") !== -1 &&
-			(options.width?.indexOf("-") === -1 ||
-				options.width?.indexOf("+") === -1)
+			options.width?.indexOf("-") === -1 &&
+			options.width?.indexOf("+") === -1
 		)
-			options.width = options.width + "-" + (base.left + base.right);
+			options.width = options.width + "-" + (base.left + base.right + 2);
 
 		//if its just a percentage then add the base onto it, if not leave it and have them do it
 		if (
 			options.height !== undefined &&
 			typeof options.height === "string" &&
 			options.height?.indexOf("%") !== -1 &&
-			(options.height?.indexOf("-") === -1 ||
-				options.height?.indexOf("+") === -1)
+			options.height?.indexOf("-") === -1 &&
+			options.height?.indexOf("+") === -1
 		)
-			options.height = options.height + "-" + (base.top + base.bottom);
+			options.height =
+				options.height + "-" + (base.top + base.bottom + 2);
 
-		return this.registerElement(key, blessed[type](options));
+		let element = this.registerElement(key, blessed[type](options));
+
+		if (options.alwaysFront) element.alwaysFront = options.alwaysFront;
+		if (options.alwaysBack) element.alwaysBack = options.alwaysBack;
+		if (options.alwaysUpdate) element.alwaysUpdate = options.alwaysUpdate;
+		if (options.think) element.think = options.think;
+		return element;
 	}
 
 	public async create() {
@@ -723,6 +746,7 @@ export class InfinityMintWindow {
 			height: 5,
 			tags: true,
 			padding: 1,
+			alwaysFront: true,
 			content: "[x]",
 			border: this.border || {},
 			style: {
@@ -742,6 +766,7 @@ export class InfinityMintWindow {
 			right: this.hideCloseButton ? 0 : calculateWidth(this.closeButton),
 			width: 7,
 			height: 5,
+			alwaysFront: true,
 			tags: true,
 			padding: 1,
 			content: "[-]",

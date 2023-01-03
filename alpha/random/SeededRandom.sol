@@ -18,7 +18,7 @@ contract SeededRandom is RandomNumber {
 		numberSeed = seedNumber;
 	}
 
-	function returnNumber(uint256 maxNumber, uint256 _salt)
+	function unsafeNumber(uint256 maxNumber, uint256 _salt)
 		public
 		view
 		override
@@ -30,6 +30,7 @@ contract SeededRandom is RandomNumber {
 				abi.encode(
 					numberSeed,
 					_salt,
+					salt,
 					maxNumber,
 					msg.sender, //is this contract or who ever calls this
 					randomnessFactor

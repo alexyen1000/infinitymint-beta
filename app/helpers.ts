@@ -1,12 +1,14 @@
 import Pipes, { Pipe } from "./pipes";
 import fsExtra from "fs-extra";
 import fs, { PathLike } from "fs";
+import path from "path";
 import {
 	InfinityMintConfig,
 	InfinityMintEnvironment,
 	InfinityMintEnvironmentKeys,
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
+	InfinityMintScript,
 	InfinityMintSession,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
@@ -17,6 +19,9 @@ import {
 	registerGasPriceHandler,
 	registerTokenPriceHandler,
 } from "./gasAndPrices";
+import { glob } from "glob";
+import { InfinityConsole } from "./console";
+import { EventEmitter } from "events";
 
 export interface Vector {
 	x: number;
@@ -25,12 +30,51 @@ export interface Vector {
 }
 
 export interface Blessed {
-	screen: any;
-	box: any;
-	button: any;
-	list: any;
-	image: any;
-	form: any;
+	screen: (options: any) => BlessedElement;
+	box: (options: BlessedElementOptions) => BlessedElement;
+	button: (options: BlessedElementOptions) => BlessedElement;
+	list: (options: BlessedElementOptions) => BlessedElement;
+	image: (options: BlessedElementOptions) => BlessedElement;
+	form: (options: BlessedElementOptions) => BlessedElement;
+}
+
+export type BlessedElementPadding = {
+	top: string | number;
+	left: string | number;
+	right: string | number;
+	bottom: string | number;
+};
+
+export interface BlessedElementOptions extends Dictionary<any> {
+	/**
+	 * will always run the think hook of this blessed element even if it is hidden
+	 */
+	alwaysUpdate?: boolean;
+	/**
+	 * will make sure the element is always brung to the front
+	 */
+	alwaysFront?: boolean;
+	/**
+	 * will make sure the element is always at the back
+	 */
+	alwaysBack?: boolean;
+	draggable?: boolean;
+	tags?: boolean;
+	bold?: boolean;
+	mouse?: boolean;
+	keyboard?: boolean;
+	think?: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, void>;
+	width?: string | number;
+	height?: string | number;
+	padding?: BlessedElementPadding | string | number;
+	file?: PathLike;
+	parent?: BlessedElement;
+	style?: Dictionary<any>;
+	scrollbar?: Dictionary<any>;
+	label?: string;
+	animate?: boolean;
+	border?: Dictionary<any> | string;
+	content?: any;
 }
 
 /**
@@ -39,7 +83,7 @@ export interface Blessed {
  *
  * @experimental
  */
-export interface BlessedElement extends Element, Dictionary<any> {
+export interface BlessedElement extends BlessedElementOptions, Dictionary<any> {
 	focus: Function;
 	render: Function;
 	hide: Function;
@@ -54,7 +98,6 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	 */
 	pushLine: Function;
 	disableMouse: Function;
-	content: any;
 	/**
 	 * Returns the current window this element is assigned too. Will be undefined if the element has not been registered with an InfinityMintWindow
 	 */
@@ -63,13 +106,14 @@ export interface BlessedElement extends Element, Dictionary<any> {
 	setItems: Function;
 	enterSelected: Function;
 	enableKeys: Function;
-	width: number;
+	/**
+	 * true if the window is hidden
+	 */
 	hidden: boolean;
-	height: number;
+	/**
+	 * ture if the window should hide when the window is shown again, applied to elements which are hidden initially when the window is initialized and used to keep them hidden when we reshow the window later on.
+	 */
 	shouldUnhide: boolean;
-	style: any;
-	scrollbar: any;
-	border: any;
 	setContent: Function;
 	setLabel: Function;
 	enableMouse: Function;
@@ -161,9 +205,20 @@ export const debugLog = (msg: string | object | number) => {
  */
 export const warning = (msg: string | object | number) => {
 	log(
-		`{yellow-fg}⚠️${msg}{/yellow-fg}`,
+		`{yellow-fg}{underline}⚠️{/underline} ${msg}{/yellow-fg}`,
 		isEnvTrue("PIPE_SEPERATE_WARNINGS") ? "warning" : "debug"
 	);
+};
+
+export const getElementPadding = (
+	element: BlessedElement,
+	type: "left" | "right" | "up" | "down"
+) => {
+	if (element?.padding === undefined) return 0;
+
+	if (element?.padding[type] === undefined) return 0;
+
+	return parseInt(element?.padding[type].toString());
 };
 
 export const calculateWidth = (...elements: BlessedElement[]) => {
@@ -174,10 +229,8 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
 				element.strWidth(element.content) +
 				//for the border
 				(element.border !== undefined ? 2 : 0) +
-				(typeof element.padding?.left === "number" ||
-				!isNaN(element.padding?.left)
-					? element.padding.left * 2
-					: 0)
+				getElementPadding(element, "left") +
+				getElementPadding(element, "right")
 		)
 		.forEach((num) => (fin += num));
 	return fin;
@@ -213,30 +266,38 @@ export const readSession = (): InfinityMintSession => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let consoleLog = console.log;
-	console.log = (msg: string | object, setPipe = true) => {
-		if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
 
-		if (setPipe && Pipes.logs[Pipes.currentPipe] !== undefined)
-			Pipes.getPipe(Pipes.currentPipe).log(msg);
+	console.log = (msg: string | object) => {
+		try {
+			if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+		} catch (error) {
+			msg = msg.toString();
+		}
 
 		if (
-			Pipes.logs[Pipes.currentPipe]?.listen ||
-			(Pipes.logs[Pipes.currentPipe] === undefined &&
+			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
+			Pipes.pipes[Pipes.currentPipeKey] !== undefined
+		)
+			Pipes.getPipe(Pipes.currentPipeKey).log(msg);
+
+		if (
+			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
+			(Pipes.pipes[Pipes.currentPipeKey] === undefined &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
-			consoleLog(msg);
+			consoleLog(msg.replace("<#DONT_LOG_ME$>", ""));
 	};
 
 	let consoleError = console.error;
-	console.error = (error: any | Error, setPipe = true) => {
-		if (setPipe && Pipes.logs[Pipes.currentPipe])
-			Pipes.getPipe(Pipes.currentPipe).error(error);
+	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
+		if (Pipes.pipes[Pipes.currentPipeKey] && dontSendToPipe !== true)
+			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
 		if (isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT"))
 			console.log("[error] " + error?.message);
 
 		if (
-			Pipes.logs[Pipes.currentPipe]?.listen ||
+			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
 			isEnvTrue("PIPE_ECHO_ERRORS")
 		)
 			consoleError(error);
@@ -267,6 +328,63 @@ export const getCompiledProject = (projectName: string) => {
 	if (res.compiled !== true)
 		throw new Error(`project ${projectName} has not been compiled`);
 
+	return res as InfinityMintProject;
+};
+
+export const hasTempDeployedProject = (projectName: string) => {
+	return fs.existsSync(
+		process.cwd() + "/temp/projects/" + projectName + ".temp.json"
+	);
+};
+
+export const hasTempCompiledProject = (projectName: string) => {
+	return fs.existsSync(
+		process.cwd() + "/temp/projects/" + projectName + ".compiled.temp.json"
+	);
+};
+
+export const saveTempDeployedProject = (project: InfinityMintProject) => {
+	debugLog("saving " + project.name + ".temp.json");
+	fs.writeFileSync(
+		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
+		JSON.stringify(project)
+	);
+};
+
+export const saveTempCompiledProject = (project: InfinityMintProject) => {
+	debugLog("saving " + project.name + ".compiled.temp.json");
+	fs.writeFileSync(
+		process.cwd() +
+			"/temp/projects/" +
+			project.name +
+			".compiled.temp.json",
+		JSON.stringify(project)
+	);
+};
+
+/**
+ * Returns a temporary deployed InfinityMintProject which can be picked up and completed.
+ * @param projectName
+ */
+export const getTempDeployedProject = (projectName: string) => {
+	let res = require(process.cwd() +
+		"/temp/projects/" +
+		projectName +
+		".temp.json");
+	res = res.default || res;
+	return res as InfinityMintProject;
+};
+
+/**
+ * Returns a temporary compiled InfinityMintProject which can be picked up and completed.
+ * @param projectName
+ */
+export const getTempCompiledProject = (projectName: string) => {
+	let res = require(process.cwd() +
+		"/temp/projects/" +
+		projectName +
+		".temp.compiled.json");
+	res = res.default || res;
 	return res as InfinityMintProject;
 };
 
@@ -463,6 +581,104 @@ export const getPackageJson = () => {
 	);
 };
 
+export const findFiles = (globPattern: string) => {
+	return new Promise<string[]>((resolve, reject) => {
+		glob(globPattern, (err: Error, matches: string[]) => {
+			if (err) throw err;
+
+			resolve(matches);
+		});
+	});
+};
+
+export const isTypescript = () => {
+	let session = readSession();
+
+	return session.environment?.javascript !== true;
+};
+
+export const getFileImportExtension = () => {
+	let session = readSession();
+
+	if (session.environment?.javascript) return ".js";
+
+	return ".ts";
+};
+
+/**
+ * looks for scripts inside of cwd /scripts/ and if we aren't infinityMint and the env variable INFINITYMINT_s
+ * @param extension
+ * @param roots
+ * @returns
+ */
+export const findScripts = async (extension?: string, roots?: string[]) => {
+	roots = roots || [process.cwd() + "/"];
+
+	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_SCRIPTS"))
+		roots.push(process.cwd() + "/node_modules/infinitymint/");
+
+	let scanned = [];
+	for (let i = 0; i < roots.length; i++) {
+		let location = roots[i];
+		let path =
+			location + "scripts/**/*" + (extension || getFileImportExtension());
+
+		debugLog("scanning " + path);
+		scanned = [...scanned, ...(await findFiles(path))];
+	}
+
+	scanned = scanned.map((fullPath) => {
+		return path.parse(fullPath);
+	});
+
+	return scanned as path.ParsedPath[];
+};
+
+/**
+ * Checks cwd for a /script/ folder and looks for a script with that name. if it can't find it will look in this repos deploy scripts and try and return that
+ * @param fileName
+ * @param root
+ * @returns
+ */
+export const requireScript = async (
+	fullPath: string,
+	console?: InfinityConsole
+) => {
+	if (!fs.existsSync(fullPath))
+		throw new Error("cannot find script: " + fullPath);
+
+	if (require.cache[fullPath]) {
+		debugLog("deleting old cache of " + fullPath);
+		delete require.cache[fullPath];
+	}
+
+	let result = await require(fullPath);
+	result = result.default || result;
+
+	if (result?.loaded !== undefined) {
+		debugLog("calling (loaded) on " + fullPath);
+		await (result as InfinityMintScript).loaded({
+			log,
+			debugLog,
+			console,
+			script: result,
+		});
+	}
+
+	return result as InfinityMintScript;
+};
+
+export const isInfinityMint = () => {
+	try {
+		let packageJson = getPackageJson();
+		if (packageJson?.name === "infinitymint") return true;
+	} catch (error) {
+		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+
+		return false;
+	}
+};
+
 /**
  * Reads InfinityMint configuration file and and registers any gas and price handlers we have for each network
  * @param config
@@ -493,7 +709,7 @@ export const loadInfinityMint = (
 	useInternalRequire?: boolean
 ) => {
 	createInfinityMintConfig(useJavascript, useInternalRequire);
-	preInitialize();
+	preInitialize(useJavascript);
 	initializeGanacheMnemonic();
 };
 
@@ -528,31 +744,50 @@ export const createEnvFile = (source: any) => {
 	fs.writeFileSync(process.cwd() + "/.env", stub);
 };
 
-export const preInitialize = () => {
+export const preInitialize = (isJavascript?: boolean) => {
 	//creates dirs
 	createDirs([
 		"gems",
 		"temp",
 		"temp/settings",
 		"temp/receipts",
+		"temp/pipes",
 		"temp/deployments",
 		"temp/projects",
+		"imports",
 		"deployments",
 		"projects",
 	]);
 
 	if (!fs.existsSync(process.cwd() + "/.env")) {
-		let path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
-			? process.cwd() + "/examples/example.env.ts"
-			: process.cwd() +
-			  "/node_modules/infinitymint/examples/example.env.ts";
+		//if it isn't javascript we can just include the .env.ts file, else if we aren't just copy the .env from the examples/js folder instead
+		let path: PathLike;
+		if (!isJavascript) {
+			path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
+				? process.cwd() + "/examples/example.env.ts"
+				: process.cwd() +
+				  "/node_modules/infinitymint/examples/example.env.ts";
 
-		if (!fs.existsSync(path))
-			throw new Error(
-				"could not find: " + path + " to create .env file with"
-			);
+			if (!fs.existsSync(path))
+				throw new Error(
+					"could not find: " + path + " to create .env file with"
+				);
+			createEnvFile(require(path));
+		} else {
+			path = fs.existsSync(process.cwd() + "/examples/js/example.env")
+				? process.cwd() + "/examples/js/example.env"
+				: process.cwd() +
+				  "/node_modules/infinitymint/examples/js/example.env";
 
-		createEnvFile(require(path));
+			if (!fs.existsSync(path))
+				throw new Error(
+					"could not find: " + path + " to create .env file with"
+				);
+
+			fs.copyFileSync(path, "./.env");
+		}
+
+		debugLog("made ./env from " + path);
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
@@ -663,11 +898,11 @@ export const error = (error: string | Error) => {
 	Pipes.log(error.toString());
 };
 
-export const isEnvTrue = (key: InfinityMintEnvironmentKeys[0]): boolean => {
+export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {
 	return process.env[key] !== undefined && process.env[key] === "true";
 };
 
-export const isEnvSet = (key: InfinityMintEnvironmentKeys[0]): boolean => {
+export const isEnvSet = (key: InfinityMintEnvironmentKeys): boolean => {
 	return (
 		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
 	);

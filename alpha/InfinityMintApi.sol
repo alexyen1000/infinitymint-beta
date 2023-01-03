@@ -6,6 +6,7 @@ import "./InfinityMint.sol";
 import "./Asset.sol";
 import "./InfinityMintValues.sol";
 import "./Royalty.sol";
+import "./InfinityMintProject.sol";
 
 /// @title InfinityMint API
 /// @author Llydia Cross
@@ -17,38 +18,59 @@ contract InfinityMintApi is InfinityMintObject {
 	Asset public assetController;
 	InfinityMintValues public valuesController;
 	Royalty public royaltyController;
+	InfinityMintProject public projectController;
 
 	constructor(
 		address erc721Destination,
 		address storageestination,
 		address assetDestination,
 		address valuesDestination,
-		address royaltyDestination
+		address royaltyDestination,
+		address projectDestination
 	) {
 		erc721 = InfinityMint(erc721Destination);
 		storageController = InfinityMintStorage(storageestination);
 		assetController = Asset(assetDestination);
 		valuesController = InfinityMintValues(valuesDestination);
 		royaltyController = Royalty(royaltyDestination);
+		projectController = InfinityMintProject(projectDestination);
 	}
 
 	function getPrice() external view returns (uint256) {
 		return royaltyController.tokenPrice();
 	}
 
-	function ownerOf(uint32 tokenId) external view returns (address result) {
-		result = storageController.getOwner(tokenId);
+	function getCurrentProject()
+		external
+		view
+		returns (
+			bytes memory encodedUrl,
+			bytes memory encodedTag,
+			uint256 version
+		)
+	{
+		return (
+			projectController.getProject(),
+			projectController.getCurrentTag(),
+			projectController.getCurrentVersion()
+		);
+	}
 
-		require(result != address(0x0), "bad address");
+	function getProject(uint256 version)
+		external
+		view
+		returns (
+			bytes memory encodedProject,
+			bytes memory encodedTag,
+			bytes memory encodedInitialProject
+		)
+	{
+		return projectController.getVersion(version);
 	}
 
 	function isPreviewBlocked(address sender) external view returns (bool) {
 		//returns true only if the current time stamp is less than the preview timestamp
 		return block.timestamp < storageController.getPreviewTimestamp(sender);
-	}
-
-	function isMintsEnabled() external view returns (bool) {
-		return erc721.mintsEnabled();
 	}
 
 	/// @notice only returns a maximum of 256 tokens use offchain retrival services to obtain token information on owner!
@@ -65,16 +87,12 @@ contract InfinityMintApi is InfinityMintObject {
 		return storageController.getAllRegisteredTokens(owner);
 	}
 
-	function getRaw(uint32 tokenId) external view returns (bytes memory) {
+	function getBytes(uint32 tokenId) external view returns (bytes memory) {
 		if (tokenId < 0 || tokenId >= erc721.currentTokenId()) revert();
 
 		InfinityObject memory data = storageController.get(tokenId);
 
 		return encode(data);
-	}
-
-	function balanceOf(address sender) external view returns (uint256) {
-		return erc721.balanceOf(sender);
 	}
 
 	/// @notice gets the balance of a wallet associated with a tokenId
@@ -94,12 +112,9 @@ contract InfinityMintApi is InfinityMintObject {
 		return storageController.get(tokenId);
 	}
 
-	function getWalletContract(uint32 tokenId)
-		public
-		view
-		returns (address result)
-	{
-		getLink(tokenId, valuesController.tryGetValue("linkWalletIndex"));
+	function getWalletContract(uint32 tokenId) public view returns (address) {
+		return
+			getLink(tokenId, valuesController.tryGetValue("linkWalletIndex"));
 	}
 
 	function getLink(uint32 tokenId, uint256 index)
@@ -113,11 +128,7 @@ contract InfinityMintApi is InfinityMintObject {
 		return storageController.get(tokenId).destinations[index];
 	}
 
-	function getStickerContract(uint32 tokenId)
-		public
-		view
-		returns (address result)
-	{
+	function getStickerContract(uint32 tokenId) public view returns (address) {
 		return
 			getLink(tokenId, valuesController.tryGetValue("linkStickersIndex"));
 	}
@@ -142,7 +153,7 @@ contract InfinityMintApi is InfinityMintObject {
 		}
 	}
 
-	function allPreviews(address addr) external view returns (uint32[] memory) {
+	function getPreviews(address addr) external view returns (uint32[] memory) {
 		require(addr != address(0x0), "cannot view previews for null address");
 
 		//find previews

@@ -8,8 +8,12 @@ import {
 } from "./interfaces";
 import {
 	debugLog,
+	getCompiledProject,
+	getFileImportExtension,
 	getProject,
+	initializeGanacheMnemonic,
 	isEnvTrue,
+	isInfinityMint,
 	log,
 	readSession,
 	warning,
@@ -17,9 +21,15 @@ import {
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
-import { getContract, getDefaultSigner, logTransaction } from "./web3";
+import {
+	getContract,
+	getDefaultSigner,
+	getNetworkSettings,
+	logTransaction,
+} from "./web3";
 import { Contract } from "@ethersproject/contracts";
 import hre from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -73,10 +83,7 @@ export class InfinityMintDeployment {
 		if (
 			fs.existsSync(process.cwd() + "/deploy/" + deploymentScriptLocation)
 		)
-			this.deploymentScript = require(process.cwd() +
-				"/deploy/" +
-				deploymentScriptLocation)
-				.default as InfinityMintDeploymentScript;
+			this.reloadScript();
 		else
 			debugLog(
 				`deploy script for [${this.key}]<${this.project}> not found`
@@ -115,9 +122,16 @@ export class InfinityMintDeployment {
 	/**
 	 * reloads the source file script
 	 */
-	reload() {
-		this.deploymentScript = require("./../" + this.deploymentScriptLocation)
-			.default as InfinityMintDeploymentScript;
+	async reloadScript() {
+		let location = process.cwd() + this.deploymentScriptLocation;
+		if (require.cache[location] !== undefined) {
+			debugLog("deleting old cache of " + location);
+			delete require.cache[location];
+			debugLog(`reloading <${location}>`);
+		} else debugLog(`loading <${location}>`);
+
+		let requirement = require(location);
+		this.deploymentScript = requirement.default || requirement;
 	}
 
 	/**
@@ -152,6 +166,10 @@ export class InfinityMintDeployment {
 
 	getKey() {
 		return this.key;
+	}
+
+	getModule() {
+		return this.deploymentScript.module;
 	}
 
 	getContractName(index?: 0) {
@@ -285,9 +303,9 @@ export class InfinityMintDeployment {
 	 * @param index
 	 * @returns
 	 */
-	async getSignedContract(index?: number) {
+	async getSignedContract(index?: number, signer?: SignerWithAddress) {
 		let contract = this.getContract(index);
-		let signer = await getDefaultSigner();
+		signer = signer || (await getDefaultSigner());
 		return contract.connect(signer);
 	}
 
@@ -366,7 +384,16 @@ export class InfinityMintDeployment {
 		) as InfinityMintDeploymentLocal;
 	}
 
+	public getDeploymentScript() {
+		return this.deploymentScript;
+	}
+
+	public getDeploymentScriptLocation() {
+		return this.deploymentScriptLocation;
+	}
+
 	async deploy(...args: any) {
+		this.reloadScript();
 		let result = await this.execute("deploy", args);
 
 		let contracts: Contract[];
@@ -430,6 +457,7 @@ export class InfinityMintDeployment {
 	}
 
 	async setup(...args: any) {
+		this.reloadScript();
 		await this.execute("setup", args);
 		this.hasSetupDeployments = true;
 	}
@@ -469,6 +497,91 @@ export class InfinityMintDeployment {
 		}
 	}
 }
+
+/**
+ *
+ * @param project
+ * @returns
+ */
+export const loadDeploymentClasses = async (project: InfinityMintProject) => {
+	let deployments = [...(await getDeploymentClasses(project))];
+
+	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_DEPLOY"))
+		deployments = [
+			...deployments,
+			...(await getDeploymentClasses(
+				project,
+				process.cwd() + "/node_modules/infinitymint/deploy/**/*.ts"
+			)),
+		];
+
+	return deployments;
+};
+
+/**
+ * Returns a list of deployment classes relating to a project in order to deploy it ready to be steped through
+ * @param project
+ * @param loadedDeploymentClasses
+ * @returns
+ */
+export const getProjectDeploymentClasses = async (
+	project: string,
+	loadedDeploymentClasses?: InfinityMintDeployment[]
+) => {
+	let compiledProject: InfinityMintProject;
+	if (typeof project === "string")
+		compiledProject = getCompiledProject(project);
+	else compiledProject = project;
+
+	loadedDeploymentClasses =
+		loadedDeploymentClasses ||
+		(await loadDeploymentClasses(compiledProject));
+
+	let setings = getNetworkSettings(hre.network.name);
+
+	if (!compiledProject.compiled)
+		throw new Error(
+			"please compile " + compiledProject.name + " before launching it"
+		);
+
+	let moduleDeployments = loadedDeploymentClasses.filter(
+		(deployment) =>
+			Object.keys(compiledProject.modules).filter(
+				(key) =>
+					key === deployment.getModule() &&
+					compiledProject.modules[key] ===
+						deployment.getContractName()
+			).length !== 0
+	);
+
+	let otherDeployments = loadedDeploymentClasses.filter(
+		(deployment) =>
+			moduleDeployments.filter(
+				(thatDeployment) =>
+					deployment.getContractName() ===
+					thatDeployment.getContractName()
+			).length !== 0 &&
+			[
+				...(setings?.disabledContracts || []),
+				...(compiledProject?.settings?.disabledContracts || []),
+			].filter(
+				(value) =>
+					value === deployment.getContractName() ||
+					value === deployment.getKey()
+			).length === 0
+	);
+
+	let deployments = [...moduleDeployments, ...otherDeployments];
+
+	//now we need to sort the deployments ranked on their index, then put libraries first, then put important first
+	deployments = deployments.sort((a, b) =>
+		a.isLibrary() || a.isImportant()
+			? deployments.length
+			: a.getIndex() - b.getIndex()
+	);
+
+	return deployments;
+};
 
 /**
  * gets a deployment in the /deployments/network/ folder and turns it into an InfinityMintDeploymentLive
@@ -591,7 +704,10 @@ export const getDeploymentClasses = (
 		if (network === undefined)
 			throw new Error("unable to automatically determain network");
 
-		let filePath = (root || process.cwd() + "/") + "deploy/**/*.ts";
+		let filePath =
+			(root || process.cwd() + "/") +
+			"deploy/**/*." +
+			getFileImportExtension();
 		debugLog("finding deployment scripts in: " + filePath);
 		glob(filePath, (err: Error | null, matches: any[]) => {
 			if (err) throw err;

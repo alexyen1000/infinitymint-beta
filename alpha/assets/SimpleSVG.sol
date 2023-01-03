@@ -9,7 +9,7 @@ contract SimpleSVG is InfinityMintAsset {
 		InfinityMintAsset(valuesContract)
 	{
 		tokenName = _tokenName;
-		assetsType = "svg"; //returns scalable vector asset
+		typeOf = "svg"; //returns scalable vector asset
 	}
 
 	function getNextPathId(RandomNumber randomNumberController)
@@ -21,7 +21,7 @@ contract SimpleSVG is InfinityMintAsset {
 		if (pathCount == 1 && disabledPaths[safeDefaultReturnPath])
 			revert("No valid paths");
 
-		if (valuesController.isTrue("incrementalMode")) {
+		if (valuesController.isTrue("incremental")) {
 			nextPath = lastPath++;
 			if (nextPath >= pathCount) {
 				lastPath = uint32(safeDefaultReturnPath);

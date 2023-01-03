@@ -14,7 +14,7 @@ contract UnsafeRandom is RandomNumber {
 		numberSeed = seedNumber;
 	}
 
-	function returnNumber(uint256 maxNumber, uint256 _salt)
+	function unsafeNumber(uint256 maxNumber, uint256 _salt)
 		public
 		view
 		override
@@ -26,6 +26,7 @@ contract UnsafeRandom is RandomNumber {
 				abi.encode(
 					numberSeed,
 					_salt,
+					salt,
 					maxNumber,
 					block.difficulty,
 					block.number,
