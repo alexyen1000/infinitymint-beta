@@ -94,6 +94,16 @@ export interface InfinityMintProjectJavascript
 }
 
 /**
+ *
+ */
+export interface InfinityMintStaticManifest {
+	project?: string;
+	stylesheets?: Array<PathLike>;
+	images?: Dictionary<PathLike>;
+	javascript?: Array<PathLike> | Dictionary<PathLike>;
+}
+
+/**
  * classic paths, used when project file is a .js
  */
 export interface InfinityMintProjectJavascriptPaths {

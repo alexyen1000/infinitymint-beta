@@ -1,4 +1,4 @@
-import { debugLog, warning } from "../helpers";
+import { debugLog, isInfinityMint, warning } from "../helpers";
 import { InfinityMintWindow } from "../window";
 
 const Music = new InfinityMintWindow(
@@ -15,8 +15,10 @@ const Music = new InfinityMintWindow(
 	}
 );
 
-export const tracks = ["f10_f2.mp3", "contents.mp3", "shakes.mp3"].map(
-	(file) => "/resources/ost/" + file
+export const tracks = ["f10_f2.mp3", "contents.mp3", "shakes.mp3"].map((file) =>
+	isInfinityMint()
+		? "/resources/ost/" + file
+		: "/node_modules/infinitymint/resources/ost/" + file
 );
 
 let clockInterval;
