@@ -739,12 +739,16 @@ export class InfinityConsole {
 	}
 
 	/**
-	 * Gets all the deployment classes relating to a project. You should use this over getting projectDeploymentClasses directly
+	 * Used to get the deployment classes relating to a project, must pass the Infinity Console.
 	 * @param projectName
+	 * @param console
 	 * @returns
 	 */
-	public async getDeploymentClasses(projectName: string) {
-		return await getProjectDeploymentClasses(projectName);
+	public async getDeploymentClasses(
+		projectName: string,
+		console: InfinityConsole
+	) {
+		return await getProjectDeploymentClasses(projectName, console);
 	}
 
 	public async refreshScripts() {

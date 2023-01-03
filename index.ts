@@ -111,6 +111,23 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 	await infinityConsole.initialize();
 	return infinityConsole;
 };
+
+/**
+ * Starts infinitymint in the background with no UI drawing
+ */
+let infinityConsole: InfinityConsole;
+export const load = async (
+	options?: InfinityMintConsoleOptions
+): Promise<InfinityConsole> => {
+	infinityConsole = await start({
+		...(options || {}),
+		dontDraw: true,
+	});
+	return infinityConsole;
+};
+export const infinitymint = infinityConsole as InfinityConsole;
+export default load();
+
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (config.console)
 	start().catch((error) => {
