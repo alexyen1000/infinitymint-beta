@@ -2,7 +2,7 @@
 	"name": "infinitymint",
 	"description": "InfinityMint - Powered by Hardhat and Ganache",
 	"homepage": "https://github.com/0x0zAgency/infinitymint-beta#readme",
-	"version": "1.0.15",
+	"version": "1.0.16",
 	"main": "dist/index.js",
 	"directories": {
 		"test": "tests"
@@ -47,7 +47,7 @@
 		"glob": "^8.0.3",
 		"hardhat": "^2.12.4",
 		"hardhat-change-network": "^0.0.7",
-		"infinitymint": "^1.0.11",
+		"infinitymint": "^1.0.14",
 		"module-alias": "^2.2.2",
 		"play-sound": "^1.1.5",
 		"uuid": "^9.0.0"
