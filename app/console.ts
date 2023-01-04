@@ -1,13 +1,23 @@
-import { InfinityMintConsoleOptions, InfinityMintScript } from "./interfaces";
+import {
+	InfinityMintConfigEventKeys,
+	InfinityMintConsoleOptions,
+	InfinityMintEventEmit,
+	InfinityMintEventKeys,
+	InfinityMintScript,
+	KeyValue,
+} from "./interfaces";
 import {
 	Blessed,
 	BlessedElement,
 	debugLog,
 	findScripts,
+	findWindows,
+	getPackageJson,
 	isEnvTrue,
 	isTypescript,
 	log,
 	requireScript,
+	requireWindow,
 	warning,
 } from "./helpers";
 import { InfinityMintEventEmitter } from "./interfaces";
@@ -19,30 +29,12 @@ import { changeNetwork, getDefaultSigner, getProvider } from "./web3";
 import Pipes from "./pipes";
 import { Dictionary } from "form-data";
 import { BigNumber } from "ethers";
+import { getProjectDeploymentClasses } from "./deployments";
 
 //const
 const { v4: uuidv4 } = require("uuid");
 //node audio
 const player = require("play-sound")({ player: "afplay" });
-
-//core windows
-import Logs from "./windows/logs";
-import Menu from "./windows/menu";
-import Browser from "./windows/browser";
-import Deployments from "./windows/deployments";
-import Gems from "./windows/gems";
-import Networks from "./windows/networks";
-import Scaffold from "./windows/scaffold";
-import Scripts from "./windows/scripts";
-import Settings from "./windows/settings";
-import Deploy from "./windows/deploy";
-import Tutorial from "./windows/tutorial";
-import Projects from "./windows/projects";
-import Music from "./windows/music";
-import Ganache from "./windows/ganache";
-import CloseBox from "./windows/closeBox";
-import { getProjectDeploymentClasses } from "./deployments";
-
 //blessed
 const blessed = require("blessed") as Blessed;
 
@@ -61,6 +53,7 @@ export class InfinityConsole {
 	private network?: HardhatRuntimeEnvironment["network"];
 	private signers?: SignerWithAddress[];
 	private windowManager?: BlessedElement;
+	private errorBox?: BlessedElement;
 	private inputKeys: Dictionary<Array<Function>>;
 	private chainId: number;
 	private eventEmitter: InfinityMintEventEmitter;
@@ -78,24 +71,7 @@ export class InfinityConsole {
 		this.windows = [];
 		this.allowExit = true;
 		this.options = options;
-		this.windows = [
-			Menu,
-			Tutorial,
-			Projects,
-			Logs,
-			Browser,
-			Ganache,
-			Deployments,
-			Gems,
-			Networks,
-			Scaffold,
-			Music,
-			Scripts,
-			Settings,
-			Deploy,
-			CloseBox,
-		];
-
+		this.windows = [];
 		this.tick = 0;
 		this.registerDefaultKeys();
 		this.sessionId = this.generateId();
@@ -119,7 +95,7 @@ export class InfinityConsole {
 	 * Creates a new event emitter, will remove all listeners on the old event emitter unless first param is true.
 	 * @returns
 	 */
-	public createEventEmitter(dontCleanListeners: boolean) {
+	public createEventEmitter(dontCleanListeners?: boolean) {
 		if (dontCleanListeners !== true)
 			try {
 				if (
@@ -183,6 +159,11 @@ export class InfinityConsole {
 			],
 			"C-r": [
 				(ch: string, key: string) => {
+					this.reload();
+				},
+			],
+			"C-x": [
+				(ch: string, key: string) => {
 					if (this.screen.lastWindow !== undefined) {
 						this.currentWindow?.hide();
 						this.currentWindow = this.screen.lastWindow;
@@ -206,14 +187,24 @@ export class InfinityConsole {
 					this.windowManager.show();
 				},
 			],
+			up: [
+				(ch: string, key: string) => {
+					if (this.currentWindow?.isVisible() === true) return;
+					this.windowManager.focus();
+				},
+			],
+			down: [
+				(ch: string, key: string) => {
+					if (this.currentWindow?.isVisible() === true) return;
+					this.windowManager.focus();
+				},
+			],
 			"C-c": [
 				(ch: string, key: string) => {
 					if (!this.allowExit) {
 						debugLog("not showing CloseBox as allowExit is false");
 						return;
 					}
-
-					this.windowManager.setBack();
 
 					if (this?.currentWindow === undefined) {
 						this.setWindow("CloseBox");
@@ -302,15 +293,18 @@ export class InfinityConsole {
 				this.registerEvents();
 			}
 			this.currentWindow.show();
+			this.windowManager.setBack();
 		}
 	}
 
 	public async reload() {
+		this.emit("reloaded");
 		Object.keys(this.inputKeys).forEach((key) => {
 			this.unkey(key);
 		});
 		this.currentWindow = undefined;
 		this.windows.forEach((window) => window.destroy());
+		this.windows = [];
 		this.windowManager.destroy();
 		//render
 		this.screen.render();
@@ -381,8 +375,13 @@ export class InfinityConsole {
 	}
 
 	public async stopAudio() {
-		this.currentAudio?.kill();
-		await this.audioKilled();
+		if (this.currentAudio?.kill) {
+			this.currentAudio?.kill();
+			await this.audioKilled();
+		} else {
+			this.currentAudioAwaitingKill = false;
+			this.currentAudioKilled = true;
+		}
 	}
 
 	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {
@@ -445,24 +444,29 @@ export class InfinityConsole {
 	 * updates the window list with options
 	 */
 	public updateWindowsList() {
-		this.windowManager.setItems(
-			[...this.windows].map(
-				(window) =>
-					(window.name + " " + `[${window.getId()}]`).padEnd(
-						56,
-						" "
-					) +
-					(window.isAlive()
-						? " {green-fg}(alive){/green-fg}"
-						: " {red-fg}(dead) {/red-fg}") +
-					(!window.hasInitialized()
-						? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
-						: "") +
-					(window.isAlive() && window.shouldBackgroundThink()
-						? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
-						: "")
-			)
-		);
+		try {
+			this.windowManager.setItems(
+				[...this.windows].map(
+					(window) =>
+						(window.name + " " + `[${window.getId()}]`).padEnd(
+							56,
+							" "
+						) +
+						(window.isAlive()
+							? " {green-fg}(alive){/green-fg}"
+							: " {red-fg}(dead) {/red-fg}") +
+						(!window.hasInitialized()
+							? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
+							: "") +
+						(window.isAlive() && window.shouldBackgroundThink()
+							? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
+							: "")
+				)
+			);
+		} catch (error) {
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			warning("cannot update window manager: " + error?.message);
+		}
 	}
 
 	/**
@@ -515,24 +519,39 @@ export class InfinityConsole {
 		});
 		//when an item is selected form the list box, attempt to show or hide that Windoiw.
 		this.windowManager.on("select", async (_el: Element, selected: any) => {
-			//disable the select if the current window is visible
-			if (this.currentWindow?.isVisible()) return;
-			//set the current window to the one that was selected
-			this.currentWindow = this.windows[selected];
-			if (!this.currentWindow.hasInitialized()) {
-				//sets blessed screen for this window
-				this.currentWindow.setScreen(this.screen);
-				//set the container of this window ( the console, which is this)
-				this.currentWindow.setContainer(this);
-				await this.currentWindow.create();
-				//registers events on the window
-				this.registerEvents();
-			} else if (!this.currentWindow.isVisible())
-				this.currentWindow.show();
-			else this.currentWindow.hide();
-			await this.currentWindow.updateFrameTitle();
-			//set the window manager to the back of the screne
-			this.windowManager.setBack();
+			try {
+				//disable the select if the current window is visible
+				if (this.currentWindow?.isVisible()) return;
+				//set the current window to the one that was selected
+				this.currentWindow = this.windows[selected];
+				if (!this.currentWindow.hasInitialized()) {
+					this.currentWindow.destroy();
+					//sets blessed screen for this window
+					this.currentWindow.setScreen(this.screen);
+					//set the container of this window ( the console, which is this)
+					this.currentWindow.setContainer(this);
+					await this.currentWindow.create();
+					//registers events on the window
+					this.registerEvents();
+				} else if (!this.currentWindow.isVisible())
+					this.currentWindow.show();
+				else this.currentWindow.hide();
+				await this.currentWindow.updateFrameTitle();
+				//set the window manager to the back of the screne
+				this.windowManager.setBack();
+			} catch (error) {
+				this.currentWindow?.hide();
+				this.currentWindow?.destroy();
+
+				try {
+					this.windows[selected]?.hide();
+					this.destroyWindow(this.windows[selected]);
+				} catch (error) {
+					warning("cannot destroy window: " + error.message);
+				}
+
+				this.errorHandler(error);
+			}
 		});
 
 		//update the list
@@ -590,19 +609,37 @@ export class InfinityConsole {
 	}
 
 	public displayError(error: Error, onClick?: any) {
-		let errorBox = blessed.box({
+		if (this.errorBox) {
+			this.errorBox = undefined;
+			this.errorBox?.destroy();
+		}
+
+		this.errorBox = blessed.box({
 			top: "center",
 			left: "center",
 			shrink: true,
-			parent: this.screen,
 			width: "80%",
-			height: "shrink",
+			mouse: true,
+			keyboard: true,
+			height: "80%",
+			scrollable: true,
+			scrollbar: {
+				ch: " ",
+				track: {
+					bg: "black",
+				},
+				style: {
+					inverse: true,
+				},
+			},
 			padding: 1,
 			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION: ${
 				error.message
 			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
 				error.stack
-			} \n\n {white-bg}{black-fg}infinitymint-beta{/black-fg}{/white-bg}`,
+			} \n\n {white-bg}{black-fg}infinitymint-beta ${
+				getPackageJson()?.version
+			}{/black-fg}{/white-bg}`,
 			tags: true,
 			border: {
 				type: "line",
@@ -616,15 +653,16 @@ export class InfinityConsole {
 			},
 		}) as BlessedElement;
 
-		if (onClick !== undefined)
-			errorBox.on("click", () => {
-				onClick(errorBox);
-			});
+		this.errorBox.on("click", () => {
+			if (onClick) onClick(this.errorBox);
+			else this.errorBox.destroy();
+		});
 
-		errorBox.setFront();
-		this.screen.append(errorBox);
+		this.screen.append(this.errorBox);
 		this.screen.render();
-		errorBox.focus();
+
+		this.errorBox.setFront();
+		this.errorBox.focus();
 	}
 
 	public registerKeys() {
@@ -710,11 +748,13 @@ export class InfinityConsole {
 
 	public errorHandler(error: Error | string) {
 		console.error(error);
+
 		if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
 			throw error;
 
-		this.displayError(error as Error, (errorBox: BlessedElement) => {
-			errorBox.destroy();
+		this.displayError(error as Error, () => {
+			this.errorBox.destroy();
+			this.errorBox = undefined;
 		});
 	}
 
@@ -739,12 +779,16 @@ export class InfinityConsole {
 	}
 
 	/**
-	 * Gets all the deployment classes relating to a project. You should use this over getting projectDeploymentClasses directly
+	 * Used to get the deployment classes relating to a project, must pass the Infinity Console.
 	 * @param projectName
+	 * @param console
 	 * @returns
 	 */
-	public async getDeploymentClasses(projectName: string) {
-		return await getProjectDeploymentClasses(projectName);
+	public async getDeploymentClasses(
+		projectName: string,
+		console: InfinityConsole
+	) {
+		return await getProjectDeploymentClasses(projectName, console);
 	}
 
 	public async refreshScripts() {
@@ -759,9 +803,6 @@ export class InfinityConsole {
 		}
 
 		let scripts = await findScripts();
-		if (isTypescript())
-			scripts = [...scripts, ...(await findScripts(".js"))];
-
 		debugLog("found " + scripts.length + " deployment scripts");
 
 		this.scripts = [];
@@ -770,10 +811,16 @@ export class InfinityConsole {
 			let script = scripts[i];
 
 			try {
-				debugLog(`[${i}] requiring script <${script.name}>`);
-				this.scripts.push(
-					await requireScript(script.dir + "/" + script.base)
+				debugLog(
+					`[${i}] requiring script <${script.name}> => ${
+						script.dir + "/" + script.base
+					}`
 				);
+				let scriptSource = await requireScript(
+					script.dir + "/" + script.base,
+					this
+				);
+				this.scripts.push(scriptSource);
 				debugLog(`{green-fg}Success!{/green-fg}`);
 			} catch (error) {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
@@ -788,14 +835,76 @@ export class InfinityConsole {
 		}
 	}
 
+	public emit(
+		eventName: InfinityMintConfigEventKeys | InfinityMintEventKeys,
+		eventParameters?: any,
+		eventType?: any
+	) {
+		debugLog("emitting (" + eventName + ")");
+		return this.eventEmitter.emit(eventName, {
+			infinityConsole: this,
+			event: eventParameters,
+			log: log,
+			eventEmitter: this.eventEmitter,
+			debugLog: debugLog,
+		} as InfinityMintEventEmit<typeof eventType>);
+	}
+
+	/**
+	 *
+	 * @param windowOrIdOrName
+	 */
+	public async destroyWindow(windowOrIdOrName: InfinityMintWindow | string) {
+		for (let i = 0; i < this.windows.length; i++) {
+			if (
+				this.windows[i].toString() === windowOrIdOrName.toString() ||
+				this.windows[i].name === windowOrIdOrName.toString() ||
+				this.windows[i].getId() === windowOrIdOrName.toString()
+			) {
+				let container: InfinityConsole;
+				if (this.windows[i].hasContainer())
+					container = this.windows[i].getInfinityConsole();
+				else container = this;
+				let fileName = this.windows[i].getFileName();
+				this.windows[i].log("reimporting");
+				this.windows[i].destroy();
+				this.windows[i] = undefined;
+
+				this.windows[i] = requireWindow(fileName);
+				this.windows[i].setContainer(container);
+				this.windows[i].setFileName(fileName);
+				this.windows[i].setScreen(this.screen);
+			}
+		}
+	}
+
+	public async refreshWindows() {
+		let windows = await findWindows();
+
+		debugLog("requiring windows and storing inside console instance...");
+		for (let i = 0; i < windows.length; i++) {
+			let window = requireWindow(windows[i]);
+			window.setFileName(windows[i]);
+			this.windows.push(window);
+			debugLog(
+				`[${i}]` +
+					" {green-fg}successfully required{/green-fg} => " +
+					windows[i]
+			);
+		}
+	}
+
 	public async initialize() {
+		//if the network member has been defined then we have already initialized
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
+		this.createEventEmitter();
+		await this.refreshWindows();
 		await this.refreshWeb3();
 		await this.refreshScripts();
 
-		log(`initializing InfinityConsole<${this.sessionId}>`);
+		log(`loading InfinityConsole<${this.sessionId}>`);
 
 		if (this.options?.dontDraw !== true)
 			try {
@@ -816,7 +925,8 @@ export class InfinityConsole {
 
 				//set the current window from the
 				if (this.options?.initialWindow === undefined)
-					this.currentWindow = this.windows[0];
+					this.currentWindow =
+						this.getWindowsByName("Menu")[0] || this.windows[0];
 				else if (
 					typeof this.options.initialWindow ===
 					typeof InfinityMintWindow
@@ -833,25 +943,41 @@ export class InfinityConsole {
 					thatWindow.shouldInstantiate()
 				);
 
+				debugLog(`initializing ${instantInstantiate.length} windows`);
 				for (let i = 0; i < instantInstantiate.length; i++) {
-					debugLog(
-						"initializing <" +
-							instantInstantiate[i].name +
-							`>[${instantInstantiate[i].getId()}]`
-					);
+					try {
+						debugLog(
+							`[${i}] initializing <` +
+								instantInstantiate[i].name +
+								`>[${instantInstantiate[i].getId()}]`
+						);
 
-					if (!instantInstantiate[i].hasContainer())
-						instantInstantiate[i].setContainer(this);
+						if (!instantInstantiate[i].hasContainer())
+							instantInstantiate[i].setContainer(this);
 
-					instantInstantiate[i].setScreen(this.screen);
-					await instantInstantiate[i].create();
-					instantInstantiate[i].hide();
-					//register events
-					this.registerEvents(instantInstantiate[i]);
+						instantInstantiate[i].setScreen(this.screen);
+						await instantInstantiate[i].create();
+						instantInstantiate[i].hide();
+						//register events
+						this.registerEvents(instantInstantiate[i]);
+					} catch (error) {
+						warning(
+							`[${i}] error initializing <` +
+								instantInstantiate[i].name +
+								`>[${instantInstantiate[i].getId()}]: ` +
+								error.message
+						);
+						//simply try and hide
+						try {
+							instantInstantiate[i].hide();
+						} catch (error) {}
+						this.errorHandler(error);
+					}
 				}
 
-				//create the window manager
-				this.createWindowManager();
+				debugLog(
+					`finished initializing ${instantInstantiate.length} windows`
+				);
 
 				//if the current window still hasn't been initialized, t
 				if (!this.currentWindow.hasInitialized()) {
@@ -862,6 +988,9 @@ export class InfinityConsole {
 					//register events for the windowManager with the currentWindow
 					this.registerEvents();
 				}
+
+				//create the window manager
+				this.createWindowManager();
 
 				//the think method for this console
 				let int = () => {
@@ -901,6 +1030,12 @@ export class InfinityConsole {
 							}
 						);
 					}
+
+					if (
+						this.errorBox !== undefined &&
+						this.errorBox.hidden !== true
+					)
+						this.errorBox.setFront();
 				}, this.options?.tickRate);
 
 				//render
@@ -941,7 +1076,8 @@ export class InfinityConsole {
 				`not starting blessed on InfinityConsole<${this.sessionId}>`
 			);
 
-		log(`initialized InfinityConsole<${this.sessionId}>`);
+		log(`successfully loaded InfinityConsole<${this.sessionId}>`);
+		this.emit("initialized");
 	}
 }
 export default InfinityConsole;

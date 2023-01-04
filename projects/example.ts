@@ -31,6 +31,9 @@ const example: InfinityMintProject = {
 		},
 	],
 	events: {
+		initialized: async ({ log, eventEmitter }) => {
+			log("project initialized");
+		},
 		failure: async ({ log, event: error }) => {
 			log("failed to launch successfully");
 			console.error(error);

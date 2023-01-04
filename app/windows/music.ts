@@ -15,16 +15,14 @@ const Music = new InfinityMintWindow(
 	}
 );
 
-export const tracks = ["f10_f2.mp3", "contents.mp3", "shakes.mp3"].map((file) =>
+export const tracks = ["contents.mp3", "menu.mp3"].map((file) =>
 	isInfinityMint()
 		? "/resources/ost/" + file
 		: "/node_modules/infinitymint/resources/ost/" + file
 );
 
-let clockInterval;
-
+let clockInterval: any;
 const onFinished = async (window: InfinityMintWindow) => {
-	console.log("test");
 	//gets the music window
 	let musicWindow = window.getInfinityConsole().getWindow("Music");
 	musicWindow.options.currentTrack =
@@ -65,15 +63,8 @@ Music.initialize = async (window, frame, blessed) => {
 	window.on("destroy", () => {
 		if (window.getInfinityConsole().hasAudio())
 			window.getInfinityConsole().stopAudio();
-	});
 
-	window.key("p", async () => {
-		if (window.getInfinityConsole().isAwaitingKill()) {
-			warning("awaiting audio to be killed, cannot change track");
-			return;
-		}
-
-		await onFinished(window);
+		clearInterval(clockInterval);
 	});
 };
 Music.setBackgroundThink(true);

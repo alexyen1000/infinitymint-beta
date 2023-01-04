@@ -4,7 +4,7 @@ import fs, { PathLike } from "fs";
 import path from "path";
 import {
 	InfinityMintConfig,
-	InfinityMintEnvironment,
+	KeyValue,
 	InfinityMintEnvironmentKeys,
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
@@ -12,7 +12,6 @@ import {
 	InfinityMintSession,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
-import { Dictionary } from "form-data";
 import { HardhatUserConfig } from "hardhat/types";
 import { InfinityMintWindow } from "./window";
 import {
@@ -21,7 +20,6 @@ import {
 } from "./gasAndPrices";
 import { glob } from "glob";
 import { InfinityConsole } from "./console";
-import { EventEmitter } from "events";
 
 export interface Vector {
 	x: number;
@@ -45,7 +43,7 @@ export type BlessedElementPadding = {
 	bottom: string | number;
 };
 
-export interface BlessedElementOptions extends Dictionary<any> {
+export interface BlessedElementOptions extends KeyValue {
 	/**
 	 * will always run the think hook of this blessed element even if it is hidden
 	 */
@@ -69,11 +67,11 @@ export interface BlessedElementOptions extends Dictionary<any> {
 	padding?: BlessedElementPadding | string | number;
 	file?: PathLike;
 	parent?: BlessedElement;
-	style?: Dictionary<any>;
-	scrollbar?: Dictionary<any>;
+	style?: KeyValue;
+	scrollbar?: KeyValue;
 	label?: string;
 	animate?: boolean;
-	border?: Dictionary<any> | string;
+	border?: KeyValue | string;
 	content?: any;
 }
 
@@ -83,7 +81,7 @@ export interface BlessedElementOptions extends Dictionary<any> {
  *
  * @experimental
  */
-export interface BlessedElement extends BlessedElementOptions, Dictionary<any> {
+export interface BlessedElement extends BlessedElementOptions, KeyValue {
 	focus: Function;
 	render: Function;
 	hide: Function;
@@ -186,6 +184,15 @@ export interface Rectangle {
  */
 export const log = (msg: string | object | number, pipe?: string) => {
 	if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+
+	//if we aren't overwriting console methods and console is false
+	if (
+		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
+		getConfigFile().console === false &&
+		isEnvTrue("PIPE_SILENCE") === false
+	)
+		console.log(msg);
+
 	Pipes.log(msg.toString(), pipe);
 };
 
@@ -195,6 +202,14 @@ export const log = (msg: string | object | number, pipe?: string) => {
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
+	///TODO: implement as an option on the pipe
+	if (Pipes.getPipe("debug").logs.length > 1480) {
+		Pipes.getPipe("debug").logs = [];
+		log(
+			"{red-fg}debug pipe cleaned due to exceeding 1480{red-fg}",
+			"debug"
+		);
+	}
 	log(msg, "debug");
 };
 
@@ -293,8 +308,25 @@ export const overwriteConsoleMethods = () => {
 		if (Pipes.pipes[Pipes.currentPipeKey] && dontSendToPipe !== true)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
-		if (isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT"))
-			console.log("[error] " + error?.message);
+		if (
+			isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG") ||
+			isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT")
+		) {
+			log(
+				`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
+				isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG") ? "debug" : "default"
+			);
+			(error.stack as string)
+				.split("\n")
+				.forEach((line: string) =>
+					log(
+						`{red-fg}${line}{red-fg}`,
+						isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG")
+							? "debug"
+							: "default"
+					)
+				);
+		}
 
 		if (
 			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
@@ -317,6 +349,7 @@ export const getConfigFile = () => {
 /**
  * Returns a compiled InfinityMintProject ready to be deployed, see {@link app/interfaces.InfinityMintProject}.
  * @param projectName
+ * @throws
  */
 export const getCompiledProject = (projectName: string) => {
 	let res = require(process.cwd() +
@@ -365,27 +398,44 @@ export const saveTempCompiledProject = (project: InfinityMintProject) => {
 /**
  * Returns a temporary deployed InfinityMintProject which can be picked up and completed.
  * @param projectName
+ * @returns
+ * @throws
  */
 export const getTempDeployedProject = (projectName: string) => {
-	let res = require(process.cwd() +
-		"/temp/projects/" +
-		projectName +
-		".temp.json");
-	res = res.default || res;
-	return res as InfinityMintProject;
+	try {
+		let res = require(process.cwd() +
+			"/temp/projects/" +
+			projectName +
+			".temp.deployed.json");
+		res = res.default || res;
+		return res as InfinityMintProject;
+	} catch (error) {
+		throw new Error(
+			"could not load temp deployed project: " + error.message
+		);
+	}
 };
 
 /**
  * Returns a temporary compiled InfinityMintProject which can be picked up and completed.
  * @param projectName
+ * @returns
+ * @throws
  */
 export const getTempCompiledProject = (projectName: string) => {
-	let res = require(process.cwd() +
-		"/temp/projects/" +
-		projectName +
-		".temp.compiled.json");
-	res = res.default || res;
-	return res as InfinityMintProject;
+	try {
+		let res = require(process.cwd() +
+			"/temp/projects/" +
+			projectName +
+			".temp.compiled.json");
+		res = res.default || res;
+
+		return res as InfinityMintProject;
+	} catch (error) {
+		throw new Error(
+			"could not load temp deployed project: " + error.message
+		);
+	}
 };
 
 /**
@@ -409,6 +459,7 @@ export const getDeployedProject = (projectName: string, version?: any) => {
  * Returns an InfinityMintProject file relative to the /projects/ folder, see {@link app/interfaces.InfinityMintProject}. Will return type of InfinityMintProjectClassic if second param is true.
  * @param projectName
  * @param isJavaScript
+ * @throws
  */
 export const getProject = (projectName: string, isJavaScript?: boolean) => {
 	let res = require(process.cwd() +
@@ -562,6 +613,30 @@ export const prepareConfig = () => {
 	return config as InfinityMintConfig;
 };
 
+export const findWindows = async (roots?: PathLike[]) => {
+	let searchLocations = [...(roots || [])] as string[];
+
+	if (!isInfinityMint())
+		searchLocations.push(
+			process.cwd() +
+				"/node_modules/infinitymint/dist/app/windows/**/*.js"
+		);
+	else searchLocations.push(process.cwd() + "/app/windows/**/*.ts");
+
+	searchLocations.push(process.cwd() + "/windows/**/*.js");
+	if (isTypescript())
+		searchLocations.push(process.cwd() + "/windows/**/*.ts");
+
+	let files = [];
+
+	for (let i = 0; i < searchLocations.length; i++) {
+		debugLog("scanning for windows in => " + searchLocations[i]);
+		files = [...files, ...(await findFiles(searchLocations[i]))];
+	}
+
+	return files;
+};
+
 export const getPackageJson = () => {
 	if (
 		!fs.existsSync("./../package.json") &&
@@ -582,6 +657,7 @@ export const getPackageJson = () => {
 };
 
 export const findFiles = (globPattern: string) => {
+	debugLog("searching for files with glob pattern => " + globPattern);
 	return new Promise<string[]>((resolve, reject) => {
 		glob(globPattern, (err: Error, matches: string[]) => {
 			if (err) throw err;
@@ -611,19 +687,19 @@ export const getFileImportExtension = () => {
  * @param roots
  * @returns
  */
-export const findScripts = async (extension?: string, roots?: string[]) => {
-	roots = roots || [process.cwd() + "/"];
+export const findScripts = async (roots?: string[]) => {
+	roots = roots || [];
 
-	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_SCRIPTS"))
-		roots.push(process.cwd() + "/node_modules/infinitymint/");
+	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_SCRIPTS"))
+		roots.push(process.cwd() + "/node_modules/infinitymint/dist/**/*.js");
+
+	if (isTypescript()) roots.push(process.cwd() + "/scripts/**/*.ts");
+	roots.push(process.cwd() + "/scripts/**/*.js");
 
 	let scanned = [];
 	for (let i = 0; i < roots.length; i++) {
-		let location = roots[i];
-		let path =
-			location + "scripts/**/*" + (extension || getFileImportExtension());
-
-		debugLog("scanning " + path);
+		let path = roots[i];
+		debugLog("scanning for scripts in => " + path);
 		scanned = [...scanned, ...(await findFiles(path))];
 	}
 
@@ -632,6 +708,28 @@ export const findScripts = async (extension?: string, roots?: string[]) => {
 	});
 
 	return scanned as path.ParsedPath[];
+};
+
+/**
+ *
+ * @param fullPath
+ * @returns
+ */
+export const requireWindow = (fullPath: string) => {
+	if (!fs.existsSync(fullPath))
+		throw new Error("cannot find script: " + fullPath);
+
+	if (require.cache[fullPath]) {
+		debugLog("deleting old cache  => " + fullPath);
+		delete require.cache[fullPath];
+	}
+
+	debugLog("requiring => " + fullPath);
+	let result = require(fullPath);
+	result = result.default || result;
+	//log
+	result.log("required");
+	return result as InfinityMintWindow;
 };
 
 /**
@@ -644,16 +742,41 @@ export const requireScript = async (
 	fullPath: string,
 	console?: InfinityConsole
 ) => {
+	let hasReloaded = false;
 	if (!fs.existsSync(fullPath))
 		throw new Error("cannot find script: " + fullPath);
 
 	if (require.cache[fullPath]) {
-		debugLog("deleting old cache of " + fullPath);
+		debugLog("deleting old script cache of " + fullPath);
 		delete require.cache[fullPath];
+		hasReloaded = true;
 	}
 
 	let result = await require(fullPath);
 	result = result.default || result;
+	result.fileName = fullPath;
+
+	if (console !== undefined && result.events !== undefined) {
+		Object.keys(result.events).forEach((key) => {
+			try {
+				console.getEventEmitter().off(key, result.events[key]);
+			} catch (error) {
+				warning("could not turn off event emitter: " + error?.message);
+			}
+			debugLog("new event <EventEmitter>(" + key + ")");
+			console.getEventEmitter().on(key, result.events[key]);
+		});
+	}
+
+	if (result?.reloaded && hasReloaded) {
+		debugLog("calling (reloaded) on " + fullPath);
+		await (result as InfinityMintScript).reloaded({
+			log,
+			debugLog,
+			console,
+			script: result,
+		});
+	}
 
 	if (result?.loaded !== undefined) {
 		debugLog("calling (loaded) on " + fullPath);
@@ -851,6 +974,7 @@ export const createInfinityMintConfig = (
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config = {
+			console: true,
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
 		module.exports = config;`
@@ -859,6 +983,7 @@ export const createInfinityMintConfig = (
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config: InfinityMintConfig = {
+			console: true,
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
 		export default config;`;
@@ -895,7 +1020,13 @@ export const saveSession = (session: InfinityMintSession) => {
 };
 
 export const error = (error: string | Error) => {
-	Pipes.log(error.toString());
+	if (
+		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
+		getConfigFile().console === false
+	)
+		console.error(error);
+
+	Pipes.error(error);
 };
 
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {

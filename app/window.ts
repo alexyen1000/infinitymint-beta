@@ -1,13 +1,10 @@
 import { Dictionary } from "form-data";
 import {
 	Rectangle,
-	Vector,
 	FuncTripple,
-	log,
 	debugLog,
 	readSession,
 	saveSession,
-	getSolidityFolder,
 	isEnvTrue,
 	calculateWidth,
 	warning,
@@ -16,7 +13,6 @@ import {
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
-import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed") as Blessed;
@@ -81,6 +77,7 @@ export class InfinityMintWindow {
 	private creation: any;
 	private initialCreation: any;
 	private autoInstantiate: boolean;
+	private fileName: string;
 
 	constructor(
 		name?: string,
@@ -118,6 +115,14 @@ export class InfinityMintWindow {
 		this.id = this.generateId();
 		this.initialize = async () => {};
 		this.think = () => {};
+	}
+
+	public setFileName(fileName?: string) {
+		this.fileName = fileName || __filename;
+	}
+
+	public getFileName() {
+		return this.fileName;
 	}
 
 	/**
@@ -174,9 +179,7 @@ export class InfinityMintWindow {
 
 	public setScreen(screen: any) {
 		if (this.screen !== undefined)
-			throw new Error(
-				"cannot change screen of window with out destroying it first"
-			);
+			this.warning(`setting screen with out window object first`);
 
 		this.screen = screen;
 	}
@@ -421,7 +424,8 @@ export class InfinityMintWindow {
 	 */
 	public registerElement(
 		key: string,
-		element: BlessedElement
+		element: BlessedElement,
+		dontRegister?: boolean
 	): BlessedElement {
 		if (this.elements[key] !== undefined)
 			throw new Error("key already registered in window: " + key);
@@ -467,6 +471,9 @@ export class InfinityMintWindow {
 				});
 		};
 		element?.focus();
+
+		if (dontRegister) return element;
+
 		this.elements[key] = element;
 		return this.elements[key];
 	}
@@ -599,11 +606,11 @@ export class InfinityMintWindow {
 		let minutes = seconds <= 0 ? 0 : Math.floor(musicOptions.clock / 60);
 
 		this.getElement("frame").setContent(
-			`{bold}{yellow-fg}${
+			`{bold}${this.name}{/bold} {magenta-fg}=>{/magenta-fg} {yellow-fg}${
 				hre.network.name
-			} [${this.getInfinityConsole().getCurrentChainId()}]{/bold} {underline}${account.address.substring(
+			}[${this.getInfinityConsole().getCurrentChainId()}] {underline}${account.address.substring(
 				0,
-				14
+				16
 			)}...{/underline}{/yellow-fg} {white-fg}{bold}${etherBalance.substring(
 				0,
 				8
@@ -735,8 +742,13 @@ export class InfinityMintWindow {
 				scrollbar: this.scrollbar || {},
 				border: this.border || {},
 				style: this.style || {},
-			})
+			}),
+			true
 		);
+		this.elements["frame"] = this.frame;
+		this.screen.append(this.frame);
+		this.screen.render();
+
 		this.frame.setBack();
 
 		this.closeButton = this.createElement("closeButton", {
@@ -758,7 +770,7 @@ export class InfinityMintWindow {
 			},
 		});
 		this.closeButton.on("click", () => {
-			this.destroy();
+			this.getInfinityConsole().destroyWindow(this);
 		});
 		this.closeButton.focus();
 		this.hideButton = this.createElement("hideButton", {
@@ -788,20 +800,28 @@ export class InfinityMintWindow {
 		if (this.hideMinimizeButton) this.hideButton.hide();
 
 		this.log("calling initialize");
-		await this.initialize(this, this.frame, blessed);
-		this.initialized = true;
+		try {
+			await this.initialize(this, this.frame, blessed);
+			this.initialized = true;
+		} catch (error) {
+			this.getInfinityConsole().errorHandler(error);
+		}
 		this.destroyed = false;
 
 		//append each element
-		Object.values(this.elements).forEach((element) => {
+		Object.keys(this.elements).forEach((key) => {
+			if (key === "frame") return;
+
+			let element = this.elements[key];
 			this.log(
 				`appending element (${element.constructor.name}) to screen`
 			);
 
 			this.screen.append(element);
 		});
+		//render the screen
 		this.screen.render();
-
+		//update the title and frame
 		this.hideButton.setFront();
 		this.closeButton.setFront();
 		//frame title

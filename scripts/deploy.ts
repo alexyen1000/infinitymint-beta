@@ -15,7 +15,7 @@ import {
 } from "@app/helpers";
 
 const deploy: InfinityMintScript = {
-	name: "Deploy",
+	name: "Deploy Project",
 	description:
 		"Deploys InfinityMint or a specific InfinityMint contract related to the current project",
 	/**
@@ -24,9 +24,19 @@ const deploy: InfinityMintScript = {
 	 */
 	execute: async (script: InfinityMintScriptParameters) => {
 		let project: InfinityMintProject;
+		let isTemp = false;
+		let projectName = script.args.project.value;
 
-		//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
-		if (script.args?.setPipe?.value === true) {
+		if (
+			script.args.useTemp.value === true &&
+			hasTempDeployedProject(projectName)
+		) {
+			isTemp = true;
+			project = getTempDeployedProject(projectName);
+		} else project = getCompiledProject(projectName);
+
+		if (script.args.setPipe.value === true) {
+			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = "deploy_" + project.name;
 			if (script.infinityConsole.getPipes().pipes[pipeName] === undefined)
 				script.infinityConsole.getPipes().registerSimplePipe(pipeName, {
@@ -37,24 +47,18 @@ const deploy: InfinityMintScript = {
 			script.infinityConsole.getPipes().setCurrentPipe(pipeName);
 		}
 
-		if (
-			script.args.useTemp.value === true &&
-			hasTempDeployedProject(script.args.project.value)
-		) {
-			script.log("picking up project => " + script.args.project.value);
-			project = getTempDeployedProject(script.args.project.value);
-		} else project = getCompiledProject(script.args.project.value);
+		if (isTemp)
+			script.log("picking up previous attempt => " + project.name);
 
 		script.log(
-			"{green-fg}deploying project{/green-fg} (" +
-				script.args.project.value +
-				")"
+			"{green-fg}deploying project{/green-fg} (" + project.name + ")"
 		);
 		//make sure stages are created
 		project.stages = project.stages || {};
 
 		let deployments = await script.infinityConsole.getDeploymentClasses(
-			script.args?.project.value
+			project.name,
+			script.infinityConsole
 		);
 
 		let notUniqueAndImportant = deployments
@@ -217,7 +221,7 @@ const deploy: InfinityMintScript = {
 				saveTempCompiledProject(project);
 				script.log(
 					`{red-fg}failed deployment: ${error?.message}{/red-fg} (` +
-						script.args.project.value +
+						project.name +
 						")"
 				);
 				throw error;
@@ -227,7 +231,7 @@ const deploy: InfinityMintScript = {
 
 			script.log(
 				"{green-fg}successfully deployed{/green-fg} (" +
-					script.args.project.value +
+					project.name +
 					")"
 			);
 		}

@@ -9,7 +9,8 @@ import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
 
 let lastLength = 0;
-let lastSelectedLine = 0;
+let lastCount = 0;
+let extraLines = 0;
 const Logs = new InfinityMintWindow(
 	"Logs",
 	{
@@ -36,52 +37,77 @@ const Logs = new InfinityMintWindow(
 Logs.think = (window, frame, blessed) => {
 	let element = window.getElement("console");
 	let lines = Pipes.getPipe(window.options.pipe).logs;
+	let currentCount = 0;
+
 	//bleseed push line doesnt work for some reason so we have to do it this way
 
-	if (window.options.alwaysScroll)
-		window.options.selectedLine = lines.length - 1;
+	//counts lined changes
+	if (window.options.showDuplicateEntries !== true)
+		lines.forEach((object) => {
+			currentCount = currentCount + object.count;
+		});
 
-	if (
-		lastLength !== lines.length ||
-		window.options.selectedLine !== lastSelectedLine
-	) {
-		element.setContent(
-			lines
-				.map((line, index) => {
-					let lineCount = `{white-bg}{black-fg}${index
+	element.setLabel(
+		"{bold}{white-fg}Pipe: {/white-fg}" + window.options.pipe + "{/bold}"
+	);
+
+	if (currentCount !== lastCount || lastLength !== lines.length) {
+		lastCount = 0;
+		lines
+			.slice(lastLength - 1 < 0 ? 0 : lastLength - 1)
+			.forEach((object) => {
+				let line = object.message;
+				lastCount = lastCount + object.count;
+				let lineCount = (indexCount: number | string) => {
+					return `{white-bg}{black-fg}${indexCount
 						.toString()
 						.padEnd(6, " ")}{/black-fg}{/white-bg} `;
+				};
 
-					if (index === window.options.selectedLine)
-						lineCount = `{yellow-bg}{black-fg}${index
-							.toString()
-							.padEnd(6, " ")}{/black-fg}{/yellow-bg} `;
+				if (
+					object.count <= 1 ||
+					window.options.showDuplicateEntries !== true
+				) {
+					let finalLine = lineCount(object.index) + line.toString();
+					finalLine =
+						finalLine +
+						` {blue-fg}{bold}${
+							window.options.showDuplicateEntries !== true &&
+							object.count > 1
+								? "x" + object.count
+								: ""
+						}{/bold}{/blue-fg}`;
+					finalLine =
+						object.index % 2 === 0
+							? `{white-fg}${finalLine}{/white-fg}`
+							: `{black-bg}${finalLine}{/black-bg}`;
 
-					let finalLine = lineCount + line.toString();
+					element.setLine(object.index + extraLines, finalLine);
+				} else {
+					let currentExtraLines = extraLines;
+					for (let i = 0; i < object.count; i++) {
+						let finalLine =
+							lineCount(object.index + " " + i) + line.toString();
+						finalLine =
+							(object.index + i) % 2 === 0
+								? `{white-fg}${finalLine}{/white-fg}`
+								: `{black-bg}${finalLine}{/black-bg}`;
 
-					if (index === window.options.selectedLine)
-						return `{blue-bg}{white-fg}${finalLine}{/black-fg}{/blue-bg}`;
+						element.setLine(
+							object.index + currentExtraLines + i,
+							finalLine
+						);
+						if (i > 0 && lastLength !== lines.length) extraLines++;
+					}
+				}
+			});
 
-					return index % 2 === 0
-						? `{white-fg}${finalLine}{/white-fg}`
-						: `{black-bg}${finalLine}{/black-bg}`;
-				})
-				.join("\n")
-		);
-
-		let actualLength = element.content.split("\n").length;
-		lastLength = actualLength;
-		lastSelectedLine = window.options.selectedLine;
-
-		element.focus();
-		element.setLabel(
-			"{bold}{white-fg}Pipe: {/white-fg}" +
-				window.options.pipe +
-				"{/bold}"
-		);
 		if (window.options.alwaysScroll === true) {
-			element.setScroll(actualLength);
+			element.setScrollPerc(100);
+			window.options.selectedLine = lines.length - 1;
 		}
+
+		lastLength = lines.length;
 	}
 };
 
@@ -133,6 +159,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.loadOptions({
 		alwaysScroll: true,
 		scrollToSelectedLine: false,
+		showDuplicateEntries: false,
 		pipe: "default",
 		selectedLine: 0,
 	});
@@ -165,10 +192,12 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 	console.setBack();
+	console.focus();
 
 	//create buttons
 	let alwaysScroll = window.createElement("alwaysScroll", {
 		bottom: 0,
+		left: 0,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
@@ -188,6 +217,51 @@ Logs.initialize = async (window, frame, blessed) => {
 				bg: "grey",
 			},
 		},
+	});
+
+	let showDuplicateEntries = window.createElement("showDuplicateEntries", {
+		bottom: 0,
+		left: calculateWidth(alwaysScroll),
+		width: "shrink",
+		height: "shrink",
+		padding: 1,
+		content:
+			"Show Dupe Entries [" +
+			(window.options.showDuplicateEntries ? "O" : "X") +
+			"]",
+		tags: true,
+		border: {
+			type: "line",
+		},
+		style: {
+			fg: "white",
+			bg: window.options.showDuplicateEntries ? "green" : "red",
+			border: {
+				fg: "#ffffff",
+			},
+			hover: {
+				bg: "grey",
+			},
+		},
+	});
+	showDuplicateEntries.on("click", () => {
+		window.options.showDuplicateEntries =
+			!window.options.showDuplicateEntries;
+		//change style
+		showDuplicateEntries.style.bg = window.options.showDuplicateEntries
+			? "green"
+			: "red";
+		showDuplicateEntries.setContent(
+			"Show Dupe Entries [" +
+				(window.options.showDuplicateEntries ? "O" : "X") +
+				"]"
+		);
+		console.setContent("");
+		console.setScroll(0);
+		lastLength = 0;
+		extraLines = 0;
+		lastCount = 0;
+		window.saveOptions();
 	});
 
 	let alwaysScrollUpdate = () => {
@@ -214,18 +288,18 @@ Logs.initialize = async (window, frame, blessed) => {
 	//create buttons
 	let gotoEnd = window.createElement("gotoEnd", {
 		bottom: 0,
-		left: calculateWidth(alwaysScroll),
+		left: calculateWidth(alwaysScroll, showDuplicateEntries),
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Goto End",
+		content: "Scroll To End",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "blue",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -243,18 +317,18 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let gotoTop = window.createElement("gotoTop", {
 		bottom: 0,
-		left: calculateWidth(alwaysScroll, gotoEnd),
+		left: calculateWidth(alwaysScroll, showDuplicateEntries, gotoEnd),
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Goto Top",
+		content: "Scroll To Top",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "blue",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -271,18 +345,23 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let gotoSelected = window.createElement("gotoSelected", {
 		bottom: 0,
-		left: calculateWidth(alwaysScroll, gotoEnd, gotoTop),
+		left: calculateWidth(
+			alwaysScroll,
+			showDuplicateEntries,
+			gotoEnd,
+			gotoTop
+		),
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Goto Selected",
+		content: "Scroll To Selected",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "blue",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -304,7 +383,13 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let save = window.createElement("save", {
 		bottom: 0,
-		left: "center",
+		left: calculateWidth(
+			alwaysScroll,
+			showDuplicateEntries,
+			gotoEnd,
+			gotoTop,
+			gotoSelected
+		),
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
@@ -315,7 +400,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 		style: {
 			fg: "white",
-			bg: "magenta",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -349,15 +434,17 @@ Logs.initialize = async (window, frame, blessed) => {
 				},
 			},
 			style: {
-				bg: "grey",
+				bg: "black",
 				fg: "white",
 				item: {
 					hover: {
-						bg: "white",
+						bg: "green",
+						fg: "black",
 					},
 				},
 				selected: {
-					bg: "white",
+					bg: "grey",
+					fg: "green",
 					bold: true,
 				},
 			},
@@ -369,28 +456,38 @@ Logs.initialize = async (window, frame, blessed) => {
 	form.on("select", (el: any, selected: any) => {
 		window.options.pipe = keys[selected];
 		window.saveOptions();
-		changePipe.setContent("Change Pipe (" + window.options.pipe + ")");
-		console.setScroll(0);
 		form.hide();
+		console.setContent("");
+		console.setScroll(0);
+		lastLength = 0;
+		extraLines = 0;
+		lastCount = 0;
+		console.focus();
 	});
-	form.focus();
 	form.hide();
 
 	//create buttons
 	let changePipe = window.createElement("changePipe", {
 		bottom: 0,
-		right: 0,
+		left: calculateWidth(
+			alwaysScroll,
+			showDuplicateEntries,
+			gotoEnd,
+			gotoTop,
+			gotoSelected,
+			save
+		),
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Change Pipe (" + window.options.pipe + ")",
+		content: "Change Pipe",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
-			fg: "black",
-			bg: "white",
+			fg: "white",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -399,15 +496,17 @@ Logs.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	changePipe.setFront();
-	changePipe.on("click", () => {
+
+	let onChangePipe = () => {
+		if (!window.isVisible()) return;
+
 		form.setFront();
 		form.toggle();
-		window.options.selectedLine = 0;
-		window.saveOptions();
-	});
+		form.focus();
+	};
 
-	window.think(window, frame, blessed); //do think once
+	changePipe.setFront();
+	changePipe.on("click", onChangePipe);
 
 	//save when the window is destroyed
 	window.on("destroy", () => {
@@ -418,9 +517,15 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.on("hide", () => {
 		window.saveOptions();
 	});
+
+	window.key("p", onChangePipe);
+
+	lastLength = 0;
+	extraLines = 0;
+	lastCount = 0;
 };
 
-Logs.setShouldInstantiate(true);
-Logs.setBackgroundThink(true);
+Logs.setShouldInstantiate(false);
+Logs.setBackgroundThink(false);
 
 export default Logs;

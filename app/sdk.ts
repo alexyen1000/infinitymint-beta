@@ -1,10 +1,13 @@
-import { Dictionary } from "form-data";
 import {
 	InfinityMintDeploymentLocal,
 	InfinityMintProject,
 	InfinityMintStaticManifest,
+	KeyValue,
 } from "./interfaces";
 
+/**
+ * defines the infinitymint.build.json found in the root of the client build (normally src).
+ */
 export interface InfinityMintSDKBuildConfiguration {
 	deploymentsFolder: string;
 	gemsFolder: string;
@@ -15,22 +18,22 @@ export interface InfinityMintSDKBuildConfiguration {
 	bundled?: boolean;
 	custom?: boolean;
 	multiProject?: boolean;
-	settings?: Dictionary<any>;
+	settings?: KeyValue;
 }
 
 export interface InfinityMintDeploymentManifest {
-	deployments: Dictionary<any>;
+	deployments: KeyValue;
 	updated?: number;
 	created?: number;
 }
 
 export interface InfinityMintProjectManifest {
-	projects: Dictionary<any>;
-	staticManifests: Dictionary<any>;
-	imports: Dictionary<any>;
+	projects: KeyValue;
+	staticManifests: KeyValue;
+	imports: KeyValue;
 }
 
-export interface InfinityMintSDKOptions extends Dictionary<any> {
+export interface InfinityMintSDKOptions extends KeyValue {
 	webpackRoot?: string;
 }
 

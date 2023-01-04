@@ -12,6 +12,11 @@ import { InfinityMintSVGSettings } from "./content";
 import { GasPriceFunction, TokenPriceFunction } from "./gasAndPrices";
 
 /**
+ * Shorthand for Dictionary<any>, defines your typical javascript object
+ */
+export interface KeyValue extends Dictionary<any> {}
+
+/**
  * Gems are our plugins. They allow you to easily extend the functionality of InfinityMint. Gems an contain solidity code, react code and more and integrate with every aspect of InfinityMint
  */
 export interface InfinityMintGemScript extends InfinityMintDeploymentScript {
@@ -43,7 +48,7 @@ export interface InfinityMintGemParameters
  */
 export interface InfinityMintEventEmit<T>
 	extends InfinityMintDeploymentParameters,
-		Dictionary<any> {
+		KeyValue {
 	event?: T;
 	/**
 	 * might be accessible depending on the context of the event
@@ -64,7 +69,7 @@ export interface InfinityMintGemConfig {
 	git?: string;
 	version: string;
 	solidityFolder: string;
-	author?: Dictionary<any> | Dictionary<any>[];
+	author?: KeyValue | KeyValue[];
 }
 
 export interface InfinityMintApplicationConfig {
@@ -77,19 +82,19 @@ export interface InfinityMintApplicationConfig {
  */
 export interface InfinityMintProjectJavascript
 	extends InfinityMintProject,
-		Dictionary<any> {
+		KeyValue {
 	/**
 	 * will always be true
 	 */
 	javascript: true;
 	mods: Dictionary<boolean>;
-	contracts: Dictionary<any>;
-	description: Dictionary<any>;
-	static: Dictionary<any>;
-	deployment: Dictionary<any>;
-	royalty?: Dictionary<any>;
+	contracts: KeyValue;
+	description: KeyValue;
+	static: KeyValue;
+	deployment: KeyValue;
+	royalty?: KeyValue;
 	approved: Dictionary<string>;
-	assetConfig: Dictionary<any>;
+	assetConfig: KeyValue;
 	names: Array<string>;
 }
 
@@ -107,7 +112,7 @@ export interface InfinityMintStaticManifest {
  * classic paths, used when project file is a .js
  */
 export interface InfinityMintProjectJavascriptPaths {
-	default: Dictionary<any>;
+	default: KeyValue;
 	indexes: Array<InfinityMintProjectPath>;
 }
 
@@ -213,7 +218,7 @@ export interface InfinityMintProject {
 	/**
 	 * Used in keeping track of temporary projects which fail in their deployment. keeps track of stages we have passed so we can continue where we left off if anything goes wrong.
 	 */
-	stages?: Dictionary<any>;
+	stages?: KeyValue;
 	/**
 	 * if this is a deployed project or not
 	 */
@@ -259,7 +264,7 @@ export interface InfinityMintProject {
 	/**
 	 * Holds any IPFS locations of the project, react build and deployments
 	 */
-	ipfs?: Dictionary<any>;
+	ipfs?: KeyValue;
 	/**
 	 * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
 	 * @private
@@ -328,36 +333,49 @@ export declare interface InfinityMintEventEmitter {
 	 * @since v0.1.26
 	 */
 	emit(eventName: string, ...args: any[]): boolean;
+	emit(eventName: InfinityMintEventKeys, ...args: any[]): boolean;
+	emit(eventName: InfinityMintConfigEventKeys, ...args: any[]): boolean;
 
-	//keyof won't work for some reason here :(
-	emit(eventName: "preDeploy", ...args: any[]): boolean;
-	emit(eventName: "postDeploy", ...args: any[]): boolean;
-	emit(eventName: "preScript", ...args: any[]): boolean;
-	emit(eventName: "postScript", ...args: any[]): boolean;
-	emit(eventName: "preCompile", ...args: any[]): boolean;
-	emit(eventName: "postCompile", ...args: any[]): boolean;
-	emit(eventName: "gemPreSetup", ...args: any[]): boolean;
-	emit(eventName: "gemPostSetup", ...args: any[]): boolean;
-	emit(eventName: "gemPreDeploy", ...args: any[]): boolean;
-	emit(eventName: "gemPostDeploy", ...args: any[]): boolean;
-	emit(eventName: "preSetup", ...args: any[]): boolean;
-	emit(eventName: "postSetup", ...args: any[]): boolean;
-	emit(eventName: "preBuild", ...args: any[]): boolean;
-	emit(eventName: "postBuild", ...args: any[]): boolean;
-	emit(eventName: "preGem", ...args: any[]): boolean;
-	emit(eventName: "postGem", ...args: any[]): boolean;
-	emit(eventName: "success", ...args: any[]): boolean;
-	emit(eventName: "failure", ...args: any[]): boolean;
+	on(eventName: string, cb: Function): any;
+	on(eventName: InfinityMintEventKeys, cb: Function): any;
+	on(eventName: InfinityMintConfigEventKeys, cb: Function): any;
 }
 
+/**
+ * Extends the default node event emitter to have our event names appear in auto completion making it easier to work with InfinityMint
+ */
 export class InfinityMintEventEmitter extends EventEmitter {}
+
+export interface InfinityMintConfigEvents extends InfinityMintEvents {
+	changeProject?: FuncSingle<
+		InfinityMintEventEmit<string>,
+		Promise<void | boolean>
+	>;
+	changeNetwork?: FuncSingle<
+		InfinityMintEventEmit<string>,
+		Promise<void | boolean>
+	>;
+}
+
+export type InfinityMintConfigEventKeys = keyof InfinityMintConfigEvents;
+
 /**
  * Events can be defined which can then be called directly from the project file or a gem. The EventEmitter where ever the project is used is responsible for handling the automatic assignment of these events. All you need to do is return a promise which returns void. Please be aware that promises will not be waited for.
  */
-export interface InfinityMintEvents
-	extends Dictionary<
-		FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>
-	> {
+export interface InfinityMintEvents {
+	/**
+	 * Fired when the InfinityConsole is initialized
+	 * @event
+	 */
+	initialized?: FuncSingle<
+		InfinityMintEventEmit<void>,
+		Promise<void | boolean>
+	>;
+	/**
+	 * Fired when the InfinityConsole is reinitialized
+	 * @event
+	 */
+	reloaded?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
 	/**
 	 * @event
 	 */
@@ -513,7 +531,7 @@ export interface InfinityMintProjectInformation {
 /**
  * Here you can specify addresses which will be given admin permissions inside of the InfinityMint deployments.
  */
-export interface InfinityMintProjectPermissions extends Dictionary<any> {
+export interface InfinityMintProjectPermissions extends KeyValue {
 	/**
 	 * Will give all addresses inside the array admin access to all deployments.
 	 */
@@ -573,7 +591,7 @@ export interface InfinityMintProjectGem {
 	 *
 	 * @see {@link InfinityMintGemScript}
 	 */
-	settings?: Dictionary<any>;
+	settings?: KeyValue;
 }
 
 export interface InfinityMintProjectSettingsLink {
@@ -596,7 +614,7 @@ export interface InfinityMintProjectSettingsLinkSettings {
  *
  * @see {@link InfinityMintProjectSettings}
  */
-export interface InfinityMintProjectSettingsValues extends Dictionary<any> {
+export interface InfinityMintProjectSettingsValues extends KeyValue {
 	disablePreviews?: boolean;
 	disableAssets?: boolean;
 }
@@ -609,7 +627,7 @@ export interface InfinityMintProjectSettingsValues extends Dictionary<any> {
 export interface InfinityMintProjectSettingsMinter {
 	pathId?: number;
 	maxSupply?: number;
-	mintBytes?: Dictionary<any>;
+	mintBytes?: KeyValue;
 	approvedOnly?: boolean;
 	onlyImplicitMint?: boolean;
 	maxTokensPerWallet?: number;
@@ -633,15 +651,13 @@ export interface InfinityMintProjectSettingsAssets {
 	nameCount?: number;
 }
 
-export interface InfinityMintProjectSettingsRoyaltySplit
-	extends Dictionary<any> {
+export interface InfinityMintProjectSettingsRoyaltySplit extends KeyValue {
 	address: string;
 	mints: number;
 	stickers: number;
 }
 
-export interface InfinityMintProjectSettingsRoyaltyCuts
-	extends Dictionary<any> {
+export interface InfinityMintProjectSettingsRoyaltyCuts extends KeyValue {
 	stickers: number;
 }
 
@@ -650,7 +666,7 @@ export interface InfinityMintProjectSettingsRoyaltyCuts
  *
  * @see {@link InfinityMintProjectSettings}
  */
-export interface InfinityMintProjectSettingsRoyalty extends Dictionary<any> {
+export interface InfinityMintProjectSettingsRoyalty extends KeyValue {
 	cuts: InfinityMintProjectSettingsRoyaltyCuts;
 	splits?:
 		| InfinityMintProjectSettingsRoyaltySplit
@@ -662,7 +678,7 @@ export interface InfinityMintProjectSettingsRoyalty extends Dictionary<any> {
  *
  * @see {@link InfinityMintProjectSettings}
  */
-export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
+export interface InfinityMintProjectSettingsERC721 extends KeyValue {
 	defaultTokenURI?: string;
 	allowTransfer?: boolean;
 }
@@ -670,7 +686,7 @@ export interface InfinityMintProjectSettingsERC721 extends Dictionary<any> {
 /**
  * All of the InfinityMint environment variables
  */
-export interface InfinityMintEnvironment {
+export interface InfinityMintEnvironmentVariables {
 	INFINITYMINT_PROJECT?: string;
 	ETHERSCAN_API_KEY?: string;
 	POLYGONSCAN_API_KEY?: string;
@@ -682,10 +698,12 @@ export interface InfinityMintEnvironment {
 	PIPE_ECHO_WARNINGS?: boolean;
 	PIPE_SEPERATE_WARNINGS?: boolean;
 	PIPE_LOG_ERRORS_TO_DEFAULT?: boolean;
+	PIPE_LOG_ERRORS_TO_DEBUG?: boolean;
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
+	PIPE_SILENCE?: boolean;
 	OVERWRITE_CONSOLE_METHODS?: boolean;
-	INFINITYMINT_DONT_INCLUDE_DEPLOY?: boolean;
-	INFINITYMINT_DONT_INCLUDE_SCRIPTS?: boolean;
+	INFINITYMINT_INCLUDE_DEPLOY?: boolean;
+	INFINITYMINT_INCLUDE_SCRIPTS?: boolean;
 	GANACHE_PORT?: number;
 	THROW_ALL_ERRORS?: boolean;
 	INFINITYMINT_CONSOLE?: boolean;
@@ -695,7 +713,8 @@ export interface InfinityMintEnvironment {
 	SOLIDITY_USE_NODE_MODULE?: boolean;
 }
 
-export type InfinityMintEnvironmentKeys = keyof InfinityMintEnvironment;
+export type InfinityMintEnvironmentKeys =
+	keyof InfinityMintEnvironmentVariables;
 
 /**
  * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
@@ -752,7 +771,7 @@ export type InfinityMintProjectSettingsKeys = keyof InfinityMintProjectSettings;
  * @see {@link InfinityMintProjectSettings}
  * @see {@link InfinityMintDeploymentLive}
  */
-export interface InfinityMintProjectModules extends Dictionary<any> {
+export interface InfinityMintProjectModules extends KeyValue {
 	/**
 	 * Should be the *fully quallified solidity artifact name* for an Asset Controller. Solidity artifacts are compiled based on the current solidity root which is usually the `./alpha` folder. Gems will have an Gem_ before their artifact name.
 	 *
@@ -829,12 +848,12 @@ export interface InfinityMintProjectPath {
 	/**
 	 * is the mint data, this is copied to each token internally. Can be a path to a file
 	 */
-	data?: Dictionary<any> | PathLike;
+	data?: KeyValue | PathLike;
 	key?: string;
 	/**
 	 * can either contain an object of settings for the path or a link to the settings file or simply `true` to look for a settings file that matches the fileName import. See {@link app/content.InfinityMintSVGSettings}
 	 */
-	settings?: Dictionary<any> | PathLike | boolean | InfinityMintSVGSettings;
+	settings?: KeyValue | PathLike | boolean | InfinityMintSVGSettings;
 	description?: string;
 	/**
 	 * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
@@ -896,11 +915,11 @@ export interface InfinityMintConfig {
 	 */
 	project?: string;
 	/**
-	 * Will launch into the infinitymint console if the value of this member is true or equals an object,
+	 * Will launch into the infinitymint console if the value of this member is true or equals an object. See {@link InfinityMintConsoleOptions}
 	 *
 	 * @example
 	 * ```js
-	 * //set console options
+	 * //set console options, see
 	 * console: {
 	 * 	blessed: {
 	 * 		//blessed screen options (see blessed api)
@@ -914,9 +933,38 @@ export interface InfinityMintConfig {
 	 */
 	console?: InfinityMintConsoleOptions | boolean;
 	/**
+	 * automatically loads InfinityMint if true. The default import of the infinitymint repository will return the InfinityConsole instance of which to work from. See {@link app/console.InfinityConsole}
+	 *
+	 * @example
+	 * ```js
+	 * //infinitymit.config.js has member load which is true
+	 * const infinitymint = require('infinitymint');
+	 * //if we dont have member load which is true we do the line below
+	 * //const { load } = require('infinitymint');
+	 *
+	 * //changes network to ganache
+	 * (async () => {
+	 * 	//if we don't have member load in infinitymint.config.js is true we do the line below
+	 * 	//let infinitymint = await load();
+	 * 	await infinitymint.changeNetwork('ganache');
+	 * })().then(() => {
+	 * 	process.exit(0);
+	 * }).catch((err) => {
+	 * 	console.error(err);
+	 * 	process.exit(1);
+	 * });
+	 * ```
+	 */
+	startup?: boolean;
+
+	/**
 	 * The hardhat configuration, the same as hre.config. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/hardhat>
 	 */
 	hardhat: HardhatUserConfig;
+	/**
+	 * execute code when things happen inside of InfinityMint, config file gets a few more event names than normal infinitymint events. Events defined here are always the first to be added to event Emitters
+	 */
+	events?: InfinityMintConfigEvents;
 	/**
 	 * ipfs cofiguration settings
 	 */
@@ -984,18 +1032,23 @@ export interface InfinityMintConfigSettingsNetwork {
 	testnet?: boolean;
 }
 
+export interface InfinityMintSessionEnvironment extends KeyValue {
+	ganacheMnemonic?: string;
+	project?: string;
+}
+
 /**
  * the interface for the .session file
  */
 export interface InfinityMintSession {
-	environment?: any;
+	environment?: InfinityMintSessionEnvironment;
 	created: number;
 }
 
 /**
  * @see {@link InfinityMintConfigSettings}
  */
-export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {
+export interface InfinityMintConfigSettingsDeploy extends KeyValue {
 	/**
 	 * locations are relative to the cwd
 	 */
@@ -1005,7 +1058,7 @@ export interface InfinityMintConfigSettingsDeploy extends Dictionary<any> {
 /**
  * @see {@link InfinityMintConfigSettings}
  */
-export interface InfinityMintConfigSettingsBuild extends Dictionary<any> {}
+export interface InfinityMintConfigSettingsBuild extends KeyValue {}
 
 /**
  * A mutable object containing infinity mint specific settings for each network. Based off of the networks which are defined in the hardhat member of the InfinityMintConfig Settings.
@@ -1024,7 +1077,7 @@ export interface InfinityMintConfigSettingsNetworks
 /**
  * @see {@link InfinityMintConfigSettings}
  */
-export interface InfinityMintConfigSettingsCompile extends Dictionary<any> {}
+export interface InfinityMintConfigSettingsCompile extends KeyValue {}
 
 /**
  * here you can specify the infinity mint settings for the `networks`, `deploy` and `build` and `export` steps. You can configure infinity mint here.
@@ -1034,7 +1087,7 @@ export interface InfinityMintConfigSettingsCompile extends Dictionary<any> {}
  * @see {@link InfinityMintConfigSettingsBuild}
  * @see {@link InfinityMintConfigSettingsCompile}
  */
-export interface InfinityMintConfigSettings extends Dictionary<any> {
+export interface InfinityMintConfigSettings extends KeyValue {
 	/**
 	 * each key is the network name followed by an object with the type of {@link InfinityMintConfigSettingsNetwork}
 	 *
@@ -1090,19 +1143,19 @@ export interface InfinityMintScriptArguments {
  *
  */
 export interface InfinityMintConsoleOptions {
-	blessed?: Dictionary<any>;
+	blessed?: KeyValue;
 	/**
 	 * custom think method
 	 */
-	think: Function;
+	think?: Function;
 	/**
 	 * number of ms to wait before running think again
 	 */
-	tickRate: number;
+	tickRate?: number;
 	/**
 	 * if to throw errors outside of the console
 	 */
-	throwErrors: boolean;
+	throwErrors?: boolean;
 	/**
 	 * the initial window the console should open into
 	 */
@@ -1117,6 +1170,7 @@ export interface InfinityMintConsoleOptions {
 
 export interface InfinityMintScript {
 	name?: string;
+	fileName?: string;
 	description?: string;
 	/**
 	 * called when the script is executed, is passed {@link InfinityMintScriptParameters}. Return false to signify that this script failed.
@@ -1130,6 +1184,8 @@ export interface InfinityMintScript {
 	 * registers this InfinityMint script as a hardhat task as well.
 	 */
 	task?: true;
+	solidityFolder?: string;
+	author?: KeyValue | KeyValue[];
 }
 
 /**
@@ -1137,7 +1193,7 @@ export interface InfinityMintScript {
  */
 export interface InfinityMintScriptParameters
 	extends InfinityMintDeploymentParameters,
-		Dictionary<any> {
+		KeyValue {
 	/**
 	 * Refers to the current script of which the parameters values come from. Could not be available due to the fact this extends InfinityMintDeploymentParameters and InfinityMintEventEmit
 	 */
@@ -1166,15 +1222,15 @@ export interface InfinityMintDeploymentParametersDeployments
 	InfinityMintProject: InfinityMintDeploymentLive;
 }
 
-export interface InfinityMintDeploymentLocal extends Dictionary<any> {
+export interface InfinityMintDeploymentLocal extends KeyValue {
 	abi?: any[];
 	name?: string;
 	address?: string;
 	args?: any[];
 	transactionHash?: string;
-	receipt?: Dictionary<any>;
-	input?: Dictionary<any>;
-	output?: Dictionary<any>;
+	receipt?: KeyValue;
+	input?: KeyValue;
+	output?: KeyValue;
 	sourceName?: string;
 	contractName?: string;
 	deployer?: string;
@@ -1183,7 +1239,7 @@ export interface InfinityMintDeploymentLocal extends Dictionary<any> {
 /**
  * Parameters which are passed into every deploy script method which is called by InfinityMint. See {@link InfinityMintDeploymentScript}
  */
-export interface InfinityMintDeploymentParameters extends Dictionary<any> {
+export interface InfinityMintDeploymentParameters extends KeyValue {
 	/**
 	 * Returns true if this deployment has been set up or not.
 	 *
@@ -1243,7 +1299,7 @@ export interface InfinityMintDeploymentParameters extends Dictionary<any> {
  *
  * @see {@link InfinityMintDeploymentScript}
  */
-export interface InfinityMintDeploymentLive extends Dictionary<any> {
+export interface InfinityMintDeploymentLive extends KeyValue {
 	/**
 	 *  The abi of the current dpeloyment.
 	 */
@@ -1284,7 +1340,7 @@ export interface InfinityMintDeploymentLive extends Dictionary<any> {
 	/**
 	 * The receipt for this deployment
 	 */
-	receipt?: Dictionary<any>;
+	receipt?: KeyValue;
 	/**
 	 * true if the contract has had its setup method called successfully in the deploy script, see {@link InfinityMintDeploymentScript}
 	 */

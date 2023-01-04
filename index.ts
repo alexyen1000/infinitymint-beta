@@ -18,6 +18,7 @@ import {
 	saveSession,
 	getSolidityFolder,
 	getConfigFile,
+	isEnvSet,
 } from "./app/helpers";
 import { InfinityMintConsoleOptions } from "./app/interfaces";
 
@@ -34,14 +35,13 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		...(options || {}),
 		...(typeof config?.console === "object" ? config.console : {}),
 	} as InfinityMintConsoleOptions;
-	log("starting infinitymint");
 	let session = readSession();
 
-	debugLog("printing hardhat tasks");
-	Object.values(hre.tasks).forEach((task, index) => {
-		debugLog(`[${index}] => ${task.name}`);
-	});
-
+	if (isEnvSet("INFINITYMINT_PROJECT")) {
+		session.environment.project =
+			session.environment?.project || process.env.INFINITYMINT_PROJECT;
+		saveSession(session);
+	}
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
 	//register current network pipes
@@ -94,10 +94,6 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 			getSolidityFolder() +
 			")"
 	);
-	contracts.forEach((contract, index) => {
-		let split = contract.split(":");
-		debugLog(`[${index}] => (${split[1]}) => ${split[0]}`);
-	});
 
 	//start a network pipe if we aren't ganache as we do something different if we are
 	if (hre.network.name !== "ganache") startNetworkPipe();
@@ -109,11 +105,53 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 
 	let infinityConsole = new InfinityConsole(options);
 	await infinityConsole.initialize();
+	log(
+		"{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<" +
+			infinityConsole.getSessionId() +
+			">"
+	);
 	return infinityConsole;
 };
-//if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if (config.console)
-	start().catch((error) => {
-		console.error(error);
-		process.exit(1);
+
+/**
+ * if you spawned InfinityMint through load, then this is the current infinity console instance
+ */
+let infinityConsole: InfinityConsole;
+/**
+ * Starts infinitymint in the background with no UI drawing
+ */
+export const load = async (
+	options?: InfinityMintConsoleOptions
+): Promise<InfinityConsole> => {
+	return await start({
+		...(options || {}),
+		dontDraw: true,
 	});
+};
+export const infinitymint = infinityConsole as InfinityConsole;
+export default infinitymint;
+
+//if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
+if (
+	(config.console || isEnvTrue("INFINITYMINT_CONSOLE")) &&
+	config.startup !== true
+)
+	start()
+		.catch((error) => {
+			console.error(error);
+			process.exit(1);
+		})
+		.then((result) => {
+			infinityConsole = result;
+		});
+
+//load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
+if (config.startup)
+	load()
+		.catch((error) => {
+			console.error(error);
+			process.exit(1);
+		})
+		.then((result) => {
+			infinityConsole = result;
+		});

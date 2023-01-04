@@ -5,15 +5,18 @@ import {
 	InfinityMintDeploymentLive,
 	InfinityMintProject,
 	InfinityMintDeploymentLocal,
+	InfinityMintEventKeys,
 } from "./interfaces";
 import {
 	debugLog,
+	findFiles,
 	getCompiledProject,
 	getFileImportExtension,
 	getProject,
 	initializeGanacheMnemonic,
 	isEnvTrue,
 	isInfinityMint,
+	isTypescript,
 	log,
 	readSession,
 	warning,
@@ -30,6 +33,7 @@ import {
 import { Contract } from "@ethersproject/contracts";
 import hre from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import InfinityConsole from "./console";
 
 /**
  * Deployment class for InfinityMint deployments
@@ -72,13 +76,19 @@ export class InfinityMintDeployment {
 	 */
 	protected hasSetupDeployments: boolean;
 
+	/**
+	 * might be available
+	 */
+	private console?: InfinityConsole;
+
 	constructor(
 		deploymentScriptLocation: string,
 		key: string,
 		network: string,
-		project: InfinityMintProject
+		project: InfinityMintProject,
+		console?: InfinityConsole
 	) {
-		this.emitter = new events.EventEmitter();
+		this.emitter = console?.getEventEmitter() || new events.EventEmitter();
 
 		if (
 			fs.existsSync(process.cwd() + "/deploy/" + deploymentScriptLocation)
@@ -105,6 +115,7 @@ export class InfinityMintDeployment {
 		this.network = network;
 		this.project = project;
 		this.liveDeployments = [];
+		this.console = console;
 
 		if (fs.existsSync(this.getFilePath())) {
 			this.liveDeployments = this.getDeployments();
@@ -142,7 +153,7 @@ export class InfinityMintDeployment {
 	 * @param callback
 	 * @returns
 	 */
-	on(event: string, callback: (...args: any[]) => void) {
+	on(event: InfinityMintEventKeys, callback: (...args: any[]) => void) {
 		return this.emitter.on(event, callback);
 	}
 
@@ -152,7 +163,7 @@ export class InfinityMintDeployment {
 	 * @param callback
 	 * @returns
 	 */
-	off(event: string, callback: (...args: any[]) => void) {
+	off(event: InfinityMintEventKeys, callback: (...args: any[]) => void) {
 		return this.emitter.off(event, callback);
 	}
 
@@ -503,15 +514,19 @@ export class InfinityMintDeployment {
  * @param project
  * @returns
  */
-export const loadDeploymentClasses = async (project: InfinityMintProject) => {
-	let deployments = [...(await getDeploymentClasses(project))];
+export const loadDeploymentClasses = async (
+	project: InfinityMintProject,
+	console?: InfinityConsole
+) => {
+	let deployments = [...(await getDeploymentClasses(project, console))];
 
-	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_DEPLOY"))
+	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_DEPLOY"))
 		deployments = [
 			...deployments,
 			...(await getDeploymentClasses(
 				project,
-				process.cwd() + "/node_modules/infinitymint/deploy/**/*.ts"
+				console,
+				process.cwd() + "/node_modules/infinitymint/"
 			)),
 		];
 
@@ -526,6 +541,7 @@ export const loadDeploymentClasses = async (project: InfinityMintProject) => {
  */
 export const getProjectDeploymentClasses = async (
 	project: string,
+	console?: InfinityConsole,
 	loadedDeploymentClasses?: InfinityMintDeployment[]
 ) => {
 	let compiledProject: InfinityMintProject;
@@ -535,7 +551,7 @@ export const getProjectDeploymentClasses = async (
 
 	loadedDeploymentClasses =
 		loadedDeploymentClasses ||
-		(await loadDeploymentClasses(compiledProject));
+		(await loadDeploymentClasses(compiledProject, console));
 
 	let setings = getNetworkSettings(hre.network.name);
 
@@ -693,44 +709,37 @@ export const create = (
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-export const getDeploymentClasses = (
+export const getDeploymentClasses = async (
 	project: InfinityMintProject,
+	console?: InfinityConsole,
 	network?: string,
-	root?: string
+	roots?: string[]
 ): Promise<InfinityMintDeployment[]> => {
-	return new Promise((resolve, reject) => {
-		network = network || project.network?.name;
+	network = network || project.network?.name;
 
-		if (network === undefined)
-			throw new Error("unable to automatically determain network");
+	if (network === undefined)
+		throw new Error("unable to automatically determain network");
 
-		let filePath =
-			(root || process.cwd() + "/") +
-			"deploy/**/*." +
-			getFileImportExtension();
-		debugLog("finding deployment scripts in: " + filePath);
-		glob(filePath, (err: Error | null, matches: any[]) => {
-			if (err) throw err;
+	let searchLocations = [...(roots || [])];
+	searchLocations.push(process.cwd() + "/deploy/**/*.js");
+	if (isTypescript()) searchLocations.push(process.cwd() + "/deploy/**/*.ts");
+	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_DEPLOY"))
+		searchLocations.push(
+			process.cwd() + "/node_modules/infinitymint/dist/deploy/**/*.js"
+		);
 
-			debugLog(
-				"found " +
-					matches.length +
-					" deployment scripts in: " +
-					filePath
-			);
-			resolve(
-				matches.map((match, index) => {
-					let key = path.parse(match).name;
-					debugLog(`[${index}] => ${key}:(${match})`);
-
-					return new InfinityMintDeployment(
-						match,
-						key,
-						network,
-						project
-					);
-				})
+	let deployments = [];
+	for (let i = 0; i < searchLocations.length; i++) {
+		debugLog("scanning for deployment scripts in => " + searchLocations[i]);
+		let files = await findFiles(searchLocations[i]);
+		files.map((file, index) => {
+			let key = path.parse(file).name;
+			debugLog(`[${index}] => ${key}:(${file})`);
+			deployments.push(
+				new InfinityMintDeployment(file, key, network, project, console)
 			);
 		});
-	});
+	}
+
+	return deployments;
 };
