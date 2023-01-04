@@ -265,8 +265,10 @@ export class InfinityMintWindow {
 	 * @returns
 	 */
 	public getInfinityConsole() {
-		if (this.container === undefined)
-			throw new Error("container is undefined");
+		if (this.container === undefined) {
+			this.warning("container is undefined");
+			return undefined;
+		}
 
 		return this.container;
 	}

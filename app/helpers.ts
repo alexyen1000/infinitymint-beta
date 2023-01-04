@@ -319,7 +319,7 @@ export const overwriteConsoleMethods = () => {
 				`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
 				isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG") ? "debug" : "default"
 			);
-			(error.stack as string)
+			((error?.stack || error?.message || "unknown") as string)
 				.split("\n")
 				.forEach((line: string) =>
 					log(
@@ -694,7 +694,9 @@ export const findScripts = async (roots?: string[]) => {
 	roots = roots || [];
 
 	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_SCRIPTS"))
-		roots.push(process.cwd() + "/node_modules/infinitymint/dist/**/*.js");
+		roots.push(
+			process.cwd() + "/node_modules/infinitymint/dist/scripts/**/*.js"
+		);
 
 	if (isTypescript()) roots.push(process.cwd() + "/scripts/**/*.ts");
 	roots.push(process.cwd() + "/scripts/**/*.js");
@@ -828,7 +830,7 @@ export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
  * @see {@link app/interfaces.InfinityMintConfig}
  * @see {@link app/pipes.Pipe}
  * @param useJavascript Will return infinitymint.config.js instead of infinitymint.config.ts
- * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/build/app/interfaces')
+ * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/dist/app/interfaces')
  */
 export const loadInfinityMint = (
 	useJavascript?: boolean,
@@ -910,10 +912,10 @@ export const preInitialize = (isJavascript?: boolean) => {
 					"could not find: " + path + " to create .env file with"
 				);
 
-			fs.copyFileSync(path, "./.env");
+			fs.copyFileSync(path, process.cwd() + "/.env");
 		}
 
-		debugLog("made ./env from " + path);
+		debugLog("made /env from " + path);
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
@@ -967,7 +969,7 @@ export const createInfinityMintConfig = (
 
 	let requireStatement = useInternalRequire
 		? "./app/interfaces"
-		: "infinitymint/build/app/interfaces";
+		: "infinitymint/dist/app/interfaces";
 	let filename = useJavascript
 		? "infinitymint.config.js"
 		: "infinitymint.config.ts";
@@ -1019,7 +1021,7 @@ export const saveSessionVariable = (
 };
 
 export const saveSession = (session: InfinityMintSession) => {
-	fs.writeFileSync("./.session", JSON.stringify(session));
+	fs.writeFileSync(process.cwd() + "/.session", JSON.stringify(session));
 };
 
 export const error = (error: string | Error) => {
