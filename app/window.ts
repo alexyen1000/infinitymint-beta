@@ -77,6 +77,7 @@ export class InfinityMintWindow {
 	private creation: any;
 	private initialCreation: any;
 	private autoInstantiate: boolean;
+	private fileName: string;
 
 	constructor(
 		name?: string,
@@ -114,6 +115,14 @@ export class InfinityMintWindow {
 		this.id = this.generateId();
 		this.initialize = async () => {};
 		this.think = () => {};
+	}
+
+	public setFileName(fileName?: string) {
+		this.fileName = fileName || __filename;
+	}
+
+	public getFileName() {
+		return this.fileName;
 	}
 
 	/**
@@ -754,7 +763,7 @@ export class InfinityMintWindow {
 			},
 		});
 		this.closeButton.on("click", () => {
-			this.destroy();
+			this.getInfinityConsole().destroyWindow(this);
 		});
 		this.closeButton.focus();
 		this.hideButton = this.createElement("hideButton", {

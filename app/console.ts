@@ -11,10 +11,13 @@ import {
 	BlessedElement,
 	debugLog,
 	findScripts,
+	findWindows,
+	getPackageJson,
 	isEnvTrue,
 	isTypescript,
 	log,
 	requireScript,
+	requireWindow,
 	warning,
 } from "./helpers";
 import { InfinityMintEventEmitter } from "./interfaces";
@@ -26,31 +29,12 @@ import { changeNetwork, getDefaultSigner, getProvider } from "./web3";
 import Pipes from "./pipes";
 import { Dictionary } from "form-data";
 import { BigNumber } from "ethers";
-import events from "events";
+import { getProjectDeploymentClasses } from "./deployments";
 
 //const
 const { v4: uuidv4 } = require("uuid");
 //node audio
 const player = require("play-sound")({ player: "afplay" });
-
-//core windows
-import Logs from "./windows/logs";
-import Menu from "./windows/menu";
-import Browser from "./windows/browser";
-import Deployments from "./windows/deployments";
-import Gems from "./windows/gems";
-import Networks from "./windows/networks";
-import Scaffold from "./windows/scaffold";
-import Scripts from "./windows/scripts";
-import Settings from "./windows/settings";
-import Deploy from "./windows/deploy";
-import Tutorial from "./windows/tutorial";
-import Projects from "./windows/projects";
-import Music from "./windows/music";
-import Ganache from "./windows/ganache";
-import CloseBox from "./windows/closeBox";
-import { getProjectDeploymentClasses } from "./deployments";
-
 //blessed
 const blessed = require("blessed") as Blessed;
 
@@ -69,6 +53,7 @@ export class InfinityConsole {
 	private network?: HardhatRuntimeEnvironment["network"];
 	private signers?: SignerWithAddress[];
 	private windowManager?: BlessedElement;
+	private errorBox?: BlessedElement;
 	private inputKeys: Dictionary<Array<Function>>;
 	private chainId: number;
 	private eventEmitter: InfinityMintEventEmitter;
@@ -86,24 +71,7 @@ export class InfinityConsole {
 		this.windows = [];
 		this.allowExit = true;
 		this.options = options;
-		this.windows = [
-			Menu,
-			Tutorial,
-			Projects,
-			Logs,
-			Browser,
-			Ganache,
-			Deployments,
-			Gems,
-			Networks,
-			Scaffold,
-			Music,
-			Scripts,
-			Settings,
-			Deploy,
-			CloseBox,
-		];
-
+		this.windows = [];
 		this.tick = 0;
 		this.registerDefaultKeys();
 		this.sessionId = this.generateId();
@@ -471,24 +439,29 @@ export class InfinityConsole {
 	 * updates the window list with options
 	 */
 	public updateWindowsList() {
-		this.windowManager.setItems(
-			[...this.windows].map(
-				(window) =>
-					(window.name + " " + `[${window.getId()}]`).padEnd(
-						56,
-						" "
-					) +
-					(window.isAlive()
-						? " {green-fg}(alive){/green-fg}"
-						: " {red-fg}(dead) {/red-fg}") +
-					(!window.hasInitialized()
-						? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
-						: "") +
-					(window.isAlive() && window.shouldBackgroundThink()
-						? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
-						: "")
-			)
-		);
+		try {
+			this.windowManager.setItems(
+				[...this.windows].map(
+					(window) =>
+						(window.name + " " + `[${window.getId()}]`).padEnd(
+							56,
+							" "
+						) +
+						(window.isAlive()
+							? " {green-fg}(alive){/green-fg}"
+							: " {red-fg}(dead) {/red-fg}") +
+						(!window.hasInitialized()
+							? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
+							: "") +
+						(window.isAlive() && window.shouldBackgroundThink()
+							? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
+							: "")
+				)
+			);
+		} catch (error) {
+			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
+			warning("cannot update window manager: " + error?.message);
+		}
 	}
 
 	/**
@@ -616,19 +589,37 @@ export class InfinityConsole {
 	}
 
 	public displayError(error: Error, onClick?: any) {
-		let errorBox = blessed.box({
+		if (this.errorBox) {
+			this.errorBox = undefined;
+			this.errorBox.destroy();
+		}
+
+		this.errorBox = blessed.box({
 			top: "center",
 			left: "center",
 			shrink: true,
-			parent: this.screen,
 			width: "80%",
-			height: "shrink",
+			mouse: true,
+			keyboard: true,
+			height: "80%",
+			scrollable: true,
+			scrollbar: {
+				ch: " ",
+				track: {
+					bg: "black",
+				},
+				style: {
+					inverse: true,
+				},
+			},
 			padding: 1,
 			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION: ${
 				error.message
 			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
 				error.stack
-			} \n\n {white-bg}{black-fg}infinitymint-beta{/black-fg}{/white-bg}`,
+			} \n\n {white-bg}{black-fg}infinitymint-beta ${
+				getPackageJson()?.version
+			}{/black-fg}{/white-bg}`,
 			tags: true,
 			border: {
 				type: "line",
@@ -642,15 +633,16 @@ export class InfinityConsole {
 			},
 		}) as BlessedElement;
 
-		if (onClick !== undefined)
-			errorBox.on("click", () => {
-				onClick(errorBox);
-			});
+		this.errorBox.on("click", () => {
+			if (onClick) onClick(this.errorBox);
+			else this.errorBox.destroy();
+		});
 
-		errorBox.setFront();
-		this.screen.append(errorBox);
+		this.screen.append(this.errorBox);
 		this.screen.render();
-		errorBox.focus();
+
+		this.errorBox.setFront();
+		this.errorBox.focus();
 	}
 
 	public registerKeys() {
@@ -739,8 +731,9 @@ export class InfinityConsole {
 		if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
 			throw error;
 
-		this.displayError(error as Error, (errorBox: BlessedElement) => {
-			errorBox.destroy();
+		this.displayError(error as Error, () => {
+			this.errorBox.destroy();
+			this.errorBox = undefined;
 		});
 	}
 
@@ -835,11 +828,70 @@ export class InfinityConsole {
 		} as InfinityMintEventEmit<typeof eventType>);
 	}
 
+	/**
+	 *
+	 * @param windowOrIdOrName
+	 */
+	public async destroyWindow(windowOrIdOrName: InfinityMintWindow | string) {
+		for (let i = 0; i < this.windows.length; i++) {
+			if (
+				this.windows[i].toString() === windowOrIdOrName.toString() ||
+				this.windows[i].name === windowOrIdOrName.toString() ||
+				this.windows[i].getId() === windowOrIdOrName.toString()
+			) {
+				let container: InfinityConsole;
+				if (this.windows[i].hasContainer())
+					container = this.windows[i].getInfinityConsole();
+				else container = this;
+				let fileName = this.windows[i].getFileName();
+
+				this.windows[i].destroy();
+				this.windows[i] = undefined;
+
+				debugLog(
+					"{cyan-fg}refreshing InfinityMintWindow {/cyan-fg} => " +
+						fileName
+				);
+
+				this.windows[i] = requireWindow(fileName);
+				this.windows[i].setContainer(container);
+				this.windows[i].setFileName(fileName);
+				this.windows[i].setScreen(this.screen);
+				//create the window
+				await this.windows[i].create();
+				//then hide it
+				this.windows[i].hide();
+				//register events
+				this.registerEvents(this.windows[i]);
+				debugLog(
+					"{green-fg}successfully refreshed InfinityMintWindow{/green-fg} => " +
+						this.windows[i].getFileName()
+				);
+			}
+		}
+	}
+
+	public async refreshWindows() {
+		let windows = await findWindows();
+
+		for (let i = 0; i < windows.length; i++) {
+			let window = requireWindow(windows[i]);
+			window.setFileName(windows[i]);
+			this.windows.push(window);
+			debugLog(
+				`[${i}]` +
+					" {green-fg}successfully required{/green-fg} => " +
+					windows[i]
+			);
+		}
+	}
+
 	public async initialize() {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
 		this.createEventEmitter();
+		await this.refreshWindows();
 		await this.refreshWeb3();
 		await this.refreshScripts();
 
@@ -864,7 +916,8 @@ export class InfinityConsole {
 
 				//set the current window from the
 				if (this.options?.initialWindow === undefined)
-					this.currentWindow = this.windows[0];
+					this.currentWindow =
+						this.getWindowsByName("Menu")[0] || this.windows[0];
 				else if (
 					typeof this.options.initialWindow ===
 					typeof InfinityMintWindow
@@ -882,24 +935,35 @@ export class InfinityConsole {
 				);
 
 				for (let i = 0; i < instantInstantiate.length; i++) {
-					debugLog(
-						"initializing <" +
-							instantInstantiate[i].name +
-							`>[${instantInstantiate[i].getId()}]`
-					);
+					try {
+						debugLog(
+							"initializing <" +
+								instantInstantiate[i].name +
+								`>[${instantInstantiate[i].getId()}]`
+						);
 
-					if (!instantInstantiate[i].hasContainer())
-						instantInstantiate[i].setContainer(this);
+						if (!instantInstantiate[i].hasContainer())
+							instantInstantiate[i].setContainer(this);
 
-					instantInstantiate[i].setScreen(this.screen);
-					await instantInstantiate[i].create();
-					instantInstantiate[i].hide();
-					//register events
-					this.registerEvents(instantInstantiate[i]);
+						instantInstantiate[i].setScreen(this.screen);
+						await instantInstantiate[i].create();
+						instantInstantiate[i].hide();
+						//register events
+						this.registerEvents(instantInstantiate[i]);
+					} catch (error) {
+						warning(
+							"error initializing <" +
+								instantInstantiate[i].name +
+								`>[${instantInstantiate[i].getId()}]: ` +
+								error.message
+						);
+						//simply try and hide
+						try {
+							instantInstantiate[i].hide();
+						} catch (error) {}
+						this.errorHandler(error);
+					}
 				}
-
-				//create the window manager
-				this.createWindowManager();
 
 				//if the current window still hasn't been initialized, t
 				if (!this.currentWindow.hasInitialized()) {
@@ -910,6 +974,9 @@ export class InfinityConsole {
 					//register events for the windowManager with the currentWindow
 					this.registerEvents();
 				}
+
+				//create the window manager
+				this.createWindowManager();
 
 				//the think method for this console
 				let int = () => {
@@ -949,6 +1016,12 @@ export class InfinityConsole {
 							}
 						);
 					}
+
+					if (
+						this.errorBox !== undefined &&
+						this.errorBox.hidden !== true
+					)
+						this.errorBox.setFront();
 				}, this.options?.tickRate);
 
 				//render

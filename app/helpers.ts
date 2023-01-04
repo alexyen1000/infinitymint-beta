@@ -588,6 +588,24 @@ export const prepareConfig = () => {
 	return config as InfinityMintConfig;
 };
 
+export const findWindows = async (roots?: PathLike[]) => {
+	let searchLocations = [
+		...(roots || []),
+		isInfinityMint()
+			? process.cwd() + "/app/windows/**/*.ts"
+			: process.cwd() +
+			  "/node_modules/infinitymint/dist/app/windows/**/*.js",
+	] as string[];
+
+	let files = [];
+
+	for (let i = 0; i < searchLocations.length; i++) {
+		files = [...files, ...(await findFiles(searchLocations[i]))];
+	}
+
+	return files;
+};
+
 export const getPackageJson = () => {
 	if (
 		!fs.existsSync("./../package.json") &&
@@ -661,6 +679,26 @@ export const findScripts = async (extension?: string, roots?: string[]) => {
 };
 
 /**
+ *
+ * @param fullPath
+ * @returns
+ */
+export const requireWindow = (fullPath: string) => {
+	if (!fs.existsSync(fullPath))
+		throw new Error("cannot find script: " + fullPath);
+
+	if (require.cache[fullPath]) {
+		debugLog("deleting old cache of InfinityMintWindow => " + fullPath);
+		delete require.cache[fullPath];
+	}
+
+	debugLog("requiring InfinityMintWindow => " + fullPath);
+	let result = require(fullPath);
+	result = result.default || result;
+	return result as InfinityMintWindow;
+};
+
+/**
  * Checks cwd for a /script/ folder and looks for a script with that name. if it can't find it will look in this repos deploy scripts and try and return that
  * @param fileName
  * @param root
@@ -675,7 +713,7 @@ export const requireScript = async (
 		throw new Error("cannot find script: " + fullPath);
 
 	if (require.cache[fullPath]) {
-		debugLog("deleting old cache of " + fullPath);
+		debugLog("deleting old script cache of " + fullPath);
 		delete require.cache[fullPath];
 		hasReloaded = true;
 	}

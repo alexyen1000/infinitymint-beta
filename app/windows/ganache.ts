@@ -13,6 +13,7 @@ const Ganache = new InfinityMintWindow(
 		type: "line",
 	}
 );
+
 Ganache.setBackgroundThink(true);
 Ganache.setShouldInstantiate(true);
 export default Ganache;
