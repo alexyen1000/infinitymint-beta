@@ -1,4 +1,4 @@
-import { debugLog, isInfinityMint, warning } from "../helpers";
+import { getConfigFile, isInfinityMint, warning } from "../helpers";
 import { InfinityMintWindow } from "../window";
 
 const Music = new InfinityMintWindow(
@@ -23,7 +23,7 @@ export const tracks = ["contents.mp3", "menu.mp3"].map((file) =>
 
 let clockInterval: any;
 const onFinished = async (window: InfinityMintWindow) => {
-	if (window.getInfinityConsole() === undefined) return;
+	if (!window.hasInfinityConsole()) return;
 	//gets the music window
 	let musicWindow = window.getInfinityConsole().getWindow("Music");
 	musicWindow.options.currentTrack =
@@ -33,24 +33,33 @@ const onFinished = async (window: InfinityMintWindow) => {
 	//stops any audio
 	if (window.getInfinityConsole().hasAudio()) {
 		await window.getInfinityConsole().stopAudio();
+		if (!window.hasInfinityConsole()) return;
 	}
-
 	//plays audio
 	window
 		.getInfinityConsole()
 		.playAudio(musicWindow.options.currentTrack, onFinished);
-	window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
+
+	if (window.getInfinityConsole().hasCurrentWindow())
+		window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
 };
 Music.initialize = async (window, frame, blessed) => {
+	if (getConfigFile().music !== true) return;
+
 	if (clockInterval) clearInterval(clockInterval);
 	window.options.clock = 0;
 
 	clockInterval = setInterval(() => {
-		if (window.getInfinityConsole() === undefined) return;
+		if (!window.hasInfinityConsole()) return;
 
 		try {
 			window.options.clock = window.options.clock + 1;
-			window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
+
+			if (window.getInfinityConsole().hasCurrentWindow())
+				window
+					.getInfinityConsole()
+					.getCurrentWindow()
+					.updateFrameTitle();
 		} catch (error) {
 			warning(error.message);
 		}
@@ -58,6 +67,7 @@ Music.initialize = async (window, frame, blessed) => {
 
 	if (window.getInfinityConsole().hasAudio()) {
 		await window.getInfinityConsole().stopAudio();
+		if (!window.hasInfinityConsole()) return;
 	}
 
 	window.options.currentTrack =
@@ -67,13 +77,14 @@ Music.initialize = async (window, frame, blessed) => {
 	window
 		.getInfinityConsole()
 		.playAudio(window.options.currentTrack, onFinished);
-	window.on("destroy", () => {
+	window.on("destroy", async () => {
 		if (window.getInfinityConsole().hasAudio())
-			window.getInfinityConsole().stopAudio();
+			await window.getInfinityConsole().stopAudio();
 
 		clearInterval(clockInterval);
 	});
 };
 Music.setBackgroundThink(true);
 Music.setShouldInstantiate(true);
+Music.setHiddenFromMenu(getConfigFile().music !== true);
 export default Music;

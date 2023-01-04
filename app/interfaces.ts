@@ -933,6 +933,11 @@ export interface InfinityMintConfig {
 	 */
 	console?: InfinityMintConsoleOptions | boolean;
 	/**
+	 * enabled music playback functionality
+	 * @experimental
+	 */
+	music?: boolean;
+	/**
 	 * automatically loads InfinityMint if true. The default import of the infinitymint repository will return the InfinityConsole instance of which to work from. See {@link app/console.InfinityConsole}
 	 *
 	 * @example

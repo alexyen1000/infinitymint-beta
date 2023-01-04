@@ -836,6 +836,19 @@ export const loadInfinityMint = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean
 ) => {
+	try {
+		let projectJson = getPackageJson();
+		if (projectJson._moduleAliases === undefined) {
+			projectJson._moduleAliases = {
+				"@app": "./node_modules/infinitymint/dist/app/",
+			};
+		}
+		fs.writeFileSync(
+			process.cwd() + "/package.json",
+			JSON.stringify(projectJson, null, 2)
+		);
+	} catch (error) {}
+
 	createInfinityMintConfig(useJavascript, useInternalRequire);
 	preInitialize(useJavascript);
 	initializeGanacheMnemonic();
@@ -975,8 +988,6 @@ export const createInfinityMintConfig = (
 		: "infinitymint.config.ts";
 	let stub = useJavascript
 		? `\n
-		const { InfinityMintConfig } = require("${requireStatement}");
-
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config = {
 			console: true,

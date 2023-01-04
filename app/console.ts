@@ -12,9 +12,9 @@ import {
 	debugLog,
 	findScripts,
 	findWindows,
+	getConfigFile,
 	getPackageJson,
 	isEnvTrue,
-	isTypescript,
 	log,
 	requireScript,
 	requireWindow,
@@ -33,8 +33,6 @@ import { getProjectDeploymentClasses } from "./deployments";
 
 //const
 const { v4: uuidv4 } = require("uuid");
-//node audio
-const player = require("play-sound")({ player: "afplay" });
 //blessed
 const blessed = require("blessed") as Blessed;
 
@@ -65,6 +63,7 @@ export class InfinityConsole {
 	private currentAudio: any;
 	private currentAudioKilled: boolean;
 	private currentAudioAwaitingKill: boolean;
+	private player: any;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -75,6 +74,9 @@ export class InfinityConsole {
 		this.tick = 0;
 		this.registerDefaultKeys();
 		this.sessionId = this.generateId();
+
+		if (getConfigFile().music)
+			this.player = require("play-sound")({ player: "afplay" });
 	}
 
 	private generateId() {
@@ -354,6 +356,7 @@ export class InfinityConsole {
 	}
 
 	public isAwaitingKill() {
+		if (getConfigFile().music !== true) return false;
 		return this.currentAudioAwaitingKill;
 	}
 
@@ -371,10 +374,13 @@ export class InfinityConsole {
 	}
 
 	public hasAudio() {
+		if (getConfigFile().music !== true) false;
 		return this.currentAudio !== undefined && this.currentAudio !== null;
 	}
 
 	public async stopAudio() {
+		if (getConfigFile().music !== true) return;
+
 		if (this.currentAudio?.kill) {
 			this.currentAudio?.kill();
 			await this.audioKilled();
@@ -385,10 +391,11 @@ export class InfinityConsole {
 	}
 
 	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {
+		if (getConfigFile().music !== true) return;
 		this.currentAudioKilled = false;
 		debugLog("playing => " + process.cwd() + path);
 		// configure arguments for executable if any
-		this.currentAudio = player.play(
+		this.currentAudio = this.player.play(
 			process.cwd() + path,
 			{ afplay: ["-v", 1] /* lower volume for afplay on OSX */ },
 			(err: Error | any) => {
@@ -416,13 +423,22 @@ export class InfinityConsole {
 		return this.currentWindow;
 	}
 
+	/**
+	 * Returns true if we have a current window selected
+	 * @returns
+	 */
+	public hasCurrentWindow() {
+		return this.currentWindow !== undefined && this.currentWindow !== null;
+	}
+
 	public async audioKilled() {
+		if (getConfigFile().music !== true) return;
 		if (this.currentAudioKilled) return;
 
 		this.currentAudioAwaitingKill = true;
 		await new Promise((resolve, reject) => {
 			let int = setInterval(() => {
-				if (this.currentAudioKilled) {
+				if (this.currentAudioKilled || !this.currentWindow.isAlive()) {
 					clearInterval(int);
 					resolve(true);
 					this.currentAudioAwaitingKill = false;
@@ -446,22 +462,24 @@ export class InfinityConsole {
 	public updateWindowsList() {
 		try {
 			this.windowManager.setItems(
-				[...this.windows].map(
-					(window) =>
-						(window.name + " " + `[${window.getId()}]`).padEnd(
-							56,
-							" "
-						) +
-						(window.isAlive()
-							? " {green-fg}(alive){/green-fg}"
-							: " {red-fg}(dead) {/red-fg}") +
-						(!window.hasInitialized()
-							? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
-							: "") +
-						(window.isAlive() && window.shouldBackgroundThink()
-							? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
-							: "")
-				)
+				[...this.windows]
+					.filter((window) => !window.isHiddenFromMenu())
+					.map(
+						(window) =>
+							(window.name + " " + `[${window.getId()}]`).padEnd(
+								56,
+								" "
+							) +
+							(window.isAlive()
+								? " {green-fg}(alive){/green-fg}"
+								: " {red-fg}(dead) {/red-fg}") +
+							(!window.hasInitialized()
+								? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
+								: "") +
+							(window.isAlive() && window.shouldBackgroundThink()
+								? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
+								: "")
+					)
 			);
 		} catch (error) {
 			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
@@ -525,11 +543,13 @@ export class InfinityConsole {
 				//set the current window to the one that was selected
 				this.currentWindow = this.windows[selected];
 				if (!this.currentWindow.hasInitialized()) {
+					//reset it
 					this.currentWindow.destroy();
 					//sets blessed screen for this window
 					this.currentWindow.setScreen(this.screen);
 					//set the container of this window ( the console, which is this)
 					this.currentWindow.setContainer(this);
+					//create it
 					await this.currentWindow.create();
 					//registers events on the window
 					this.registerEvents();
@@ -855,25 +875,17 @@ export class InfinityConsole {
 	 * @param windowOrIdOrName
 	 */
 	public async destroyWindow(windowOrIdOrName: InfinityMintWindow | string) {
+		console.log("destroying window");
 		for (let i = 0; i < this.windows.length; i++) {
 			if (
 				this.windows[i].toString() === windowOrIdOrName.toString() ||
 				this.windows[i].name === windowOrIdOrName.toString() ||
 				this.windows[i].getId() === windowOrIdOrName.toString()
 			) {
-				let container: InfinityConsole;
-				if (this.windows[i].hasContainer())
-					container = this.windows[i].getInfinityConsole();
-				else container = this;
 				let fileName = this.windows[i].getFileName();
-				this.windows[i].log("reimporting");
+				this.windows[i].log("reimporting " + fileName);
 				this.windows[i].destroy();
-				this.windows[i] = undefined;
-
 				this.windows[i] = requireWindow(fileName);
-				this.windows[i].setContainer(container);
-				this.windows[i].setFileName(fileName);
-				this.windows[i].setScreen(this.screen);
 			}
 		}
 	}

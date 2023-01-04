@@ -9,6 +9,10 @@ coverage.json
 cache/
 artifacts/
 
+# Deployments
+/deployments/hardhat/
+/deployments/ganache/
+
 # InfinityMint files
 infinitymint.config.ts
 .session
