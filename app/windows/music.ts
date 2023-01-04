@@ -23,6 +23,7 @@ export const tracks = ["contents.mp3", "menu.mp3"].map((file) =>
 
 let clockInterval: any;
 const onFinished = async (window: InfinityMintWindow) => {
+	if (window.getInfinityConsole() === undefined) return;
 	//gets the music window
 	let musicWindow = window.getInfinityConsole().getWindow("Music");
 	musicWindow.options.currentTrack =
@@ -45,8 +46,14 @@ Music.initialize = async (window, frame, blessed) => {
 	window.options.clock = 0;
 
 	clockInterval = setInterval(() => {
-		window.options.clock = window.options.clock + 1;
-		window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
+		if (window.getInfinityConsole() === undefined) return;
+
+		try {
+			window.options.clock = window.options.clock + 1;
+			window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
+		} catch (error) {
+			warning(error.message);
+		}
 	}, 1000);
 
 	if (window.getInfinityConsole().hasAudio()) {
