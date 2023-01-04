@@ -9,12 +9,14 @@ import {
 } from "./interfaces";
 import {
 	debugLog,
+	findFiles,
 	getCompiledProject,
 	getFileImportExtension,
 	getProject,
 	initializeGanacheMnemonic,
 	isEnvTrue,
 	isInfinityMint,
+	isTypescript,
 	log,
 	readSession,
 	warning,
@@ -518,7 +520,7 @@ export const loadDeploymentClasses = async (
 ) => {
 	let deployments = [...(await getDeploymentClasses(project, console))];
 
-	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_DEPLOY"))
+	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_DEPLOY"))
 		deployments = [
 			...deployments,
 			...(await getDeploymentClasses(
@@ -707,46 +709,37 @@ export const create = (
  * Returns a list of InfinityMintDeployment classes for the network and project based on the deployment typescripts which are found.
  * @returns
  */
-export const getDeploymentClasses = (
+export const getDeploymentClasses = async (
 	project: InfinityMintProject,
 	console?: InfinityConsole,
 	network?: string,
-	root?: string
+	roots?: string[]
 ): Promise<InfinityMintDeployment[]> => {
-	return new Promise((resolve, reject) => {
-		network = network || project.network?.name;
+	network = network || project.network?.name;
 
-		if (network === undefined)
-			throw new Error("unable to automatically determain network");
+	if (network === undefined)
+		throw new Error("unable to automatically determain network");
 
-		let filePath =
-			(root || process.cwd() + "/") +
-			"deploy/**/*." +
-			getFileImportExtension();
-		debugLog("finding deployment scripts in: " + filePath);
-		glob(filePath, (err: Error | null, matches: any[]) => {
-			if (err) throw err;
+	let searchLocations = [...(roots || [])];
+	searchLocations.push(process.cwd() + "/deploy/**/*.js");
+	if (isTypescript()) searchLocations.push(process.cwd() + "/deploy/**/*.ts");
+	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_DEPLOY"))
+		searchLocations.push(
+			process.cwd() + "/node_modules/infinitymint/dist/deploy/**/*.js"
+		);
 
-			debugLog(
-				"found " +
-					matches.length +
-					" deployment scripts in: " +
-					filePath
-			);
-			resolve(
-				matches.map((match, index) => {
-					let key = path.parse(match).name;
-					debugLog(`[${index}] => ${key}:(${match})`);
-
-					return new InfinityMintDeployment(
-						match,
-						key,
-						network,
-						project,
-						console
-					);
-				})
+	let deployments = [];
+	for (let i = 0; i < searchLocations.length; i++) {
+		debugLog("scanning for deployment scripts in => " + searchLocations[i]);
+		let files = await findFiles(searchLocations[i]);
+		files.map((file, index) => {
+			let key = path.parse(file).name;
+			debugLog(`[${index}] => ${key}:(${file})`);
+			deployments.push(
+				new InfinityMintDeployment(file, key, network, project, console)
 			);
 		});
-	});
+	}
+
+	return deployments;
 };

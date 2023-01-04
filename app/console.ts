@@ -159,6 +159,11 @@ export class InfinityConsole {
 			],
 			"C-r": [
 				(ch: string, key: string) => {
+					this.reload();
+				},
+			],
+			"C-x": [
+				(ch: string, key: string) => {
 					if (this.screen.lastWindow !== undefined) {
 						this.currentWindow?.hide();
 						this.currentWindow = this.screen.lastWindow;
@@ -300,6 +305,7 @@ export class InfinityConsole {
 		});
 		this.currentWindow = undefined;
 		this.windows.forEach((window) => window.destroy());
+		this.windows = [];
 		this.windowManager.destroy();
 		//render
 		this.screen.render();
@@ -514,24 +520,39 @@ export class InfinityConsole {
 		});
 		//when an item is selected form the list box, attempt to show or hide that Windoiw.
 		this.windowManager.on("select", async (_el: Element, selected: any) => {
-			//disable the select if the current window is visible
-			if (this.currentWindow?.isVisible()) return;
-			//set the current window to the one that was selected
-			this.currentWindow = this.windows[selected];
-			if (!this.currentWindow.hasInitialized()) {
-				//sets blessed screen for this window
-				this.currentWindow.setScreen(this.screen);
-				//set the container of this window ( the console, which is this)
-				this.currentWindow.setContainer(this);
-				await this.currentWindow.create();
-				//registers events on the window
-				this.registerEvents();
-			} else if (!this.currentWindow.isVisible())
-				this.currentWindow.show();
-			else this.currentWindow.hide();
-			await this.currentWindow.updateFrameTitle();
-			//set the window manager to the back of the screne
-			this.windowManager.setBack();
+			try {
+				//disable the select if the current window is visible
+				if (this.currentWindow?.isVisible()) return;
+				//set the current window to the one that was selected
+				this.currentWindow = this.windows[selected];
+				if (!this.currentWindow.hasInitialized()) {
+					this.currentWindow.destroy();
+					//sets blessed screen for this window
+					this.currentWindow.setScreen(this.screen);
+					//set the container of this window ( the console, which is this)
+					this.currentWindow.setContainer(this);
+					await this.currentWindow.create();
+					//registers events on the window
+					this.registerEvents();
+				} else if (!this.currentWindow.isVisible())
+					this.currentWindow.show();
+				else this.currentWindow.hide();
+				await this.currentWindow.updateFrameTitle();
+				//set the window manager to the back of the screne
+				this.windowManager.setBack();
+			} catch (error) {
+				this.currentWindow?.hide();
+				this.currentWindow?.destroy();
+
+				try {
+					this.windows[selected]?.hide();
+					this.destroyWindow(this.windows[selected]);
+				} catch (error) {
+					warning("cannot destroy window: " + error.message);
+				}
+
+				this.errorHandler(error);
+			}
 		});
 
 		//update the list
@@ -591,7 +612,7 @@ export class InfinityConsole {
 	public displayError(error: Error, onClick?: any) {
 		if (this.errorBox) {
 			this.errorBox = undefined;
-			this.errorBox.destroy();
+			this.errorBox?.destroy();
 		}
 
 		this.errorBox = blessed.box({
@@ -728,6 +749,7 @@ export class InfinityConsole {
 
 	public errorHandler(error: Error | string) {
 		console.error(error);
+
 		if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)
 			throw error;
 
@@ -782,9 +804,6 @@ export class InfinityConsole {
 		}
 
 		let scripts = await findScripts();
-		if (isTypescript())
-			scripts = [...scripts, ...(await findScripts(".js"))];
-
 		debugLog("found " + scripts.length + " deployment scripts");
 
 		this.scripts = [];
@@ -793,7 +812,11 @@ export class InfinityConsole {
 			let script = scripts[i];
 
 			try {
-				debugLog(`[${i}] requiring script <${script.name}>`);
+				debugLog(
+					`[${i}] requiring script <${script.name}> => ${
+						script.dir + "/" + script.base
+					}`
+				);
 				let scriptSource = await requireScript(
 					script.dir + "/" + script.base,
 					this
@@ -844,14 +867,9 @@ export class InfinityConsole {
 					container = this.windows[i].getInfinityConsole();
 				else container = this;
 				let fileName = this.windows[i].getFileName();
-
+				this.windows[i].log("reimporting");
 				this.windows[i].destroy();
 				this.windows[i] = undefined;
-
-				debugLog(
-					"{cyan-fg}refreshing InfinityMintWindow {/cyan-fg} => " +
-						fileName
-				);
 
 				this.windows[i] = requireWindow(fileName);
 				this.windows[i].setContainer(container);
@@ -863,8 +881,8 @@ export class InfinityConsole {
 				this.windows[i].hide();
 				//register events
 				this.registerEvents(this.windows[i]);
-				debugLog(
-					"{green-fg}successfully refreshed InfinityMintWindow{/green-fg} => " +
+				this.windows[i].log(
+					"{green-fg}successfully refreshed {/green-fg} => " +
 						this.windows[i].getFileName()
 				);
 			}
@@ -874,6 +892,7 @@ export class InfinityConsole {
 	public async refreshWindows() {
 		let windows = await findWindows();
 
+		debugLog("requiring windows and storing inside console instance...");
 		for (let i = 0; i < windows.length; i++) {
 			let window = requireWindow(windows[i]);
 			window.setFileName(windows[i]);
@@ -887,6 +906,7 @@ export class InfinityConsole {
 	}
 
 	public async initialize() {
+		//if the network member has been defined then we have already initialized
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
@@ -934,10 +954,11 @@ export class InfinityConsole {
 					thatWindow.shouldInstantiate()
 				);
 
+				debugLog(`initializing ${instantInstantiate.length} windows`);
 				for (let i = 0; i < instantInstantiate.length; i++) {
 					try {
 						debugLog(
-							"initializing <" +
+							`[${i}] initializing <` +
 								instantInstantiate[i].name +
 								`>[${instantInstantiate[i].getId()}]`
 						);
@@ -952,7 +973,7 @@ export class InfinityConsole {
 						this.registerEvents(instantInstantiate[i]);
 					} catch (error) {
 						warning(
-							"error initializing <" +
+							`[${i}] error initializing <` +
 								instantInstantiate[i].name +
 								`>[${instantInstantiate[i].getId()}]: ` +
 								error.message
@@ -964,6 +985,10 @@ export class InfinityConsole {
 						this.errorHandler(error);
 					}
 				}
+
+				debugLog(
+					`finished initializing ${instantInstantiate.length} windows`
+				);
 
 				//if the current window still hasn't been initialized, t
 				if (!this.currentWindow.hasInitialized()) {

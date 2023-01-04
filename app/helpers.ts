@@ -300,8 +300,25 @@ export const overwriteConsoleMethods = () => {
 		if (Pipes.pipes[Pipes.currentPipeKey] && dontSendToPipe !== true)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
-		if (isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT"))
-			console.log("[error] " + error?.message);
+		if (
+			isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG") ||
+			isEnvTrue("PIPE_LOG_ERRORS_TO_DEFAULT")
+		) {
+			log(
+				`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
+				isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG") ? "debug" : "default"
+			);
+			(error.stack as string)
+				.split("\n")
+				.forEach((line: string) =>
+					log(
+						`{red-fg}${line}{red-fg}`,
+						isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG")
+							? "debug"
+							: "default"
+					)
+				);
+		}
 
 		if (
 			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
@@ -589,17 +606,23 @@ export const prepareConfig = () => {
 };
 
 export const findWindows = async (roots?: PathLike[]) => {
-	let searchLocations = [
-		...(roots || []),
-		isInfinityMint()
-			? process.cwd() + "/app/windows/**/*.ts"
-			: process.cwd() +
-			  "/node_modules/infinitymint/dist/app/windows/**/*.js",
-	] as string[];
+	let searchLocations = [...(roots || [])] as string[];
+
+	if (!isInfinityMint())
+		searchLocations.push(
+			process.cwd() +
+				"/node_modules/infinitymint/dist/app/windows/**/*.js"
+		);
+	else searchLocations.push(process.cwd() + "/app/windows/**/*.ts");
+
+	searchLocations.push(process.cwd() + "/windows/**/*.js");
+	if (isTypescript())
+		searchLocations.push(process.cwd() + "/windows/**/*.ts");
 
 	let files = [];
 
 	for (let i = 0; i < searchLocations.length; i++) {
+		debugLog("scanning for windows in => " + searchLocations[i]);
 		files = [...files, ...(await findFiles(searchLocations[i]))];
 	}
 
@@ -626,6 +649,7 @@ export const getPackageJson = () => {
 };
 
 export const findFiles = (globPattern: string) => {
+	debugLog("searching for files with glob pattern => " + globPattern);
 	return new Promise<string[]>((resolve, reject) => {
 		glob(globPattern, (err: Error, matches: string[]) => {
 			if (err) throw err;
@@ -655,19 +679,19 @@ export const getFileImportExtension = () => {
  * @param roots
  * @returns
  */
-export const findScripts = async (extension?: string, roots?: string[]) => {
-	roots = roots || [process.cwd() + "/"];
+export const findScripts = async (roots?: string[]) => {
+	roots = roots || [];
 
-	if (!isInfinityMint() && !isEnvTrue("INFINITYMINT_DONT_INCLUDE_SCRIPTS"))
-		roots.push(process.cwd() + "/node_modules/infinitymint/");
+	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_SCRIPTS"))
+		roots.push(process.cwd() + "/node_modules/infinitymint/dist/**/*.js");
+
+	if (isTypescript()) roots.push(process.cwd() + "/scripts/**/*.ts");
+	roots.push(process.cwd() + "/scripts/**/*.js");
 
 	let scanned = [];
 	for (let i = 0; i < roots.length; i++) {
-		let location = roots[i];
-		let path =
-			location + "scripts/**/*" + (extension || getFileImportExtension());
-
-		debugLog("scanning " + path);
+		let path = roots[i];
+		debugLog("scanning for scripts in => " + path);
 		scanned = [...scanned, ...(await findFiles(path))];
 	}
 
@@ -688,13 +712,15 @@ export const requireWindow = (fullPath: string) => {
 		throw new Error("cannot find script: " + fullPath);
 
 	if (require.cache[fullPath]) {
-		debugLog("deleting old cache of InfinityMintWindow => " + fullPath);
+		debugLog("deleting old cache  => " + fullPath);
 		delete require.cache[fullPath];
 	}
 
-	debugLog("requiring InfinityMintWindow => " + fullPath);
+	debugLog("requiring => " + fullPath);
 	let result = require(fullPath);
 	result = result.default || result;
+	//log
+	result.log("required");
 	return result as InfinityMintWindow;
 };
 

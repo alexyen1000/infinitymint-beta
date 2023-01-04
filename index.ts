@@ -142,7 +142,10 @@ export const infinitymint = infinityConsole as InfinityConsole;
 export default infinitymint;
 
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
-if (config.console && config.startup !== true)
+if (
+	(config.console || isEnvTrue("INFINITYMINT_CONSOLE")) &&
+	config.startup !== true
+)
 	start()
 		.catch((error) => {
 			console.error(error);
