@@ -12,9 +12,9 @@ import {
 	debugLog,
 	findScripts,
 	findWindows,
+	getConfigFile,
 	getPackageJson,
 	isEnvTrue,
-	isTypescript,
 	log,
 	requireScript,
 	requireWindow,
@@ -33,8 +33,6 @@ import { getProjectDeploymentClasses } from "./deployments";
 
 //const
 const { v4: uuidv4 } = require("uuid");
-//node audio
-const player = require("play-sound")({ player: "afplay" });
 //blessed
 const blessed = require("blessed") as Blessed;
 
@@ -65,6 +63,7 @@ export class InfinityConsole {
 	private currentAudio: any;
 	private currentAudioKilled: boolean;
 	private currentAudioAwaitingKill: boolean;
+	private player: any;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -75,6 +74,9 @@ export class InfinityConsole {
 		this.tick = 0;
 		this.registerDefaultKeys();
 		this.sessionId = this.generateId();
+
+		if (getConfigFile().music)
+			this.player = require("play-sound")({ player: "afplay" });
 	}
 
 	private generateId() {
@@ -354,6 +356,7 @@ export class InfinityConsole {
 	}
 
 	public isAwaitingKill() {
+		if (getConfigFile().music !== true) return false;
 		return this.currentAudioAwaitingKill;
 	}
 
@@ -371,10 +374,13 @@ export class InfinityConsole {
 	}
 
 	public hasAudio() {
+		if (getConfigFile().music !== true) false;
 		return this.currentAudio !== undefined && this.currentAudio !== null;
 	}
 
 	public async stopAudio() {
+		if (getConfigFile().music !== true) return;
+
 		if (this.currentAudio?.kill) {
 			this.currentAudio?.kill();
 			await this.audioKilled();
@@ -385,10 +391,11 @@ export class InfinityConsole {
 	}
 
 	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {
+		if (getConfigFile().music !== true) return;
 		this.currentAudioKilled = false;
 		debugLog("playing => " + process.cwd() + path);
 		// configure arguments for executable if any
-		this.currentAudio = player.play(
+		this.currentAudio = this.player.play(
 			process.cwd() + path,
 			{ afplay: ["-v", 1] /* lower volume for afplay on OSX */ },
 			(err: Error | any) => {
@@ -425,6 +432,7 @@ export class InfinityConsole {
 	}
 
 	public async audioKilled() {
+		if (getConfigFile().music !== true) return;
 		if (this.currentAudioKilled) return;
 
 		this.currentAudioAwaitingKill = true;
@@ -454,22 +462,24 @@ export class InfinityConsole {
 	public updateWindowsList() {
 		try {
 			this.windowManager.setItems(
-				[...this.windows].map(
-					(window) =>
-						(window.name + " " + `[${window.getId()}]`).padEnd(
-							56,
-							" "
-						) +
-						(window.isAlive()
-							? " {green-fg}(alive){/green-fg}"
-							: " {red-fg}(dead) {/red-fg}") +
-						(!window.hasInitialized()
-							? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
-							: "") +
-						(window.isAlive() && window.shouldBackgroundThink()
-							? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
-							: "")
-				)
+				[...this.windows]
+					.filter((window) => !window.isHiddenFromMenu())
+					.map(
+						(window) =>
+							(window.name + " " + `[${window.getId()}]`).padEnd(
+								56,
+								" "
+							) +
+							(window.isAlive()
+								? " {green-fg}(alive){/green-fg}"
+								: " {red-fg}(dead) {/red-fg}") +
+							(!window.hasInitialized()
+								? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
+								: "") +
+							(window.isAlive() && window.shouldBackgroundThink()
+								? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
+								: "")
+					)
 			);
 		} catch (error) {
 			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;

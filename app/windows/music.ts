@@ -1,4 +1,4 @@
-import { isInfinityMint, warning } from "../helpers";
+import { getConfigFile, isInfinityMint, warning } from "../helpers";
 import { InfinityMintWindow } from "../window";
 
 const Music = new InfinityMintWindow(
@@ -44,6 +44,8 @@ const onFinished = async (window: InfinityMintWindow) => {
 		window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
 };
 Music.initialize = async (window, frame, blessed) => {
+	if (getConfigFile().music !== true) return;
+
 	if (clockInterval) clearInterval(clockInterval);
 	window.options.clock = 0;
 
@@ -84,4 +86,5 @@ Music.initialize = async (window, frame, blessed) => {
 };
 Music.setBackgroundThink(true);
 Music.setShouldInstantiate(true);
+Music.setHiddenFromMenu(getConfigFile().music !== true);
 export default Music;

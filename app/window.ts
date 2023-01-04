@@ -9,6 +9,7 @@ import {
 	calculateWidth,
 	warning,
 	BlessedElementOptions,
+	getConfigFile,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -64,6 +65,7 @@ export class InfinityMintWindow {
 	protected scrollbar: any;
 	protected hideCloseButton: boolean;
 	protected hideMinimizeButton: boolean;
+	protected hideFromMenu: boolean;
 	protected z: number;
 	protected screen: BlessedElement;
 	protected container?: InfinityConsole;
@@ -123,6 +125,14 @@ export class InfinityMintWindow {
 
 	public getFileName() {
 		return this.fileName;
+	}
+
+	public setHiddenFromMenu(hidden: boolean) {
+		this.hideFromMenu = hidden;
+	}
+
+	public isHiddenFromMenu() {
+		return this.hideFromMenu;
 	}
 
 	/**
@@ -632,7 +642,9 @@ export class InfinityMintWindow {
 			)} ETH ($${(parseFloat(etherBalance) * 2222).toFixed(
 				2
 			)}){/bold}{/white-fg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/green-fg}{/black-bg} {bold}{cyan-fg}♫{/cyan-fg}{/bold} {underline}{cyan-fg}${
-				musicOptions.currentTrack
+				getConfigFile().music !== true
+					? "music disabled"
+					: musicOptions.currentTrack
 			}{/cyan-fg}{/underline} {black-bg}{white-fg}${(minutes % 60)
 				.toString()
 				.padStart(2, "0")}:${(seconds % 60)

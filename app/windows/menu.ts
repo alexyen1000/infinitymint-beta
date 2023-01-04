@@ -1,6 +1,7 @@
 import {
 	calculateWidth,
 	debugLog,
+	getConfigFile,
 	getPackageJson,
 	getSolidityFolder,
 	isEnvTrue,
