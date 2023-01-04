@@ -21,8 +21,7 @@ export const tracks = ["contents.mp3", "menu.mp3"].map((file) =>
 		: "/node_modules/infinitymint/resources/ost/" + file
 );
 
-let clockInterval;
-
+let clockInterval: any;
 const onFinished = async (window: InfinityMintWindow) => {
 	//gets the music window
 	let musicWindow = window.getInfinityConsole().getWindow("Music");
