@@ -6,6 +6,16 @@
 -   Node **16.0.0** or Higher
 -   (Optional) Nix
 
+## 🗿 Boilerplates & Starterkits
+
+Don't feel like starting from scratch? Check out our boilerplates and starterkits and get building with InfinityMint straight away!
+
+[Javascript Boilerplate](https://github.com/0x0zAgency/infinitymint-javascript-boilerplate)</br>
+[Typescript Boilerplate](https://github.com/0x0zAgency/infinitymint-typescript-boilerplate)</br>
+[React Starterkit (Typescript)](https://github.com/0x0zAgency/infinitymint-react-typescript-starterkit)</br>
+[React Starterkit (Javascript)](https://github.com/0x0zAgency/infinitymint-react-javascript-starterkit)</br>
+[NextJS Starterkit](https://github.com/0x0zAgency/infinitymint-nextjs-starterkit)</br>
+
 ## 🗿 Installation
 
 `npm i infinitymint`
