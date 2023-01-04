@@ -57,20 +57,20 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		//start ganache here
 		let obj = { ...config.ganache } as any;
 		if (obj.wallet === undefined) obj.wallet = {};
-		if (session.environment.ganacheMnemomic === undefined)
+		if (session.environment.ganacheMnemonic === undefined)
 			throw new Error("no ganache mnemonic");
 
-		obj.wallet.mnemonic = session.environment.ganacheMnemomic;
+		obj.wallet.mnemonic = session.environment.ganacheMnemonic;
 		saveSession(session);
 		debugLog("starting ganache with menomic of: " + obj.wallet.mnemonic);
 
 		//get private keys and save them to file
-		let keys = getPrivateKeys(session.environment.ganacheMnemomic);
+		let keys = getPrivateKeys(session.environment.ganacheMnemonic);
 		debugLog(
 			"found " +
 				keys.length +
 				" private keys for mnemonic: " +
-				session.environment.ganacheMnemomic
+				session.environment.ganacheMnemonic
 		);
 		keys.forEach((key, index) => {
 			debugLog(`[${index}] => ${key}`);

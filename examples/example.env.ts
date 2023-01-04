@@ -26,7 +26,7 @@ const envs: InfinityMintEnvironmentVariables = {
 	INFINITYMINT_INCLUDE_SCRIPTS: true,
 	SOLIDITY_CLEAN_NAMESPACE: false,
 	SOLIDITY_USE_NODE_MODULE: false,
-	DEFAULT_WALLET_MNEMOMIC: undefined,
+	DEFAULT_WALLET_Mnemonic: undefined,
 	BACKUP_WALLET_MNEMONIC: undefined,
 };
 export default envs;
