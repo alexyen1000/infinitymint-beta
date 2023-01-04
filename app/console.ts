@@ -416,6 +416,14 @@ export class InfinityConsole {
 		return this.currentWindow;
 	}
 
+	/**
+	 * Returns true if we have a current window selected
+	 * @returns
+	 */
+	public hasCurrentWindow() {
+		return this.currentWindow !== undefined && this.currentWindow !== null;
+	}
+
 	public async audioKilled() {
 		if (this.currentAudioKilled) return;
 
@@ -525,11 +533,13 @@ export class InfinityConsole {
 				//set the current window to the one that was selected
 				this.currentWindow = this.windows[selected];
 				if (!this.currentWindow.hasInitialized()) {
+					//reset it
 					this.currentWindow.destroy();
 					//sets blessed screen for this window
 					this.currentWindow.setScreen(this.screen);
 					//set the container of this window ( the console, which is this)
 					this.currentWindow.setContainer(this);
+					//create it
 					await this.currentWindow.create();
 					//registers events on the window
 					this.registerEvents();
@@ -855,25 +865,17 @@ export class InfinityConsole {
 	 * @param windowOrIdOrName
 	 */
 	public async destroyWindow(windowOrIdOrName: InfinityMintWindow | string) {
+		console.log("destroying window");
 		for (let i = 0; i < this.windows.length; i++) {
 			if (
 				this.windows[i].toString() === windowOrIdOrName.toString() ||
 				this.windows[i].name === windowOrIdOrName.toString() ||
 				this.windows[i].getId() === windowOrIdOrName.toString()
 			) {
-				let container: InfinityConsole;
-				if (this.windows[i].hasContainer())
-					container = this.windows[i].getInfinityConsole();
-				else container = this;
 				let fileName = this.windows[i].getFileName();
-				this.windows[i].log("reimporting");
+				this.windows[i].log("reimporting " + fileName);
 				this.windows[i].destroy();
-				this.windows[i] = undefined;
-
 				this.windows[i] = requireWindow(fileName);
-				this.windows[i].setContainer(container);
-				this.windows[i].setFileName(fileName);
-				this.windows[i].setScreen(this.screen);
 			}
 		}
 	}

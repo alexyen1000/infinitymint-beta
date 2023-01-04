@@ -261,14 +261,20 @@ export class InfinityMintWindow {
 	}
 
 	/**
+	 * Returns true if we have an InfinityConole set on this window
+	 * @returns
+	 */
+	public hasInfinityConsole() {
+		return this.container !== undefined && this.container !== null;
+	}
+
+	/**
 	 * Get the infinity console this window is contained in. Through the InfinityConsole you can change the network, refresh web3 and do a lot more!
 	 * @returns
 	 */
 	public getInfinityConsole() {
-		if (this.container === undefined) {
-			this.warning("container is undefined");
-			return undefined;
-		}
+		if (this.container === undefined || this.container === null)
+			throw new Error("no infinityconsole associated with this window");
 
 		return this.container;
 	}
@@ -576,7 +582,12 @@ export class InfinityMintWindow {
 	}
 
 	public hasInitialized() {
-		return this.initialized && this.destroyed === false;
+		return (
+			this.initialized &&
+			this.destroyed === false &&
+			this.container !== null &&
+			this.container !== undefined
+		);
 	}
 
 	public on(event: string, listener: Function): Function {
@@ -596,6 +607,8 @@ export class InfinityMintWindow {
 	}
 
 	public async updateFrameTitle() {
+		if (!this.hasInfinityConsole()) return;
+
 		let account = this.getInfinityConsole().getAccount();
 		let balance = this.getInfinityConsole().getBalance();
 		let etherBalance = ethers.utils.formatEther(balance);
