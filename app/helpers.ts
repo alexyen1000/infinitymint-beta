@@ -640,6 +640,26 @@ export const findWindows = async (roots?: PathLike[]) => {
 	return files;
 };
 
+export const getInfinityMintVersion = () => {
+	if (isInfinityMint()) return getPackageJson()?.version || "1.0.0";
+
+	if (
+		!fs.existsSync(
+			process.cwd() + "/node_modules/infinitymint/package.json"
+		)
+	)
+		return "1.0.0";
+
+	return (
+		JSON.parse(
+			fs.readFileSync(
+				process.cwd() + "/node_modules/infinitymint/package.json",
+				{ encoding: "utf-8" }
+			)
+		)?.version || "1.0.0"
+	);
+};
+
 export const getPackageJson = () => {
 	if (
 		!fs.existsSync("./../package.json") &&
@@ -870,6 +890,9 @@ export const readJson = (fileName: string) => {
 
 export const createEnvFile = (source: any) => {
 	source = source?.default || source;
+
+	//dont do node modules
+	if (isInfinityMint()) source.SOLIDITY_USE_NODE_MODULE = false;
 
 	let stub = ``;
 	Object.keys(source).forEach((key) => {

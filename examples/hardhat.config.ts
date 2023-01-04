@@ -7,7 +7,11 @@
  */
 
 import "module-alias/register";
-import { debugLog, prepareConfig, loadInfinityMint } from "@app/helpers";
+import {
+	debugLog,
+	prepareConfig,
+	loadInfinityMint,
+} from "infinitymint/dist/app/helpers";
 
 //require dotenv
 require("dotenv").config({

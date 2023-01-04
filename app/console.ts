@@ -13,6 +13,7 @@ import {
 	findScripts,
 	findWindows,
 	getConfigFile,
+	getInfinityMintVersion,
 	getPackageJson,
 	isEnvTrue,
 	log,
@@ -659,9 +660,7 @@ export class InfinityConsole {
 				error.message
 			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
 				error.stack
-			} \n\n {white-bg}{black-fg}infinitymint-beta ${
-				getPackageJson()?.version
-			}{/black-fg}{/white-bg}`,
+			} \n\n {white-bg}{black-fg}infinitymint-beta ${getInfinityMintVersion()}{/black-fg}{/white-bg}`,
 			tags: true,
 			border: {
 				type: "line",
