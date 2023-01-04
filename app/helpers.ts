@@ -913,7 +913,16 @@ export const preInitialize = (isJavascript?: boolean) => {
 				throw new Error(
 					"could not find: " + path + " to create .env file with"
 				);
-			createEnvFile(require(path));
+
+			try {
+				createEnvFile(require(path));
+			} catch (error) {
+				console.log(
+					"Could not create .env file for typescript environment, falling back to .env"
+				);
+				preInitialize(true);
+				return;
+			}
 		} else {
 			path = fs.existsSync(process.cwd() + "/examples/js/example.env")
 				? process.cwd() + "/examples/js/example.env"
