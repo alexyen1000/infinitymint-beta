@@ -937,15 +937,15 @@ export const initializeGanacheMnemonic = () => {
 	//if the ganache is not external and no mnemonic for ganache in the environment file then set one
 	if (
 		isEnvTrue("GANACHE_EXTERNAL") === false &&
-		session.environment?.ganacheMnemomic === undefined
+		session.environment?.ganacheMnemonic === undefined
 	)
-		session.environment.ganacheMnemomic = generateMnemonic();
+		session.environment.ganacheMnemonic = generateMnemonic();
 
 	debugLog(
-		"saving " + session.environment.ganacheMnemomic + " to .session file"
+		"saving " + session.environment.ganacheMnemonic + " to .session file"
 	);
 	saveSession(session);
-	return session.environment?.ganacheMnemomic;
+	return session.environment?.ganacheMnemonic;
 };
 
 export const createInfinityMintConfig = (

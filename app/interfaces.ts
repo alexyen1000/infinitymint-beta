@@ -692,7 +692,7 @@ export interface InfinityMintEnvironmentVariables {
 	POLYGONSCAN_API_KEY?: string;
 	PIPE_ECHO_DEFAULT?: boolean;
 	PIPE_ECHO_DEBUG?: boolean;
-	DEFAULT_WALLET_MNEMOMIC?: string;
+	DEFAULT_WALLET_Mnemonic?: string;
 	BACKUP_WALLET_MNEMONIC?: string;
 	PIPE_ECHO_ERRORS?: boolean;
 	PIPE_ECHO_WARNINGS?: boolean;
