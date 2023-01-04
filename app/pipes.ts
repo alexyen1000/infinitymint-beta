@@ -1,13 +1,18 @@
 import { ChildProcess } from "child_process";
 import { Dictionary } from "form-data";
-import { debugLog, isEnvTrue, warning } from "./helpers";
+import { debugLog, getConfigFile, isEnvTrue, warning } from "./helpers";
 import fs from "fs";
 
 /**
  * The log pipe class
  */
 export class Pipe {
-	public logs: String[];
+	public logs: {
+		message: string;
+		count: number;
+		time: number;
+		index: number;
+	}[];
 	public errors: Error[];
 	public listen: boolean;
 	public save: boolean;
@@ -31,16 +36,40 @@ export class Pipe {
 		this.appendDate = false;
 		this.created = Date.now();
 		this.logHandler = (str: string) => {
-			if (this.listen) console.log("<#DONT_LOG_ME$>" + str);
-			if (this.appendDate)
-				str =
-					`{underline}${new Date(
-						Date.now()
-					).toLocaleTimeString()}{/underline} ` + str;
-			this.logs.push(str);
+			if (
+				this.listen &&
+				(isEnvTrue("OVERWRITE_CONSOLE_METHODS") ||
+					getConfigFile().console)
+			)
+				console.log("<#DONT_LOG_ME$>" + str);
+
+			if (
+				this.logs.length > 2 &&
+				this.logs[this.logs.length - 1].message === str
+			)
+				this.logs[this.logs.length - 1].count++;
+			else
+				this.logs.push({
+					message: str,
+					count: 1,
+					index: this.logs.length,
+					time: Date.now(),
+				});
 		};
 		this.errorHandler = (err: Error) => {
-			if (this.listen) console.error(err, false);
+			if (
+				this.listen &&
+				(isEnvTrue("OVERWRITE_CONSOLE_METHODS") ||
+					getConfigFile().console)
+			)
+				console.error(err, false);
+
+			if (
+				isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
+				getConfigFile().console !== true
+			)
+				console.error(err);
+
 			this.errors.push(err);
 		};
 		this.terminationHandler = () => {};

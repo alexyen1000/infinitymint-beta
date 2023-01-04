@@ -31,7 +31,7 @@ const example: InfinityMintProject = {
 		},
 	],
 	events: {
-		init: async ({ log, eventEmitter }) => {
+		initialized: async ({ log, eventEmitter }) => {
 			log("project initialized");
 		},
 		failure: async ({ log, event: error }) => {

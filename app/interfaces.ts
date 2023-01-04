@@ -364,10 +364,18 @@ export type InfinityMintConfigEventKeys = keyof InfinityMintConfigEvents;
  */
 export interface InfinityMintEvents {
 	/**
-	 * Fired immediately as soon as it can, depending on where this event is triggered, could be as soon as eventEmitter class is created, or as soon as deploy script requirement for instance.
+	 * Fired when the InfinityConsole is initialized
 	 * @event
 	 */
-	init?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
+	initialized?: FuncSingle<
+		InfinityMintEventEmit<void>,
+		Promise<void | boolean>
+	>;
+	/**
+	 * Fired when the InfinityConsole is reinitialized
+	 * @event
+	 */
+	reloaded?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
 	/**
 	 * @event
 	 */
@@ -678,7 +686,7 @@ export interface InfinityMintProjectSettingsERC721 extends KeyValue {
 /**
  * All of the InfinityMint environment variables
  */
-export interface InfinityMintEnvironment {
+export interface InfinityMintEnvironmentVariables {
 	INFINITYMINT_PROJECT?: string;
 	ETHERSCAN_API_KEY?: string;
 	POLYGONSCAN_API_KEY?: string;
@@ -691,6 +699,7 @@ export interface InfinityMintEnvironment {
 	PIPE_SEPERATE_WARNINGS?: boolean;
 	PIPE_LOG_ERRORS_TO_DEFAULT?: boolean;
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
+	PIPE_SILENCE?: boolean;
 	OVERWRITE_CONSOLE_METHODS?: boolean;
 	INFINITYMINT_DONT_INCLUDE_DEPLOY?: boolean;
 	INFINITYMINT_DONT_INCLUDE_SCRIPTS?: boolean;
@@ -703,7 +712,8 @@ export interface InfinityMintEnvironment {
 	SOLIDITY_USE_NODE_MODULE?: boolean;
 }
 
-export type InfinityMintEnvironmentKeys = keyof InfinityMintEnvironment;
+export type InfinityMintEnvironmentKeys =
+	keyof InfinityMintEnvironmentVariables;
 
 /**
  * The project settings are where you can configure your infinity mint deployments to the logic you require. The name of each key is the same as the keys you defined in the `modules` key. (see {@link InfinityMintProjectModules}). The key is the deployment you would like to configure. You must not configure gem contracts here, but inside of the `gems` key of the project instead.
@@ -904,11 +914,11 @@ export interface InfinityMintConfig {
 	 */
 	project?: string;
 	/**
-	 * Will launch into the infinitymint console if the value of this member is true or equals an object,
+	 * Will launch into the infinitymint console if the value of this member is true or equals an object. See {@link InfinityMintConsoleOptions}
 	 *
 	 * @example
 	 * ```js
-	 * //set console options
+	 * //set console options, see
 	 * console: {
 	 * 	blessed: {
 	 * 		//blessed screen options (see blessed api)
@@ -921,6 +931,31 @@ export interface InfinityMintConfig {
 	 * ```
 	 */
 	console?: InfinityMintConsoleOptions | boolean;
+	/**
+	 * automatically loads InfinityMint if true. The default import of the infinitymint repository will return the InfinityConsole instance of which to work from. See {@link app/console.InfinityConsole}
+	 *
+	 * @example
+	 * ```js
+	 * //infinitymit.config.js has member load which is true
+	 * const infinitymint = require('infinitymint');
+	 * //if we dont have member load which is true we do the line below
+	 * //const { load } = require('infinitymint');
+	 *
+	 * //changes network to ganache
+	 * (async () => {
+	 * 	//if we don't have member load in infinitymint.config.js is true we do the line below
+	 * 	//let infinitymint = await load();
+	 * 	await infinitymint.changeNetwork('ganache');
+	 * })().then(() => {
+	 * 	process.exit(0);
+	 * }).catch((err) => {
+	 * 	console.error(err);
+	 * 	process.exit(1);
+	 * });
+	 * ```
+	 */
+	startup?: boolean;
+
 	/**
 	 * The hardhat configuration, the same as hre.config. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/hardhat>
 	 */
@@ -996,11 +1031,16 @@ export interface InfinityMintConfigSettingsNetwork {
 	testnet?: boolean;
 }
 
+export interface InfinityMintSessionEnvironment extends KeyValue {
+	ganacheMnemonic?: string;
+	project?: string;
+}
+
 /**
  * the interface for the .session file
  */
 export interface InfinityMintSession {
-	environment?: any;
+	environment?: InfinityMintSessionEnvironment;
 	created: number;
 }
 

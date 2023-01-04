@@ -184,6 +184,15 @@ export interface Rectangle {
  */
 export const log = (msg: string | object | number, pipe?: string) => {
 	if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
+
+	//if we aren't overwriting console methods and console is false
+	if (
+		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
+		getConfigFile().console === false &&
+		isEnvTrue("PIPE_SILENCE") === false
+	)
+		console.log(msg);
+
 	Pipes.log(msg.toString(), pipe);
 };
 
@@ -674,7 +683,7 @@ export const requireScript = async (
 	let result = await require(fullPath);
 	result = result.default || result;
 
-	if (console !== undefined && result.events) {
+	if (console !== undefined && result.events !== undefined) {
 		Object.keys(result.events).forEach((key) => {
 			try {
 				console.getEventEmitter().off(key, result.events[key]);
@@ -892,6 +901,7 @@ export const createInfinityMintConfig = (
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config = {
+			console: true,
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
 		module.exports = config;`
@@ -900,6 +910,7 @@ export const createInfinityMintConfig = (
 
 		//please visit docs.infinitymint.app for a more complete starter configuration file
 		const config: InfinityMintConfig = {
+			console: true,
 			hardhat: ${JSON.stringify(config, null, 2)}
 		}
 		export default config;`;
@@ -936,7 +947,13 @@ export const saveSession = (session: InfinityMintSession) => {
 };
 
 export const error = (error: string | Error) => {
-	Pipes.log(error.toString());
+	if (
+		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
+		getConfigFile().console === false
+	)
+		console.error(error);
+
+	Pipes.error(error);
 };
 
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {

@@ -24,7 +24,6 @@ export const tracks = ["f10_f2.mp3", "contents.mp3", "shakes.mp3"].map((file) =>
 let clockInterval;
 
 const onFinished = async (window: InfinityMintWindow) => {
-	console.log("test");
 	//gets the music window
 	let musicWindow = window.getInfinityConsole().getWindow("Music");
 	musicWindow.options.currentTrack =

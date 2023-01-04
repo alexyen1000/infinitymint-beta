@@ -1,9 +1,9 @@
-import { InfinityMintEnvironment } from "@app/interfaces";
+import { InfinityMintEnvironmentVariables } from "@app/interfaces";
 
 /**
  * this file is what is used in creating the default .env variables for infinity mint, not all of the environment variables are listed here. Its interface is defined in the interfaces file, see {@link app/interfaces.InfinityMintEnvironment}.
  */
-const envs: InfinityMintEnvironment = {
+const envs: InfinityMintEnvironmentVariables = {
 	INFINITYMINT_PROJECT: undefined,
 	ETHERSCAN_API_KEY: undefined,
 	POLYGONSCAN_API_KEY: undefined,
@@ -13,6 +13,7 @@ const envs: InfinityMintEnvironment = {
 	PIPE_ECHO_WARNINGS: true,
 	PIPE_LOG_ERRORS_TO_DEFAULT: true,
 	PIPE_SILENCE_UNDEFINED_PIPE: false,
+	PIPE_SILENCE: false,
 	PIPE_SEPERATE_WARNINGS: false,
 	OVERWRITE_CONSOLE_METHODS: false,
 	GANACHE_PORT: 8545,

@@ -1,4 +1,11 @@
-import { InfinityMintConsoleOptions, InfinityMintScript } from "./interfaces";
+import {
+	InfinityMintConfigEventKeys,
+	InfinityMintConsoleOptions,
+	InfinityMintEventEmit,
+	InfinityMintEventKeys,
+	InfinityMintScript,
+	KeyValue,
+} from "./interfaces";
 import {
 	Blessed,
 	BlessedElement,
@@ -19,6 +26,7 @@ import { changeNetwork, getDefaultSigner, getProvider } from "./web3";
 import Pipes from "./pipes";
 import { Dictionary } from "form-data";
 import { BigNumber } from "ethers";
+import events from "events";
 
 //const
 const { v4: uuidv4 } = require("uuid");
@@ -119,7 +127,7 @@ export class InfinityConsole {
 	 * Creates a new event emitter, will remove all listeners on the old event emitter unless first param is true.
 	 * @returns
 	 */
-	public createEventEmitter(dontCleanListeners: boolean) {
+	public createEventEmitter(dontCleanListeners?: boolean) {
 		if (dontCleanListeners !== true)
 			try {
 				if (
@@ -306,6 +314,7 @@ export class InfinityConsole {
 	}
 
 	public async reload() {
+		this.emit("reloaded");
 		Object.keys(this.inputKeys).forEach((key) => {
 			this.unkey(key);
 		});
@@ -775,9 +784,11 @@ export class InfinityConsole {
 
 			try {
 				debugLog(`[${i}] requiring script <${script.name}>`);
-				this.scripts.push(
-					await requireScript(script.dir + "/" + script.base)
+				let scriptSource = await requireScript(
+					script.dir + "/" + script.base,
+					this
 				);
+				this.scripts.push(scriptSource);
 				debugLog(`{green-fg}Success!{/green-fg}`);
 			} catch (error) {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
@@ -792,14 +803,30 @@ export class InfinityConsole {
 		}
 	}
 
+	public emit(
+		eventName: InfinityMintConfigEventKeys | InfinityMintEventKeys,
+		eventParameters?: any,
+		eventType?: any
+	) {
+		debugLog("emitting (" + eventName + ")");
+		return this.eventEmitter.emit(eventName, {
+			infinityConsole: this,
+			event: eventParameters,
+			log: log,
+			eventEmitter: this.eventEmitter,
+			debugLog: debugLog,
+		} as InfinityMintEventEmit<typeof eventType>);
+	}
+
 	public async initialize() {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
+		this.createEventEmitter();
 		await this.refreshWeb3();
 		await this.refreshScripts();
 
-		log(`initializing InfinityConsole<${this.sessionId}>`);
+		log(`loading InfinityConsole<${this.sessionId}>`);
 
 		if (this.options?.dontDraw !== true)
 			try {
@@ -945,7 +972,8 @@ export class InfinityConsole {
 				`not starting blessed on InfinityConsole<${this.sessionId}>`
 			);
 
-		log(`initialized InfinityConsole<${this.sessionId}>`);
+		log(`successfully loaded InfinityConsole<${this.sessionId}>`);
+		this.emit("initialized");
 	}
 }
 export default InfinityConsole;
