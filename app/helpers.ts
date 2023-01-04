@@ -679,6 +679,11 @@ export const getPackageJson = () => {
 	);
 };
 
+/**
+ *
+ * @param globPattern
+ * @returns
+ */
 export const findFiles = (globPattern: string) => {
 	debugLog("searching for files with glob pattern => " + globPattern);
 	return new Promise<string[]>((resolve, reject) => {
