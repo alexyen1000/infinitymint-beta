@@ -640,6 +640,26 @@ export const findWindows = async (roots?: PathLike[]) => {
 	return files;
 };
 
+export const getInfinityMintVersion = () => {
+	if (isInfinityMint()) return getPackageJson()?.version || "1.0.0";
+
+	if (
+		!fs.existsSync(
+			process.cwd() + "/node_modules/infinitymint/package.json"
+		)
+	)
+		return "1.0.0";
+
+	return (
+		JSON.parse(
+			fs.readFileSync(
+				process.cwd() + "/node_modules/infinitymint/package.json",
+				{ encoding: "utf-8" }
+			)
+		)?.version || "1.0.0"
+	);
+};
+
 export const getPackageJson = () => {
 	if (
 		!fs.existsSync("./../package.json") &&
@@ -659,6 +679,11 @@ export const getPackageJson = () => {
 	);
 };
 
+/**
+ *
+ * @param globPattern
+ * @returns
+ */
 export const findFiles = (globPattern: string) => {
 	debugLog("searching for files with glob pattern => " + globPattern);
 	return new Promise<string[]>((resolve, reject) => {
@@ -871,6 +896,9 @@ export const readJson = (fileName: string) => {
 export const createEnvFile = (source: any) => {
 	source = source?.default || source;
 
+	//dont do node modules
+	if (isInfinityMint()) source.SOLIDITY_USE_NODE_MODULE = false;
+
 	let stub = ``;
 	Object.keys(source).forEach((key) => {
 		stub = `${stub}${key.toUpperCase()}=${
@@ -907,13 +935,22 @@ export const preInitialize = (isJavascript?: boolean) => {
 			path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
 				? process.cwd() + "/examples/example.env.ts"
 				: process.cwd() +
-				  "/node_modules/infinitymint/examples/example.env.ts";
+				  "/node_modules/infinitymint/dist/examples/example.env.js";
 
 			if (!fs.existsSync(path))
 				throw new Error(
 					"could not find: " + path + " to create .env file with"
 				);
-			createEnvFile(require(path));
+
+			try {
+				createEnvFile(require(path));
+			} catch (error) {
+				console.log(
+					"Could not create .env file for typescript environment, falling back to .env"
+				);
+				preInitialize(true);
+				return;
+			}
 		} else {
 			path = fs.existsSync(process.cwd() + "/examples/js/example.env")
 				? process.cwd() + "/examples/js/example.env"

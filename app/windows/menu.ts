@@ -2,6 +2,7 @@ import {
 	calculateWidth,
 	debugLog,
 	getConfigFile,
+	getInfinityMintVersion,
 	getPackageJson,
 	getSolidityFolder,
 	isEnvTrue,
@@ -243,7 +244,7 @@ Menu.initialize = async (window, frame, blessed) => {
 
 	let packageVersion = "1.0.1";
 	try {
-		packageVersion = getPackageJson()?.version || "1.0.1";
+		packageVersion = getInfinityMintVersion();
 	} catch (error) {
 		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 

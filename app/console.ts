@@ -13,6 +13,7 @@ import {
 	findScripts,
 	findWindows,
 	getConfigFile,
+	getInfinityMintVersion,
 	getPackageJson,
 	isEnvTrue,
 	log,
@@ -541,7 +542,9 @@ export class InfinityConsole {
 				//disable the select if the current window is visible
 				if (this.currentWindow?.isVisible()) return;
 				//set the current window to the one that was selected
-				this.currentWindow = this.windows[selected];
+				this.currentWindow = this.windows.filter(
+					(window) => !window.isHiddenFromMenu()
+				)[selected];
 				if (!this.currentWindow.hasInitialized()) {
 					//reset it
 					this.currentWindow.destroy();
@@ -657,9 +660,7 @@ export class InfinityConsole {
 				error.message
 			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
 				error.stack
-			} \n\n {white-bg}{black-fg}infinitymint-beta ${
-				getPackageJson()?.version
-			}{/black-fg}{/white-bg}`,
+			} \n\n {white-bg}{black-fg}infinitymint-beta ${getInfinityMintVersion()}{/black-fg}{/white-bg}`,
 			tags: true,
 			border: {
 				type: "line",
