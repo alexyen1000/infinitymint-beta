@@ -214,6 +214,18 @@ export class InfinityConsole {
 					this.windowManager.show();
 				},
 			],
+			up: [
+				(ch: string, key: string) => {
+					if (this.currentWindow?.isVisible() === true) return;
+					this.windowManager.focus();
+				},
+			],
+			down: [
+				(ch: string, key: string) => {
+					if (this.currentWindow?.isVisible() === true) return;
+					this.windowManager.focus();
+				},
+			],
 			"C-c": [
 				(ch: string, key: string) => {
 					if (!this.allowExit) {
@@ -390,8 +402,13 @@ export class InfinityConsole {
 	}
 
 	public async stopAudio() {
-		this.currentAudio?.kill();
-		await this.audioKilled();
+		if (this.currentAudio?.kill) {
+			this.currentAudio?.kill();
+			await this.audioKilled();
+		} else {
+			this.currentAudioAwaitingKill = false;
+			this.currentAudioKilled = true;
+		}
 	}
 
 	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {

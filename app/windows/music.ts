@@ -64,15 +64,8 @@ Music.initialize = async (window, frame, blessed) => {
 	window.on("destroy", () => {
 		if (window.getInfinityConsole().hasAudio())
 			window.getInfinityConsole().stopAudio();
-	});
 
-	window.key("p", async () => {
-		if (window.getInfinityConsole().isAwaitingKill()) {
-			warning("awaiting audio to be killed, cannot change track");
-			return;
-		}
-
-		await onFinished(window);
+		clearInterval(clockInterval);
 	});
 };
 Music.setBackgroundThink(true);

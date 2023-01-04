@@ -402,30 +402,31 @@ Menu.initialize = async (window, frame, blessed) => {
 		).toString()}{/black-fg}{/white-bg}`,
 	});
 
-	window.createElement("infoLabel", {
-		left: -1,
-		bottom: 1,
-		parent: container,
-		width: "shrink",
-		height: "shrink",
-		tags: true,
-		alwaysFront: true,
-		bold: true,
-		padding: 1,
-		style: {
-			border: {
-				fg: "#f0f0f0",
+	if (container.height >= 9)
+		window.createElement("infoLabel", {
+			left: -1,
+			bottom: 1,
+			parent: container,
+			width: "shrink",
+			height: "shrink",
+			tags: true,
+			alwaysFront: true,
+			bold: true,
+			padding: 0,
+			style: {
+				border: {
+					fg: "#f0f0f0",
+				},
 			},
-		},
-		border: window.getBorder(),
-		content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
-			window.getInfinityConsole().getScripts().length
-		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
-			isTypescript() ? "true" : "false"
-		}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
-			Object.keys(hre.tasks).length
-		}{/white-fg}{/gray-bg}`,
-	});
+			border: window.getBorder(),
+			content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
+				window.getInfinityConsole().getScripts().length
+			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
+				isTypescript() ? "true" : "false"
+			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
+				Object.keys(hre.tasks).length
+			}{/white-fg}{/gray-bg}`,
+		});
 
 	createButtons(window);
 };

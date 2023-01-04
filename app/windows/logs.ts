@@ -47,7 +47,6 @@ Logs.think = (window, frame, blessed) => {
 			currentCount = currentCount + object.count;
 		});
 
-	element.focus();
 	element.setLabel(
 		"{bold}{white-fg}Pipe: {/white-fg}" + window.options.pipe + "{/bold}"
 	);
@@ -193,6 +192,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 	console.setBack();
+	console.focus();
 
 	//create buttons
 	let alwaysScroll = window.createElement("alwaysScroll", {
@@ -397,15 +397,14 @@ Logs.initialize = async (window, frame, blessed) => {
 	form.on("select", (el: any, selected: any) => {
 		window.options.pipe = keys[selected];
 		window.saveOptions();
-		console.setScroll(0);
 		form.hide();
-		window.getScreen().render();
 		console.setContent("");
+		console.setScroll(0);
 		lastLength = 0;
 		extraLines = 0;
 		lastCount = 0;
+		console.focus();
 	});
-	form.focus();
 	form.hide();
 
 	//create buttons
@@ -431,16 +430,17 @@ Logs.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	changePipe.setFront();
-	changePipe.on("click", () => {
+
+	let onChangePipe = () => {
+		if (!window.isVisible()) return;
+
 		form.setFront();
 		form.toggle();
-		window.options.selectedLine = 0;
-		lastLength = 0;
-		extraLines = 0;
-		lastCount = 0;
-		window.saveOptions();
-	});
+		form.focus();
+	};
+
+	changePipe.setFront();
+	changePipe.on("click", onChangePipe);
 
 	let showDuplicateEntries = window.createElement("showDuplicateEntries", {
 		bottom: 0,
@@ -497,12 +497,14 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.saveOptions();
 	});
 
+	window.key("p", onChangePipe);
+
 	lastLength = 0;
 	extraLines = 0;
 	lastCount = 0;
 };
 
-Logs.setShouldInstantiate(true);
-Logs.setBackgroundThink(true);
+Logs.setShouldInstantiate(false);
+Logs.setBackgroundThink(false);
 
 export default Logs;

@@ -1,13 +1,10 @@
 import { Dictionary } from "form-data";
 import {
 	Rectangle,
-	Vector,
 	FuncTripple,
-	log,
 	debugLog,
 	readSession,
 	saveSession,
-	getSolidityFolder,
 	isEnvTrue,
 	calculateWidth,
 	warning,
@@ -16,7 +13,6 @@ import {
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
-import { getDefaultAccountIndex, getDefaultSigner } from "./web3";
 
 const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed") as Blessed;

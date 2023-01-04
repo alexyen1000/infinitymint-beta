@@ -52,6 +52,7 @@ Networks.initialize = async (window, frame, blessed) => {
 		session.environment.defaultNetwork = keys[selected];
 		saveSession(session);
 	});
+	form.focus();
 };
 
 export default Networks;
