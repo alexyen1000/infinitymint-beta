@@ -930,7 +930,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 			path = fs.existsSync(process.cwd() + "/examples/example.env.ts")
 				? process.cwd() + "/examples/example.env.ts"
 				: process.cwd() +
-				  "/node_modules/infinitymint/examples/example.env.ts";
+				  "/node_modules/infinitymint/dist/examples/example.env.js";
 
 			if (!fs.existsSync(path))
 				throw new Error(
