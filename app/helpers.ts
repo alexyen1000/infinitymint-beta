@@ -202,6 +202,14 @@ export const log = (msg: string | object | number, pipe?: string) => {
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
+	///TODO: implement as an option on the pipe
+	if (Pipes.getPipe("debug").logs.length > 1480) {
+		Pipes.getPipe("debug").logs = [];
+		log(
+			"{red-fg}debug pipe cleaned due to exceeding 1480{red-fg}",
+			"debug"
+		);
+	}
 	log(msg, "debug");
 };
 
@@ -746,6 +754,7 @@ export const requireScript = async (
 
 	let result = await require(fullPath);
 	result = result.default || result;
+	result.fileName = fullPath;
 
 	if (console !== undefined && result.events !== undefined) {
 		Object.keys(result.events).forEach((key) => {

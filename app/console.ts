@@ -206,8 +206,6 @@ export class InfinityConsole {
 						return;
 					}
 
-					this.windowManager.setBack();
-
 					if (this?.currentWindow === undefined) {
 						this.setWindow("CloseBox");
 						return;
@@ -295,6 +293,7 @@ export class InfinityConsole {
 				this.registerEvents();
 			}
 			this.currentWindow.show();
+			this.windowManager.setBack();
 		}
 	}
 
@@ -875,16 +874,6 @@ export class InfinityConsole {
 				this.windows[i].setContainer(container);
 				this.windows[i].setFileName(fileName);
 				this.windows[i].setScreen(this.screen);
-				//create the window
-				await this.windows[i].create();
-				//then hide it
-				this.windows[i].hide();
-				//register events
-				this.registerEvents(this.windows[i]);
-				this.windows[i].log(
-					"{green-fg}successfully refreshed {/green-fg} => " +
-						this.windows[i].getFileName()
-				);
 			}
 		}
 	}

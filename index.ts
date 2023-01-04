@@ -42,12 +42,6 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 			session.environment?.project || process.env.INFINITYMINT_PROJECT;
 		saveSession(session);
 	}
-
-	debugLog("printing hardhat tasks");
-	Object.values(hre.tasks).forEach((task, index) => {
-		debugLog(`[${index}] => ${task.name}`);
-	});
-
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
 	//register current network pipes
@@ -100,10 +94,6 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 			getSolidityFolder() +
 			")"
 	);
-	contracts.forEach((contract, index) => {
-		let split = contract.split(":");
-		debugLog(`[${index}] => (${split[1]}) => ${split[0]}`);
-	});
 
 	//start a network pipe if we aren't ganache as we do something different if we are
 	if (hre.network.name !== "ganache") startNetworkPipe();

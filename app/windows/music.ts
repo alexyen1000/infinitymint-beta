@@ -15,7 +15,7 @@ const Music = new InfinityMintWindow(
 	}
 );
 
-export const tracks = ["f10_f2.mp3", "contents.mp3", "shakes.mp3"].map((file) =>
+export const tracks = ["contents.mp3", "menu.mp3"].map((file) =>
 	isInfinityMint()
 		? "/resources/ost/" + file
 		: "/node_modules/infinitymint/resources/ost/" + file

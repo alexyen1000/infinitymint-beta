@@ -1170,6 +1170,7 @@ export interface InfinityMintConsoleOptions {
 
 export interface InfinityMintScript {
 	name?: string;
+	fileName?: string;
 	description?: string;
 	/**
 	 * called when the script is executed, is passed {@link InfinityMintScriptParameters}. Return false to signify that this script failed.
@@ -1183,6 +1184,8 @@ export interface InfinityMintScript {
 	 * registers this InfinityMint script as a hardhat task as well.
 	 */
 	task?: true;
+	solidityFolder?: string;
+	author?: KeyValue | KeyValue[];
 }
 
 /**

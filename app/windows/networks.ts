@@ -30,15 +30,17 @@ Networks.initialize = async (window, frame, blessed) => {
 				},
 			},
 			style: {
-				bg: "grey",
+				bg: "black",
 				fg: "white",
 				item: {
 					hover: {
-						bg: "white",
+						bg: "green",
+						fg: "black",
 					},
 				},
 				selected: {
-					bg: "white",
+					bg: "grey",
+					fg: "green",
 					bold: true,
 				},
 			},
