@@ -19,6 +19,7 @@ import {
 	getSolidityFolder,
 	getConfigFile,
 	isEnvSet,
+	warning,
 } from "./app/helpers";
 import { InfinityMintConsoleOptions } from "./app/interfaces";
 
@@ -81,7 +82,7 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		let provider = await GanacheServer.start(obj);
 		startNetworkPipe(provider as Web3Provider, "ganache");
 	} else {
-		debugLog("! WARNING ! no ganache network found");
+		warning("no ganache network found");
 	}
 
 	let artifacts = hre.artifacts;

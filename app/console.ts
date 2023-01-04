@@ -422,7 +422,7 @@ export class InfinityConsole {
 		this.currentAudioAwaitingKill = true;
 		await new Promise((resolve, reject) => {
 			let int = setInterval(() => {
-				if (this.currentAudioKilled) {
+				if (this.currentAudioKilled || !this.currentWindow.isAlive()) {
 					clearInterval(int);
 					resolve(true);
 					this.currentAudioAwaitingKill = false;
