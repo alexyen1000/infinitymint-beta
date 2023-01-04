@@ -203,7 +203,10 @@ export const log = (msg: string | object | number, pipe?: string) => {
  */
 export const debugLog = (msg: string | object | number) => {
 	///TODO: implement as an option on the pipe
-	if (Pipes.getPipe("debug").logs.length > 1480) {
+	if (
+		Pipes.getPipe("debug") !== undefined &&
+		Pipes.getPipe("debug").logs.length > 1480
+	) {
 		Pipes.getPipe("debug").logs = [];
 		log(
 			"{red-fg}debug pipe cleaned due to exceeding 1480{red-fg}",
