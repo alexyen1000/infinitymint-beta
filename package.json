@@ -50,6 +50,7 @@
     "infinitymint": "^1.0.14",
     "module-alias": "^2.2.2",
     "play-sound": "^1.1.5",
+    "sharp": "^0.31.3",
     "uuid": "^9.0.0"
   }
 }
