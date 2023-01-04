@@ -88,7 +88,7 @@ Logs.think = (window, frame, blessed) => {
 					let currentExtraLines = extraLines;
 					for (let i = 0; i < object.count; i++) {
 						let finalLine =
-							lineCount(object.index + "#" + i) + line.toString();
+							lineCount(object.index + " " + i) + line.toString();
 						finalLine =
 							(object.index + i) % 2 === 0
 								? `{white-fg}${finalLine}{/white-fg}`
@@ -449,7 +449,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		height: "shrink",
 		padding: 1,
 		content:
-			"Expand Entries [" +
+			"Show Dupe Entries [" +
 			(window.options.showDuplicateEntries ? "O" : "X") +
 			"]",
 		tags: true,
@@ -475,7 +475,7 @@ Logs.initialize = async (window, frame, blessed) => {
 			? "green"
 			: "red";
 		showDuplicateEntries.setContent(
-			"Expand Entries [" +
+			"Show Dupe Entries [" +
 				(window.options.showDuplicateEntries ? "O" : "X") +
 				"]"
 		);
