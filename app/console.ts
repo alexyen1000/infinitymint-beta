@@ -31,6 +31,14 @@ import Pipes from "./pipes";
 import { Dictionary } from "form-data";
 import { BigNumber } from "ethers";
 import { getProjectDeploymentClasses } from "./deployments";
+import {
+	getImportCache,
+	hasImportCache,
+	importCount,
+	ImportType,
+	readImportCache,
+} from "./imports";
+import fs from "fs";
 
 //const
 const { v4: uuidv4 } = require("uuid");
@@ -65,6 +73,7 @@ export class InfinityConsole {
 	private currentAudioKilled: boolean;
 	private currentAudioAwaitingKill: boolean;
 	private player: any;
+	private imports: ImportType;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -305,6 +314,8 @@ export class InfinityConsole {
 		Object.keys(this.inputKeys).forEach((key) => {
 			this.unkey(key);
 		});
+		//get imports again (TEMPORARY)
+		this.imports = await getImportCache();
 		this.currentWindow = undefined;
 		this.windows.forEach((window) => window.destroy());
 		this.windows = [];
@@ -314,6 +325,8 @@ export class InfinityConsole {
 		this.network = undefined;
 		this.windowManager = undefined;
 		this.registerDefaultKeys();
+
+		await this.refreshImports(true);
 		await this.initialize();
 		this.updateWindowsList();
 	}
@@ -326,6 +339,10 @@ export class InfinityConsole {
 		return this.windows
 			.filter((thatWindow) => thatWindow.getId() === id.toString())
 			.pop();
+	}
+
+	public getImports() {
+		return this.imports;
 	}
 
 	public getWindowByAge(name: string, oldest: boolean) {
@@ -906,12 +923,30 @@ export class InfinityConsole {
 		}
 	}
 
+	public async refreshImports(dontUseCache?: boolean) {
+		this.imports =
+			hasImportCache() && dontUseCache !== true
+				? readImportCache()
+				: await getImportCache();
+
+		if (dontUseCache) {
+			debugLog(`found <${importCount(this.imports)}> imports`);
+			debugLog("saving imports to /temp/imports.json");
+			fs.writeFileSync(
+				process.cwd() + "/temp/imports.json",
+				JSON.stringify(this.imports, null, 2)
+			);
+		}
+	}
+
 	public async initialize() {
 		//if the network member has been defined then we have already initialized
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
 		this.createEventEmitter();
+
+		await this.refreshImports();
 		await this.refreshWindows();
 		await this.refreshWeb3();
 		await this.refreshScripts();

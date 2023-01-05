@@ -13,6 +13,7 @@ import {
 import { InfinityMintWindow } from "../window";
 import hre from "hardhat";
 import { getDefaultAccountIndex } from "../web3";
+import { importCount } from "@app/imports";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
@@ -427,7 +428,9 @@ Menu.initialize = async (window, frame, blessed) => {
 				isTypescript() ? "true" : "false"
 			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
 				Object.keys(hre.tasks).length
-			}{/white-fg}{/gray-bg}`,
+			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}imports =>{/magenta-fg} {white-fg}${importCount(
+				window.getInfinityConsole().getImports()
+			)}{/white-fg}{/gray-bg}`,
 		});
 
 	createButtons(window);

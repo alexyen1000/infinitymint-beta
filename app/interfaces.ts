@@ -1082,7 +1082,9 @@ export interface InfinityMintConfigSettingsNetworks
 /**
  * @see {@link InfinityMintConfigSettings}
  */
-export interface InfinityMintConfigSettingsCompile extends KeyValue {}
+export interface InfinityMintConfigSettingsCompile extends KeyValue {
+	supportedExtensions?: string[];
+}
 
 /**
  * here you can specify the infinity mint settings for the `networks`, `deploy` and `build` and `export` steps. You can configure infinity mint here.

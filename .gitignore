@@ -21,6 +21,7 @@ infinitymint.config.ts
 /alpha/__gems/
 /beta/__gems/
 /*/__gems/
+temp/
 
 .DS_Store
 dist/
