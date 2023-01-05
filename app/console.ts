@@ -876,7 +876,6 @@ export class InfinityConsole {
 	 * @param windowOrIdOrName
 	 */
 	public async destroyWindow(windowOrIdOrName: InfinityMintWindow | string) {
-		console.log("destroying window");
 		for (let i = 0; i < this.windows.length; i++) {
 			if (
 				this.windows[i].toString() === windowOrIdOrName.toString() ||

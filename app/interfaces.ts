@@ -822,7 +822,7 @@ export interface InfinityMintProjectModules extends KeyValue {
 	erc721?: string;
 }
 
-export type Iincremental = keyof InfinityMintProjectModules;
+export type InfinityMintProjetModulesKeys = keyof InfinityMintProjectModules;
 
 export interface InfinityMintProjectPathExport {
 	data: string;
@@ -1467,7 +1467,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
 	 */
-	module?: Iincremental[] | string;
+	module?: InfinityMintProjetModulesKeys[] | string;
 	/**
 	 * Will be the filename of the deploy script by default.
 	 */
