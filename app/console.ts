@@ -173,9 +173,17 @@ export class InfinityConsole {
 			],
 			"C-r": [
 				(ch: string, key: string) => {
-					if (this.currentWindow && this.currentWindow.isVisible())
+					if (
+						this.currentWindow &&
+						this.currentWindow.isVisible() &&
+						this.currentWindow.canRefresh()
+					)
 						this.reloadWindow(this.currentWindow);
-					else this.reload();
+					else if (
+						!this.currentWindow.canRefresh() &&
+						!this.currentWindow.isVisible()
+					)
+						this.reload();
 				},
 			],
 			"C-q": [

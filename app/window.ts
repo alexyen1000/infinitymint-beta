@@ -78,6 +78,7 @@ export class InfinityMintWindow {
 	protected hideMinimizeButton: boolean;
 	protected hideRefreshButton: boolean;
 	protected hideFromMenu: boolean;
+	protected refresh: boolean;
 	protected z: number;
 	protected screen: BlessedElement;
 	protected container?: InfinityConsole;
@@ -122,6 +123,7 @@ export class InfinityMintWindow {
 		this.initialized = false;
 		this.destroyId = true;
 		this.autoInstantiate = false;
+		this.refresh = true;
 		this.options = options || {};
 		this.initialCreation = Date.now();
 		this.elements = {};
@@ -233,10 +235,18 @@ export class InfinityMintWindow {
 		return this.backgroundThink;
 	}
 
+	/**
+	 * sets if the window should destroy its id upon being destoryed. or have a persistant id.
+	 * @param shouldDestroyId
+	 */
 	public setDestroyId(shouldDestroyId: boolean) {
 		this.destroyId = shouldDestroyId;
 	}
 
+	/**
+	 * Set the current window container / infinityconsole / terminal container for this window
+	 * @param container
+	 */
 	public setContainer(container: InfinityConsole) {
 		if (this.container !== undefined)
 			throw new Error(
@@ -246,14 +256,26 @@ export class InfinityMintWindow {
 		this.container = container;
 	}
 
+	/**
+	 * Opens another infinity mint window, closing this one.
+	 * @param name
+	 */
 	public async openWindow(name: string) {
 		this.container?.gotoWindow(name);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	public getCreation() {
 		return this.creation;
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	public getInitialCreation() {
 		return this.initialCreation;
 	}
@@ -330,9 +352,26 @@ export class InfinityMintWindow {
 		clone.setHideMinimizeButton(this.hideMinimizeButton);
 		clone.setHideCloseButton(this.hideCloseButton);
 		clone.setHideRefreshButton(this.hideRefreshButton);
+		clone.setCanRefresh(this.refresh);
 		clone.data = { ...this.data, ...(data || {}) };
 		clone.data.clone = true;
 		return clone;
+	}
+
+	/**
+	 * Returns true if this window can be refreshed
+	 * @returns
+	 */
+	public canRefresh() {
+		return this.refresh === true;
+	}
+
+	/**
+	 * Sets if this window can be refreshed
+	 * @param canRefresh
+	 */
+	public setCanRefresh(canRefresh: boolean) {
+		this.refresh = canRefresh;
 	}
 
 	/**
@@ -722,11 +761,16 @@ export class InfinityMintWindow {
 		);
 	}
 
+	/**
+	 *
+	 * @param hideRefreshButton
+	 */
 	public setHideRefreshButton(hideRefreshButton?: boolean) {
 		this.hideRefreshButton = hideRefreshButton;
 
 		if (this.refreshButton) {
-			if (this.hideRefreshButton) this.refreshButton.hide();
+			if (this.hideRefreshButton || !this.canRefresh)
+				this.refreshButton.hide();
 			else this.refreshButton.show();
 		}
 	}
@@ -936,7 +980,8 @@ export class InfinityMintWindow {
 
 		if (this.hideCloseButton) this.closeButton.hide();
 		if (this.hideMinimizeButton) this.hideButton.hide();
-		if (this.hideRefreshButton) this.refreshButton.hide();
+		if (this.hideRefreshButton || !this.canRefresh)
+			this.refreshButton.hide();
 
 		this.log("calling initialize");
 		try {
