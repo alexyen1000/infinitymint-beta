@@ -60,7 +60,13 @@ Projects.initialize = async (window, frame, blessed) => {
 	let scripts = await findProjects();
 	let projects = scripts.map(
 		(project) =>
-			`{underline}${project.base}{/underline} {black-fg}(${project.dir}){black-fg}`
+			`${
+				project.ext === ".js"
+					? "{yellow-fg}js{/yellow-fg}"
+					: "{blue-fg}ts{/blue-fg}"
+			} {underline}${project.name}{/underline} {gray-fg}(${
+				project.dir + "/" + project.base
+			}){gray-fg}`
 	);
 	list.setItems(projects);
 	list.on("select", (el: any, selected: any) => {

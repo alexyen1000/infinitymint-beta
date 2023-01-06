@@ -869,6 +869,8 @@ export const findProjects = async (roots?: PathLike[]) => {
 		process.cwd() + "/projects/",
 		...(config.roots || []).map(
 			(root: string) =>
+				process.cwd() +
+				"/" +
 				root +
 				(root[root.length - 1] !== "/" ? "/projects/" : "projects/")
 		),

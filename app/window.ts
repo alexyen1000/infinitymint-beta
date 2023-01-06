@@ -701,10 +701,10 @@ export class InfinityMintWindow {
 			}[${this.getInfinityConsole().getCurrentChainId()}] {underline}${account.address.substring(
 				0,
 				16
-			)}...{/underline}{/yellow-fg} {black-bg}{blue-fg}${
+			)}...{/underline}{/yellow-fg} {black-bg}{white-fg}${
 				getCurrentProjectPath().base ||
 				"{red-fg}NO CURRENT PROJECT{red-fg}"
-			}{/blue-fg}{/black-bg} {white-fg}{bold}${etherBalance.substring(
+			}{/white-fg}{/black-bg} {white-fg}{bold}${etherBalance.substring(
 				0,
 				8
 			)} ETH ($${(parseFloat(etherBalance) * 2222).toFixed(

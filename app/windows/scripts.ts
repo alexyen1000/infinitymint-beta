@@ -226,9 +226,9 @@ Scripts.initialize = async (window, frame, blessed) => {
 				script.javascript
 					? "{yellow-fg}js{/yellow-fg}"
 					: "{blue-fg}ts{/blue-fg}"
-			} {bold}${script.name}{/bold} {black-fg}(${
+			} {bold}${script.name}{/bold} {gray-fg}(${
 				script.fileName
-			}){/black-fg}`
+			}){/gray-fg}`
 	);
 	form.setItems(names);
 	form.on("select", runSelected);

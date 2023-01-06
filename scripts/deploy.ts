@@ -43,7 +43,7 @@ const deploy: InfinityMintScript = {
 				) as InfinityMintTempProject;
 		} else project = getCurrentProject() as InfinityMintTempProject;
 
-		if (script.args.setPipe.value === true) {
+		if (script.args?.setPipe?.value === true) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = "deploy_" + project.name;
 			if (script.infinityConsole.getPipes().pipes[pipeName] === undefined)

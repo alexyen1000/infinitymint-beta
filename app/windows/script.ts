@@ -120,6 +120,7 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.on("click", () => {
 		window.openWindow("Scripts");
+		window.getInfinityConsole().destroyWindow(window);
 	});
 	close.hide();
 
