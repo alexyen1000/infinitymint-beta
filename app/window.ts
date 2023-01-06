@@ -56,6 +56,7 @@ export class InfinityMintWindow {
 	 */
 	protected height: number | string;
 	protected hideButton: BlessedElement;
+	protected refreshButton: BlessedElement;
 	protected closeButton: BlessedElement;
 	protected frame: BlessedElement;
 	/**
@@ -75,6 +76,7 @@ export class InfinityMintWindow {
 	protected scrollbar: any;
 	protected hideCloseButton: boolean;
 	protected hideMinimizeButton: boolean;
+	protected hideRefreshButton: boolean;
 	protected hideFromMenu: boolean;
 	protected z: number;
 	protected screen: BlessedElement;
@@ -144,7 +146,6 @@ export class InfinityMintWindow {
 	public isHiddenFromMenu() {
 		return this.hideFromMenu;
 	}
-
 	/**
 	 * Will hide the close button if true, can be called when ever but be aware screen must be re-rendered in some circumstances.
 	 * @param hideCloseButton
@@ -328,6 +329,7 @@ export class InfinityMintWindow {
 		clone.setShouldInstantiate(this.autoInstantiate);
 		clone.setHideMinimizeButton(this.hideMinimizeButton);
 		clone.setHideCloseButton(this.hideCloseButton);
+		clone.setHideRefreshButton(this.hideRefreshButton);
 		clone.data = { ...this.data, ...(data || {}) };
 		clone.data.clone = true;
 		return clone;
@@ -720,6 +722,15 @@ export class InfinityMintWindow {
 		);
 	}
 
+	public setHideRefreshButton(hideRefreshButton?: boolean) {
+		this.hideRefreshButton = hideRefreshButton;
+
+		if (this.refreshButton) {
+			if (this.hideRefreshButton) this.refreshButton.hide();
+			else this.refreshButton.show();
+		}
+	}
+
 	/**
 	 *
 	 * @param key
@@ -899,7 +910,7 @@ export class InfinityMintWindow {
 		this.hideButton.on("click", () => {
 			this.hide();
 		});
-		let refreshButton = this.createElement("refreshButton", {
+		this.refreshButton = this.createElement("refreshButton", {
 			top: -1,
 			right: this.hideCloseButton
 				? calculateWidth(this.hideButton) + 1
@@ -919,12 +930,13 @@ export class InfinityMintWindow {
 				},
 			},
 		});
-		refreshButton.on("click", () => {
+		this.refreshButton.on("click", () => {
 			this.getInfinityConsole().reloadWindow(this);
 		});
 
 		if (this.hideCloseButton) this.closeButton.hide();
 		if (this.hideMinimizeButton) this.hideButton.hide();
+		if (this.hideRefreshButton) this.refreshButton.hide();
 
 		this.log("calling initialize");
 		try {

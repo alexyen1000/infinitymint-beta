@@ -277,25 +277,30 @@ export class InfinityConsole {
 				continue;
 
 			this.setLoading("Reloading " + window.name);
-			let shouldInstantiate = false;
-			if (
-				this.currentWindow.toString() === window.toString() ||
-				this.currentWindow.name === window.name
-			) {
-				shouldInstantiate = true;
-				this.currentWindow.hide();
-			}
-			let fileName = window.getFileName();
-			window.log("reloading");
-			window.destroy();
-			this.windows[i] = undefined;
+			try {
+				let shouldInstantiate = false;
+				if (
+					this.currentWindow.toString() === window.toString() ||
+					this.currentWindow.name === window.name
+				) {
+					shouldInstantiate = true;
+					this.currentWindow.hide();
+				}
+				let fileName = window.getFileName();
+				window.log("reloading");
+				window.destroy();
 
-			let newWindow = requireWindow(fileName);
-			newWindow.setFileName(fileName);
-			this.windows[i] = newWindow;
-			this.currentWindow = newWindow;
-			if (shouldInstantiate) {
-				await this.createCurrentWindow();
+				let newWindow = requireWindow(fileName);
+				newWindow.setFileName(fileName);
+
+				this.windows[i] = newWindow;
+				this.currentWindow = newWindow;
+				if (shouldInstantiate) {
+					await this.createCurrentWindow();
+				}
+			} catch (error) {
+				this.stopLoading();
+				throw error;
 			}
 			this.stopLoading();
 		}

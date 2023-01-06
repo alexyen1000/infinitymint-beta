@@ -25,6 +25,7 @@ const Script = new InfinityMintWindow(
 );
 
 Script.setBackgroundThink(true);
+Script.setHideRefreshButton(true);
 Script.setHiddenFromMenu(true);
 Script.initialize = async (window, frame, blessed) => {
 	if (window.data.script === undefined)
