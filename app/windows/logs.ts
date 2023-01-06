@@ -452,7 +452,7 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let deletePipe = window.createElement("delete", {
 		top: 2,
-		right: 18 + calculateWidth(changePipe, save, newPipe),
+		right: 16 + calculateWidth(changePipe, save, newPipe),
 		width: "shrink",
 		height: "shrink",
 		padding: 0,

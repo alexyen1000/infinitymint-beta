@@ -2,7 +2,7 @@ import {
 	calculateWidth,
 	debugLog,
 	getConfigFile,
-	getCurrentProject,
+	getCurrentProjectPath,
 	getInfinityMintVersion,
 	getPackageJson,
 	getSolidityFolder,
@@ -197,15 +197,15 @@ Menu.think = (window, frame, blessed) => {
 
 Menu.initialize = async (window, frame, blessed) => {
 	window.on("hide", () => {
-		if (!getCurrentProject()) noProject.show();
+		if (!getCurrentProjectPath()) noProject.show();
 		else noProject.hide();
 	});
 	window.on("show", () => {
-		if (!getCurrentProject()) noProject.show();
+		if (!getCurrentProjectPath()) noProject.show();
 		else noProject.hide();
 	});
 	window.on("focus", () => {
-		if (!getCurrentProject()) noProject.show();
+		if (!getCurrentProjectPath()) noProject.show();
 		else noProject.hide();
 	});
 
@@ -447,7 +447,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		window.openWindow("Projects");
 	});
 
-	if (!getCurrentProject()) noProject.show();
+	if (!getCurrentProjectPath()) noProject.show();
 	else noProject.hide();
 
 	createButtons(window);

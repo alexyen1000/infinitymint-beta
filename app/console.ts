@@ -40,6 +40,7 @@ import {
 	saveImportTache as saveImportCache,
 } from "./imports";
 import fs from "fs";
+import infinitymint from "../index";
 
 //const
 const { v4: uuidv4 } = require("uuid");
@@ -647,8 +648,8 @@ export class InfinityConsole {
 
 	public displayError(error: Error, onClick?: any) {
 		if (this.errorBox) {
-			this.errorBox = undefined;
 			this.errorBox?.destroy();
+			this.errorBox = undefined;
 		}
 
 		this.errorBox = blessed.box({
@@ -851,11 +852,30 @@ export class InfinityConsole {
 						script.dir + "/" + script.base
 					}`
 				);
-				let scriptSource = await requireScript(
-					script.dir + "/" + script.base,
-					this
-				);
-				this.scripts.push(scriptSource);
+
+				if (script.ext === ".ts") {
+					let scriptSource = await requireScript(
+						script.dir + "/" + script.base,
+						this
+					);
+					scriptSource.fileName = script.dir + "/" + script.base;
+					this.scripts.push(scriptSource);
+				} else {
+					this.scripts.push({
+						name: script.name,
+						fileName: script.dir + "/" + script.base,
+						javascript: true,
+						execute: async (infinitymint) => {
+							let result = await requireScript(
+								script.dir + "/" + script.base,
+								this
+							);
+							if (typeof result === "function")
+								await (result as any)(infinitymint);
+						},
+					});
+				}
+
 				debugLog(`{green-fg}Success!{/green-fg}`);
 			} catch (error) {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;

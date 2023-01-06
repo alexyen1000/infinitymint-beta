@@ -220,7 +220,16 @@ Scripts.initialize = async (window, frame, blessed) => {
 	});
 
 	let scripts = window.getInfinityConsole().getScripts();
-	let names = [...scripts].map((script) => script.name);
+	let names = [...scripts].map(
+		(script) =>
+			`${
+				script.javascript
+					? "{yellow-fg}js{/yellow-fg}"
+					: "{blue-fg}ts{/blue-fg}"
+			} {bold}${script.name}{/bold} {black-fg}(${
+				script.fileName
+			}){/black-fg}`
+	);
 	form.setItems(names);
 	form.on("select", runSelected);
 	form.focus();

@@ -7,6 +7,7 @@ import {
 	InfinityMintDeploymentLocal,
 	InfinityMintEventKeys,
 	InfinityMintCompiledProject,
+	InfinityMintDeployedProject,
 } from "./interfaces";
 import {
 	debugLog,
@@ -516,7 +517,7 @@ export class InfinityMintDeployment {
  * @returns
  */
 export const loadDeploymentClasses = async (
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	console?: InfinityConsole
 ) => {
 	let deployments = [...(await getDeploymentClasses(project, console))];
@@ -636,7 +637,7 @@ export const readLocalDeployment = (contractName: string, network: string) => {
  */
 export const hasDeploymentManifest = (
 	contractName: string,
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	network?: string
 ) => {
 	network = network || project?.network?.name;
@@ -654,7 +655,7 @@ export const hasDeploymentManifest = (
 
 export const getDeploymentClass = (
 	contractName: string,
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject,
 	network?: string
 ) => {
 	network = network || project?.network?.name;
@@ -668,7 +669,7 @@ export const getDeploymentClass = (
 
 export const getLiveDeployments = (
 	contractName: string,
-	project: InfinityMintProject,
+	project: InfinityMintCompiledProject | InfinityMintDeployedProject,
 	network: string
 ) => {
 	let path =
@@ -711,7 +712,7 @@ export const create = (
  * @returns
  */
 export const getDeploymentClasses = async (
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	console?: InfinityConsole,
 	network?: string,
 	roots?: string[]

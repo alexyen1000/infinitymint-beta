@@ -137,7 +137,7 @@ export interface InfinityMintCompiledProject {
 	/**
 	 * specificy other projects by name to have them deploy along side this minter and be packed together into the export location.
 	 */
-	system: Array<string>;
+	system?: Array<string>;
 	/**
 	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset, minter, royalty or random` solidity contract you are using.
 	 */
@@ -170,10 +170,7 @@ export interface InfinityMintCompiledProject {
 	/**
 	 * All the possible asset varations of the minter, must be an Array of {@link InfinityMintProjectAsset}
 	 */
-	assets?:
-		| Array<InfinityMintProjectAsset>
-		| InfinityMintProjectJavascriptAssets
-		| Dictionary<InfinityMintProjectAsset[]>;
+	assets?: Array<InfinityMintProjectAsset>;
 	/**
 	 * The settings of the project. The settings key is which deployment the settings should be for, and you can enter what ever you like here.
 	 *
@@ -213,11 +210,11 @@ export interface InfinityMintCompiledProject {
 	/**
 	 * only available in deployed InfinityMint projects
 	 */
-	network?: {
+	network: {
 		/**
 		 * chain id of the network this project was deployed too
 		 */
-		chainId?: number;
+		chainId: number;
 		/**
 		 * rpc url if added, must specify in the config to add. See {@link InfinityMintConfig}
 		 */
@@ -225,7 +222,7 @@ export interface InfinityMintCompiledProject {
 		/**
 		 * the name of the network
 		 */
-		name?: string;
+		name: string;
 		/**
 		 * the token symbol
 		 */
@@ -239,13 +236,15 @@ export interface InfinityMintCompiledProject {
 	 * Only set when the project is compiled, the SolidityFolder this project was compiled with
 	 * @default undefined
 	 */
-	compiledSolidityFolder?: PathLike;
+	compiledSolidityFolder: PathLike;
 }
 
 /**
  * Defines an infinitymint temporary project, a temporary project is created before a project is compiled or deployed. Effectively for the reason to allows you to restart where you last left off in case anything is wrong. Temporary projects are turned into either an InfinityMintComiledProject or an InfinityMintDeployedProject.
  */
-export interface InfinityMintTempProject extends InfinityMintCompiledProject {
+export interface InfinityMintTempProject
+	extends InfinityMintCompiledProject,
+		InfinityMintDeployedProject {
 	/**
 	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well. Note that deployments might not available if the project is compiling or deploying for the first time.
 	 *
@@ -257,13 +256,120 @@ export interface InfinityMintTempProject extends InfinityMintCompiledProject {
 	 */
 	stages: KeyValue;
 	/**
-	 * if this is project has completed the deployed stage yet
-	 */
-	deployed?: boolean;
-	/**
 	 * if this is project has completed the setup stage yet
 	 */
 	setup?: boolean;
+}
+
+/**
+ *
+ */
+export interface InfinityMintDeployedProject {
+	/**
+	 * the name of the current project
+	 */
+	name: string;
+	/**
+	 * custom infinityLinks which can be linked to the token
+	 */
+	links: Array<InfinityMintProjectSettingsLink>;
+	/**
+	 * specificy other projects by name to have them deploy along side this minter and be packed together into the export location.
+	 */
+	system?: Array<string>;
+	/**
+	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset, minter, royalty or random` solidity contract you are using.
+	 */
+	modules: InfinityMintProjectModules;
+	/**
+	 * The price of your tokens. This can be in a decimal (for crypto) or as a real life value, for example:
+	 * ```js
+	 * //price: '$1',
+	 * //price: 0.15,
+	 * ```
+	 */
+	price: number | BigNumber | string;
+	/**
+	 * The information relating to your project.
+	 *
+	 * @see {@link InfinityMintProjectInformation}
+	 */
+	information: InfinityMintProjectInformation;
+	/**
+	 * An array containing the gems which are associated with this project.
+	 *
+	 * @see {@link InfinityMintProjectGem}
+	 */
+	gems?: Array<InfinityMintProjectGem>;
+	/**
+	 * All the possible mint varations of the minter, must be an Array of {@link InfinityMintProjectPath}
+	 */
+	paths: Array<InfinityMintProjectPath>;
+	/**
+	 * All the possible asset varations of the minter, must be an Array of {@link InfinityMintProjectAsset}
+	 */
+	assets?: Array<InfinityMintProjectAsset>;
+	/**
+	 * The settings of the project. The settings key is which deployment the settings should be for, and you can enter what ever you like here.
+	 *
+	 * @see {@link InfinityMintProjectSettings}
+	 */
+	settings?: InfinityMintProjectSettings;
+	/**
+	 * The permissions of your project. here you can specify if certian addresses get free mint privilages or specific access to gems.
+	 *
+	 * @see {@link InfinityMintProjectPermissions}
+	 */
+	permissions?: InfinityMintProjectPermissions;
+	/**
+	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well.
+	 *
+	 * @see {@link InfinityMintDeploymentLive}
+	 */
+	deployments?: Dictionary<InfinityMintDeploymentLive>;
+	/**
+	 * if this is a deployed project or not
+	 */
+	deployed?: boolean;
+	/**
+	 * The version information for this project
+	 */
+	version?: {
+		/**
+		 * @defaultValue initial
+		 */
+		tag: string;
+		/**
+		 * @defaultValue 0.0.1
+		 */
+		version: string;
+	};
+	/**
+	 * only available in deployed InfinityMint projects
+	 */
+	network: {
+		/**
+		 * chain id of the network this project was deployed too
+		 */
+		chainId: number;
+		/**
+		 * rpc url if added, must specify in the config to add. See {@link InfinityMintConfig}
+		 */
+		url?: string;
+		/**
+		 * the name of the network
+		 */
+		name: string;
+		/**
+		 * the token symbol
+		 */
+		tokenSymbol?: string;
+	};
+	/**
+	 * Only set when the project is compiled, the SolidityFolder this project was compiled with
+	 * @default undefined
+	 */
+	compiledSolidityFolder: PathLike;
 }
 
 /**
@@ -354,16 +460,6 @@ export interface InfinityMintProject {
 	 */
 	events?: InfinityMintEvents;
 	/**
-	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well.
-	 *
-	 * @see {@link InfinityMintDeploymentLive}
-	 */
-	deployments?: Dictionary<InfinityMintDeploymentLive>;
-	/**
-	 * Used in keeping track of temporary projects which fail in their deployment. keeps track of stages we have passed so we can continue where we left off if anything goes wrong.
-	 */
-	stages?: KeyValue;
-	/**
 	 * if this is a deployed project or not
 	 */
 	deployed?: boolean;
@@ -379,27 +475,6 @@ export interface InfinityMintProject {
 		 * @defaultValue 0.0.1
 		 */
 		version: string;
-	};
-	/**
-	 * only available in deployed InfinityMint projects
-	 */
-	network?: {
-		/**
-		 * chain id of the network this project was deployed too
-		 */
-		chainId?: number;
-		/**
-		 * rpc url if added, must specify in the config to add. See {@link InfinityMintConfig}
-		 */
-		url?: string;
-		/**
-		 * the name of the network
-		 */
-		name?: string;
-		/**
-		 * the token symbol
-		 */
-		tokenSymbol?: string;
 	};
 	/**
 	 * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
@@ -1313,6 +1388,9 @@ export interface InfinityMintConsoleOptions {
 
 export interface InfinityMintScript {
 	name?: string;
+	/**
+	 * The location of the script file
+	 */
 	fileName?: string;
 	description?: string;
 	/**
@@ -1328,6 +1406,7 @@ export interface InfinityMintScript {
 	 */
 	task?: true;
 	solidityFolder?: string;
+	javascript?: true;
 	author?: KeyValue | KeyValue[];
 }
 

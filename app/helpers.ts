@@ -1,6 +1,7 @@
 import Pipes, { Pipe } from "./pipes";
 import fsExtra from "fs-extra";
 import fs, { PathLike } from "fs";
+import { Dictionary } from "form-data";
 import path from "path";
 import {
 	InfinityMintConfig,
@@ -12,6 +13,10 @@ import {
 	InfinityMintSession,
 	InfinityMintCompiledProject,
 	InfinityMintTempProject,
+	InfinityMintEventEmitter,
+	InfinityMintScriptArguments,
+	InfinityMintGemScript,
+	InfinityMintDeployedProject,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
 import { HardhatUserConfig } from "hardhat/types";
@@ -452,7 +457,7 @@ export const getDeployedProject = (projectName: string, version?: any) => {
 	if (res.deployed !== true)
 		throw new Error(`project ${projectName} has not been deployed`);
 
-	return res as InfinityMintProject;
+	return res as InfinityMintDeployedProject;
 };
 
 /**
@@ -461,11 +466,8 @@ export const getDeployedProject = (projectName: string, version?: any) => {
  * @param isJavaScript
  * @throws
  */
-export const getProject = (projectName: string, isJavaScript?: boolean) => {
-	let res = require(process.cwd() +
-		"/projects/" +
-		projectName +
-		(isJavaScript ? ".js" : ".ts"));
+export const getProject = (projectPath: PathLike, isJavaScript: boolean) => {
+	let res = require(projectPath as string);
 	res = res.default || res;
 	res.javascript = isJavaScript === true;
 
@@ -712,6 +714,7 @@ export const getFileImportExtension = () => {
  * @returns
  */
 export const findScripts = async (roots?: string[]) => {
+	let config = getConfigFile();
 	roots = roots || [];
 
 	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_SCRIPTS"))
@@ -721,6 +724,25 @@ export const findScripts = async (roots?: string[]) => {
 
 	if (isTypescript()) roots.push(process.cwd() + "/scripts/**/*.ts");
 	roots.push(process.cwd() + "/scripts/**/*.js");
+	roots = [
+		...roots,
+		...(config.roots || []).map(
+			(root: string) =>
+				process.cwd() +
+				"/" +
+				root +
+				(root[root.length - 1] !== "/" ? "/scripts/" : "scripts/") +
+				"**/*.ts"
+		),
+		...(config.roots || []).map(
+			(root: string) =>
+				process.cwd() +
+				"/" +
+				root +
+				(root[root.length - 1] !== "/" ? "/scripts/" : "scripts/") +
+				"**/*.js"
+		),
+	];
 
 	let scanned = [];
 	for (let i = 0; i < roots.length; i++) {
@@ -740,7 +762,7 @@ export const findScripts = async (roots?: string[]) => {
  * Returns the current project
  * @returns
  */
-export const getCurrentProject = () => {
+export const getCurrentProjectPath = () => {
 	let session = readSession();
 
 	if (session.environment.project === undefined) return undefined;
@@ -748,9 +770,9 @@ export const getCurrentProject = () => {
 };
 
 export const getCurrentDeployedProject = () => {
-	if (!getCurrentProject()) throw new Error("no current project");
+	if (!getCurrentProjectPath()) throw new Error("no current project");
 
-	return getDeployedProject(getCurrentProject().name);
+	return getDeployedProject(getCurrentProjectPath().name);
 };
 
 /**
@@ -758,9 +780,58 @@ export const getCurrentDeployedProject = () => {
  * @returns
  */
 export const getCurrentCompiledProject = () => {
-	if (!getCurrentProject()) throw new Error("no current project");
+	if (!getCurrentProjectPath()) throw new Error("no current project");
 
-	return getCompiledProject(getCurrentProject().name);
+	return getCompiledProject(getCurrentProjectPath().name);
+};
+
+/**
+ *
+ * @param script
+ * @param eventEmitter
+ * @param gems
+ * @param args
+ * @param console
+ */
+export const executeScript = async (
+	script: InfinityMintScript,
+	eventEmitter: InfinityMintEventEmitter,
+	gems?: Dictionary<InfinityMintGemScript>,
+	args?: Dictionary<InfinityMintScriptArguments>,
+	console?: InfinityConsole,
+	onLog?: Function,
+	onDebugLog?: Function
+) => {
+	if (!script.javascript)
+		await script.execute({
+			script: script,
+			eventEmitter: eventEmitter,
+			log: (msg, pipe) => {
+				if (onLog) onLog(msg, pipe);
+
+				log(msg, pipe);
+			},
+			gems: gems,
+			args: args,
+			debugLog: (msg) => {
+				if (onDebugLog) onDebugLog(msg);
+				debugLog(msg);
+			},
+			infinityConsole: console,
+			project: getCurrentProject(),
+		});
+	else throw new Error("javascript files are not supported yet");
+};
+
+/**
+ *
+ * @returns
+ */
+export const getCurrentProject = () => {
+	return getProject(
+		getCurrentProjectPath().dir + "/" + getCurrentProjectPath().base,
+		getCurrentProjectPath().ext === ".js"
+	);
 };
 
 /**

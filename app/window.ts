@@ -11,7 +11,7 @@ import {
 	BlessedElementOptions,
 	getConfigFile,
 	log,
-	getCurrentProject,
+	getCurrentProjectPath,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -702,7 +702,8 @@ export class InfinityMintWindow {
 				0,
 				16
 			)}...{/underline}{/yellow-fg} {black-bg}{blue-fg}${
-				getCurrentProject().base || "{red-fg}NO CURRENT PROJECT{red-fg}"
+				getCurrentProjectPath().base ||
+				"{red-fg}NO CURRENT PROJECT{red-fg}"
 			}{/blue-fg}{/black-bg} {white-fg}{bold}${etherBalance.substring(
 				0,
 				8
@@ -804,6 +805,14 @@ export class InfinityMintWindow {
 		if (options.alwaysUpdate) element.alwaysUpdate = options.alwaysUpdate;
 		if (options.think) element.think = options.think;
 		if (options.shouldFocus) element.shouldFocus = options.shouldFocus;
+		if (options.instantlyCreate) {
+			this.log(
+				`appending element (${element.constructor.name}) to screen`
+			);
+
+			this.screen.append(element);
+			this.screen.render();
+		}
 
 		return element;
 	}
@@ -907,13 +916,15 @@ export class InfinityMintWindow {
 		//append each element
 		Object.keys(this.elements).forEach((key) => {
 			if (key === "frame") return;
-
 			let element = this.elements[key];
-			this.log(
-				`appending element (${element.constructor.name}) to screen`
-			);
+			if (!element.instantlyAppend) {
+				this.log(
+					`appending element (${element.constructor.name}) to screen`
+				);
 
-			this.screen.append(element);
+				this.screen.append(element);
+			}
+
 			if (element.shouldFocus) element.focus();
 		});
 
