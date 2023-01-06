@@ -20,14 +20,12 @@ const example: InfinityMintProject = {
 		{
 			name: "Example Asset",
 			fileName: "/imports/example-asset.svg",
-			settings: true,
 		},
 	],
 	paths: [
 		{
 			name: "Example Token",
 			fileName: "/imports/example.svg",
-			settings: true,
 		},
 	],
 	events: {

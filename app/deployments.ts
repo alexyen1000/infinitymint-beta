@@ -6,6 +6,7 @@ import {
 	InfinityMintProject,
 	InfinityMintDeploymentLocal,
 	InfinityMintEventKeys,
+	InfinityMintCompiledProject,
 } from "./interfaces";
 import {
 	debugLog,
@@ -544,7 +545,7 @@ export const getProjectDeploymentClasses = async (
 	console?: InfinityConsole,
 	loadedDeploymentClasses?: InfinityMintDeployment[]
 ) => {
-	let compiledProject: InfinityMintProject;
+	let compiledProject: InfinityMintCompiledProject;
 	if (typeof project === "string")
 		compiledProject = getCompiledProject(project);
 	else compiledProject = project;

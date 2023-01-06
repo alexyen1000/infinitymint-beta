@@ -123,6 +123,150 @@ export interface InfinityMintProjectJavascriptAssets
 	extends Dictionary<InfinityMintProjectAsset> {}
 
 /**
+ * A compiled version of the InfinityMintProject, unlike the InfinityMintProject this does not contain any events which might have been defined in the project. You must include the project javascript or typescript file as well as the compiled project to also be able to do events.
+ */
+export interface InfinityMintCompiledProject {
+	/**
+	 * the name of the current project
+	 */
+	name: string;
+	/**
+	 * custom infinityLinks which can be linked to the token
+	 */
+	links: Array<InfinityMintProjectSettingsLink>;
+	/**
+	 * specificy other projects by name to have them deploy along side this minter and be packed together into the export location.
+	 */
+	system: Array<string>;
+	/**
+	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset, minter, royalty or random` solidity contract you are using.
+	 */
+	modules: InfinityMintProjectModules;
+	/**
+	 * The price of your tokens. This can be in a decimal (for crypto) or as a real life value, for example:
+	 * ```js
+	 * //price: '$1',
+	 * //price: 0.15,
+	 * ```
+	 */
+	price: number | BigNumber | string;
+	/**
+	 * The information relating to your project.
+	 *
+	 * @see {@link InfinityMintProjectInformation}
+	 */
+	information: InfinityMintProjectInformation;
+	/**
+	 * An array containing the gems which are associated with this project.
+	 *
+	 * @see {@link InfinityMintProjectGem}
+	 */
+	gems?: Array<InfinityMintProjectGem>;
+
+	/**
+	 * All the possible mint varations of the minter, must be an Array of {@link InfinityMintProjectPath}
+	 */
+	paths: Array<InfinityMintProjectPath>;
+	/**
+	 * All the possible asset varations of the minter, must be an Array of {@link InfinityMintProjectAsset}
+	 */
+	assets?:
+		| Array<InfinityMintProjectAsset>
+		| InfinityMintProjectJavascriptAssets
+		| Dictionary<InfinityMintProjectAsset[]>;
+	/**
+	 * The settings of the project. The settings key is which deployment the settings should be for, and you can enter what ever you like here.
+	 *
+	 * @see {@link InfinityMintProjectSettings}
+	 */
+	settings?: InfinityMintProjectSettings;
+	/**
+	 * The permissions of your project. here you can specify if certian addresses get free mint privilages or specific access to gems.
+	 *
+	 * @see {@link InfinityMintProjectPermissions}
+	 */
+	permissions?: InfinityMintProjectPermissions;
+
+	/**
+	 *
+	 */
+	bundles?: Dictionary<{
+		version?: string;
+		paths?: {
+			ipfs?: Array<PathLike>;
+		};
+	}>;
+
+	/**
+	 * The version information for this project
+	 */
+	version?: {
+		/**
+		 * @defaultValue initial
+		 */
+		tag: string;
+		/**
+		 * @defaultValue 0.0.1
+		 */
+		version: string;
+	};
+	/**
+	 * only available in deployed InfinityMint projects
+	 */
+	network?: {
+		/**
+		 * chain id of the network this project was deployed too
+		 */
+		chainId?: number;
+		/**
+		 * rpc url if added, must specify in the config to add. See {@link InfinityMintConfig}
+		 */
+		url?: string;
+		/**
+		 * the name of the network
+		 */
+		name?: string;
+		/**
+		 * the token symbol
+		 */
+		tokenSymbol?: string;
+	};
+	/**
+	 * is true if this is a compiled infinitymint project.
+	 */
+	compiled?: boolean;
+	/**
+	 * Only set when the project is compiled, the SolidityFolder this project was compiled with
+	 * @default undefined
+	 */
+	compiledSolidityFolder?: PathLike;
+}
+
+/**
+ * Defines an infinitymint temporary project, a temporary project is created before a project is compiled or deployed. Effectively for the reason to allows you to restart where you last left off in case anything is wrong. Temporary projects are turned into either an InfinityMintComiledProject or an InfinityMintDeployedProject.
+ */
+export interface InfinityMintTempProject extends InfinityMintCompiledProject {
+	/**
+	 * A dictionary containing all of the currently deployed contracts associated with this project. Values inside of this object are inserted based on their key if they are a core infinity mint deployment (erc721, minter, assets) as well as by their contract name (DefaultMinter, RaritySVG) this also applies for gems as well. Note that deployments might not available if the project is compiling or deploying for the first time.
+	 *
+	 * @see {@link InfinityMintDeploymentLive}
+	 */
+	deployments?: Dictionary<InfinityMintDeploymentLive>;
+	/**
+	 * Used in keeping track of temporary projects which fail in their deployment. keeps track of stages we have passed so we can continue where we left off if anything goes wrong.
+	 */
+	stages: KeyValue;
+	/**
+	 * if this is project has completed the deployed stage yet
+	 */
+	deployed?: boolean;
+	/**
+	 * if this is project has completed the setup stage yet
+	 */
+	setup?: boolean;
+}
+
+/**
  * The infinitymint project is responsible for holding the paths, assets and other information relating to the project. You can set which modules are used in the creation of the minter, along with other specific settings relating to the project. Each project is stored inside of the `./projects/` in the root of where ever InfinityMint is run.
  *
  * @see {@link InfinityMintDeploymentLive}
@@ -257,14 +401,6 @@ export interface InfinityMintProject {
 		 */
 		tokenSymbol?: string;
 	};
-	/**
-	 * is true if this is a compiled infinitymint project.
-	 */
-	compiled?: boolean;
-	/**
-	 * Holds any IPFS locations of the project, react build and deployments
-	 */
-	ipfs?: KeyValue;
 	/**
 	 * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
 	 * @private
@@ -824,19 +960,15 @@ export interface InfinityMintProjectModules extends KeyValue {
 
 export type InfinityMintProjetModulesKeys = keyof InfinityMintProjectModules;
 
+/**
+ *
+ */
 export interface InfinityMintProjectPathExport {
-	data: string;
-	size: number;
-	extension: string;
-	ipfs: boolean;
-	localStorage: boolean;
-	projectStorage: boolean;
-	ipfsUrl: string;
-	ipfsCid: string;
-	/**
-	 * list of back ups where this content might be found, accepts IPFS cids and http/https web2 links
-	 */
-	backups: string[];
+	key: string;
+	checksum: string;
+	settingsFile?: string;
+	settingsFileKey?: string;
+	settings: KeyValue | InfinityMintSVGSettings;
 }
 
 /**
@@ -849,7 +981,6 @@ export interface InfinityMintProjectPath {
 	 * is the mint data, this is copied to each token internally. Can be a path to a file
 	 */
 	data?: KeyValue | PathLike;
-	key?: string;
 	/**
 	 * can either contain an object of settings for the path or a link to the settings file or simply `true` to look for a settings file that matches the fileName import. See {@link app/content.InfinityMintSVGSettings}
 	 */
@@ -874,12 +1005,6 @@ export interface InfinityMintProjectPath {
 	 */
 	export?: InfinityMintProjectPathExport;
 	/**
-	 * Uses AE2 encryption. Note when using encryption you must find a way to send the decryption key to the token holder.
-	 *
-	 * @defaultValue false
-	 */
-	encrypted?: boolean;
-	/**
 	 * true if the project the path contains has been compiled.
 	 */
 	compiled?: boolean;
@@ -896,13 +1021,19 @@ export interface InfinityMintProjectJavascriptPath
 	paths?: InfinityMintProjectPathExport;
 }
 
+/**
+ *
+ */
 export interface InfinityMintProjectContent extends InfinityMintProjectPath {
 	onlyOwners?: boolean;
 	onlyApproved?: boolean;
 }
 
+/**
+ *
+ */
 export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
-	path?: string | number;
+	pathId?: number;
 	section?: string;
 }
 
@@ -982,6 +1113,11 @@ export interface InfinityMintConfig {
 	 * Other filesystem locations where IM will look for assets such as PNGs, Vectors etc.to create tokens with.
 	 */
 	imports?: Array<PathLike>;
+
+	/**
+	 * Others InfinityMint repositories to add to the root of this root.
+	 */
+	roots?: Array<PathLike>;
 	/**
 	 * InfinityMint-specific config settings. Configures settings such as how networks behave, what wallets to use by default, & if to log a specific chain within `defaultPipe`, & specify whether a chain is *production* or a *testnet*. Also determines what will be used to fetch `Gas Estimates` and *token prices*.
 	 *

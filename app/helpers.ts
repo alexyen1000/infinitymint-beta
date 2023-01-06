@@ -10,6 +10,8 @@ import {
 	InfinityMintProjectJavascript,
 	InfinityMintScript,
 	InfinityMintSession,
+	InfinityMintCompiledProject,
+	InfinityMintTempProject,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
 import { HardhatUserConfig } from "hardhat/types";
@@ -62,6 +64,7 @@ export interface BlessedElementOptions extends KeyValue {
 	mouse?: boolean;
 	keyboard?: boolean;
 	think?: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, void>;
+	options?: KeyValue;
 	width?: string | number;
 	height?: string | number;
 	padding?: BlessedElementPadding | string | number;
@@ -202,17 +205,6 @@ export const log = (msg: string | object | number, pipe?: string) => {
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
-	///TODO: implement as an option on the pipe
-	if (
-		Pipes.getPipe("debug") !== undefined &&
-		Pipes.getPipe("debug").logs.length > 1480
-	) {
-		Pipes.getPipe("debug").logs = [];
-		log(
-			"{red-fg}debug pipe cleaned due to exceeding 1480{red-fg}",
-			"debug"
-		);
-	}
 	log(msg, "debug");
 };
 
@@ -364,7 +356,7 @@ export const getCompiledProject = (projectName: string) => {
 	if (res.compiled !== true)
 		throw new Error(`project ${projectName} has not been compiled`);
 
-	return res as InfinityMintProject;
+	return res as InfinityMintCompiledProject;
 };
 
 export const hasTempDeployedProject = (projectName: string) => {
@@ -380,7 +372,7 @@ export const hasTempCompiledProject = (projectName: string) => {
 };
 
 export const saveTempDeployedProject = (project: InfinityMintProject) => {
-	debugLog("saving " + project.name + ".temp.json");
+	log("saving " + project.name + ".temp.json", "fs");
 	fs.writeFileSync(
 		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
 		JSON.stringify(project)
@@ -388,7 +380,7 @@ export const saveTempDeployedProject = (project: InfinityMintProject) => {
 };
 
 export const saveTempCompiledProject = (project: InfinityMintProject) => {
-	debugLog("saving " + project.name + ".compiled.temp.json");
+	log("saving " + project.name + ".compiled.temp.json", "fs");
 	fs.writeFileSync(
 		process.cwd() +
 			"/temp/projects/" +
@@ -411,7 +403,7 @@ export const getTempDeployedProject = (projectName: string) => {
 			projectName +
 			".temp.deployed.json");
 		res = res.default || res;
-		return res as InfinityMintProject;
+		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error(
 			"could not load temp deployed project: " + error.message
@@ -433,7 +425,7 @@ export const getTempCompiledProject = (projectName: string) => {
 			".temp.compiled.json");
 		res = res.default || res;
 
-		return res as InfinityMintProject;
+		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error(
 			"could not load temp deployed project: " + error.message
@@ -492,7 +484,7 @@ export const copyContractsFromNodeModule = (
 		);
 
 	if (fs.existsSync(destination) && isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")) {
-		debugLog("cleaning " + source);
+		log("cleaning " + source, "fs");
 		fs.rmdirSync(destination, {
 			recursive: true,
 			force: true,
@@ -500,7 +492,7 @@ export const copyContractsFromNodeModule = (
 	}
 
 	if (!fs.existsSync(destination)) {
-		debugLog("copying " + source + " to " + destination);
+		log("copying " + source + " to " + destination, "fs");
 		fsExtra.copySync(source, destination);
 		fs.chmodSync(destination, 0o777);
 	}
@@ -633,7 +625,7 @@ export const findWindows = async (roots?: PathLike[]) => {
 	let files = [];
 
 	for (let i = 0; i < searchLocations.length; i++) {
-		debugLog("scanning for windows in => " + searchLocations[i]);
+		log("searching for windows with glob => " + searchLocations[i], "fs");
 		files = [...files, ...(await findFiles(searchLocations[i]))];
 	}
 
@@ -685,11 +677,10 @@ export const getPackageJson = () => {
  * @returns
  */
 export const findFiles = (globPattern: string) => {
-	debugLog("searching for files with glob pattern => " + globPattern);
+	log("searching for files with glob pattern => " + globPattern, "glob");
 	return new Promise<string[]>((resolve, reject) => {
 		glob(globPattern, (err: Error, matches: string[]) => {
 			if (err) throw err;
-
 			resolve(matches);
 		});
 	});
@@ -729,7 +720,7 @@ export const findScripts = async (roots?: string[]) => {
 	let scanned = [];
 	for (let i = 0; i < roots.length; i++) {
 		let path = roots[i];
-		debugLog("scanning for scripts in => " + path);
+		log("searching for scripts with glob => " + path, "fs");
 		scanned = [...scanned, ...(await findFiles(path))];
 	}
 
@@ -742,22 +733,22 @@ export const findScripts = async (roots?: string[]) => {
 
 /**
  *
- * @param fullPath
+ * @param fileName
  * @returns
  */
-export const requireWindow = (fullPath: string) => {
-	if (!fs.existsSync(fullPath))
-		throw new Error("cannot find script: " + fullPath);
+export const requireWindow = (fileName: string) => {
+	if (!fs.existsSync(fileName))
+		throw new Error("cannot find script: " + fileName);
 
-	if (require.cache[fullPath]) {
-		debugLog("deleting old cache  => " + fullPath);
-		delete require.cache[fullPath];
+	if (require.cache[fileName]) {
+		debugLog("deleting old cache  => " + fileName);
+		delete require.cache[fileName];
 	}
 
-	debugLog("requiring => " + fullPath);
-	let result = require(fullPath);
+	debugLog("requiring => " + fileName);
+	let result = require(fileName);
 	result = result.default || result;
-	//log
+	result.setFileName(fileName);
 	result.log("required");
 	return result as InfinityMintWindow;
 };
@@ -969,11 +960,24 @@ export const preInitialize = (isJavascript?: boolean) => {
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
-	//create the debug pipe
-	Pipes.registerSimplePipe("debug", {
-		listen: isEnvTrue("PIPE_ECHO_DEBUG"),
-		save: true,
-	});
+
+	let pipes = [
+		"debug",
+		"imports",
+		"gems",
+		"windows",
+		"glob",
+		"fs",
+		"receipts",
+	];
+	pipes.forEach((pipe) =>
+		Pipes.registerSimplePipe(pipe, {
+			listen:
+				envExists("PIPE_ECHO_" + pipe.toUpperCase()) &&
+				process.env["PIPE_ECHO_" + pipe.toUpperCase()] === "true",
+			save: true,
+		})
+	);
 
 	if (isEnvTrue("PIPE_SEPERATE_WARNINGS"))
 		Pipes.registerSimplePipe("warnings", {
@@ -1080,6 +1084,12 @@ export const error = (error: string | Error) => {
 		console.error(error);
 
 	Pipes.error(error);
+};
+
+export const envExists = (key: string) => {
+	return (
+		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
+	);
 };
 
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {

@@ -1,6 +1,6 @@
 import { InfinityMintSVGSettings } from "./content";
 import { PathLike } from "fs";
-import { debugLog, findFiles, getConfigFile } from "./helpers";
+import { debugLog, findFiles, getConfigFile, log, warning } from "./helpers";
 import { Dictionary } from "form-data";
 import path from "path";
 import fs from "fs";
@@ -20,12 +20,12 @@ type ipfsType = { cid: string; fileName?: string; gateway: string };
 export interface CompiledImportInterface extends ImportInterface {
 	paths: {
 		ipfs?: Array<ipfsType>;
-		project?: string;
-		public?: Array<string>;
+		public?: string;
+		web2?: string;
 		settings?: {
 			ipfs?: Array<ipfsType>;
-			project?: string;
-			public?: Array<string>;
+			public: string;
+			web2?: string;
 		};
 	};
 	compiled?: number;
@@ -57,6 +57,15 @@ export const importCount = (imports?: ImportType) => {
 		count += Object.values(dirs).length;
 	});
 	return count;
+};
+
+export const saveImportTache = (cache: ImportType) => {
+	log(`saving <${importCount(cache)}> imports to cache file`, "imports");
+	log("saving imports to /temp/import_cache.json", "fs");
+	fs.writeFileSync(
+		process.cwd() + "/temp/import_cache.json",
+		JSON.stringify(cache, null, 2)
+	);
 };
 
 export const readImportCache = (): ImportType => {
@@ -92,11 +101,33 @@ export const getImportCache = async (
 		],
 	];
 
+	log(
+		"found " + supportedExtensions.length + " supported extensions",
+		"imports"
+	);
+
 	let finalLocations = [];
 
-	[...(config.imports || []), process.cwd() + "/imports/"]
+	[
+		...(config.imports || []).map((root: string) =>
+			root.indexOf("imports") === -1
+				? root +
+				  (root[root.length - 1] !== "/" ? "/imports/" : "imports/")
+				: root
+		),
+		process.cwd() + "/imports/",
+		...(config.roots || []).map(
+			(root: string) =>
+				root +
+				(root[root.length - 1] !== "/" ? "/imports/" : "imports/")
+		),
+	]
 		.map((location) => {
 			return location + "**/*";
+		})
+		.map((location) => {
+			//removes broken double directory slash
+			return location.replace(/\/\//g, "");
 		})
 		.forEach((location) => {
 			supportedExtensions.forEach((ext) => {
@@ -123,8 +154,11 @@ export const getImportCache = async (
 	let imports: ImportType = {};
 	for (let i = 0; i < infinityImports.length; i++) {
 		let normalImport = infinityImports[i];
-		if (imports[normalImport.dir] === undefined)
+		if (imports[normalImport.dir] === undefined) {
+			log(`[${i}] found dir => ${normalImport.dir}`, "imports");
 			imports[normalImport.dir] = {};
+		}
+
 		if (
 			imports[normalImport.dir][normalImport.name + normalImport.ext] ===
 			undefined
@@ -148,14 +182,6 @@ export const getImportCache = async (
 					normalImport.name +
 					normalImport.ext
 			);
-
-		debugLog(
-			`[${i}] => found import: ` +
-				normalImport.dir +
-				"/" +
-				normalImport.name +
-				normalImport.ext
-		);
 	}
 
 	return imports as ImportType;

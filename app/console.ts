@@ -37,6 +37,7 @@ import {
 	importCount,
 	ImportType,
 	readImportCache,
+	saveImportTache as saveImportCache,
 } from "./imports";
 import fs from "fs";
 
@@ -219,7 +220,7 @@ export class InfinityConsole {
 					}
 
 					if (this?.currentWindow === undefined) {
-						this.setWindow("CloseBox");
+						this.gotoWindow("CloseBox");
 						return;
 					}
 
@@ -229,7 +230,7 @@ export class InfinityConsole {
 							windows[0].options.currentWindow =
 								this.currentWindow?.name;
 
-						this.setWindow("CloseBox");
+						this.gotoWindow("CloseBox");
 						//if the closeBox aka the current window is visible and we press control-c again just exit
 					} else if (this.currentWindow?.name === "CloseBox") {
 						if (this.currentWindow.isVisible()) {
@@ -271,28 +272,29 @@ export class InfinityConsole {
 			"registering events for <" + window.name + `>[${window.getId()}]`
 		);
 		//so we only fire once
-		if (window.options.destroy)
-			window.off("destroy", window.options.destroy);
+		if (window.data.destroy) window.off("destroy", window.data.destroy);
 
-		window.options.destroy = window.on("destroy", () => {
-			debugLog("destroyed window " + window?.name);
+		window.data.destroy = window.on("destroy", () => {
 			this.updateWindowsList();
 		});
 
 		//so we only fire once
-		if (window.options.hide) window.off("hide", window.options.hude);
+		if (window.data.hide) window.off("hide", window.data.hide);
 		//when the current window is hiden, rebuild the item
-		window.options.hide = window.on("hide", () => {
+		window.data.hide = window.on("hide", () => {
 			this.updateWindowsList();
 		});
 	}
 
-	public async setWindow(thatWindow: string | Window) {
+	public async gotoWindow(thatWindow: string | Window) {
 		if (this.currentWindow) this.currentWindow.hide();
 
 		for (let i = 0; i < this.windows.length; i++) {
 			let window = this.windows[i];
-			if (window.name !== thatWindow.toString()) {
+			if (
+				window.toString() !== thatWindow.toString() &&
+				window.name !== thatWindow.toString()
+			) {
 				if (window.isAlive()) window.hide();
 				continue;
 			}
@@ -300,7 +302,10 @@ export class InfinityConsole {
 			this.currentWindow = window;
 			if (!this.currentWindow.hasInitialized()) {
 				this.currentWindow.setScreen(this.screen);
-				this.currentWindow.setContainer(this);
+
+				if (!this.currentWindow.hasContainer())
+					this.currentWindow.setContainer(this);
+
 				await this.currentWindow.create();
 				this.registerEvents();
 			}
@@ -311,11 +316,12 @@ export class InfinityConsole {
 
 	public async reload() {
 		this.emit("reloaded");
+
+		//then start destorying
 		Object.keys(this.inputKeys).forEach((key) => {
 			this.unkey(key);
 		});
-		//get imports again (TEMPORARY)
-		this.imports = await getImportCache();
+		this.imports = undefined;
 		this.currentWindow = undefined;
 		this.windows.forEach((window) => window.destroy());
 		this.windows = [];
@@ -326,8 +332,10 @@ export class InfinityConsole {
 		this.windowManager = undefined;
 		this.registerDefaultKeys();
 
+		//do a hard refresh of imports (TODO: Maybe remove)
 		await this.refreshImports(true);
 		await this.initialize();
+
 		this.updateWindowsList();
 	}
 
@@ -478,25 +486,26 @@ export class InfinityConsole {
 	 * updates the window list with options
 	 */
 	public updateWindowsList() {
+		debugLog("updating windows list");
 		try {
 			this.windowManager.setItems(
 				[...this.windows]
 					.filter((window) => !window.isHiddenFromMenu())
 					.map(
-						(window) =>
-							(window.name + " " + `[${window.getId()}]`).padEnd(
-								56,
-								" "
-							) +
-							(window.isAlive()
-								? " {green-fg}(alive){/green-fg}"
-								: " {red-fg}(dead) {/red-fg}") +
-							(!window.hasInitialized()
-								? " {red-fg}[!] NOT INITIALIZED{/red-fg}"
-								: "") +
-							(window.isAlive() && window.shouldBackgroundThink()
-								? " {cyan-fg}[?] RUNNING IN BACK{/cyan-fg}"
-								: "")
+						(window, index) =>
+							`[${index.toString().padEnd(4, "0")}]` +
+							((window.isAlive()
+								? " {green-fg}->{/green-fg}"
+								: " {red-fg}->{/red-fg}") +
+								(!window.hasInitialized()
+									? " {red-fg}[!]{/red-fg}"
+									: " {green-fg}[@]{/green-fg}") +
+								" " +
+								window.name +
+								(window.isAlive() &&
+								window.shouldBackgroundThink()
+									? " {cyan-fg}[?]{/cyan-fg}"
+									: ""))
 					)
 			);
 		} catch (error) {
@@ -562,6 +571,14 @@ export class InfinityConsole {
 				this.currentWindow = this.windows.filter(
 					(window) => !window.isHiddenFromMenu()
 				)[selected];
+
+				if (this.currentWindow === undefined) {
+					warning("current window is undefined");
+					this.updateWindowsList();
+					this.currentWindow = this.getWindow("Menu");
+					return;
+				}
+
 				if (!this.currentWindow.hasInitialized()) {
 					//reset it
 					this.currentWindow.destroy();
@@ -889,6 +906,54 @@ export class InfinityConsole {
 	}
 
 	/**
+	 * Similar to gotoWindow except it does require the window to exist in the window manager
+	 * @param window
+	 */
+
+	public async setWindow(window: InfinityMintWindow) {
+		if (this.currentWindow) this.currentWindow?.hide();
+
+		for (let i = 0; i < this.windows.length; i++) {
+			let thatWindow = this.windows[i];
+			if (window.toString() !== thatWindow.toString()) {
+				if (window.isAlive()) window.hide();
+			}
+		}
+
+		this.currentWindow = window;
+
+		if (!this.currentWindow.hasInitialized()) {
+			this.currentWindow.setScreen(this.screen);
+
+			if (!this.currentWindow.hasContainer())
+				this.currentWindow.setContainer(this);
+
+			await this.currentWindow.create();
+			this.registerEvents();
+		}
+		this.currentWindow.show();
+		this.windowManager.setBack();
+		this.addWindowToList(window);
+	}
+
+	/**
+	 *
+	 * @param window
+	 */
+	public async addWindowToList(window: InfinityMintWindow) {
+		if (
+			this.windows.filter(
+				(thatWindow) => thatWindow.toString() === window.toString()
+			).length !== 0
+		)
+			warning("window is already in list");
+		else {
+			this.windows.push(window);
+			this.updateWindowsList();
+		}
+	}
+
+	/**
 	 *
 	 * @param windowOrIdOrName
 	 */
@@ -899,6 +964,15 @@ export class InfinityConsole {
 				this.windows[i].name === windowOrIdOrName.toString() ||
 				this.windows[i].getId() === windowOrIdOrName.toString()
 			) {
+				if (this.windows[i].data.clone) {
+					this.windows[i].destroy();
+					this.windows[i] = new InfinityMintWindow(
+						this.windows[i].name
+					);
+					this.windows[i].setHiddenFromMenu(true);
+					return;
+				}
+
 				let fileName = this.windows[i].getFileName();
 				this.windows[i].log("reimporting " + fileName);
 				this.windows[i].destroy();
@@ -914,6 +988,7 @@ export class InfinityConsole {
 		for (let i = 0; i < windows.length; i++) {
 			let window = requireWindow(windows[i]);
 			window.setFileName(windows[i]);
+			window.setContainer(this);
 			this.windows.push(window);
 			debugLog(
 				`[${i}]` +
@@ -929,13 +1004,9 @@ export class InfinityConsole {
 				? readImportCache()
 				: await getImportCache();
 
-		if (dontUseCache) {
-			debugLog(`found <${importCount(this.imports)}> imports`);
-			debugLog("saving imports to /temp/imports.json");
-			fs.writeFileSync(
-				process.cwd() + "/temp/imports.json",
-				JSON.stringify(this.imports, null, 2)
-			);
+		if (dontUseCache || !hasImportCache()) {
+			saveImportCache(this.imports);
+			warning("master imports file might need rebuilding");
 		}
 	}
 
@@ -945,8 +1016,10 @@ export class InfinityConsole {
 			throw new Error("console already initialized");
 
 		this.createEventEmitter();
+		//refresh imports
+		if (this.imports === undefined || !hasImportCache())
+			await this.refreshImports();
 
-		await this.refreshImports();
 		await this.refreshWindows();
 		await this.refreshWeb3();
 		await this.refreshScripts();
@@ -1028,7 +1101,9 @@ export class InfinityConsole {
 
 				//if the current window still hasn't been initialized, t
 				if (!this.currentWindow.hasInitialized()) {
-					this.currentWindow.setContainer(this);
+					if (!this.currentWindow.hasContainer())
+						this.currentWindow.setContainer(this);
+
 					this.currentWindow.setScreen(this.screen);
 					//create window
 					await this.currentWindow.create();
@@ -1071,7 +1146,7 @@ export class InfinityConsole {
 								)
 									element.think(
 										this.currentWindow,
-										this.currentWindow.getElement("frame"),
+										element,
 										blessed
 									);
 							}

@@ -10,10 +10,12 @@ import {
 	warning,
 	BlessedElementOptions,
 	getConfigFile,
+	log,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
+import { KeyValue } from "./interfaces";
 
 const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed") as Blessed;
@@ -36,7 +38,14 @@ export class InfinityMintWindow {
 	>;
 	public name: string;
 	public elements: Dictionary<BlessedElement>;
-	public options: any;
+	/**
+	 * data which is saved to session file
+	 */
+	public options: KeyValue;
+	/**
+	 * data which is not saved
+	 */
+	public data: KeyValue;
 	/**
 	 * @default "100%"
 	 */
@@ -113,10 +122,10 @@ export class InfinityMintWindow {
 		this.options = options || {};
 		this.initialCreation = Date.now();
 		this.elements = {};
+		this.data = {};
 		//replace with GUID
 		this.id = this.generateId();
 		this.initialize = async () => {};
-		this.think = () => {};
 	}
 
 	public setFileName(fileName?: string) {
@@ -211,7 +220,7 @@ export class InfinityMintWindow {
 
 	///TODO: needs to be stricter
 	public hasContainer() {
-		return this.container !== undefined;
+		return this.container !== undefined && this.container !== null;
 	}
 
 	public shouldInstantiate(): boolean {
@@ -236,7 +245,7 @@ export class InfinityMintWindow {
 	}
 
 	public async openWindow(name: string) {
-		this.container?.setWindow(name);
+		this.container?.gotoWindow(name);
 	}
 
 	public getCreation() {
@@ -253,21 +262,74 @@ export class InfinityMintWindow {
 	 * See {@link app/interfaces.InfinityMintSession}
 	 * @param defaultOptions
 	 */
-	public loadOptions(defaultOptions: Dictionary<any>) {
+	public loadOptions(
+		defaultOptions?: Dictionary<any>,
+		elementDefaultOptions?: Dictionary<KeyValue>
+	) {
 		let session = readSession();
 		this.options = session.environment["Window_" + this.name] || {};
 
-		Object.keys(defaultOptions).forEach((key) => {
+		Object.keys(defaultOptions || {}).forEach((key) => {
 			if (this.options[key] === undefined)
 				this.options[key] = defaultOptions[key];
+		});
+
+		Object.keys(this.elements).forEach((key) => {
+			let element = this.elements[key];
+			element.options =
+				session.environment["Window_" + this.name + "_" + key] || {};
+
+			if (elementDefaultOptions[key] !== undefined)
+				Object.keys(elementDefaultOptions[key] || {}).forEach(
+					(elementKey) => {
+						if (element.options[elementKey] === undefined)
+							element.options[elementKey] =
+								elementDefaultOptions[key][elementKey];
+					}
+				);
 		});
 	}
 
 	public saveOptions() {
 		let session = readSession();
 		session.environment["Window_" + this.name] = this.options;
+
+		Object.keys(this.elements).forEach((key) => {
+			let element = this.elements[key];
+			if (element?.options !== undefined)
+				session.environment["Window_" + this.name + "_" + key] =
+					element?.options;
+		});
+
 		this.log("saving window options");
 		saveSession(session);
+	}
+
+	/**
+	 * Returns a clone of this window
+	 * @param options
+	 * @param data
+	 * @returns
+	 */
+	public clone(name?: string, style?: {}, options?: {}, data?: {}) {
+		let clone = new InfinityMintWindow(
+			name || this.name,
+			style || this.style,
+			this.border,
+			this.scrollbar,
+			{ x: this.x, y: this.y },
+			{ width: this.width, height: this.height },
+			{ ...this.options, ...(options || {}) }
+		);
+		clone.initialize = this.initialize;
+		clone.think = this.think;
+		clone.setBackgroundThink(this.backgroundThink);
+		clone.setShouldInstantiate(this.autoInstantiate);
+		clone.setHideMinimizeButton(this.hideMinimizeButton);
+		clone.setHideCloseButton(this.hideCloseButton);
+		clone.data = { ...this.data, ...(data || {}) };
+		clone.data.clone = true;
+		return clone;
 	}
 
 	/**
@@ -385,7 +447,7 @@ export class InfinityMintWindow {
 	}
 
 	public show() {
-		debugLog(`showing <${this.name}>[${this.id}]`);
+		this.log(`showing`);
 		Object.values(this.elements).forEach((element) => {
 			if (element.shouldUnhide) {
 				element.shouldUnhide = false;
@@ -416,7 +478,7 @@ export class InfinityMintWindow {
 		if (returnString)
 			return string + ` => <${window.name}>[${window.getId()}]`;
 
-		debugLog(string + ` => <${window.name}>[${window.getId()}]`);
+		log(string + ` => <${window.name}>[${window.getId()}]`, "windows");
 	}
 
 	public warning(
@@ -505,7 +567,9 @@ export class InfinityMintWindow {
 	}
 
 	public update() {
-		if (this.think) this.think(this, this.getElement("frame"), blessed);
+		if (this.think) {
+			this.think(this, this.getElement("frame"), blessed);
+		}
 	}
 
 	public getScreen() {
@@ -514,7 +578,19 @@ export class InfinityMintWindow {
 
 	public destroy() {
 		this.log("destroying");
-		this.destroyed = true; //window needs to be set as destroyed
+		this.destroyed = true;
+
+		//unkeys everything to do with the window
+		if (this.inputKeys !== undefined)
+			Object.keys(this.inputKeys).forEach((key) => {
+				Object.values(this.inputKeys[key]).forEach((cb) => {
+					this.unkey(key, cb);
+				});
+			});
+
+		this.container = undefined;
+		this.screen = undefined;
+
 		Object.keys(this.elements).forEach((index) => {
 			this.log(
 				"destroying element (" +
@@ -531,17 +607,9 @@ export class InfinityMintWindow {
 			delete this.elements[index];
 		});
 
-		//unkeys everything to do with the window
-		if (this.inputKeys !== undefined)
-			Object.keys(this.inputKeys).forEach((key) => {
-				Object.values(this.inputKeys[key]).forEach((cb) => {
-					this.unkey(key, cb);
-				});
-			});
-
-		this.container = undefined;
-		this.screen = undefined;
 		this.elements = {};
+		this.data = {};
+		this.options = {};
 	}
 
 	/**
@@ -592,12 +660,7 @@ export class InfinityMintWindow {
 	}
 
 	public hasInitialized() {
-		return (
-			this.initialized &&
-			this.destroyed === false &&
-			this.container !== null &&
-			this.container !== undefined
-		);
+		return this.initialized;
 	}
 
 	public on(event: string, listener: Function): Function {
@@ -829,11 +892,11 @@ export class InfinityMintWindow {
 		this.log("calling initialize");
 		try {
 			await this.initialize(this, this.frame, blessed);
+			this.destroyed = false;
 			this.initialized = true;
 		} catch (error) {
 			this.getInfinityConsole().errorHandler(error);
 		}
-		this.destroyed = false;
 
 		//append each element
 		Object.keys(this.elements).forEach((key) => {
