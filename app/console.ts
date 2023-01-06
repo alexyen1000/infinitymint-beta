@@ -90,6 +90,30 @@ export class InfinityConsole {
 
 		if (getConfigFile().music)
 			this.player = require("play-sound")({ player: "afplay" });
+
+		debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
+		this.screen = blessed.screen(
+			this.options?.blessed || {
+				smartCRS: true,
+				autoPadding: true,
+				fullUnicode: true,
+				dockBorders: true,
+				sendFocus: true,
+			}
+		);
+		this.loadingBox = blessed.loading({
+			top: "center",
+			left: "center",
+			width: "90%",
+			height: 20,
+			style: {
+				fg: "white",
+			},
+		});
+		this.screen.append(this.loadingBox);
+		this.loadingBox.setFront();
+		this.loadingBox.show();
+		this.screen.render();
 	}
 
 	private generateId() {
@@ -179,16 +203,17 @@ export class InfinityConsole {
 						this.currentWindow.canRefresh()
 					)
 						this.reloadWindow(this.currentWindow);
-					else if (
-						!this.currentWindow.canRefresh() &&
-						!this.currentWindow.isVisible()
-					)
-						this.reload();
+					else this.reload();
 				},
 			],
-			"C-q": [
+			"C-i": [
 				(ch: string, key: string) => {
 					this.reload();
+				},
+			],
+			"C-p": [
+				(ch: string, key: string) => {
+					this.gotoWindow("Projects");
 				},
 			],
 			//shows the current video
@@ -308,7 +333,7 @@ export class InfinityConsole {
 				}
 			} catch (error) {
 				this.stopLoading();
-				throw error;
+				this.errorHandler(error);
 			}
 			this.stopLoading();
 		}
@@ -361,6 +386,12 @@ export class InfinityConsole {
 	public async reload() {
 		this.emit("reloaded");
 		this.setLoading("Reloading InfinityConsole");
+		//reset pipes
+		Object.values(Pipes.pipes).forEach((pipe) => {
+			pipe.logs = [];
+			pipe.errors = [];
+			pipe.log("{red-fg}pipe reset{/red-fg}");
+		});
 
 		//then start destorying
 		Object.keys(this.inputKeys).forEach((key) => {
@@ -538,18 +569,20 @@ export class InfinityConsole {
 					.filter((window) => !window.isHiddenFromMenu())
 					.map(
 						(window, index) =>
-							`[${index.toString().padEnd(4, "0")}]` +
+							`{bold}[${index.toString().padEnd(4, "0")}]{bold}` +
 							((window.isAlive()
-								? " {green-fg}->{/green-fg}"
-								: " {red-fg}->{/red-fg}") +
+								? ` {green-fg}0x${index
+										.toString(16)
+										.padEnd(4, "0")}{/green-fg}`
+								: " {red-fg}0x0000{/red-fg}") +
 								(!window.hasInitialized()
-									? " {red-fg}[!]{/red-fg}"
-									: " {green-fg}[@]{/green-fg}") +
+									? " {gray-fg}[!]{/gray-fg}"
+									: " {gray-fg}[?]{/gray-fg}") +
 								" " +
 								window.name +
 								(window.isAlive() &&
 								window.shouldBackgroundThink()
-									? " {cyan-fg}[?]{/cyan-fg}"
+									? " {gray-fg}(running in background){/gray-fg}"
 									: ""))
 					)
 			);
@@ -561,14 +594,14 @@ export class InfinityConsole {
 
 	public setLoading(msg: string, filled?: number) {
 		this.loadingBox.load(msg);
-		this.loadingBox.filled = filled || this.loadingBox.filled || 0;
 		this.loadingBox.show();
 		this.loadingBox.setFront();
+		this.loadingBox.filled = filled || 1;
 	}
 
 	public stopLoading() {
 		this.loadingBox.stop();
-		this.loadingBox.setBack();
+		this.loadingBox.setFront();
 		this.loadingBox.hide();
 	}
 
@@ -607,15 +640,17 @@ export class InfinityConsole {
 				},
 			},
 			style: {
-				bg: "grey",
+				bg: "black",
 				fg: "white",
 				item: {
 					hover: {
-						bg: "white",
+						bg: "green",
+						fg: "black",
 					},
 				},
 				selected: {
-					bg: "white",
+					bg: "grey",
+					fg: "green",
 					bold: true,
 				},
 			},
@@ -660,7 +695,7 @@ export class InfinityConsole {
 				this.errorHandler(error);
 			}
 		});
-
+		this.windowManager.setBack();
 		//update the list
 		this.updateWindowsList();
 		//append window manager to the screen
@@ -1107,32 +1142,21 @@ export class InfinityConsole {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
-		debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
-		//create the screen if it is undefined
-		if (this.screen === undefined)
-			this.screen = blessed.screen(
-				this.options?.blessed || {
-					smartCRS: true,
-					useBCE: true,
-					autoPadding: true,
-					fullUnicode: true,
-					dockBorders: true,
-					title: "InfinityMint " + getInfinityMintVersion(),
-					sendFocus: true,
-				}
-			);
+		//loading
+		this.createEventEmitter();
+		log(`loading InfinityConsole<${this.sessionId}>`);
 
-		if (this.loadingBox === undefined) {
-			this.loadingBox = blessed.loading({
-				top: "center",
-				left: "center",
-				width: "90%",
-				height: 20,
-			});
-			this.loadingBox.hide();
-			this.screen.append(this.loadingBox);
-			this.screen.render();
-		}
+		this.setLoading("Loading Imports", 10);
+		//refresh imports
+		if (this.imports === undefined || !hasImportCache())
+			await this.refreshImports();
+
+		this.setLoading("Loading Windows", 10);
+		await this.refreshWindows();
+		this.setLoading("Loading Web3", 20);
+		await this.refreshWeb3();
+		this.setLoading("Loading Scripts", 30);
+		await this.refreshScripts();
 
 		//the think method for this console
 		let int = () => {
@@ -1147,6 +1171,7 @@ export class InfinityConsole {
 
 			this.screen.render();
 		};
+
 		this.think = setInterval(() => {
 			this.loadingBox.setFront();
 			(this.options?.think || int)();
@@ -1171,22 +1196,9 @@ export class InfinityConsole {
 
 			if (this.errorBox !== undefined && this.errorBox.hidden !== true)
 				this.errorBox.setFront();
-		}, this.options?.tickRate);
-
-		this.setLoading("Loading");
-		this.createEventEmitter();
-		//refresh imports
-		if (this.imports === undefined || !hasImportCache())
-			await this.refreshImports();
-
-		this.setLoading("Loading Windows", 10);
-		await this.refreshWindows();
-		this.setLoading("Loading Web3", 20);
-		await this.refreshWeb3();
-		this.setLoading("Loading Scripts", 30);
-		await this.refreshScripts();
-
-		log(`loading InfinityConsole<${this.sessionId}>`);
+		}, this.options?.tickRate || 33);
+		//create the window manager
+		this.createWindowManager();
 
 		if (this.options?.dontDraw !== true)
 			try {
@@ -1256,8 +1268,6 @@ export class InfinityConsole {
 					`finished initializing ${instantInstantiate.length} windows`
 				);
 
-				//create the window manager
-				this.createWindowManager();
 				this.setLoading("Loading Current Window", 50);
 				await this.createCurrentWindow(); //create the current window
 				//render
@@ -1303,6 +1313,7 @@ export class InfinityConsole {
 			);
 
 		log(`successfully loaded InfinityConsole<${this.sessionId}>`);
+
 		this.emit("initialized");
 	}
 }

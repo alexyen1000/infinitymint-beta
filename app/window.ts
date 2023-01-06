@@ -785,7 +785,14 @@ export class InfinityMintWindow {
 	public createElement(
 		key: string,
 		options: BlessedElementOptions,
-		type?: "box" | "list" | "image" | "bigtext" | "listbar" | "listtable"
+		type?:
+			| "box"
+			| "list"
+			| "image"
+			| "bigtext"
+			| "listbar"
+			| "listtable"
+			| "layout"
 	) {
 		type = type || "box";
 		if (this.elements["frame"] === undefined && options?.parent)
@@ -794,76 +801,15 @@ export class InfinityMintWindow {
 		if (blessed[type] === undefined || typeof blessed[type] !== "function")
 			throw new Error("bad blessed element: " + type);
 
-		let base = options?.parent || this.getElement("frame");
-
-		if (options.left === undefined && options.right === undefined)
-			options.left = 0;
-
-		(options.left !== undefined ||
-			(options.left === undefined && options.right === undefined)) &&
-		typeof options.left === "number"
-			? (options.left =
-					base.left +
-					(options.left || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
-			: false;
-
-		options.right !== undefined && typeof options.right === "number"
-			? (options.right =
-					base.right +
-					(options.right || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
-			: false;
-
-		(options.top !== undefined ||
-			(options.top === undefined && options.bottom === undefined)) &&
-		typeof options.top === "number"
-			? (options.top =
-					base.top +
-					(options.top || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
-			: false;
-
-		options.bottom !== undefined && typeof options.bottom === "number"
-			? (options.bottom =
-					base.bottom +
-					(options.bottom || 0) +
-					(typeof this.padding === "number" ? this.padding : 0))
-			: false;
-
-		//deducts the base left and base right starting positions from the options width so it is 100% of the frame/base not the screen
-		if (
-			options.width !== undefined &&
-			typeof options.width === "string" &&
-			options.width?.indexOf("%") !== -1 &&
-			options.width?.indexOf("-") === -1 &&
-			options.width?.indexOf("+") === -1
-		)
-			options.width = options.width + "-" + (base.left + base.right + 2);
-
-		//if its just a percentage then add the base onto it, if not leave it and have them do it
-		if (
-			options.height !== undefined &&
-			typeof options.height === "string" &&
-			options.height?.indexOf("%") !== -1 &&
-			options.height?.indexOf("-") === -1 &&
-			options.height?.indexOf("+") === -1
-		)
-			options.height =
-				options.height + "-" + (base.top + base.bottom + 2);
-
 		let element = this.registerElement(key, blessed[type](options));
-
+		if (element?.options.parent) delete element.options.parent;
 		if (options.alwaysFront) element.alwaysFront = options.alwaysFront;
 		if (options.alwaysBack) element.alwaysBack = options.alwaysBack;
 		if (options.alwaysUpdate) element.alwaysUpdate = options.alwaysUpdate;
 		if (options.think) element.think = options.think;
 		if (options.shouldFocus) element.shouldFocus = options.shouldFocus;
-		if (options.instantlyCreate) {
-			this.log(
-				`appending element (${element.constructor.name}) to screen`
-			);
 
+		if (options.instantlyCreate || options.instantlyAppend) {
 			this.screen.append(element);
 			this.screen.render();
 		}
@@ -890,11 +836,12 @@ export class InfinityMintWindow {
 		// Create the frame which all other components go into
 		this.frame = this.registerElement(
 			"frame",
-			blessed.box({
+			blessed.layout({
 				top: this.x,
 				left: this.y,
 				width: this.width,
 				height: this.height.toString(),
+				layout: "grid",
 				tags: true,
 				parent: this.screen,
 				padding: this.padding || 1,
@@ -912,14 +859,15 @@ export class InfinityMintWindow {
 
 		this.closeButton = this.createElement("closeButton", {
 			top: -1,
-			right: 0,
+			right: 2,
 			width: 3,
 			height: 3,
 			shouldFocus: true,
 			tags: true,
 			padding: 0,
 			alwaysFront: true,
-			content: "[x]",
+			content: " ",
+			border: this.border || {},
 			style: {
 				bg: "red",
 				fg: "white",
@@ -934,15 +882,16 @@ export class InfinityMintWindow {
 		this.hideButton = this.createElement("hideButton", {
 			top: -1,
 			right: this.hideCloseButton
-				? 0
-				: calculateWidth(this.closeButton) + 1,
+				? 2
+				: calculateWidth(this.closeButton) + 2,
 			width: 3,
 			height: 3,
 			alwaysFront: true,
 			shouldFocus: true,
 			tags: true,
 			padding: 0,
-			content: "[-]",
+			content: " ",
+			border: this.border || {},
 			style: {
 				bg: "yellow",
 				fg: "white",
@@ -957,7 +906,7 @@ export class InfinityMintWindow {
 		this.refreshButton = this.createElement("refreshButton", {
 			top: -1,
 			right: this.hideCloseButton
-				? calculateWidth(this.hideButton) + 1
+				? calculateWidth(this.hideButton) + 2
 				: calculateWidth(this.hideButton, this.closeButton) + 2,
 			width: 3,
 			height: 3,
@@ -965,7 +914,8 @@ export class InfinityMintWindow {
 			shouldFocus: true,
 			tags: true,
 			padding: 0,
-			content: "[?]",
+			content: " ",
+			border: this.border || {},
 			style: {
 				bg: "blue",
 				fg: "white",
@@ -994,17 +944,19 @@ export class InfinityMintWindow {
 
 		//append each element
 		Object.keys(this.elements).forEach((key) => {
-			if (key === "frame") return;
 			let element = this.elements[key];
-			if (!element.instantlyAppend) {
-				this.log(
-					`appending element (${element.constructor.name}) to screen`
-				);
 
+			if (
+				key !== "frame" &&
+				!element.instantlyAppend &&
+				!element.instantlyCreate
+			) {
 				this.screen.append(element);
 			}
 
 			if (element.shouldFocus) element.focus();
+			if (element.alwaysBack) element.setBack();
+			if (element.alwaysFront) element.setFront();
 		});
 
 		//render the screen

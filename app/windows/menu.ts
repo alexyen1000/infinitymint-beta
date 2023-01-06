@@ -30,7 +30,7 @@ const Menu = new InfinityMintWindow(
 	}
 );
 
-let createButtons = (window) => {
+let createButtons = (window: InfinityMintWindow) => {
 	let projects = window.createElement("deploy", {
 		bottom: 0,
 		left: 0,
@@ -211,9 +211,9 @@ Menu.initialize = async (window, frame, blessed) => {
 
 	let background = window.createElement("background", {
 		width: "100%",
-		height: "100%-" + (frame.top + frame.bottom + 8),
-		padding: 1,
+		height: "100%-8",
 		top: 4,
+		padding: 1,
 		label: "{bold}{white-fg}Menu{/white-fg}{/bold}",
 		left: "center",
 		keys: true,
@@ -242,16 +242,13 @@ Menu.initialize = async (window, frame, blessed) => {
 	}
 
 	let container = window.createElement("container", {
-		width: "100%",
-		height: "100%-" + (frame.top + frame.bottom + 10),
+		width: "100%-3",
+		height: "100%-10",
 		top: 5,
-		left: 1,
+		left: 2,
 		style: {
 			fg: "white",
 			bg: "black",
-			border: {
-				fg: "#f0f0f0",
-			},
 		},
 	});
 
@@ -285,9 +282,9 @@ Menu.initialize = async (window, frame, blessed) => {
 			window.createElement(
 				"logo",
 				{
-					top: -1,
+					top: 6,
 					parent: container,
-					left: 8,
+					left: 12,
 					draggable: true,
 					width: logoWidth,
 					height: logoHeight,
@@ -306,6 +303,7 @@ Menu.initialize = async (window, frame, blessed) => {
 						},
 					},
 					border: window.getBorder(),
+					alwaysFocus: true,
 				},
 				"image"
 			);
@@ -354,7 +352,7 @@ Menu.initialize = async (window, frame, blessed) => {
 	});
 
 	window.createElement("companyLabel", {
-		left: container.left,
+		left: container.left - 1,
 		top: container.top - 1,
 		width: "shrink",
 		height: "shrink",
@@ -396,8 +394,8 @@ Menu.initialize = async (window, frame, blessed) => {
 
 	if (container.height >= 9)
 		window.createElement("infoLabel", {
-			left: -1,
-			bottom: 1,
+			left: 4,
+			bottom: 6,
 			parent: container,
 			width: "shrink",
 			height: "shrink",

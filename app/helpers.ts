@@ -37,6 +37,7 @@ export interface Vector {
 export interface Blessed {
 	screen: (options: any) => BlessedElement;
 	box: (options: BlessedElementOptions) => BlessedElement;
+	layout: (options: BlessedElementOptions) => BlessedElement;
 	loading: (options: BlessedElementOptions) => BlessedElement;
 	button: (options: BlessedElementOptions) => BlessedElement;
 	list: (options: BlessedElementOptions) => BlessedElement;
@@ -107,6 +108,8 @@ export interface BlessedElement extends BlessedElementOptions, KeyValue {
 	 */
 	pushLine: Function;
 	disableMouse: Function;
+	instantlyCreate: boolean;
+	instantlyAppend: boolean;
 	/**
 	 * Returns the current window this element is assigned too. Will be undefined if the element has not been registered with an InfinityMintWindow
 	 */
@@ -298,6 +301,7 @@ export const overwriteConsoleMethods = () => {
 		}
 
 		if (
+			msg.indexOf !== undefined &&
 			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
 			Pipes.pipes[Pipes.currentPipeKey] !== undefined
 		)

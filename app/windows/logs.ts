@@ -21,17 +21,18 @@ let pipeViewerThink = (
 		lines.length > 2 ? lines[lines.length - 1].count : 1;
 
 	//bleseed push line doesnt work for some reason so we have to do it this way
-
-	element.setLabel(
-		"{bold}{white-fg}Pipe: {/white-fg}" + element.options.pipe + "{/bold}"
-	);
-
 	if (
 		(element.content.length === 0 && lines.length !== 0) ||
 		element.options.currentCount !== element.options.lastCount ||
 		element.options.lastLength !== lines.length
 	) {
 		element.options.lastCount = lines[lines.length - 1].count;
+		element.setLabel(
+			"{bold}{white-fg}Pipe: {/white-fg}" +
+				element.options.pipe +
+				" (LOADING){/bold}"
+		);
+
 		lines.forEach((object, index) => {
 			if (element.options.lastLength - 1 < index) return;
 			let lineCount = (indexCount: number | string) => {
@@ -101,6 +102,10 @@ let pipeViewerThink = (
 
 		element.options.lastLength = lines.length;
 	}
+
+	element.setLabel(
+		"{bold}{white-fg}Pipe: {/white-fg}" + element.options.pipe + "{/bold}"
+	);
 };
 const Logs = new InfinityMintWindow(
 	"Logs",
@@ -181,7 +186,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		height: "100%-" + (frame.top + frame.bottom + 8),
 		padding: 0,
 		top: 4,
-		label: `{bold}{white-fg}Pipe: {/white-fg}${"undefined"}{/bold}`,
+		label: `{bold}{white-fg}Pipe: {/white-fg}${"(LOADING)"}{/bold}`,
 		keys: true,
 		tags: true,
 		scrollable: true,
@@ -207,7 +212,8 @@ Logs.initialize = async (window, frame, blessed) => {
 		log.options.extraLines = 0;
 		log.options.lastCount = 0;
 		log.think = pipeViewerThink;
-		log.setBack();
+		log.setFront();
+		log.focus();
 	});
 
 	window.data.log = logs[0];
@@ -380,12 +386,12 @@ Logs.initialize = async (window, frame, blessed) => {
 	form.hide();
 
 	let save = window.createElement("save", {
-		top: 2,
-		right: 0,
+		top: 3,
+		right: 2,
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "Save Pipe To File",
+		content: "Save",
 		tags: true,
 		border: {
 			type: "line",
@@ -404,12 +410,12 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	//create buttons
 	let changePipe = window.createElement("changePipe", {
-		top: 2,
-		right: calculateWidth(save),
+		top: 3,
+		right: calculateWidth(save) + 2,
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "Change Current Pipe",
+		content: "Edit",
 		tags: true,
 		border: {
 			type: "line",
@@ -428,12 +434,12 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	//create buttons
 	let newPipe = window.createElement("newPipe", {
-		top: 2,
-		right: calculateWidth(save, changePipe),
+		top: 3,
+		right: calculateWidth(save, changePipe) + 2,
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "New Window",
+		content: "Split",
 		tags: true,
 		border: {
 			type: "line",
@@ -451,19 +457,19 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 
 	let deletePipe = window.createElement("delete", {
-		top: 2,
-		right: calculateWidth(changePipe, save, newPipe),
+		top: 3,
+		right: calculateWidth(changePipe, save, newPipe) + 2,
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "Delete Pipe",
+		content: "Delete",
 		tags: true,
 		border: {
 			type: "line",
 		},
 		style: {
 			fg: "white",
-			bg: "red",
+			bg: "black",
 			border: {
 				fg: "#ffffff",
 			},
@@ -516,8 +522,5 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.data.log.options.extraLines = 0;
 	window.data.log.options.lastCount = 0;
 };
-
-Logs.setShouldInstantiate(false);
-Logs.setBackgroundThink(false);
 
 export default Logs;

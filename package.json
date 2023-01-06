@@ -13,8 +13,9 @@
   "scripts": {
     "test": "mocha",
     "build": "rm -R -f ./dist && npx tsc",
-    "start": "npx tsc && npx hardhat compile && npx ts-node index.ts",
-    "doc": "npx typedoc --options ./typedoc.json"
+    "start": "npx ts-node index.ts",
+    "doc": "npx typedoc --options ./typedoc.json",
+    "postinstall": "npx tsc && npx hardhat compile"
   },
   "repository": {
     "type": "git",
