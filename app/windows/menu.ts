@@ -2,6 +2,7 @@ import {
 	calculateWidth,
 	debugLog,
 	getConfigFile,
+	getCurrentProject,
 	getInfinityMintVersion,
 	getPackageJson,
 	getSolidityFolder,
@@ -13,7 +14,7 @@ import {
 import { InfinityMintWindow } from "../window";
 import hre from "hardhat";
 import { getDefaultAccountIndex } from "../web3";
-import { importCount } from "@app/imports";
+import { importCount } from "../imports";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
@@ -30,7 +31,7 @@ const Menu = new InfinityMintWindow(
 );
 
 let createButtons = (window) => {
-	let deploy = window.createElement("deploy", {
+	let projects = window.createElement("deploy", {
 		bottom: 0,
 		left: 0,
 		shrink: true,
@@ -38,7 +39,7 @@ let createButtons = (window) => {
 		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
-		content: "Deploy Projects",
+		content: "View Projects",
 		tags: true,
 		border: {
 			type: "line",
@@ -54,19 +55,19 @@ let createButtons = (window) => {
 			},
 		},
 	});
-	deploy.on("click", async () => {
-		await window.openWindow("Deploy");
+	projects.on("click", async () => {
+		await window.openWindow("Projects");
 	});
 
 	let browser = window.createElement("browser", {
 		bottom: 0,
-		left: calculateWidth(deploy),
+		left: calculateWidth(projects),
 		shrink: true,
 		alwaysFront: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Download Projects",
+		content: "Web3 Browser",
 		tags: true,
 		border: {
 			type: "line",
@@ -86,40 +87,15 @@ let createButtons = (window) => {
 		await window.openWindow("Browser");
 	});
 
-	let compile = window.createElement("compile", {
-		bottom: 0,
-		left: calculateWidth(deploy, browser),
-		shrink: true,
-		alwaysFront: true,
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Compile Projects",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-
 	let scripts = window.createElement("scripts", {
 		bottom: 0,
-		left: calculateWidth(deploy, browser, compile),
+		left: calculateWidth(projects, browser),
 		shrink: true,
 		width: "shrink",
 		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
-		content: "Run Scripts",
+		content: "Execute Scripts",
 		tags: true,
 		border: {
 			type: "line",
@@ -141,13 +117,13 @@ let createButtons = (window) => {
 
 	let deployments = window.createElement("deployments", {
 		bottom: 0,
-		left: calculateWidth(deploy, browser, compile, scripts),
+		left: calculateWidth(projects, browser, scripts),
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		alwaysFront: true,
 		padding: 1,
-		content: "All Deployments",
+		content: "View Deployments",
 		tags: true,
 		border: {
 			type: "line",
@@ -175,7 +151,7 @@ let createButtons = (window) => {
 		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
-		content: "Change Network",
+		content: "Set Network",
 		tags: true,
 		border: {
 			type: "line",
@@ -220,6 +196,19 @@ Menu.think = (window, frame, blessed) => {
 };
 
 Menu.initialize = async (window, frame, blessed) => {
+	window.on("hide", () => {
+		if (!getCurrentProject()) noProject.show();
+		else noProject.hide();
+	});
+	window.on("show", () => {
+		if (!getCurrentProject()) noProject.show();
+		else noProject.hide();
+	});
+	window.on("focus", () => {
+		if (!getCurrentProject()) noProject.show();
+		else noProject.hide();
+	});
+
 	let background = window.createElement("background", {
 		width: "100%",
 		height: "100%-" + (frame.top + frame.bottom + 8),
@@ -432,6 +421,34 @@ Menu.initialize = async (window, frame, blessed) => {
 				window.getInfinityConsole().getImports()
 			)}{/white-fg}{/gray-bg}`,
 		});
+
+	let noProject = window.createElement("noProjectWarning", {
+		top: "center",
+		right: 4,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		alwaysFront: true,
+		bold: true,
+		padding: 2,
+		style: {
+			bg: "red",
+			border: {
+				fg: "yellow",
+			},
+			hover: {
+				bg: "black",
+			},
+		},
+		border: window.getBorder(),
+		content: `{bold}warning!{/bold}\n\nno current project is set!\nclick me to set one...`,
+	});
+	noProject.on("click", () => {
+		window.openWindow("Projects");
+	});
+
+	if (!getCurrentProject()) noProject.show();
+	else noProject.hide();
 
 	createButtons(window);
 };

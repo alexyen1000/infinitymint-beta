@@ -6,6 +6,7 @@ import {
 	readSession,
 	saveSession,
 	saveSessionVariable,
+	warning,
 } from "../helpers";
 import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
@@ -16,85 +17,82 @@ let pipeViewerThink = (
 	blessed: Blessed
 ) => {
 	let lines = Pipes.getPipe(element.options.pipe).logs;
-	element.options.currentCount = 0;
-	//bleseed push line doesnt work for some reason so we have to do it this way
+	element.options.currentCount =
+		lines.length > 2 ? lines[lines.length - 1].count : 1;
 
-	//counts lined changes
-	if (element.options.showDuplicateEntries !== true)
-		lines.forEach((object) => {
-			element.options.currentCount =
-				element.options.currentCount + object.count;
-		});
+	//bleseed push line doesnt work for some reason so we have to do it this way
 
 	element.setLabel(
 		"{bold}{white-fg}Pipe: {/white-fg}" + element.options.pipe + "{/bold}"
 	);
 
 	if (
+		(element.content.length === 0 && lines.length !== 0) ||
 		element.options.currentCount !== element.options.lastCount ||
 		element.options.lastLength !== lines.length
 	) {
-		element.options.lastCount = 0;
-		lines
-			.slice(
-				element.options.lastLength - 1 < 0
-					? 0
-					: element.options.lastLength - 1
-			)
-			.forEach((object) => {
-				let line = object.message;
-				element.options.lastCount =
-					element.options.lastCount + object.count;
-				let lineCount = (indexCount: number | string) => {
-					return `{white-bg}{black-fg}${indexCount
-						.toString()
-						.padEnd(6, " ")}{/black-fg}{/white-bg} `;
-				};
+		element.options.lastCount = lines[lines.length - 1].count;
+		lines.forEach((object, index) => {
+			if (element.options.lastLength - 1 < index) return;
+			let lineCount = (indexCount: number | string) => {
+				return `{white-bg}{black-fg}${indexCount
+					.toString()
+					.padEnd(6, " ")}{/black-fg}{/white-bg} `;
+			};
 
-				if (
-					object.count <= 1 ||
-					element.options.showDuplicateEntries !== true
-				) {
-					let finalLine = lineCount(object.index) + line.toString();
+			if (
+				object.count <= 1 ||
+				element.options.showDuplicateEntries !== true
+			) {
+				let finalLine =
+					lineCount(object.index) + object.message.toString();
+				finalLine =
+					finalLine +
+					` {blue-fg}{bold}${
+						element.options.showDuplicateEntries !== true &&
+						object.count > 1
+							? "x" + object.count
+							: ""
+					}{/bold}{/blue-fg}`;
+				finalLine =
+					object.index % 2 === 0
+						? `{white-fg}${finalLine}{/white-fg}`
+						: `{black-bg}${finalLine}{/black-bg}`;
+
+				element.setLine(
+					object.index + element.options.extraLines,
+					finalLine
+				);
+			} else {
+				let currentExtraLines = element.options.extraLines;
+				for (let i = 0; i < object.count; i++) {
+					//hide after 6
+					if (i == 6) {
+						element.setLine(
+							object.index + currentExtraLines + i,
+							`{red-fg}${
+								object.count - i
+							} more but hiding due to amount{/red-fg}`
+						);
+						break;
+					}
+					let finalLine =
+						lineCount(object.index + " " + i) +
+						object.message.toString();
 					finalLine =
-						finalLine +
-						` {blue-fg}{bold}${
-							element.options.showDuplicateEntries !== true &&
-							object.count > 1
-								? "x" + object.count
-								: ""
-						}{/bold}{/blue-fg}`;
-					finalLine =
-						object.index % 2 === 0
+						(object.index + i) % 2 === 0
 							? `{white-fg}${finalLine}{/white-fg}`
 							: `{black-bg}${finalLine}{/black-bg}`;
 
 					element.setLine(
-						object.index + element.options.extraLines,
+						object.index + currentExtraLines + i,
 						finalLine
 					);
-				} else {
-					let currentExtraLines = element.options.extraLines;
-					for (let i = 0; i < object.count; i++) {
-						let finalLine =
-							lineCount(object.index + " " + i) + line.toString();
-						finalLine =
-							(object.index + i) % 2 === 0
-								? `{white-fg}${finalLine}{/white-fg}`
-								: `{black-bg}${finalLine}{/black-bg}`;
-
-						element.setLine(
-							object.index + currentExtraLines + i,
-							finalLine
-						);
-						if (
-							i > 0 &&
-							element.options.lastLength !== lines.length
-						)
-							element.options.extraLines++;
-					}
+					if (i > 0 && element.options.lastLength !== lines.length)
+						element.options.extraLines++;
 				}
-			});
+			}
+		});
 
 		if (element.options.alwaysScroll === true) {
 			element.setScrollPerc(100);
@@ -188,6 +186,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		tags: true,
 		scrollable: true,
 		vi: true,
+		shouldFocus: true,
 		mouse: true,
 		alwaysScroll: true,
 		scrollbar: window.getScrollbar() || {},
@@ -212,7 +211,6 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 
 	window.data.log = logs[0];
-	window.data.log.focus();
 	//load the options with default values
 	window.loadOptions(null, {
 		console0: {
@@ -319,9 +317,9 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.data.log.options.lastLength = 0;
 		window.data.log.options.extraLines = 0;
 		window.data.log.options.lastCount = 0;
-
 		window.data.log.setContent("");
 		window.data.log.setScroll(0);
+		window.data.log.focus();
 		window.saveOptions();
 	});
 
@@ -374,15 +372,40 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.data.log.options.extraLines = 0;
 		window.data.log.options.lastCount = 0;
 		window.data.log.setContent("");
+		window.data.log.setScroll(0);
+		window.data.log.focus();
 		window.saveOptions();
 		form.hide();
 	});
 	form.hide();
 
+	let save = window.createElement("save", {
+		top: 2,
+		right: 16,
+		width: "shrink",
+		height: "shrink",
+		padding: 0,
+		content: "Save Pipe",
+		tags: true,
+		border: {
+			type: "line",
+		},
+		style: {
+			fg: "white",
+			bg: "black",
+			border: {
+				fg: "#ffffff",
+			},
+			hover: {
+				bg: "grey",
+			},
+		},
+	});
+
 	//create buttons
 	let changePipe = window.createElement("changePipe", {
 		top: 2,
-		right: 16,
+		right: 16 + calculateWidth(save),
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
@@ -403,13 +426,14 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	let save = window.createElement("save", {
+	//create buttons
+	let newPipe = window.createElement("newPipe", {
 		top: 2,
-		right: 16 + calculateWidth(changePipe),
+		right: 16 + calculateWidth(save, changePipe),
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "Save Pipe",
+		content: "New Window",
 		tags: true,
 		border: {
 			type: "line",
@@ -424,6 +448,41 @@ Logs.initialize = async (window, frame, blessed) => {
 				bg: "grey",
 			},
 		},
+	});
+
+	let deletePipe = window.createElement("delete", {
+		top: 2,
+		right: 18 + calculateWidth(changePipe, save, newPipe),
+		width: "shrink",
+		height: "shrink",
+		padding: 0,
+		content: "Delete Pipe",
+		tags: true,
+		border: {
+			type: "line",
+		},
+		style: {
+			fg: "white",
+			bg: "red",
+			border: {
+				fg: "#ffffff",
+			},
+			hover: {
+				bg: "grey",
+			},
+		},
+	});
+	deletePipe.on("click", () => {
+		Pipes.getPipe(window.data.log.options.pipe).logs = [];
+		Pipes.getPipe(window.data.log.options.pipe).log(
+			"{red-fg}pipe deleted{/red-fg}"
+		);
+		window.data.log.options.lastLength = 0;
+		window.data.log.options.extraLines = 0;
+		window.data.log.options.lastCount = 0;
+		window.data.log.setContent("");
+		window.saveOptions();
+		form.hide();
 	});
 
 	let onChangePipe = () => {
@@ -445,6 +504,10 @@ Logs.initialize = async (window, frame, blessed) => {
 	//save when the window is hidden
 	window.on("hide", () => {
 		window.saveOptions();
+	});
+
+	window.on("show", () => {
+		window.data.log.focus();
 	});
 
 	window.key("p", onChangePipe);

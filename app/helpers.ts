@@ -251,8 +251,13 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
  * @returns
  */
 export const readSession = (): InfinityMintSession => {
-	if (!fs.existsSync(process.cwd() + "/.session"))
+	if (
+		!fs.existsSync(process.cwd() + "/.session") &&
+		memorySession === undefined
+	)
 		return { created: Date.now(), environment: {} };
+	//returns memory version
+	else if (memorySession) return memorySession;
 
 	try {
 		return JSON.parse(
@@ -732,6 +737,33 @@ export const findScripts = async (roots?: string[]) => {
 };
 
 /**
+ * Returns the current project
+ * @returns
+ */
+export const getCurrentProject = () => {
+	let session = readSession();
+
+	if (session.environment.project === undefined) return undefined;
+	return session.environment.project as path.ParsedPath;
+};
+
+export const getCurrentDeployedProject = () => {
+	if (!getCurrentProject()) throw new Error("no current project");
+
+	return getDeployedProject(getCurrentProject().name);
+};
+
+/**
+ *
+ * @returns
+ */
+export const getCurrentCompiledProject = () => {
+	if (!getCurrentProject()) throw new Error("no current project");
+
+	return getCompiledProject(getCurrentProject().name);
+};
+
+/**
  *
  * @param fileName
  * @returns
@@ -751,6 +783,36 @@ export const requireWindow = (fileName: string) => {
 	result.setFileName(fileName);
 	result.log("required");
 	return result as InfinityMintWindow;
+};
+
+/**
+ *
+ * @param roots
+ * @returns
+ */
+export const findProjects = async (roots?: PathLike[]) => {
+	let config = getConfigFile();
+	roots = roots || [];
+	roots = [
+		...roots,
+		process.cwd() + "/projects/",
+		...(config.roots || []).map(
+			(root: string) =>
+				root +
+				(root[root.length - 1] !== "/" ? "/projects/" : "projects/")
+		),
+	];
+
+	let projects = [];
+	for (let i = 0; i < roots.length; i++) {
+		projects = [
+			...projects,
+			...(await findFiles(roots[i] + "**/*.ts")),
+			...(await findFiles(roots[i] + "**/*.js")),
+		];
+	}
+
+	return projects.map((filePath) => path.parse(filePath));
 };
 
 /**
@@ -847,11 +909,13 @@ export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
  * @see {@link app/pipes.Pipe}
  * @param useJavascript Will return infinitymint.config.js instead of infinitymint.config.ts
  * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/dist/app/interfaces')
+ * @returns
  */
 export const loadInfinityMint = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean
 ) => {
+	//try to automatically add module alias
 	try {
 		let projectJson = getPackageJson();
 		if (projectJson._moduleAliases === undefined) {
@@ -995,9 +1059,6 @@ export const initializeGanacheMnemonic = () => {
 	)
 		session.environment.ganacheMnemonic = generateMnemonic();
 
-	debugLog(
-		"saving " + session.environment.ganacheMnemonic + " to .session file"
-	);
 	saveSession(session);
 	return session.environment?.ganacheMnemonic;
 };
@@ -1072,10 +1133,20 @@ export const saveSessionVariable = (
 	return session;
 };
 
+let memorySession: InfinityMintSession;
+/**
+ *
+ * @param session Saves the InfinityMint Session
+ */
 export const saveSession = (session: InfinityMintSession) => {
+	memorySession = session;
 	fs.writeFileSync(process.cwd() + "/.session", JSON.stringify(session));
 };
 
+/**
+ *
+ * @param error Logs an error
+ */
 export const error = (error: string | Error) => {
 	if (
 		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&

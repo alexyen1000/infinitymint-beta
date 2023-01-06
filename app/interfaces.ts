@@ -1175,7 +1175,7 @@ export interface InfinityMintConfigSettingsNetwork {
 
 export interface InfinityMintSessionEnvironment extends KeyValue {
 	ganacheMnemonic?: string;
-	project?: string;
+	project?: KeyValue;
 }
 
 /**

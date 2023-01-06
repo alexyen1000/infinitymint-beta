@@ -167,7 +167,6 @@ export class InfinityConsole {
 						this.screen.lastWindow = this.currentWindow;
 
 					this.currentWindow?.openWindow("Logs");
-					this.windowManager.setBack();
 				},
 			],
 			"C-r": [
@@ -300,17 +299,8 @@ export class InfinityConsole {
 			}
 
 			this.currentWindow = window;
-			if (!this.currentWindow.hasInitialized()) {
-				this.currentWindow.setScreen(this.screen);
-
-				if (!this.currentWindow.hasContainer())
-					this.currentWindow.setContainer(this);
-
-				await this.currentWindow.create();
-				this.registerEvents();
-			}
+			await this.createCurrentWindow();
 			this.currentWindow.show();
-			this.windowManager.setBack();
 		}
 	}
 
@@ -486,7 +476,7 @@ export class InfinityConsole {
 	 * updates the window list with options
 	 */
 	public updateWindowsList() {
-		debugLog("updating windows list");
+		this.windowManager.setBack();
 		try {
 			this.windowManager.setItems(
 				[...this.windows]
@@ -582,20 +572,12 @@ export class InfinityConsole {
 				if (!this.currentWindow.hasInitialized()) {
 					//reset it
 					this.currentWindow.destroy();
-					//sets blessed screen for this window
-					this.currentWindow.setScreen(this.screen);
-					//set the container of this window ( the console, which is this)
-					this.currentWindow.setContainer(this);
-					//create it
-					await this.currentWindow.create();
-					//registers events on the window
-					this.registerEvents();
+					//create it again
+					await this.createCurrentWindow();
 				} else if (!this.currentWindow.isVisible())
 					this.currentWindow.show();
 				else this.currentWindow.hide();
 				await this.currentWindow.updateFrameTitle();
-				//set the window manager to the back of the screne
-				this.windowManager.setBack();
 			} catch (error) {
 				this.currentWindow?.hide();
 				this.currentWindow?.destroy();
@@ -615,8 +597,6 @@ export class InfinityConsole {
 		this.updateWindowsList();
 		//append window manager to the screen
 		this.screen.append(this.windowManager);
-		//set to the back of the screen
-		this.windowManager.setBack();
 	}
 
 	/**
@@ -922,18 +902,32 @@ export class InfinityConsole {
 
 		this.currentWindow = window;
 
-		if (!this.currentWindow.hasInitialized()) {
-			this.currentWindow.setScreen(this.screen);
+		if (!this.currentWindow.hasInitialized())
+			await this.createCurrentWindow();
 
-			if (!this.currentWindow.hasContainer())
-				this.currentWindow.setContainer(this);
-
-			await this.currentWindow.create();
-			this.registerEvents();
-		}
 		this.currentWindow.show();
-		this.windowManager.setBack();
 		this.addWindowToList(window);
+	}
+
+	/**
+	 *
+	 */
+	public async createCurrentWindow() {
+		if (this.currentWindow.hasInitialized()) {
+			warning("window already initialized");
+			return;
+		}
+
+		this.currentWindow.setScreen(this.screen);
+
+		if (!this.currentWindow.hasContainer())
+			this.currentWindow.setContainer(this);
+
+		this.windowManager.hide();
+		await this.currentWindow.create();
+		this.windowManager.show();
+		this.windowManager.setBack();
+		this.registerEvents();
 	}
 
 	/**
@@ -964,11 +958,14 @@ export class InfinityConsole {
 				this.windows[i].name === windowOrIdOrName.toString() ||
 				this.windows[i].getId() === windowOrIdOrName.toString()
 			) {
+				//if its a clone then just kill it. InfinityMint will clean it up automatically
 				if (this.windows[i].data.clone) {
 					this.windows[i].destroy();
+					//init a dummy window to not kill console
 					this.windows[i] = new InfinityMintWindow(
 						this.windows[i].name
 					);
+					//hide it from the menu
 					this.windows[i].setHiddenFromMenu(true);
 					return;
 				}
@@ -1099,20 +1096,9 @@ export class InfinityConsole {
 					`finished initializing ${instantInstantiate.length} windows`
 				);
 
-				//if the current window still hasn't been initialized, t
-				if (!this.currentWindow.hasInitialized()) {
-					if (!this.currentWindow.hasContainer())
-						this.currentWindow.setContainer(this);
-
-					this.currentWindow.setScreen(this.screen);
-					//create window
-					await this.currentWindow.create();
-					//register events for the windowManager with the currentWindow
-					this.registerEvents();
-				}
-
 				//create the window manager
 				this.createWindowManager();
+				await this.createCurrentWindow(); //create the current window
 
 				//the think method for this console
 				let int = () => {
@@ -1166,6 +1152,8 @@ export class InfinityConsole {
 				this.registerKeys();
 				//show the current window
 				this.currentWindow.show();
+				//set window manager to the back
+				this.windowManager.setBack();
 			} catch (error: Error | any) {
 				console.error(error);
 

@@ -11,6 +11,7 @@ import {
 	BlessedElementOptions,
 	getConfigFile,
 	log,
+	getCurrentProject,
 } from "./helpers";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
@@ -579,17 +580,7 @@ export class InfinityMintWindow {
 	public destroy() {
 		this.log("destroying");
 		this.destroyed = true;
-
-		//unkeys everything to do with the window
-		if (this.inputKeys !== undefined)
-			Object.keys(this.inputKeys).forEach((key) => {
-				Object.values(this.inputKeys[key]).forEach((cb) => {
-					this.unkey(key, cb);
-				});
-			});
-
-		this.container = undefined;
-		this.screen = undefined;
+		this.initialized = false;
 
 		Object.keys(this.elements).forEach((index) => {
 			this.log(
@@ -606,6 +597,17 @@ export class InfinityMintWindow {
 			} catch (error) {}
 			delete this.elements[index];
 		});
+
+		//unkeys everything to do with the window
+		if (this.inputKeys !== undefined)
+			Object.keys(this.inputKeys).forEach((key) => {
+				Object.values(this.inputKeys[key]).forEach((cb) => {
+					this.unkey(key, cb);
+				});
+			});
+
+		this.container = undefined;
+		this.screen = undefined;
 
 		this.elements = {};
 		this.data = {};
@@ -699,7 +701,9 @@ export class InfinityMintWindow {
 			}[${this.getInfinityConsole().getCurrentChainId()}] {underline}${account.address.substring(
 				0,
 				16
-			)}...{/underline}{/yellow-fg} {white-fg}{bold}${etherBalance.substring(
+			)}...{/underline}{/yellow-fg} {black-bg}{blue-fg}${
+				getCurrentProject().base || "{red-fg}NO CURRENT PROJECT{red-fg}"
+			}{/blue-fg}{/black-bg} {white-fg}{bold}${etherBalance.substring(
 				0,
 				8
 			)} ETH ($${(parseFloat(etherBalance) * 2222).toFixed(
@@ -799,6 +803,8 @@ export class InfinityMintWindow {
 		if (options.alwaysBack) element.alwaysBack = options.alwaysBack;
 		if (options.alwaysUpdate) element.alwaysUpdate = options.alwaysUpdate;
 		if (options.think) element.think = options.think;
+		if (options.shouldFocus) element.shouldFocus = options.shouldFocus;
+
 		return element;
 	}
 
@@ -846,6 +852,7 @@ export class InfinityMintWindow {
 			right: 0,
 			width: 7,
 			height: 5,
+			shouldFocus: true,
 			tags: true,
 			padding: 1,
 			alwaysFront: true,
@@ -862,13 +869,13 @@ export class InfinityMintWindow {
 		this.closeButton.on("click", () => {
 			this.getInfinityConsole().destroyWindow(this);
 		});
-		this.closeButton.focus();
 		this.hideButton = this.createElement("hideButton", {
 			top: 0,
 			right: this.hideCloseButton ? 0 : calculateWidth(this.closeButton),
 			width: 7,
 			height: 5,
 			alwaysFront: true,
+			shouldFocus: true,
 			tags: true,
 			padding: 1,
 			content: "[-]",
@@ -884,7 +891,6 @@ export class InfinityMintWindow {
 		this.hideButton.on("click", () => {
 			this.hide();
 		});
-		this.hideButton.focus();
 
 		if (this.hideCloseButton) this.closeButton.hide();
 		if (this.hideMinimizeButton) this.hideButton.hide();
@@ -908,7 +914,9 @@ export class InfinityMintWindow {
 			);
 
 			this.screen.append(element);
+			if (element.shouldFocus) element.focus();
 		});
+
 		//render the screen
 		this.screen.render();
 		//update the title and frame

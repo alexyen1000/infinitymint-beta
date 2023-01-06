@@ -37,12 +37,6 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		...(typeof config?.console === "object" ? config.console : {}),
 	} as InfinityMintConsoleOptions;
 	let session = readSession();
-
-	if (isEnvSet("INFINITYMINT_PROJECT")) {
-		session.environment.project =
-			session.environment?.project || process.env.INFINITYMINT_PROJECT;
-		saveSession(session);
-	}
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
 	//register current network pipes
