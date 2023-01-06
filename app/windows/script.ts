@@ -1,5 +1,5 @@
 import Pipes from "../pipes";
-import { executeScript, log } from "../helpers";
+import { debugLog, executeScript, log } from "../helpers";
 import { InfinityMintWindow } from "../window";
 import { InfinityMintScript } from "../interfaces";
 
@@ -30,6 +30,12 @@ Script.initialize = async (window, frame, blessed) => {
 	if (!window.data.script)
 		throw new Error("must be instantated with script in data field");
 
+	let think = (window, element) => {
+		if (window.data.processing) {
+			output.setScrollPerc(100);
+			outputDebug.setScrollPerc(100);
+		}
+	};
 	let output = window.createElement("output", {
 		height: "100%-8",
 		width: "50%",
@@ -54,19 +60,7 @@ Script.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	let startingOutputLine = Pipes.pipes["default"].logs.length;
-	output.think = (window, element) => {
-		if (window.data.processing || output.content.length === 0) {
-			output.setContent(
-				Pipes.pipes["default"].logs
-					.slice(startingOutputLine)
-					.map((obj) => obj.message)
-					.join("\n")
-			);
-			output.setScrollPerc(100);
-		}
-	};
-
+	output.think = think;
 	let outputDebug = window.createElement("outputDebug", {
 		height: "100%-8",
 		width: "50%+2",
@@ -92,35 +86,7 @@ Script.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	let startingDebugLine = Pipes.pipes["debug"].logs.length;
-	outputDebug.think = (window, element) => {
-		if (window.data.processing || outputDebug.content.length === 0) {
-			outputDebug.setContent(
-				Pipes.pipes["debug"].logs
-					.slice(startingDebugLine)
-					.map((obj) => obj.message)
-					.join("\n")
-			);
-			outputDebug.setScrollPerc(100);
-		}
-	};
-
-	let update = () => {
-		outputDebug.setContent(
-			Pipes.pipes["debug"].logs
-				.slice(startingDebugLine)
-				.map((obj) => obj.message)
-				.join("\n")
-		);
-		output.setContent(
-			Pipes.pipes["default"].logs
-				.slice(startingOutputLine)
-				.map((obj) => obj.message)
-				.join("\n")
-		);
-		outputDebug.setScrollPerc(100);
-		output.setScrollPerc(100);
-	};
+	outputDebug.think = think;
 
 	let retry = window.createElement("retry", {
 		bottom: 0,
@@ -149,6 +115,7 @@ Script.initialize = async (window, frame, blessed) => {
 	retry.on("click", async () => {
 		await window.getInfinityConsole().refreshScripts();
 		//set the new script
+		debugLog("{cyan-fg}retrying script{/cyan-fg}");
 		window.data.script =
 			window
 				.getInfinityConsole()
@@ -213,24 +180,40 @@ Script.initialize = async (window, frame, blessed) => {
 			log(
 				"{bold}{green-fg}script executed successfully{/green-fg}{/bold}"
 			);
-
-			update();
 			window.setHideCloseButton(false);
-			window.data.processing = false;
+			output.setScrollPerc(100);
+			outputDebug.setScrollPerc(100);
 			close.show();
+			//stop logs after 1 second
+			setTimeout(() => {
+				window.data.processing = false;
+			}, 1000);
 		} catch (error) {
-			retry.show();
-			log(
-				"{red-fg}{bold}script failed exectuion{/bold}\n" +
-					error?.stack +
-					"{/red-fg}"
-			);
+			log("{red-fg}{bold}script failed exectuion{/bold}{/red-fg}");
 			window.getInfinityConsole().errorHandler(error);
-			update();
 			window.setHideCloseButton(false);
-			window.data.processing = false;
+			output.setScrollPerc(100);
+			outputDebug.setScrollPerc(100);
+			setTimeout(() => {
+				window.data.processing = false;
+			}, 1000);
+			retry.show();
 		}
 	};
+
+	//when logs occur
+	let cb = (msg: string, pipe: string) => {
+		//keep showing debug
+		if (pipe === "debug") outputDebug.pushLine(msg);
+
+		if (!window.data.processing) return;
+		if (pipe === "default") output.pushLine(msg);
+	};
+	Pipes.emitter.on("log", cb);
+	//when this window is destroyed, destroy the output emitter
+	window.on("destroy", () => {
+		Pipes.emitter.off("log", cb);
+	});
 	(() => execute())();
 };
 Script.setBackgroundThink(true);

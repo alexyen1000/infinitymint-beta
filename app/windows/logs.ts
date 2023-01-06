@@ -11,99 +11,20 @@ import {
 import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
 
-let pipeViewerThink = (
+let logThink = (
 	window: InfinityMintWindow,
 	element: BlessedElement,
 	blessed: Blessed
 ) => {
-	let lines = Pipes.getPipe(element.options.pipe).logs;
-	element.options.currentCount =
-		lines.length > 2 ? lines[lines.length - 1].count : 1;
-
-	//bleseed push line doesnt work for some reason so we have to do it this way
-	if (
-		(element.content.length === 0 && lines.length !== 0) ||
-		element.options.currentCount !== element.options.lastCount ||
-		element.options.lastLength !== lines.length
-	) {
-		element.options.lastCount = lines[lines.length - 1].count;
-		element.setLabel(
-			"{bold}{white-fg}Pipe: {/white-fg}" +
-				element.options.pipe +
-				" (LOADING){/bold}"
-		);
-
-		lines.forEach((object, index) => {
-			if (element.options.lastLength - 1 < index) return;
-			let lineCount = (indexCount: number | string) => {
-				return `{white-bg}{black-fg}${indexCount
-					.toString()
-					.padEnd(6, " ")}{/black-fg}{/white-bg} `;
-			};
-
-			if (object.count <= 1 || !element.options.showDuplicateEntries) {
-				let finalLine =
-					lineCount(object.index) + object.message.toString();
-				finalLine =
-					finalLine +
-					` {blue-fg}{bold}${
-						!element.options.showDuplicateEntries &&
-						object.count > 1
-							? "x" + object.count
-							: ""
-					}{/bold}{/blue-fg}`;
-				finalLine =
-					object.index % 2 === 0
-						? `{white-fg}${finalLine}{/white-fg}`
-						: `{black-bg}${finalLine}{/black-bg}`;
-
-				element.setLine(
-					object.index + element.options.extraLines,
-					finalLine
-				);
-			} else {
-				let currentExtraLines = element.options.extraLines;
-				for (let i = 0; i < object.count; i++) {
-					//hide after 6
-					if (i == 6) {
-						element.setLine(
-							object.index + currentExtraLines + i,
-							`{red-fg}${
-								object.count - i
-							} more but hiding due to amount{/red-fg}`
-						);
-						break;
-					}
-					let finalLine =
-						lineCount(object.index + " " + i) +
-						object.message.toString();
-					finalLine =
-						(object.index + i) % 2 === 0
-							? `{white-fg}${finalLine}{/white-fg}`
-							: `{black-bg}${finalLine}{/black-bg}`;
-
-					element.setLine(
-						object.index + currentExtraLines + i,
-						finalLine
-					);
-					if (i > 0 && element.options.lastLength !== lines.length)
-						element.options.extraLines++;
-				}
-			}
-		});
-
-		if (element.options.alwaysScroll) {
-			element.setScrollPerc(100);
-			element.options.selectedLine = lines.length - 1;
-		}
-
-		element.options.lastLength = lines.length;
-	}
-
 	element.setLabel(
 		"{bold}{white-fg}Pipe: {/white-fg}" + element.options.pipe + "{/bold}"
 	);
+
+	if (element.options.alwaysScroll) {
+		element.setScrollPerc(100);
+	}
 };
+
 const Logs = new InfinityMintWindow(
 	"Logs",
 	{
@@ -126,6 +47,29 @@ const Logs = new InfinityMintWindow(
 		},
 	}
 );
+let lastLogMessage;
+let updateContent = (window: InfinityMintWindow) => {
+	window.data.log.setContent(
+		Pipes.pipes[window.data.log.options.pipe].logs
+			.map((log, index) => {
+				if (lastLogMessage && lastLogMessage === log.message)
+					return (
+						lineNumber(index) + `{grey-fg}${log.message}{/grey-fg}`
+					);
+				else {
+					lastLogMessage = log.message;
+					return lineNumber(index) + log.message;
+				}
+			})
+			.join("\n")
+	);
+};
+
+let lineNumber = (indexCount: number | string) => {
+	return `{white-bg}{black-fg}${indexCount
+		.toString()
+		.padEnd(6, " ")}{/black-fg}{/white-bg} `;
+};
 
 //initializes the console
 Logs.initialize = async (window, frame, blessed) => {
@@ -205,10 +149,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	let logs = [window.createElement("console0", consoleStyle)];
 
 	logs.forEach((log) => {
-		log.options.lastLength = 0;
-		log.options.extraLines = 0;
-		log.options.lastCount = 0;
-		log.think = pipeViewerThink;
+		log.think = logThink;
 		log.setFront();
 		log.focus();
 	});
@@ -278,54 +219,6 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 	alwaysScroll.setFront();
 
-	let showDuplicateEntries = window.createElement("showDuplicateEntries", {
-		bottom: 0,
-		left: calculateWidth(alwaysScroll),
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content:
-			"Show Dupe Entries [" +
-			(window.data.log.options.showDuplicateEntries ? "O" : "X") +
-			"]",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: window.data.log.options.showDuplicateEntries ? "green" : "red",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-	showDuplicateEntries.on("click", () => {
-		window.data.log.options.showDuplicateEntries =
-			!window.data.log.options.showDuplicateEntries;
-		//change style
-		showDuplicateEntries.style.bg = window.data.log.options
-			.showDuplicateEntries
-			? "green"
-			: "red";
-		showDuplicateEntries.setContent(
-			"Show Dupe Entries [" +
-				(window.data.log.options.showDuplicateEntries ? "O" : "X") +
-				"]"
-		);
-
-		window.data.log.options.lastLength = 0;
-		window.data.log.options.extraLines = 0;
-		window.data.log.options.lastCount = 0;
-		window.data.log.setContent("");
-		window.data.log.setScroll(0);
-		window.data.log.focus();
-		window.saveOptions();
-	});
-
 	let form = window.createElement(
 		"form",
 		{
@@ -371,13 +264,10 @@ Logs.initialize = async (window, frame, blessed) => {
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
 		window.data.log.options.pipe = keys[selected];
-		window.data.log.options.lastLength = 0;
-		window.data.log.options.extraLines = 0;
-		window.data.log.options.lastCount = 0;
-		window.data.log.setContent("");
 		window.data.log.setScroll(0);
 		window.data.log.focus();
 		window.saveOptions();
+		updateContent(window);
 		form.hide();
 	});
 	form.hide();
@@ -480,9 +370,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		Pipes.getPipe(window.data.log.options.pipe).log(
 			"{red-fg}pipe deleted{/red-fg}"
 		);
-		window.data.log.options.lastLength = 0;
-		window.data.log.options.extraLines = 0;
-		window.data.log.options.lastCount = 0;
+
 		window.data.log.setContent("");
 		window.saveOptions();
 		form.hide();
@@ -498,10 +386,24 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	changePipe.setFront();
 	changePipe.on("click", onChangePipe);
+	let cb = (msg: string, pipe: string, index: number) => {
+		if (!window.isVisible()) return;
+
+		if (pipe === window.data.log.options.pipe) {
+			if (lastLogMessage === msg)
+				window.data.log.pushLine(
+					lineNumber(index) + `{gray-fg}${msg}{gray-fg}`
+				);
+			else window.data.log.pushLine(lineNumber(index) + msg);
+		}
+		lastLogMessage = msg;
+	};
+	Pipes.emitter.on("log", cb);
 
 	//save when the window is destroyed
 	window.on("destroy", () => {
 		window.saveOptions();
+		Pipes.emitter.off("log", cb);
 	});
 
 	//save when the window is hidden
@@ -515,9 +417,7 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	window.key("p", onChangePipe);
 
-	window.data.log.options.lastLength = 0;
-	window.data.log.options.extraLines = 0;
-	window.data.log.options.lastCount = 0;
+	updateContent(window);
 };
 
 export default Logs;

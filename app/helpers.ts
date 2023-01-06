@@ -804,25 +804,17 @@ export const executeScript = async (
 	eventEmitter: InfinityMintEventEmitter,
 	gems?: Dictionary<InfinityMintGemScript>,
 	args?: Dictionary<InfinityMintScriptArguments>,
-	console?: InfinityConsole,
-	onLog?: Function,
-	onDebugLog?: Function
+	console?: InfinityConsole
 ) => {
 	if (!script.javascript)
 		await script.execute({
 			script: script,
 			eventEmitter: eventEmitter,
-			log: (msg, pipe) => {
-				if (onLog) onLog(msg, pipe);
-
-				log(msg, pipe);
-			},
+			log: log,
+			debugLog: debugLog,
 			gems: gems,
 			args: args,
-			debugLog: (msg) => {
-				if (onDebugLog) onDebugLog(msg);
-				debugLog(msg);
-			},
+
 			infinityConsole: console,
 			project: getCurrentProject(true),
 		});

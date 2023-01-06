@@ -2,6 +2,7 @@ import { ChildProcess } from "child_process";
 import { Dictionary } from "form-data";
 import { debugLog, getConfigFile, isEnvTrue, warning } from "./helpers";
 import fs from "fs";
+import { EventEmitter } from "events";
 
 /**
  * The log pipe class
@@ -9,7 +10,6 @@ import fs from "fs";
 export class Pipe {
 	public logs: {
 		message: string;
-		count: number;
 		time: number;
 		index: number;
 	}[];
@@ -43,18 +43,11 @@ export class Pipe {
 			)
 				console.log("<#DONT_LOG_ME$>" + str);
 
-			if (
-				this.logs.length > 2 &&
-				this.logs[this.logs.length - 1].message === str
-			)
-				this.logs[this.logs.length - 1].count++;
-			else
-				this.logs.push({
-					message: str,
-					count: 1,
-					index: this.logs.length,
-					time: Date.now(),
-				});
+			this.logs.push({
+				message: str,
+				index: this.logs.length,
+				time: Date.now(),
+			});
 		};
 		this.errorHandler = (err: Error) => {
 			if (
@@ -108,12 +101,14 @@ export interface PipeOptions {
  */
 export class Pipes {
 	public pipes: Dictionary<Pipe>;
+	public emitter: EventEmitter;
 	public currentPipeKey: string;
 	constructor() {
 		this.pipes = {};
 		this.currentPipeKey = "default";
 		//registers the default pipe
 		this.registerSimplePipe("default");
+		this.emitter = new EventEmitter();
 	}
 
 	public setCurrentPipe(key: string) {
@@ -126,7 +121,12 @@ export class Pipes {
 		//go back to the default pipe
 		if (!this.currentPipeKey || !this.pipes[this.currentPipeKey])
 			this.currentPipeKey = "default";
-
+		this.emitter.emit(
+			"error",
+			error,
+			this.currentPipeKey,
+			this.pipes[this.currentPipeKey].errors.length
+		);
 		this.pipes[this.currentPipeKey].error(error);
 	}
 
@@ -146,6 +146,12 @@ export class Pipes {
 				.replace(/\)/g, "){/cyan-fg}")
 				.replace(/=>/g, "{magenta-fg}=>{/magenta-fg}");
 
+		this.emitter.emit(
+			"log",
+			msg,
+			actualPipe,
+			this.pipes[actualPipe].logs.length
+		);
 		this.pipes[actualPipe].log(msg);
 	}
 
