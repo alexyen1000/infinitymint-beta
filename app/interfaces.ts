@@ -1488,7 +1488,7 @@ export interface InfinityMintDeploymentParameters extends KeyValue {
 	/**
 	 * Might have check if undefined depending on context
 	 */
-	project?: InfinityMintProject;
+	project?: InfinityMintProject | InfinityMintTempProject;
 	/**
 	 * Contains a list of InfinityMint deployment classes which have been deployed or about to be deployed up to this point
 	 */

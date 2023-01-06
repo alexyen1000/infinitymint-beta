@@ -62,6 +62,7 @@ export class InfinityConsole {
 	private network?: HardhatRuntimeEnvironment["network"];
 	private signers?: SignerWithAddress[];
 	private windowManager?: BlessedElement;
+	private loadingBox?: BlessedElement;
 	private errorBox?: BlessedElement;
 	private inputKeys: Dictionary<Array<Function>>;
 	private chainId: number;
@@ -172,9 +173,17 @@ export class InfinityConsole {
 			],
 			"C-r": [
 				(ch: string, key: string) => {
+					if (this.currentWindow && this.currentWindow.isVisible())
+						this.reloadWindow(this.currentWindow);
+					else this.reload();
+				},
+			],
+			"C-q": [
+				(ch: string, key: string) => {
 					this.reload();
 				},
 			],
+			//shows the current video
 			"C-x": [
 				(ch: string, key: string) => {
 					if (this.screen.lastWindow !== undefined) {
@@ -188,11 +197,7 @@ export class InfinityConsole {
 						this.currentWindow?.show();
 				},
 			],
-			m: [
-				(ch: string, key: string) => {
-					this.currentAudio?.kill();
-				},
-			],
+			//hides the current window
 			"C-z": [
 				(ch: string, key: string) => {
 					this.updateWindowsList();
@@ -261,6 +266,41 @@ export class InfinityConsole {
 		return this.signers;
 	}
 
+	public async reloadWindow(thatWindow: string | InfinityMintWindow) {
+		for (let i = 0; i < this.windows.length; i++) {
+			let window = this.windows[i];
+
+			if (
+				window.toString() !== thatWindow.toString() &&
+				window.name !== thatWindow.toString()
+			)
+				continue;
+
+			this.setLoading("Reloading " + window.name);
+			let shouldInstantiate = false;
+			if (
+				this.currentWindow.toString() === window.toString() ||
+				this.currentWindow.name === window.name
+			) {
+				shouldInstantiate = true;
+				this.currentWindow.hide();
+			}
+			let fileName = window.getFileName();
+			window.log("reloading");
+			window.destroy();
+			this.windows[i] = undefined;
+
+			let newWindow = requireWindow(fileName);
+			newWindow.setFileName(fileName);
+			this.windows[i] = newWindow;
+			this.currentWindow = newWindow;
+			if (shouldInstantiate) {
+				await this.createCurrentWindow();
+			}
+			this.stopLoading();
+		}
+	}
+
 	public registerEvents(window?: InfinityMintWindow) {
 		if (this.currentWindow === undefined && window === undefined) return;
 		window = window || this.currentWindow;
@@ -307,6 +347,7 @@ export class InfinityConsole {
 
 	public async reload() {
 		this.emit("reloaded");
+		this.setLoading("Reloading InfinityConsole");
 
 		//then start destorying
 		Object.keys(this.inputKeys).forEach((key) => {
@@ -317,12 +358,12 @@ export class InfinityConsole {
 		this.windows.forEach((window) => window.destroy());
 		this.windows = [];
 		this.windowManager.destroy();
+		this.registerDefaultKeys();
 		//render
 		this.screen.render();
+
 		this.network = undefined;
 		this.windowManager = undefined;
-		this.registerDefaultKeys();
-
 		//do a hard refresh of imports (TODO: Maybe remove)
 		await this.refreshImports(true);
 		await this.initialize();
@@ -505,6 +546,19 @@ export class InfinityConsole {
 		}
 	}
 
+	public setLoading(msg: string, filled?: number) {
+		this.loadingBox.load(msg);
+		this.loadingBox.filled = filled || this.loadingBox.filled || 0;
+		this.loadingBox.show();
+		this.loadingBox.setFront();
+	}
+
+	public stopLoading() {
+		this.loadingBox.stop();
+		this.loadingBox.setBack();
+		this.loadingBox.hide();
+	}
+
 	/**
 	 * Creates the windows list which lets you select which window you want to open
 	 */
@@ -604,7 +658,10 @@ export class InfinityConsole {
 	 * This basically captures errors which occur on keys/events and still pipes them to the current pipe overwrites the key method to capture errors and actually console.error them instead of swallowing them
 	 */
 	public captureEventErrors() {
-		this.screen.oldKey = this.screen.key;
+		//captures errors in keys
+		if (this.screen.oldKey === undefined)
+			this.screen.oldKey = this.screen.key;
+
 		this.screen.key = (param1: any, cb: any) => {
 			if (typeof cb === typeof Promise)
 				this.screen.oldKey(param1, async (...any: any[]) => {
@@ -625,7 +682,8 @@ export class InfinityConsole {
 		};
 
 		//does the same a above, since for sone reason the on events aren't emitting errors, we can still get them like this
-		this.screen.oldOn = this.screen.on;
+		if (this.screen.oldOn === undefined) this.screen.oldOn = this.screen.on;
+
 		this.screen.on = (param1: any, cb: any) => {
 			if (typeof cb === typeof Promise)
 				this.screen.oldOn(param1, async (...any: any[]) => {
@@ -937,7 +995,7 @@ export class InfinityConsole {
 			warning("window already initialized");
 			return;
 		}
-
+		this.setLoading("Creating Current Window");
 		this.currentWindow.setScreen(this.screen);
 
 		if (!this.currentWindow.hasContainer())
@@ -948,6 +1006,7 @@ export class InfinityConsole {
 		this.windowManager.show();
 		this.windowManager.setBack();
 		this.registerEvents();
+		this.stopLoading();
 	}
 
 	/**
@@ -994,6 +1053,7 @@ export class InfinityConsole {
 				this.windows[i].log("reimporting " + fileName);
 				this.windows[i].destroy();
 				this.windows[i] = requireWindow(fileName);
+				this.windows[i].setFileName(fileName);
 			}
 		}
 	}
@@ -1016,6 +1076,7 @@ export class InfinityConsole {
 	}
 
 	public async refreshImports(dontUseCache?: boolean) {
+		this.setLoading("Refreshing Imports");
 		this.imports =
 			hasImportCache() && dontUseCache !== true
 				? readImportCache()
@@ -1025,6 +1086,7 @@ export class InfinityConsole {
 			saveImportCache(this.imports);
 			warning("master imports file might need rebuilding");
 		}
+		this.stopLoading();
 	}
 
 	public async initialize() {
@@ -1032,31 +1094,89 @@ export class InfinityConsole {
 		if (this.network !== undefined)
 			throw new Error("console already initialized");
 
+		debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
+		//create the screen if it is undefined
+		if (this.screen === undefined)
+			this.screen = blessed.screen(
+				this.options?.blessed || {
+					smartCRS: true,
+					useBCE: true,
+					autoPadding: true,
+					fullUnicode: true,
+					dockBorders: true,
+					title: "InfinityMint " + getInfinityMintVersion(),
+					sendFocus: true,
+				}
+			);
+
+		if (this.loadingBox === undefined) {
+			this.loadingBox = blessed.loading({
+				top: "center",
+				left: "center",
+				width: "90%",
+				height: 20,
+			});
+			this.loadingBox.hide();
+			this.screen.append(this.loadingBox);
+			this.screen.render();
+		}
+
+		//the think method for this console
+		let int = () => {
+			this.windows.forEach((window) => {
+				if (
+					window.isAlive() &&
+					(window.shouldBackgroundThink() ||
+						(!window.shouldBackgroundThink() && window.isVisible()))
+				)
+					window.update();
+			});
+
+			this.screen.render();
+		};
+		this.think = setInterval(() => {
+			this.loadingBox.setFront();
+			(this.options?.think || int)();
+			this.tick++;
+
+			//bit of a hacky solution but keeps these buttons forward
+			if (this.currentWindow !== undefined) {
+				Object.values(this.currentWindow.elements).forEach(
+					(element) => {
+						if (element.alwaysFront) element.setFront();
+						if (element.alwaysBack) element.setBack();
+
+						if (
+							element.think &&
+							typeof element.think === "function" &&
+							(!element.hidden || element.alwaysUpdate)
+						)
+							element.think(this.currentWindow, element, blessed);
+					}
+				);
+			}
+
+			if (this.errorBox !== undefined && this.errorBox.hidden !== true)
+				this.errorBox.setFront();
+		}, this.options?.tickRate);
+
+		this.setLoading("Loading");
 		this.createEventEmitter();
 		//refresh imports
 		if (this.imports === undefined || !hasImportCache())
 			await this.refreshImports();
 
+		this.setLoading("Loading Windows", 10);
 		await this.refreshWindows();
+		this.setLoading("Loading Web3", 20);
 		await this.refreshWeb3();
+		this.setLoading("Loading Scripts", 30);
 		await this.refreshScripts();
 
 		log(`loading InfinityConsole<${this.sessionId}>`);
 
 		if (this.options?.dontDraw !== true)
 			try {
-				debugLog(
-					`starting blessed on InfinityConsole<${this.sessionId}>`
-				);
-				//create the screen
-				this.screen = blessed.screen(
-					this.options?.blessed || {
-						smartCRS: true,
-						dockBorders: true,
-						sendFocus: true,
-					}
-				);
-
 				//captures errors which happen in key events in the window
 				this.captureEventErrors();
 
@@ -1082,6 +1202,13 @@ export class InfinityConsole {
 
 				debugLog(`initializing ${instantInstantiate.length} windows`);
 				for (let i = 0; i < instantInstantiate.length; i++) {
+					this.setLoading(
+						"Loading Window " + instantInstantiate[i].name,
+						Math.floor(
+							instantInstantiate.length *
+								(i / instantInstantiate.length)
+						)
+					);
 					try {
 						debugLog(
 							`[${i}] initializing <` +
@@ -1118,54 +1245,8 @@ export class InfinityConsole {
 
 				//create the window manager
 				this.createWindowManager();
+				this.setLoading("Loading Current Window", 50);
 				await this.createCurrentWindow(); //create the current window
-
-				//the think method for this console
-				let int = () => {
-					this.windows.forEach((window) => {
-						if (
-							window.isAlive() &&
-							(window.shouldBackgroundThink() ||
-								(!window.shouldBackgroundThink() &&
-									window.isVisible()))
-						)
-							window.update();
-					});
-
-					this.screen.render();
-				};
-				this.think = setInterval(() => {
-					(this.options?.think || int)();
-					this.tick++;
-
-					//bit of a hacky solution but keeps these buttons forward
-					if (this.currentWindow !== undefined) {
-						Object.values(this.currentWindow.elements).forEach(
-							(element) => {
-								if (element.alwaysFront) element.setFront();
-								if (element.alwaysBack) element.setBack();
-
-								if (
-									element.think &&
-									typeof element.think === "function" &&
-									(!element.hidden || element.alwaysUpdate)
-								)
-									element.think(
-										this.currentWindow,
-										element,
-										blessed
-									);
-							}
-						);
-					}
-
-					if (
-						this.errorBox !== undefined &&
-						this.errorBox.hidden !== true
-					)
-						this.errorBox.setFront();
-				}, this.options?.tickRate);
-
 				//render
 				this.screen.render();
 				//register core key events
@@ -1174,7 +1255,9 @@ export class InfinityConsole {
 				this.currentWindow.show();
 				//set window manager to the back
 				this.windowManager.setBack();
+				this.stopLoading();
 			} catch (error: Error | any) {
+				this.stopLoading();
 				console.error(error);
 
 				if (isEnvTrue("THROW_ALL_ERRORS") || this.options?.throwErrors)

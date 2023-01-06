@@ -30,7 +30,7 @@ const compile: InfinityMintScript = {
 				project = getCompiledProject(
 					projectName
 				) as InfinityMintTempProject;
-		} else project = getCurrentProject() as InfinityMintTempProject;
+		} else project = script.project as InfinityMintTempProject;
 	},
 	arguments: [
 		{

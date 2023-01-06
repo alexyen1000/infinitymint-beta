@@ -581,6 +581,13 @@ export class InfinityMintWindow {
 		this.log("destroying");
 		this.destroyed = true;
 		this.initialized = false;
+		//unkeys everything to do with the window
+		if (this.inputKeys !== undefined)
+			Object.keys(this.inputKeys).forEach((key) => {
+				Object.values(this.inputKeys[key]).forEach((cb) => {
+					this.unkey(key, cb);
+				});
+			});
 
 		Object.keys(this.elements).forEach((index) => {
 			this.log(
@@ -597,14 +604,6 @@ export class InfinityMintWindow {
 			} catch (error) {}
 			delete this.elements[index];
 		});
-
-		//unkeys everything to do with the window
-		if (this.inputKeys !== undefined)
-			Object.keys(this.inputKeys).forEach((key) => {
-				Object.values(this.inputKeys[key]).forEach((cb) => {
-					this.unkey(key, cb);
-				});
-			});
 
 		this.container = undefined;
 		this.screen = undefined;
@@ -731,7 +730,7 @@ export class InfinityMintWindow {
 	public createElement(
 		key: string,
 		options: BlessedElementOptions,
-		type?: "box" | "list" | "image" | "bigtext"
+		type?: "box" | "list" | "image" | "bigtext" | "listbar" | "listtable"
 	) {
 		type = type || "box";
 		if (this.elements["frame"] === undefined && options?.parent)
@@ -840,7 +839,7 @@ export class InfinityMintWindow {
 				top: this.x,
 				left: this.y,
 				width: this.width,
-				height: this.height,
+				height: this.height.toString(),
 				tags: true,
 				parent: this.screen,
 				padding: this.padding || 1,
@@ -857,16 +856,15 @@ export class InfinityMintWindow {
 		this.frame.setBack();
 
 		this.closeButton = this.createElement("closeButton", {
-			top: 0,
+			top: -1,
 			right: 0,
-			width: 7,
-			height: 5,
+			width: 3,
+			height: 3,
 			shouldFocus: true,
 			tags: true,
-			padding: 1,
+			padding: 0,
 			alwaysFront: true,
 			content: "[x]",
-			border: this.border || {},
 			style: {
 				bg: "red",
 				fg: "white",
@@ -879,16 +877,17 @@ export class InfinityMintWindow {
 			this.getInfinityConsole().destroyWindow(this);
 		});
 		this.hideButton = this.createElement("hideButton", {
-			top: 0,
-			right: this.hideCloseButton ? 0 : calculateWidth(this.closeButton),
-			width: 7,
-			height: 5,
+			top: -1,
+			right: this.hideCloseButton
+				? 0
+				: calculateWidth(this.closeButton) + 1,
+			width: 3,
+			height: 3,
 			alwaysFront: true,
 			shouldFocus: true,
 			tags: true,
-			padding: 1,
+			padding: 0,
 			content: "[-]",
-			border: this.border || {},
 			style: {
 				bg: "yellow",
 				fg: "white",
@@ -899,6 +898,29 @@ export class InfinityMintWindow {
 		});
 		this.hideButton.on("click", () => {
 			this.hide();
+		});
+		let refreshButton = this.createElement("refreshButton", {
+			top: -1,
+			right: this.hideCloseButton
+				? calculateWidth(this.hideButton) + 1
+				: calculateWidth(this.hideButton, this.closeButton) + 2,
+			width: 3,
+			height: 3,
+			alwaysFront: true,
+			shouldFocus: true,
+			tags: true,
+			padding: 0,
+			content: "[?]",
+			style: {
+				bg: "blue",
+				fg: "white",
+				hover: {
+					bg: "grey",
+				},
+			},
+		});
+		refreshButton.on("click", () => {
+			this.getInfinityConsole().reloadWindow(this);
 		});
 
 		if (this.hideCloseButton) this.closeButton.hide();

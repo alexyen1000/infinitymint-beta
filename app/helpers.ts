@@ -37,8 +37,11 @@ export interface Vector {
 export interface Blessed {
 	screen: (options: any) => BlessedElement;
 	box: (options: BlessedElementOptions) => BlessedElement;
+	loading: (options: BlessedElementOptions) => BlessedElement;
 	button: (options: BlessedElementOptions) => BlessedElement;
 	list: (options: BlessedElementOptions) => BlessedElement;
+	listbox: (options: BlessedElementOptions) => BlessedElement;
+	listtable: (options: BlessedElementOptions) => BlessedElement;
 	image: (options: BlessedElementOptions) => BlessedElement;
 	form: (options: BlessedElementOptions) => BlessedElement;
 }
@@ -466,7 +469,14 @@ export const getDeployedProject = (projectName: string, version?: any) => {
  * @param isJavaScript
  * @throws
  */
-export const getProject = (projectPath: PathLike, isJavaScript: boolean) => {
+export const getProject = (
+	projectPath: PathLike,
+	isJavaScript: boolean,
+	clearCache?: boolean
+) => {
+	if (clearCache && require.cache[projectPath as string])
+		delete require.cache[projectPath as string];
+
 	let res = require(projectPath as string);
 	res = res.default || res;
 	res.javascript = isJavaScript === true;
@@ -818,7 +828,7 @@ export const executeScript = async (
 				debugLog(msg);
 			},
 			infinityConsole: console,
-			project: getCurrentProject(),
+			project: getCurrentProject(true),
 		});
 	else throw new Error("javascript files are not supported yet");
 };
@@ -827,10 +837,11 @@ export const executeScript = async (
  *
  * @returns
  */
-export const getCurrentProject = () => {
+export const getCurrentProject = (cleanCache?: boolean) => {
 	return getProject(
 		getCurrentProjectPath().dir + "/" + getCurrentProjectPath().base,
-		getCurrentProjectPath().ext === ".js"
+		getCurrentProjectPath().ext === ".js",
+		cleanCache
 	);
 };
 

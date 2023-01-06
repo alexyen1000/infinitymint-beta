@@ -381,11 +381,11 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let save = window.createElement("save", {
 		top: 2,
-		right: 16,
+		right: 0,
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "Save Pipe",
+		content: "Save Pipe To File",
 		tags: true,
 		border: {
 			type: "line",
@@ -405,11 +405,11 @@ Logs.initialize = async (window, frame, blessed) => {
 	//create buttons
 	let changePipe = window.createElement("changePipe", {
 		top: 2,
-		right: 16 + calculateWidth(save),
+		right: calculateWidth(save),
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
-		content: "Change Pipe",
+		content: "Change Current Pipe",
 		tags: true,
 		border: {
 			type: "line",
@@ -429,7 +429,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	//create buttons
 	let newPipe = window.createElement("newPipe", {
 		top: 2,
-		right: 16 + calculateWidth(save, changePipe),
+		right: calculateWidth(save, changePipe),
 		width: "shrink",
 		height: "shrink",
 		padding: 0,
@@ -452,7 +452,7 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let deletePipe = window.createElement("delete", {
 		top: 2,
-		right: 16 + calculateWidth(changePipe, save, newPipe),
+		right: calculateWidth(changePipe, save, newPipe),
 		width: "shrink",
 		height: "shrink",
 		padding: 0,

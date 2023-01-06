@@ -49,6 +49,11 @@ Music.initialize = async (window, frame, blessed) => {
 	if (clockInterval) clearInterval(clockInterval);
 	window.options.clock = 0;
 
+	//key to stop audio
+	window.key("m", (ch: string, key: string) => {
+		window.getInfinityConsole().stopAudio();
+	});
+
 	clockInterval = setInterval(() => {
 		if (!window.hasInfinityConsole()) return;
 
