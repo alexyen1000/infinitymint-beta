@@ -21,7 +21,7 @@ const compile: InfinityMintScript = {
 		if (script.args.project) {
 			let projectName = script.args.project.value;
 			if (
-				script.args.useTemp.value === true &&
+				script.args.useTemp.value &&
 				hasTempCompiledProject(projectName)
 			) {
 				isTemp = true;

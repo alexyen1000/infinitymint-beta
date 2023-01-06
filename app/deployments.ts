@@ -260,19 +260,19 @@ export class InfinityMintDeployment {
 	}
 
 	isImportant() {
-		return this.deploymentScript?.important === true;
+		return this.deploymentScript?.important;
 	}
 
 	isUnique() {
-		return this.deploymentScript?.unique === true;
+		return this.deploymentScript?.unique;
 	}
 
 	hasDeployed() {
-		return this.hasDeployedAll === true;
+		return this.hasDeployedAll;
 	}
 
 	hasSetup() {
-		return this.hasSetupDeployments === true;
+		return this.hasSetupDeployments;
 	}
 
 	save() {

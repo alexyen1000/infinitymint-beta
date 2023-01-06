@@ -92,7 +92,7 @@ let pipeViewerThink = (
 			}
 		});
 
-		if (element.options.alwaysScroll === true) {
+		if (element.options.alwaysScroll) {
 			element.setScrollPerc(100);
 			element.options.selectedLine = lines.length - 1;
 		}

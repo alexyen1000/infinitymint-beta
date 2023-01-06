@@ -342,7 +342,7 @@ export class InfinityMintWindow {
 	 * @returns
 	 */
 	public canRefresh() {
-		return this.refresh === true;
+		return this.refresh;
 	}
 
 	/**

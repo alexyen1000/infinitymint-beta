@@ -236,13 +236,13 @@ export class InfinityConsole {
 			],
 			up: [
 				(ch: string, key: string) => {
-					if (this.currentWindow?.isVisible() === true) return;
+					if (this.currentWindow?.isVisible()) return;
 					this.windowManager.focus();
 				},
 			],
 			down: [
 				(ch: string, key: string) => {
-					if (this.currentWindow?.isVisible() === true) return;
+					if (this.currentWindow?.isVisible()) return;
 					this.windowManager.focus();
 				},
 			],

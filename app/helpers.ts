@@ -478,7 +478,7 @@ export const getProject = (
 
 	let res = require(projectPath as string);
 	res = res.default || res;
-	res.javascript = isJavaScript === true;
+	res.javascript = isJavaScript;
 
 	if (isJavaScript) return res as InfinityMintProjectJavascript;
 	return res as InfinityMintProject;
