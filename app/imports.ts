@@ -154,7 +154,7 @@ export const getImportCache = async (
 	let imports: ImportType = {};
 	for (let i = 0; i < infinityImports.length; i++) {
 		let normalImport = infinityImports[i];
-		if (imports[normalImport.dir] === undefined) {
+		if (!imports[normalImport.dir]) {
 			log(`[${i}] found dir => ${normalImport.dir}`, "imports");
 			imports[normalImport.dir] = {};
 		}

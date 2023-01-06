@@ -135,13 +135,9 @@ export class InfinityConsole {
 	 * @returns
 	 */
 	public createEventEmitter(dontCleanListeners?: boolean) {
-		if (dontCleanListeners !== true)
+		if (!dontCleanListeners)
 			try {
-				if (
-					this.eventEmitter !== undefined &&
-					this.eventEmitter !== null
-				)
-					this.eventEmitter?.removeAllListeners();
+				if (this.eventEmitter) this.eventEmitter?.removeAllListeners();
 			} catch (error) {
 				if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 
@@ -219,7 +215,7 @@ export class InfinityConsole {
 			//shows the current video
 			"C-x": [
 				(ch: string, key: string) => {
-					if (this.screen.lastWindow !== undefined) {
+					if (this.screen.lastWindow) {
 						this.currentWindow?.hide();
 						this.currentWindow = this.screen.lastWindow;
 						delete this.screen.lastWindow;
@@ -257,7 +253,7 @@ export class InfinityConsole {
 						return;
 					}
 
-					if (this?.currentWindow === undefined) {
+					if (!this.currentWindow) {
 						this.gotoWindow("CloseBox");
 						return;
 					}
@@ -282,7 +278,7 @@ export class InfinityConsole {
 	}
 
 	public getSigner(): SignerWithAddress {
-		if (this.signers === undefined)
+		if (!this.signers)
 			throw new Error(
 				"signers must be initialized before getting signer"
 			);
@@ -291,7 +287,7 @@ export class InfinityConsole {
 	}
 
 	public getSigners(): SignerWithAddress[] {
-		if (this.signers === undefined)
+		if (!this.signers)
 			throw new Error(
 				"signers must be initialized before getting signer"
 			);
@@ -340,10 +336,10 @@ export class InfinityConsole {
 	}
 
 	public registerEvents(window?: InfinityMintWindow) {
-		if (this.currentWindow === undefined && window === undefined) return;
+		if (!this.currentWindow && !window) return;
 		window = window || this.currentWindow;
 
-		if (window === undefined) return;
+		if (!window) return;
 		//when the window is destroyed, rebuild the items list
 
 		debugLog(
@@ -458,7 +454,7 @@ export class InfinityConsole {
 	}
 
 	public isAwaitingKill() {
-		if (getConfigFile().music !== true) return false;
+		if (!getConfigFile().music) return false;
 		return this.currentAudioAwaitingKill;
 	}
 
@@ -476,12 +472,12 @@ export class InfinityConsole {
 	}
 
 	public hasAudio() {
-		if (getConfigFile().music !== true) false;
-		return this.currentAudio !== undefined && this.currentAudio !== null;
+		if (!getConfigFile().music) false;
+		return !!this.currentAudio;
 	}
 
 	public async stopAudio() {
-		if (getConfigFile().music !== true) return;
+		if (!getConfigFile().music) return;
 
 		if (this.currentAudio?.kill) {
 			this.currentAudio?.kill();
@@ -493,7 +489,7 @@ export class InfinityConsole {
 	}
 
 	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {
-		if (getConfigFile().music !== true) return;
+		if (!getConfigFile().music) return;
 		this.currentAudioKilled = false;
 		debugLog("playing => " + process.cwd() + path);
 		// configure arguments for executable if any
@@ -530,11 +526,11 @@ export class InfinityConsole {
 	 * @returns
 	 */
 	public hasCurrentWindow() {
-		return this.currentWindow !== undefined && this.currentWindow !== null;
+		return !!this.currentWindow;
 	}
 
 	public async audioKilled() {
-		if (getConfigFile().music !== true) return;
+		if (!getConfigFile().music) return;
 		if (this.currentAudioKilled) return;
 
 		this.currentAudioAwaitingKill = true;
@@ -610,10 +606,10 @@ export class InfinityConsole {
 	 */
 	public createWindowManager() {
 		//incase this is ran again, delete the old windowManager
-		if (this.windowManager !== undefined) {
+		if (this.windowManager) {
 			this.windowManager?.free();
 			this.windowManager?.destroy();
-			this.windowManager === undefined;
+			this.windowManager = undefined;
 		}
 
 		//creating window manager
@@ -665,7 +661,7 @@ export class InfinityConsole {
 					(window) => !window.isHiddenFromMenu()
 				)[selected];
 
-				if (this.currentWindow === undefined) {
+				if (!this.currentWindow) {
 					warning("current window is undefined");
 					this.updateWindowsList();
 					this.currentWindow = this.getWindow("Menu");
@@ -707,8 +703,7 @@ export class InfinityConsole {
 	 */
 	public captureEventErrors() {
 		//captures errors in keys
-		if (this.screen.oldKey === undefined)
-			this.screen.oldKey = this.screen.key;
+		if (!this.screen.oldKey) this.screen.oldKey = this.screen.key;
 
 		this.screen.key = (param1: any, cb: any) => {
 			if (typeof cb === typeof Promise)
@@ -730,7 +725,7 @@ export class InfinityConsole {
 		};
 
 		//does the same a above, since for sone reason the on events aren't emitting errors, we can still get them like this
-		if (this.screen.oldOn === undefined) this.screen.oldOn = this.screen.on;
+		if (!this.screen.oldOn) this.screen.oldOn = this.screen.on;
 
 		this.screen.on = (param1: any, cb: any) => {
 			if (typeof cb === typeof Promise)
@@ -808,7 +803,7 @@ export class InfinityConsole {
 	}
 
 	public registerKeys() {
-		if (this.inputKeys === undefined) return;
+		if (!this.inputKeys) return;
 
 		let keys = Object.keys(this.inputKeys);
 		keys.forEach((key) => {
@@ -848,10 +843,10 @@ export class InfinityConsole {
 	}
 
 	public key(key: string, cb: Function) {
-		if (this.inputKeys === undefined) this.inputKeys = {};
+		if (!this.inputKeys) this.inputKeys = {};
 
 		debugLog(`registering keyboard shortcut method on [${key}]`);
-		if (this.inputKeys[key] === undefined) {
+		if (!this.inputKeys[key]) {
 			this.inputKeys[key] = [];
 			this.screen.key([key], (ch: string, _key: string) => {
 				this.inputKeys[key].forEach((method, index) => {
@@ -870,11 +865,7 @@ export class InfinityConsole {
 	 * @param cb
 	 */
 	public unkey(key: string, cb?: Function) {
-		if (
-			this?.inputKeys[key] === undefined ||
-			this.inputKeys[key].length <= 1 ||
-			cb === undefined
-		)
+		if (!this.inputKeys[key] || this.inputKeys[key].length <= 1 || !cb)
 			this.inputKeys[key] = [];
 		else {
 			this.inputKeys[key] = this.inputKeys[key].filter(
@@ -935,11 +926,11 @@ export class InfinityConsole {
 
 	public async refreshScripts() {
 		//call reloads
-		if (this.scripts !== undefined && this.scripts.length !== 0) {
+		if (this.scripts && this.scripts.length !== 0) {
 			for (let i = 0; i < this.scripts.length; i++) {
 				let script = this.scripts[i];
 
-				if (script?.reloaded !== undefined)
+				if (script?.reloaded)
 					await script.reloaded({ log, debugLog, console: this });
 			}
 		}
@@ -1126,7 +1117,7 @@ export class InfinityConsole {
 	public async refreshImports(dontUseCache?: boolean) {
 		this.setLoading("Refreshing Imports");
 		this.imports =
-			hasImportCache() && dontUseCache !== true
+			hasImportCache() && !dontUseCache
 				? readImportCache()
 				: await getImportCache();
 
@@ -1139,8 +1130,7 @@ export class InfinityConsole {
 
 	public async initialize() {
 		//if the network member has been defined then we have already initialized
-		if (this.network !== undefined)
-			throw new Error("console already initialized");
+		if (this.network) throw new Error("console already initialized");
 
 		//loading
 		this.createEventEmitter();
@@ -1148,8 +1138,7 @@ export class InfinityConsole {
 
 		this.setLoading("Loading Imports", 10);
 		//refresh imports
-		if (this.imports === undefined || !hasImportCache())
-			await this.refreshImports();
+		if (!this.imports || !hasImportCache()) await this.refreshImports();
 
 		this.setLoading("Loading Windows", 10);
 		await this.refreshWindows();
@@ -1178,7 +1167,7 @@ export class InfinityConsole {
 			this.tick++;
 
 			//bit of a hacky solution but keeps these buttons forward
-			if (this.currentWindow !== undefined) {
+			if (this.currentWindow) {
 				Object.values(this.currentWindow.elements).forEach(
 					(element) => {
 						if (element.alwaysFront) element.setFront();
@@ -1194,19 +1183,19 @@ export class InfinityConsole {
 				);
 			}
 
-			if (this.errorBox !== undefined && this.errorBox.hidden !== true)
+			if (this.errorBox && !this.errorBox.hidden)
 				this.errorBox.setFront();
 		}, this.options?.tickRate || 33);
 		//create the window manager
 		this.createWindowManager();
 
-		if (this.options?.dontDraw !== true)
+		if (!this.options.dontDraw)
 			try {
 				//captures errors which happen in key events in the window
 				this.captureEventErrors();
 
 				//set the current window from the
-				if (this.options?.initialWindow === undefined)
+				if (!this.options?.initialWindow)
 					this.currentWindow =
 						this.getWindowsByName("Menu")[0] || this.windows[0];
 				else if (

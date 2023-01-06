@@ -151,7 +151,7 @@ Projects.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	if (window.data.currentProject !== undefined) notice.hide();
+	if (window.data.currentProject) notice.hide();
 
 	let scripts = await findProjects();
 	let projects = scripts.map(

@@ -26,12 +26,8 @@ const Script = new InfinityMintWindow(
 	}
 );
 
-Script.setBackgroundThink(true);
-Script.setHideRefreshButton(true);
-Script.setCanRefresh(false);
-Script.setHiddenFromMenu(true);
 Script.initialize = async (window, frame, blessed) => {
-	if (window.data.script === undefined)
+	if (!window.data.script)
 		throw new Error("must be instantated with script in data field");
 
 	let output = window.createElement("output", {
@@ -219,6 +215,7 @@ Script.initialize = async (window, frame, blessed) => {
 			);
 
 			update();
+			window.setHideCloseButton(false);
 			window.data.processing = false;
 			close.show();
 		} catch (error) {
@@ -230,9 +227,15 @@ Script.initialize = async (window, frame, blessed) => {
 			);
 			window.getInfinityConsole().errorHandler(error);
 			update();
+			window.setHideCloseButton(false);
 			window.data.processing = false;
 		}
 	};
 	(() => execute())();
 };
+Script.setBackgroundThink(true);
+Script.setHideRefreshButton(true);
+Script.setHideCloseButton(true);
+Script.setCanRefresh(false);
+Script.setHiddenFromMenu(true);
 export default Script;

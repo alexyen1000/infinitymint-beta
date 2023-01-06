@@ -40,7 +40,7 @@ export class GanacheServer {
 										"ganache"
 									);
 									if (
-										params !== undefined &&
+										params &&
 										Object.values(params).length !== 0
 									)
 										Pipes.log(

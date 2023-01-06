@@ -179,7 +179,7 @@ Scripts.initialize = async (window, frame, blessed) => {
 	});
 	let runSelected = () => {
 		window.hide();
-		if (window.data.script === undefined) {
+		if (!window.data.script) {
 			warning("no data");
 			return;
 		}

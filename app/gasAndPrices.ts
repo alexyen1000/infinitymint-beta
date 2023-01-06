@@ -29,7 +29,7 @@ export const removeGasHandler = (
 	network: string,
 	handler?: GasPriceFunction
 ) => {
-	if (handler === undefined) handlers[network].gas = [];
+	if (!handler) handlers[network].gas = [];
 	else removeHandler(network, "gas", handler);
 };
 
@@ -37,7 +37,7 @@ export const removeTokenPriceHandler = (
 	network: string,
 	handler?: GasPriceFunction
 ) => {
-	if (handlers[network] === undefined) handlers[network].price = [];
+	if (!handlers[network]) handlers[network].price = [];
 	else removeHandler(network, "price", handler);
 };
 
@@ -46,11 +46,7 @@ export const removeHandler = (
 	type: "gas" | "price",
 	handler: GasPriceFunction | TokenPriceFunction
 ) => {
-	if (
-		handlers[network] === undefined ||
-		handlers[network][type] === undefined
-	)
-		return;
+	if (!handlers[network] || !handlers[network][type]) return;
 
 	if (handlers[network][type].length === 0) handlers[network][type] = [];
 
@@ -69,12 +65,12 @@ export const registerHandler = (
 	type: string,
 	handler: TokenPriceFunction | GasPriceFunction
 ) => {
-	if (handlers[network] === undefined)
+	if (!handlers[network])
 		handlers[network] = {
 			gas: [],
 			price: [],
 		};
-	if (handlers[network][type] === undefined) handlers[network][type] = [];
+	if (!handlers[network][type]) handlers[network][type] = [];
 
 	handlers[network][type].push(handler as any);
 
@@ -90,10 +86,7 @@ export const registerTokenPriceHandler = (
 };
 
 export const getTokenPriceHandlers = (network: string) => {
-	if (
-		handlers[network] === undefined ||
-		handlers[network]["price"] === undefined
-	)
+	if (!handlers[network] || !handlers[network]["price"])
 		return [
 			async () => {
 				return {
@@ -106,10 +99,7 @@ export const getTokenPriceHandlers = (network: string) => {
 };
 
 export const getGasPriceHandlers = (network: string) => {
-	if (
-		handlers[network] === undefined ||
-		handlers[network]["gas"] === undefined
-	)
+	if (!handlers[network] || !handlers[network]["gas"])
 		return [
 			async () => {
 				return {

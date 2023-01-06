@@ -41,16 +41,13 @@ let pipeViewerThink = (
 					.padEnd(6, " ")}{/black-fg}{/white-bg} `;
 			};
 
-			if (
-				object.count <= 1 ||
-				element.options.showDuplicateEntries !== true
-			) {
+			if (object.count <= 1 || !element.options.showDuplicateEntries) {
 				let finalLine =
 					lineCount(object.index) + object.message.toString();
 				finalLine =
 					finalLine +
 					` {blue-fg}{bold}${
-						element.options.showDuplicateEntries !== true &&
+						!element.options.showDuplicateEntries &&
 						object.count > 1
 							? "x" + object.count
 							: ""
@@ -135,7 +132,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.unkey("up");
 	window.key("up", (ch: string, key: string) => {
 		let console = window.data.log;
-		if (console === undefined || console === null) return;
+		if (!console) return;
 
 		//don't if we are invisible
 		if (window.isVisible() === false) return;
@@ -154,7 +151,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.unkey("down");
 	window.key("down", (ch: string, key: string) => {
 		let console = window.data.log;
-		if (console === undefined || console === null) return;
+		if (!console) return;
 		if (window.isVisible() === false) return;
 
 		window.data.log.options.selectedLine = Math.min(
@@ -168,7 +165,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.unkey("C-q");
 	window.key("C-q", (ch: string, key: string) => {
 		let console = window.data.log;
-		if (console === undefined || console === null) return;
+		if (!console) return;
 		if (window.isVisible() === false) return;
 
 		let selectedLinePosition = [

@@ -235,10 +235,8 @@ export const getElementPadding = (
 	element: BlessedElement,
 	type: "left" | "right" | "up" | "down"
 ) => {
-	if (element?.padding === undefined) return 0;
-
-	if (element?.padding[type] === undefined) return 0;
-
+	if (!element.padding) return 0;
+	if (!element?.padding[type]) return 0;
 	return parseInt(element?.padding[type].toString());
 };
 
@@ -249,7 +247,7 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
 			(element) =>
 				element.strWidth(element.content) +
 				//for the border
-				(element.border !== undefined ? 2 : 0) +
+				(element.border ? 2 : 0) +
 				getElementPadding(element, "left") +
 				getElementPadding(element, "right")
 		)
@@ -262,10 +260,7 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
  * @returns
  */
 export const readSession = (): InfinityMintSession => {
-	if (
-		!fs.existsSync(process.cwd() + "/.session") &&
-		memorySession === undefined
-	)
+	if (!fs.existsSync(process.cwd() + "/.session") && !memorySession)
 		return { created: Date.now(), environment: {} };
 	//returns memory version
 	else if (memorySession) return memorySession;
@@ -301,15 +296,15 @@ export const overwriteConsoleMethods = () => {
 		}
 
 		if (
-			msg.indexOf !== undefined &&
+			msg.indexOf &&
 			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
-			Pipes.pipes[Pipes.currentPipeKey] !== undefined
+			Pipes.pipes[Pipes.currentPipeKey]
 		)
 			Pipes.getPipe(Pipes.currentPipeKey).log(msg);
 
 		if (
 			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
-			(Pipes.pipes[Pipes.currentPipeKey] === undefined &&
+			(!Pipes.pipes[Pipes.currentPipeKey] &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
 			consoleLog(msg.replace("<#DONT_LOG_ME$>", ""));
@@ -317,7 +312,7 @@ export const overwriteConsoleMethods = () => {
 
 	let consoleError = console.error;
 	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
-		if (Pipes.pipes[Pipes.currentPipeKey] && dontSendToPipe !== true)
+		if (Pipes.pipes[Pipes.currentPipeKey] && !dontSendToPipe)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
 		if (
@@ -370,7 +365,7 @@ export const getCompiledProject = (projectName: string) => {
 		".compiled.json");
 	res = res.default || res;
 	//
-	if (res.compiled !== true)
+	if (!res.compiled)
 		throw new Error(`project ${projectName} has not been compiled`);
 
 	return res as InfinityMintCompiledProject;
@@ -461,7 +456,7 @@ export const getDeployedProject = (projectName: string, version?: any) => {
 		`@${version}.json`);
 	res = res.default || res;
 	//
-	if (res.deployed !== true)
+	if (!res.deployed)
 		throw new Error(`project ${projectName} has not been deployed`);
 
 	return res as InfinityMintDeployedProject;
@@ -527,16 +522,13 @@ export const prepareHardhatConfig = (
 	config.hardhat.defaultNetwork =
 		config.hardhat?.defaultNetwork || session.environment?.defaultNetwork;
 
-	if (config.hardhat.networks === undefined) config.hardhat.networks = {};
+	if (!config.hardhat.networks) config.hardhat.networks = {};
 
 	//copy ganache settings to localhost settings if ganache exists
-	if (
-		config.hardhat.networks.localhost === undefined &&
-		config.hardhat.networks.ganache !== undefined
-	)
+	if (!config.hardhat.networks.localhost && config.hardhat.networks.ganache)
 		config.hardhat.networks.localhost = config.hardhat.networks.ganache;
 
-	if (config.hardhat.paths === undefined) config.hardhat.paths = {};
+	if (!config.hardhat.paths) config.hardhat.paths = {};
 
 	return config;
 };
@@ -591,14 +583,14 @@ export const prepareConfig = () => {
 		copyContractsFromNodeModule(solidityFolder, solidityModuleFolder);
 
 	//if the sources is undefined, then set the solidityFolder to be the source foot
-	if (config.hardhat.paths.sources === undefined) {
+	if (!config.hardhat.paths.sources) {
 		//set the sources
 		config.hardhat.paths.sources = solidityFolder;
 
 		//delete artifacts folder if namespace changes
 		if (
-			process.env.DEFAULT_SOLIDITY_FOLDER !== undefined &&
-			session.environment.solidityFolder !== undefined &&
+			process.env.DEFAULT_SOLIDITY_FOLDER &&
+			session.environment.solidityFolder &&
 			session.environment.solidityFolder !==
 				process.env.DEFAULT_SOLIDITY_FOLDER
 		) {
@@ -620,7 +612,7 @@ export const prepareConfig = () => {
 	}
 
 	//set the solidityFolder in the environment if it is undefined
-	if (session.environment.solidityFolder === undefined)
+	if (!session.environment.solidityFolder)
 		session.environment.solidityFolder =
 			process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
 
@@ -710,7 +702,7 @@ export const findFiles = (globPattern: string) => {
 export const isTypescript = () => {
 	let session = readSession();
 
-	return session.environment?.javascript !== true;
+	return !session.environment?.javascript;
 };
 
 export const getFileImportExtension = () => {
@@ -779,7 +771,7 @@ export const findScripts = async (roots?: string[]) => {
 export const getCurrentProjectPath = () => {
 	let session = readSession();
 
-	if (session.environment.project === undefined) return undefined;
+	if (!session.environment.project) return undefined;
 	return session.environment.project as path.ParsedPath;
 };
 
@@ -927,7 +919,7 @@ export const requireScript = async (
 	result = result.default || result;
 	result.fileName = fullPath;
 
-	if (console !== undefined && result.events !== undefined) {
+	if (console && result.events) {
 		Object.keys(result.events).forEach((key) => {
 			try {
 				console.getEventEmitter().off(key, result.events[key]);
@@ -949,7 +941,7 @@ export const requireScript = async (
 		});
 	}
 
-	if (result?.loaded !== undefined) {
+	if (result?.loaded) {
 		debugLog("calling (loaded) on " + fullPath);
 		await (result as InfinityMintScript).loaded({
 			log,
@@ -980,7 +972,7 @@ export const isInfinityMint = () => {
 export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
 	Object.keys(config?.settings?.networks || {}).forEach((key) => {
 		let network = config?.settings?.networks[key];
-		if (network.handlers === undefined) return;
+		if (!network.handlers) return;
 
 		if (network.handlers.gasPrice)
 			registerGasPriceHandler(key, network.handlers.gasPrice);
@@ -1006,7 +998,7 @@ export const loadInfinityMint = (
 	//try to automatically add module alias
 	try {
 		let projectJson = getPackageJson();
-		if (projectJson._moduleAliases === undefined) {
+		if (!projectJson._moduleAliases) {
 			projectJson._moduleAliases = {
 				"@app": "./node_modules/infinitymint/dist/app/",
 			};
@@ -1047,7 +1039,7 @@ export const createEnvFile = (source: any) => {
 		stub = `${stub}${key.toUpperCase()}=${
 			typeof source[key] === "string"
 				? '"' + source[key] + '"'
-				: source[key] !== undefined
+				: source[key]
 				? source[key]
 				: ""
 		}\n`;
@@ -1143,7 +1135,7 @@ export const initializeGanacheMnemonic = () => {
 	//if the ganache is not external and no mnemonic for ganache in the environment file then set one
 	if (
 		isEnvTrue("GANACHE_EXTERNAL") === false &&
-		session.environment?.ganacheMnemonic === undefined
+		!session.environment?.ganacheMnemonic
 	)
 		session.environment.ganacheMnemonic = generateMnemonic();
 
@@ -1215,7 +1207,7 @@ export const saveSessionVariable = (
 	key: string,
 	value: any
 ) => {
-	if (session.environment === undefined) session.environment = {};
+	if (!session.environment) session.environment = {};
 
 	session.environment[key] = value;
 	return session;
@@ -1246,17 +1238,13 @@ export const error = (error: string | Error) => {
 };
 
 export const envExists = (key: string) => {
-	return (
-		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
-	);
+	return process.env[key] && process.env[key]?.trim().length !== 0;
 };
 
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {
-	return process.env[key] !== undefined && process.env[key] === "true";
+	return process.env[key] && process.env[key] === "true";
 };
 
 export const isEnvSet = (key: InfinityMintEnvironmentKeys): boolean => {
-	return (
-		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
-	);
+	return process.env[key] && process.env[key]?.trim().length !== 0;
 };

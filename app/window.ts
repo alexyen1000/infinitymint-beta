@@ -155,20 +155,14 @@ export class InfinityMintWindow {
 	public setHideCloseButton(hideCloseButton: boolean) {
 		this.hideCloseButton = hideCloseButton;
 
-		try {
-			if (this.hideCloseButton && this.closeButton !== undefined) {
-				this.closeButton.hide();
-			} else if (
-				!this.hideCloseButton &&
-				this.closeButton !== undefined
-			) {
-				this.closeButton.show();
-			}
-		} catch (error) {
-			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-			this.warning(
-				"failed to edit visiblity of close button: " + error.message
-			);
+		if (!this.closeButton && !this.hideButton) return;
+
+		if (this.hideCloseButton) {
+			this.closeButton.hide();
+			this.hideButton.right = 0;
+		} else {
+			this.closeButton.show();
+			this.hideButton.right = calculateWidth(this.closeButton) + 2;
 		}
 	}
 
@@ -179,21 +173,7 @@ export class InfinityMintWindow {
 	public setHideMinimizeButton(hideMinimizeButton: boolean) {
 		this.hideMinimizeButton = hideMinimizeButton;
 
-		try {
-			if (this.hideMinimizeButton && this.hideButton !== undefined) {
-				this.hideButton.hide();
-			} else if (
-				!this.hideMinimizeButton &&
-				this.hideButton !== undefined
-			) {
-				this.hideButton.show();
-			}
-		} catch (error) {
-			if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-			this.warning(
-				"failed to edit visiblity of minimize button: " + error.message
-			);
-		}
+		if (!this.hideButton) return;
 	}
 
 	private generateId() {
@@ -201,7 +181,7 @@ export class InfinityMintWindow {
 	}
 
 	public setScreen(screen: any) {
-		if (this.screen !== undefined)
+		if (this.screen)
 			this.warning(`setting screen with out window object first`);
 
 		this.screen = screen;
@@ -210,7 +190,7 @@ export class InfinityMintWindow {
 	public setScrollbar(scrollbar: any) {
 		this.scrollbar = scrollbar;
 
-		if (this.elements["frame"] !== undefined)
+		if (this.elements["frame"])
 			this.getElement("frame").scrollbar = scrollbar;
 	}
 
@@ -224,7 +204,7 @@ export class InfinityMintWindow {
 
 	///TODO: needs to be stricter
 	public hasContainer() {
-		return this.container !== undefined && this.container !== null;
+		return !!this.container;
 	}
 
 	public shouldInstantiate(): boolean {
@@ -248,7 +228,7 @@ export class InfinityMintWindow {
 	 * @param container
 	 */
 	public setContainer(container: InfinityConsole) {
-		if (this.container !== undefined)
+		if (this.container)
 			throw new Error(
 				"cannot set container with out destroying window first"
 			);
@@ -294,8 +274,7 @@ export class InfinityMintWindow {
 		this.options = session.environment["Window_" + this.name] || {};
 
 		Object.keys(defaultOptions || {}).forEach((key) => {
-			if (this.options[key] === undefined)
-				this.options[key] = defaultOptions[key];
+			if (!this.options[key]) this.options[key] = defaultOptions[key];
 		});
 
 		Object.keys(this.elements).forEach((key) => {
@@ -303,10 +282,10 @@ export class InfinityMintWindow {
 			element.options =
 				session.environment["Window_" + this.name + "_" + key] || {};
 
-			if (elementDefaultOptions[key] !== undefined)
+			if (elementDefaultOptions[key])
 				Object.keys(elementDefaultOptions[key] || {}).forEach(
 					(elementKey) => {
-						if (element.options[elementKey] === undefined)
+						if (!element.options[elementKey])
 							element.options[elementKey] =
 								elementDefaultOptions[key][elementKey];
 					}
@@ -320,7 +299,7 @@ export class InfinityMintWindow {
 
 		Object.keys(this.elements).forEach((key) => {
 			let element = this.elements[key];
-			if (element?.options !== undefined)
+			if (element?.options)
 				session.environment["Window_" + this.name + "_" + key] =
 					element?.options;
 		});
@@ -379,7 +358,7 @@ export class InfinityMintWindow {
 	 * @returns
 	 */
 	public hasInfinityConsole() {
-		return this.container !== undefined && this.container !== null;
+		return !!this.container;
 	}
 
 	/**
@@ -387,7 +366,7 @@ export class InfinityMintWindow {
 	 * @returns
 	 */
 	public getInfinityConsole() {
-		if (this.container === undefined || this.container === null)
+		if (!this.container)
 			throw new Error("no infinityconsole associated with this window");
 
 		return this.container;
@@ -396,8 +375,7 @@ export class InfinityMintWindow {
 	public setBorder(border: any) {
 		this.border = border;
 
-		if (this.elements["frame"] !== undefined)
-			this.getElement("frame").border = border;
+		if (this.elements["frame"]) this.getElement("frame").border = border;
 	}
 
 	public getBorder(): object {
@@ -453,8 +431,7 @@ export class InfinityMintWindow {
 	public setStyle(style: any) {
 		this.style = style;
 
-		if (this.elements["frame"] !== undefined)
-			this.getElement("frame").style = style;
+		if (this.elements["frame"]) this.getElement("frame").style = style;
 	}
 
 	public getWidth() {
@@ -549,10 +526,10 @@ export class InfinityMintWindow {
 		element: BlessedElement,
 		dontRegister?: boolean
 	): BlessedElement {
-		if (this.elements[key] !== undefined)
+		if (this.elements[key])
 			throw new Error("key already registered in window: " + key);
 
-		if (element.window !== undefined)
+		if (element.window)
 			throw new Error(
 				this.log(
 					"element (" +
@@ -563,11 +540,7 @@ export class InfinityMintWindow {
 				)
 			);
 
-		if (
-			this.frame !== undefined &&
-			(element.parent === undefined || element.parent === null)
-		)
-			element.parent = this.frame;
+		if (this.frame && !element.parent) element.parent = this.frame;
 
 		this.log("registering element (" + element.constructor.name + ")");
 
@@ -623,7 +596,7 @@ export class InfinityMintWindow {
 		this.destroyed = true;
 		this.initialized = false;
 		//unkeys everything to do with the window
-		if (this.inputKeys !== undefined)
+		if (this.inputKeys)
 			Object.keys(this.inputKeys).forEach((key) => {
 				Object.values(this.inputKeys[key]).forEach((cb) => {
 					this.unkey(key, cb);
@@ -661,11 +634,11 @@ export class InfinityMintWindow {
 	 */
 
 	public key(key: string, cb: Function) {
-		if (this.inputKeys === undefined) this.inputKeys = {};
+		if (!this.inputKeys) this.inputKeys = {};
 
 		this.getInfinityConsole().key(key, cb);
 
-		if (this.inputKeys[key] === undefined) this.inputKeys[key] = [];
+		if (!this.inputKeys[key]) this.inputKeys[key] = [];
 		this.inputKeys[key].push(cb);
 	}
 
@@ -676,10 +649,9 @@ export class InfinityMintWindow {
 	 * @returns
 	 */
 	public unkey(key: string, cb?: Function) {
-		if (this.inputKeys === undefined || this.inputKeys[key] === undefined)
-			return;
+		if (!this.inputKeys || !this.inputKeys[key]) return;
 
-		if (cb !== undefined) this.getInfinityConsole().unkey(key, cb);
+		if (cb) this.getInfinityConsole().unkey(key, cb);
 		else {
 			//unmap all keys
 			Object.values(this.inputKeys[key]).forEach((cb) => {
@@ -706,14 +678,14 @@ export class InfinityMintWindow {
 	}
 
 	public on(event: string, listener: Function): Function {
-		if (this.getElement("frame") === undefined)
+		if (!this.getElement("frame"))
 			throw new Error("frame has not been created");
 
 		return this.getElement("frame").on(event, listener);
 	}
 
 	public off(event: string, listener?: Function) {
-		if (this.getElement("frame") === undefined) return;
+		if (!this.getElement("frame")) return;
 		this.getElement("frame").off(event, listener);
 	}
 
@@ -750,7 +722,7 @@ export class InfinityMintWindow {
 			)} ETH ($${(parseFloat(etherBalance) * 2222).toFixed(
 				2
 			)}){/bold}{/white-fg} {black-bg}{red-fg}{bold}150.2 gwei{/bold}{/red-fg}{/black-bg} {black-bg}{yellow-fg}{bold}120.2 gwei{/bold}{/yellow-fg}{/black-bg} {black-bg}{green-fg}{bold}110.2 gwei{/bold}{/green-fg}{/black-bg} {bold}{cyan-fg}♫{/cyan-fg}{/bold} {underline}{cyan-fg}${
-				getConfigFile().music !== true
+				!getConfigFile().music
 					? "music disabled"
 					: musicOptions.currentTrack
 			}{/cyan-fg}{/underline} {black-bg}{white-fg}${(minutes % 60)
@@ -771,7 +743,9 @@ export class InfinityMintWindow {
 		if (this.refreshButton) {
 			if (this.hideRefreshButton || !this.canRefresh)
 				this.refreshButton.hide();
-			else this.refreshButton.show();
+			else {
+				this.refreshButton.show();
+			}
 		}
 	}
 
@@ -795,10 +769,8 @@ export class InfinityMintWindow {
 			| "layout"
 	) {
 		type = type || "box";
-		if (this.elements["frame"] === undefined && options?.parent)
-			throw new Error("no frame or parent for this element");
 
-		if (blessed[type] === undefined || typeof blessed[type] !== "function")
+		if (!blessed[type] || typeof blessed[type] !== "function")
 			throw new Error("bad blessed element: " + type);
 
 		let element = this.registerElement(key, blessed[type](options));
@@ -820,7 +792,7 @@ export class InfinityMintWindow {
 	public async create() {
 		if (this.initialized && this.destroyed === false)
 			throw new Error("already initialized");
-		if (this.screen === undefined)
+		if (!this.screen)
 			throw new Error("cannot create window with undefined screen");
 
 		if (this.initialized && this.destroyed && this.destroyId) {

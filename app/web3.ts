@@ -48,7 +48,7 @@ export const getDefaultSigner = async () => {
 	let defaultAccount = getDefaultAccountIndex();
 	let signers = await ethers.getSigners();
 
-	if (signers[defaultAccount] === undefined)
+	if (!signers[defaultAccount])
 		throw new Error(
 			"bad default account for network " +
 				hre.network.name +
@@ -101,8 +101,8 @@ export const deploy = async (
 
 		let session = readSession();
 
-		if (session.environment?.deployments[contract.address] === undefined) {
-			if (session.environment.deployments === undefined)
+		if (!session.environment?.deployments[contract.address]) {
+			if (!session.environment.deployments)
 				session.environment.deployments = {};
 
 			session.environment.deployments[contract.address] = {
@@ -146,8 +146,7 @@ export const deploy = async (
 
 	let session = readSession();
 
-	if (session.environment?.deployments === undefined)
-		session.environment.deployments = {};
+	if (!session.environment?.deployments) session.environment.deployments = {};
 
 	debugLog(`saving deployment to session`);
 	session.environment.deployments[contract.address] = savedDeployment;
@@ -270,7 +269,7 @@ export const logTransaction = async (
 	let tx = execution as ContractTransaction;
 	log(`🏷️ <${tx.hash}>(chainId: ${tx.chainId})`);
 	let receipt: TransactionReceipt;
-	if (tx.wait !== undefined) {
+	if (tx.wait) {
 		receipt = await tx.wait();
 	} else receipt = await getProvider().getTransactionReceipt(tx.blockHash);
 
@@ -278,7 +277,7 @@ export const logTransaction = async (
 
 	let session = readSession();
 
-	if (session.environment.temporaryGasReceipts === undefined)
+	if (!session.environment.temporaryGasReceipts)
 		session.environment.temporaryGasReceipts = [];
 
 	let savedReceipt = {
@@ -364,7 +363,7 @@ export const stopNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any
 ) => {
-	if (network === undefined) network = hre.network.name;
+	if (!network) network = hre.network.name;
 	let settings = getNetworkSettings(network);
 	//register events
 	try {
@@ -385,12 +384,11 @@ export const startNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any
 ) => {
-	if (network === undefined) network = hre.network.name;
+	if (!network) network = hre.network.name;
 	let settings = getNetworkSettings(network);
 
-	if (provider === undefined) provider = ethers.provider;
-	if (ProviderListeners[network] !== undefined)
-		stopNetworkPipe(provider, network);
+	if (!provider) provider = ethers.provider;
+	if (ProviderListeners[network]) stopNetworkPipe(provider, network);
 
 	ProviderListeners[network] = ProviderListeners[network] || {};
 	ProviderListeners[network].block = (blockNumber: any) => {
