@@ -248,6 +248,42 @@ Menu.initialize = async (window, frame, blessed) => {
 		) / 2.75
 	);
 	let logoHeight = Math.floor(logoWidth / 2.45);
+	//hide logo if screen too small
+	if (container.width > 120)
+		window.createElement(
+			"logo",
+			{
+				top: 6,
+				parent: container,
+				left: 12,
+				draggable: true,
+				width: logoWidth,
+				height: Math.max(
+					6,
+					Math.min(
+						parseInt(container.height.toString()) - 4,
+						logoHeight + 1
+					)
+				),
+				padding: 0,
+				file: isInfinityMint()
+					? process.cwd() +
+					  files[Math.floor(Math.random() * files.length)]
+					: process.cwd() +
+					  "/node_modules/infinitymint" +
+					  files[Math.floor(Math.random() * files.length)],
+				animate: true,
+				style: {
+					bg: "gray",
+					border: {
+						fg: "#f0f0f0",
+					},
+				},
+				border: window.getBorder(),
+				alwaysFocus: true,
+			},
+			"image"
+		);
 
 	window.createElement("stripe", {
 		width: 8,
@@ -261,37 +297,6 @@ Menu.initialize = async (window, frame, blessed) => {
 	});
 
 	if (container.height > 16) {
-		//hide logo if screen too small
-		if (container.width > 120)
-			window.createElement(
-				"logo",
-				{
-					top: 6,
-					parent: container,
-					left: 12,
-					draggable: true,
-					width: logoWidth,
-					height: logoHeight,
-					padding: 0,
-					file: isInfinityMint()
-						? process.cwd() +
-						  files[Math.floor(Math.random() * files.length)]
-						: process.cwd() +
-						  "/node_modules/infinitymint" +
-						  files[Math.floor(Math.random() * files.length)],
-					animate: true,
-					style: {
-						bg: "gray",
-						border: {
-							fg: "#f0f0f0",
-						},
-					},
-					border: window.getBorder(),
-					alwaysFocus: true,
-				},
-				"image"
-			);
-
 		window.createElement(
 			"title",
 			{
@@ -335,19 +340,6 @@ Menu.initialize = async (window, frame, blessed) => {
 		content: `version ${packageVersion}`,
 	});
 
-	window.createElement("companyLabel", {
-		left: container.left - 1,
-		top: container.top - 1,
-		width: "shrink",
-		height: "shrink",
-		tags: true,
-		bold: true,
-		style: {
-			fg: "white",
-		},
-		content: `0x0z`,
-	});
-
 	window.createElement("networkLabel", {
 		right: container.right,
 		bottom: container.bottom + 1,
@@ -376,7 +368,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		).toString()}{/black-fg}{/white-bg}`,
 	});
 
-	if (container.height >= 9)
+	if (container.height > 8)
 		window.createElement("infoLabel", {
 			left: 4,
 			bottom: 6,
@@ -412,19 +404,20 @@ Menu.initialize = async (window, frame, blessed) => {
 		tags: true,
 		alwaysFront: true,
 		bold: true,
-		padding: 2,
+		padding: 1,
 		style: {
-			fg: "green",
-			bg: "black",
+			fg: "black",
+			bg: "red",
 			border: {
 				fg: "red",
 			},
 			hover: {
+				fg: "red",
 				bg: "black",
 			},
 		},
 		border: window.getBorder(),
-		content: `{bold}warning!{/bold}\n\nno current project is set!\nclick me to set one...`,
+		content: `{bold}{underline}warning!{/underline}{/bold}\nno current project is set!\nclick me to set one...`,
 	});
 	noProject.on("click", () => {
 		window.openWindow("Projects");

@@ -20,7 +20,9 @@ import {
 	getConfigFile,
 	isEnvSet,
 	warning,
+	logDirect,
 } from "./app/helpers";
+import Pipes from "./app/pipes";
 import { InfinityMintConsoleOptions } from "./app/interfaces";
 
 //export helpers
@@ -37,19 +39,14 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		...(typeof config?.console === "object" ? config.console : {}),
 	} as InfinityMintConsoleOptions;
 	let session = readSession();
-	let infinityConsole = new InfinityConsole(options);
-
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
+	logDirect("starting infinity console");
 	//register current network pipes
 	registerNetworkPipes();
+
 	//start ganache
-	if (
-		hre.config.networks?.ganache !== undefined &&
-		isEnvTrue("GANACHE_EXTERNAL")
-	) {
-		//check for ganache and mnemonic here
-	} else if (hre.config.networks?.ganache !== undefined) {
+	if (hre.config.networks?.ganache !== undefined) {
 		//ask if they want to start ganache
 		//start ganache here
 		let obj = { ...config.ganache } as any;
@@ -99,7 +96,7 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 	debugLog(
 		"starting InfinityConsole with solidity root of " + getSolidityFolder()
 	);
-
+	let infinityConsole = new InfinityConsole(options);
 	await infinityConsole.initialize();
 	log(
 		"{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<" +
@@ -134,20 +131,36 @@ if (
 )
 	start()
 		.catch((error) => {
+			if ((console as any)._error) (console as any)._error(error);
 			console.error(error);
 			process.exit(1);
 		})
-		.then((result) => {
+		.then((result: InfinityConsole) => {
 			infinityConsole = result;
+		})
+		.finally(() => {
+			Object.keys(Pipes.pipes || {}).forEach((pipe) => {
+				try {
+					Pipes.savePipe(pipe);
+				} catch (error) {}
+			});
 		});
 
 //load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
 if (config.startup && !config.console)
 	load()
 		.catch((error) => {
+			if ((console as any)._error) (console as any)._error(error);
 			console.error(error);
 			process.exit(1);
 		})
-		.then((result) => {
+		.then((result: InfinityConsole) => {
 			infinityConsole = result;
+		})
+		.finally(() => {
+			Object.keys(Pipes.pipes || {}).forEach((pipe) => {
+				try {
+					Pipes.savePipe(pipe);
+				} catch (error) {}
+			});
 		});

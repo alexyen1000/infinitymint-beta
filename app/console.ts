@@ -99,7 +99,6 @@ export class InfinityConsole {
 				this.options?.blessed || {
 					smartCRS: true,
 					autoPadding: true,
-					fullUnicode: true,
 					dockBorders: true,
 					sendFocus: true,
 				}
@@ -111,11 +110,16 @@ export class InfinityConsole {
 				left: "center",
 				width: "90%",
 				height: 20,
+				horizonal: true,
+				pch: "-",
 				padding: 1,
 				border: "line",
 				style: {
 					bg: "black",
 					fg: "green",
+					border: {
+						fg: "green",
+					},
 				},
 			});
 			this.screen.append(this.loadingBox);
@@ -390,7 +394,7 @@ export class InfinityConsole {
 
 	public async reload() {
 		this.emit("reloaded");
-		this.setLoading("Reloading InfinityConsole");
+		this.setLoading("Reloading InfinityConsole", 10);
 		this.hasInitialized = false;
 		//reset pipes
 		Object.values(Pipes.pipes).forEach((pipe) => {
@@ -417,8 +421,9 @@ export class InfinityConsole {
 		//do a hard refresh of imports (TODO: Maybe remove)
 		await this.refreshImports(true);
 		await this.initialize();
-
+		this.setLoading("Reloaded", 90);
 		this.updateWindowsList();
+		this.stopLoading();
 	}
 
 	public getWindows() {

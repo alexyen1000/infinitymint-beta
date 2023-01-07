@@ -10,6 +10,7 @@ import { EventEmitter } from "events";
 export class Pipe {
 	public logs: {
 		message: string;
+		pure: string;
 		time: number;
 		index: number;
 	}[];
@@ -45,6 +46,7 @@ export class Pipe {
 
 			this.logs.push({
 				message: str,
+				pure: str.replace(/[^{\}]+(?=})/g, "").replace(/\{\}/g, ""),
 				index: this.logs.length,
 				time: Date.now(),
 			});

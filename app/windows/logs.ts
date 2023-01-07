@@ -18,7 +18,8 @@ let updateContent = (window: InfinityMintWindow) => {
 			.map((log, index) => {
 				if (lastLogMessage && lastLogMessage === log.message)
 					return (
-						lineNumber(index) + `{grey-fg}${log.message}{/grey-fg}`
+						lineNumber(index, true) +
+						`{grey-fg}${log.pure}{/grey-fg}`
 					);
 				else {
 					lastLogMessage = log.message;
@@ -29,10 +30,10 @@ let updateContent = (window: InfinityMintWindow) => {
 	);
 };
 
-let lineNumber = (indexCount: number | string) => {
-	return `{white-bg}{black-fg}${indexCount
+let lineNumber = (indexCount: number | string, gray?: boolean) => {
+	return `${gray ? "{white-bg}" : "{white-bg}"}{black-fg}${indexCount
 		.toString()
-		.padEnd(6, " ")}{/black-fg}{/white-bg} `;
+		.padEnd(6, " ")}{/black-fg}${gray ? "{/white-bg}" : "{/white-bg}"}`;
 };
 
 /**
@@ -330,6 +331,12 @@ Logs.initialize = async (window, frame, blessed) => {
 	window.key("p", onChangePipe);
 
 	updateContent(window);
+
+	window.data.log.setLabel(
+		"{bold}{white-fg}Pipe: {/white-fg}" +
+			window.data.log.options.pipe +
+			"{/bold}"
+	);
 };
 
 //runs after all elements have been appended and screen has been rendered
@@ -339,22 +346,25 @@ Logs.postInitialize = async (window, frame, blessed) => {
 		if (!window.data.log) return;
 
 		if (pipe === window.data.log.options.pipe) {
+			window.data.log.setLabel(
+				"{bold}{white-fg}Pipe: {/white-fg}" +
+					window.data.log.options.pipe +
+					"{/bold}"
+			);
+
+			if (window.data.log.options.alwaysScroll)
+				window.data.log.setScrollPerc(100);
+
 			if (lastLogMessage === msg)
 				window.data.log.pushLine(
-					lineNumber(index) + `{gray-fg}${msg}{gray-fg}`
+					lineNumber(index, true) +
+						`{gray-fg}${msg
+							.replace(/[^{\}]+(?=})/g, "")
+							.replace(/\{\}/g, "")}{/gray-fg}`
 				);
 			else window.data.log.pushLine(lineNumber(index) + msg);
+			lastLogMessage = msg;
 		}
-		lastLogMessage = msg;
-
-		window.data.log.setLabel(
-			"{bold}{white-fg}Pipe: {/white-fg}" +
-				window.data.log.options.pipe +
-				"{/bold}"
-		);
-
-		if (window.data.log.options.alwaysScroll)
-			window.data.log.setScrollPerc(100);
 	};
 	Pipes.emitter.on("log", cb);
 

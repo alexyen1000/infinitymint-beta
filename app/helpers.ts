@@ -257,21 +257,23 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
 };
 
 /**
- * Reads the current .session file in the cwd which holds settings relating to the current instance of InfinityMint.
+ * Will return the current session file as stored in memorys. Make sure to specify if to forceRead from the .session file agead.
  * @returns
  */
-export const readSession = (): InfinityMintSession => {
+export const readSession = (forceRead?: true): InfinityMintSession => {
 	if (!fs.existsSync(process.cwd() + "/.session") && !memorySession)
 		return { created: Date.now(), environment: {} };
 	//returns memory version
-	else if (memorySession) return memorySession;
+	else if (!forceRead && memorySession) return memorySession;
 
 	try {
-		return JSON.parse(
+		let result = JSON.parse(
 			fs.readFileSync(process.cwd() + "/.session", {
 				encoding: "utf-8",
 			})
 		);
+		memorySession = result;
+		return result;
 	} catch (error) {
 		Pipes.error(error);
 	}
@@ -283,12 +285,20 @@ export const readSession = (): InfinityMintSession => {
 };
 
 /**
+ *
+ * @param msg
+ */
+export const logDirect = (msg: string) => {
+	if ((console as any)._log) (console as any)._log(msg);
+	console.log(msg);
+};
+
+/**
  * Overwrites default behaviour of console.log and console.error
  */
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
-	let consoleLog = console.log;
-
+	let _log = console.log;
 	console.log = (msg: string | object) => {
 		try {
 			if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
@@ -308,10 +318,11 @@ export const overwriteConsoleMethods = () => {
 			(!Pipes.pipes[Pipes.currentPipeKey] &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
-			consoleLog(msg.replace("<#DONT_LOG_ME$>", ""));
+			_log(msg.replace("<#DONT_LOG_ME$>", ""));
 	};
+	(console as any)._log = _log;
 
-	let consoleError = console.error;
+	let _error = console.error;
 	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
 		if (Pipes.pipes[Pipes.currentPipeKey] && !dontSendToPipe)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
@@ -340,8 +351,9 @@ export const overwriteConsoleMethods = () => {
 			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
 			isEnvTrue("PIPE_ECHO_ERRORS")
 		)
-			consoleError(error);
+			_error(error);
 	};
+	(console as any)._error = _error;
 };
 
 /**

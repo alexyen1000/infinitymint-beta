@@ -122,32 +122,24 @@ Projects.initialize = async (window, frame, blessed) => {
 	);
 
 	let notice = window.createElement("noPreviewSelected", {
-		tags: true,
-		top: 6,
-		right: 2,
+		top: "center",
+		left: "75%-19",
 		width: "shrink",
 		height: "shrink",
+		tags: true,
+		alwaysFront: true,
+		bold: true,
 		padding: 2,
-		keys: true,
-		vi: true,
-		content: "{bold}Welcome!{/bold}\nPlease Select A Project To Preview",
-		mouse: true,
-		border: "line",
 		style: {
+			fg: "black",
 			bg: "red",
-			fg: "white",
-			item: {
-				hover: {
-					bg: "green",
-					fg: "black",
-				},
-			},
-			selected: {
-				bg: "grey",
-				fg: "green",
-				bold: true,
+			border: {
+				fg: "red",
 			},
 		},
+		border: window.getBorder(),
+		content: "{bold}Welcome!{/bold}\nPlease Select A Project To Preview",
+		mouse: true,
 	});
 
 	if (window.data.currentProject) notice.hide();
