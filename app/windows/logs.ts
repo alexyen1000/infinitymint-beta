@@ -19,7 +19,6 @@ let logThink = (
 	element.setLabel(
 		"{bold}{white-fg}Pipe: {/white-fg}" + element.options.pipe + "{/bold}"
 	);
-
 	if (element.options.alwaysScroll) {
 		element.setScrollPerc(100);
 	}

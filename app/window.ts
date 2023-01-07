@@ -825,8 +825,7 @@ export class InfinityMintWindow {
 		);
 		this.elements["frame"] = this.frame;
 		this.screen.append(this.frame);
-		this.screen.render();
-
+		//send frame to back
 		this.frame.setBack();
 
 		this.closeButton = this.createElement("closeButton", {
@@ -931,8 +930,6 @@ export class InfinityMintWindow {
 			if (element.alwaysFront) element.setFront();
 		});
 
-		//render the screen
-		this.screen.render();
 		//update the title and frame
 		this.hideButton.setFront();
 		this.closeButton.setFront();

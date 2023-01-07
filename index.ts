@@ -37,6 +37,8 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		...(typeof config?.console === "object" ? config.console : {}),
 	} as InfinityMintConsoleOptions;
 	let session = readSession();
+	let infinityConsole = new InfinityConsole(options);
+
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
 	//register current network pipes
@@ -98,7 +100,6 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 		"starting InfinityConsole with solidity root of " + getSolidityFolder()
 	);
 
-	let infinityConsole = new InfinityConsole(options);
 	await infinityConsole.initialize();
 	log(
 		"{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<" +
@@ -141,7 +142,7 @@ if (
 		});
 
 //load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
-if (config.startup)
+if (config.startup && !config.console)
 	load()
 		.catch((error) => {
 			console.error(error);
