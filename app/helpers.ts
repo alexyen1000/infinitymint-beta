@@ -264,10 +264,10 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
  * @returns
  */
 export const readSession = (forceRead?: boolean): InfinityMintSession => {
-	if (!fs.existsSync(process.cwd() + "/.session") && !memorySession)
+	if (!fs.existsSync(process.cwd() + "/.session"))
 		return { created: Date.now(), environment: {} };
-	//returns memory version
-	else if (!forceRead && memorySession) return memorySession;
+
+	if (memorySession) return memorySession;
 
 	try {
 		let result = JSON.parse(
@@ -1002,6 +1002,8 @@ export const loadInfinityMint = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean
 ) => {
+	initializeGanacheMnemonic();
+
 	//try to automatically add module alias
 	try {
 		let projectJson = getPackageJson();
@@ -1018,7 +1020,6 @@ export const loadInfinityMint = (
 
 	createInfinityMintConfig(useJavascript, useInternalRequire);
 	preInitialize(useJavascript);
-	initializeGanacheMnemonic();
 };
 
 export const createDirs = (dirs: string[]) => {
@@ -1139,13 +1140,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 
 export const initializeGanacheMnemonic = () => {
 	let session = readSession();
-	//if the ganache is not external and no mnemonic for ganache in the environment file then set one
-	if (
-		isEnvTrue("GANACHE_EXTERNAL") === false &&
-		!session.environment?.ganacheMnemonic
-	)
-		session.environment.ganacheMnemonic = generateMnemonic();
-
+	session.environment.ganacheMnemonic = getGanacheMnemonic();
 	saveSession(session);
 	return session.environment?.ganacheMnemonic;
 };
@@ -1228,6 +1223,21 @@ let memorySession: InfinityMintSession;
 export const saveSession = (session: InfinityMintSession) => {
 	memorySession = session;
 	fs.writeFileSync(process.cwd() + "/.session", JSON.stringify(session));
+};
+
+/**
+ * gets ganache mnemonic
+ * @returns
+ */
+export const getGanacheMnemonic = () => {
+	if (readSession()?.environment?.ganacheMnemonic)
+		return readSession()?.environment?.ganacheMnemonic;
+
+	return fs.existsSync(process.cwd() + "/.mnemonic")
+		? fs.readFileSync(process.cwd() + "/.mnemonic", {
+				encoding: "utf-8",
+		  })
+		: generateMnemonic();
 };
 
 /**
