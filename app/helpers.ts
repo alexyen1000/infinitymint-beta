@@ -263,7 +263,7 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
  * Will return the current session file as stored in memorys. Make sure to specify if to forceRead from the .session file agead.
  * @returns
  */
-export const readSession = (forceRead?: true): InfinityMintSession => {
+export const readSession = (forceRead?: boolean): InfinityMintSession => {
 	if (!fs.existsSync(process.cwd() + "/.session") && !memorySession)
 		return { created: Date.now(), environment: {} };
 	//returns memory version
