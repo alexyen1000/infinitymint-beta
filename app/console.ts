@@ -97,7 +97,7 @@ export class InfinityConsole {
 			debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
 			this.screen = blessed.screen(
 				this.options?.blessed || {
-					fastCRS: true,
+					smartCRS: true,
 					autoPadding: true,
 					fullUnicode: true,
 					dockBorders: true,
