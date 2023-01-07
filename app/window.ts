@@ -863,6 +863,7 @@ export class InfinityMintWindow {
 
 		let element = this.registerElement(key, blessed[type](options));
 		if (element?.options.parent) delete element.options.parent;
+
 		if (options.alwaysFront) element.alwaysFront = options.alwaysFront;
 		if (options.alwaysBack) element.alwaysBack = options.alwaysBack;
 		if (options.alwaysUpdate) element.alwaysUpdate = options.alwaysUpdate;

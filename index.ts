@@ -106,6 +106,55 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 	return infinityConsole;
 };
 
+export const telnet = require("telnet2");
+export const startTelnet = () => {
+	console.log("Starting InfinityMint on Telnet port 2000");
+	telnet({ tty: true }, (client) => {
+		let func = async () => {
+			infinityConsole = await start({
+				blessed: {
+					smartCSR: true,
+					input: client,
+					output: client,
+					terminal: "xterm-256color",
+					fullUnicode: true,
+				},
+			});
+			let screen = infinityConsole.getScreen();
+
+			client.on("term", function (terminal) {
+				screen.terminal = terminal;
+				screen.render();
+			});
+
+			client.on("size", function (width, height) {
+				client.columns = width;
+				client.rows = height;
+				client.emit("resize");
+			});
+
+			client.on("close", function () {
+				if (!screen.destroyed) {
+					screen.destroy();
+				}
+			});
+
+			screen.key(["C-c", "q"], function (ch, key) {
+				screen.destroy();
+			});
+
+			screen.on("destroy", function () {
+				if (client.writable) {
+					client.destroy();
+				}
+			});
+		};
+		func().catch((error) => {
+			client.stdout.write("error: " + error?.message);
+		});
+	}).listen(2000);
+};
+
 /**
  * if you spawned InfinityMint through load, then this is the current infinity console instance
  */
@@ -126,8 +175,9 @@ export default infinitymint;
 
 //if module_mode is false we are running infinitymint normally, if not we are going to not and just return our exports
 if (
+	!config.telnet &&
 	(config.console || isEnvTrue("INFINITYMINT_CONSOLE")) &&
-	config.startup !== true
+	!config.startup
 )
 	start()
 		.catch((error) => {
@@ -147,7 +197,12 @@ if (
 		});
 
 //load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
-if (config.startup && !config.console)
+if (
+	!config.telnet &&
+	config.startup &&
+	!config.console &&
+	!isEnvTrue("INFINITYMINT_CONSOLE")
+)
 	load()
 		.catch((error) => {
 			if ((console as any)._error) (console as any)._error(error);
@@ -164,3 +219,22 @@ if (config.startup && !config.console)
 				} catch (error) {}
 			});
 		});
+
+if (
+	config.telnet &&
+	!config.startup &&
+	!config.console &&
+	!isEnvTrue("INFINITYMINT_CONSOLE")
+)
+	try {
+		startTelnet();
+	} catch (error) {
+		if ((console as any)._error) (console as any)._error(error);
+		console.error(error);
+		Object.keys(Pipes.pipes || {}).forEach((pipe) => {
+			try {
+				Pipes.savePipe(pipe);
+			} catch (error) {}
+		});
+		process.exit(1);
+	}

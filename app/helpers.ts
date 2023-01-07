@@ -36,6 +36,9 @@ export interface Vector {
 
 export interface Blessed {
 	screen: (options: any) => BlessedElement;
+	escape: (input: string) => string;
+	stripTags: (input: string) => string;
+	cleanTags: (input: string) => string;
 	box: (options: BlessedElementOptions) => BlessedElement;
 	layout: (options: BlessedElementOptions) => BlessedElement;
 	loading: (options: BlessedElementOptions) => BlessedElement;

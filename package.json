@@ -52,6 +52,7 @@
     "module-alias": "^2.2.2",
     "play-sound": "^1.1.5",
     "sharp": "^0.31.3",
+    "telnet2": "^0.0.1",
     "uuid": "^9.0.0"
   }
 }

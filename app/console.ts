@@ -169,6 +169,10 @@ export class InfinityConsole {
 		return this.eventEmitter;
 	}
 
+	public getScreen() {
+		return this.screen;
+	}
+
 	public getAccount() {
 		return this.account;
 	}
@@ -1313,6 +1317,16 @@ export class InfinityConsole {
 					this.options?.blessed || {
 						smartCRS: true,
 						dockBorders: true,
+						cursor: {
+							artificial: true,
+							shape: {
+								bg: "red",
+								fg: "white",
+								bold: true,
+								ch: "#",
+							},
+							blink: true,
+						},
 						debug: true,
 						sendFocus: true,
 					}

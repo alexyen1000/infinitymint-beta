@@ -1138,6 +1138,7 @@ export interface InfinityMintConfig {
 	 * ```
 	 */
 	console?: InfinityMintConsoleOptions | boolean;
+	telnet?: boolean;
 	/**
 	 * enabled music playback functionality
 	 * @experimental

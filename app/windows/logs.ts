@@ -358,9 +358,7 @@ Logs.postInitialize = async (window, frame, blessed) => {
 			if (lastLogMessage === msg)
 				window.data.log.pushLine(
 					lineNumber(index, true) +
-						`{gray-fg}${msg
-							.replace(/[^{\}]+(?=})/g, "")
-							.replace(/\{\}/g, "")}{/gray-fg}`
+						`{gray-fg}${blessed.cleanTags(msg)}{/gray-fg}`
 				);
 			else window.data.log.pushLine(lineNumber(index) + msg);
 			lastLogMessage = msg;
