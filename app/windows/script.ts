@@ -50,8 +50,8 @@ Script.initialize = async (window, frame, blessed) => {
 		shouldFocus: true,
 		mouse: true,
 		alwaysScroll: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
+		scrollbar: window.getScrollbar(),
+		border: "line",
 		style: {
 			fg: "white",
 			bg: "transparent",
@@ -76,8 +76,8 @@ Script.initialize = async (window, frame, blessed) => {
 		shouldFocus: true,
 		mouse: true,
 		alwaysScroll: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
+		scrollbar: window.getScrollbar(),
+		border: "line",
 		style: {
 			fg: "white",
 			bg: "transparent",

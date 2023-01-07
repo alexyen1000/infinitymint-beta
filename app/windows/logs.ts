@@ -11,42 +11,7 @@ import {
 import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
 
-let logThink = (
-	window: InfinityMintWindow,
-	element: BlessedElement,
-	blessed: Blessed
-) => {
-	element.setLabel(
-		"{bold}{white-fg}Pipe: {/white-fg}" + element.options.pipe + "{/bold}"
-	);
-	if (element.options.alwaysScroll) {
-		element.setScrollPerc(100);
-	}
-};
-
-const Logs = new InfinityMintWindow(
-	"Logs",
-	{
-		fg: "white",
-		bg: "grey",
-		border: {
-			fg: "#f0f0f0",
-		},
-	},
-	{
-		type: "line",
-	},
-	{
-		ch: " ",
-		track: {
-			bg: "black",
-		},
-		style: {
-			inverse: true,
-		},
-	}
-);
-let lastLogMessage;
+let lastLogMessage: string;
 let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.setContent(
 		Pipes.pipes[window.data.log.options.pipe].logs
@@ -70,57 +35,34 @@ let lineNumber = (indexCount: number | string) => {
 		.padEnd(6, " ")}{/black-fg}{/white-bg} `;
 };
 
-//initializes the console
+/**
+ * Allows you to view the output of pipes
+ */
+const Logs = new InfinityMintWindow(
+	"Logs",
+	{
+		fg: "white",
+		bg: "grey",
+		border: {
+			fg: "#f0f0f0",
+		},
+	},
+	{
+		type: "line",
+	},
+	{
+		ch: " ",
+		track: {
+			bg: "black",
+		},
+		style: {
+			inverse: true,
+		},
+	}
+);
+
+//initializes the logging window.
 Logs.initialize = async (window, frame, blessed) => {
-	window.unkey("up");
-	window.key("up", (ch: string, key: string) => {
-		let console = window.data.log;
-		if (!console) return;
-
-		//don't if we are invisible
-		if (window.isVisible() === false) return;
-
-		if (window.data.log.options.alwaysScroll) {
-			window.data.log.options.alwaysScroll = false;
-			window.saveOptions();
-		}
-
-		window.data.log.options.selectedLine = Math.max(
-			0,
-			window.data.log.options.selectedLine - 1
-		);
-	});
-
-	window.unkey("down");
-	window.key("down", (ch: string, key: string) => {
-		let console = window.data.log;
-		if (!console) return;
-		if (window.isVisible() === false) return;
-
-		window.data.log.options.selectedLine = Math.min(
-			(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]).length -
-				1,
-			window.data.log.options.selectedLine + 1
-		);
-	});
-
-	//centers the scroll of the console to the selected line position when you do Control-Q
-	window.unkey("C-q");
-	window.key("C-q", (ch: string, key: string) => {
-		let console = window.data.log;
-		if (!console) return;
-		if (window.isVisible() === false) return;
-
-		let selectedLinePosition = [
-			...(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]),
-		]
-			.slice(0, window.data.log.options.selectedLine)
-			.join("\n")
-			.split("\n").length;
-
-		console.setScroll(selectedLinePosition);
-	});
-
 	//register the console first
 	let consoleStyle = {
 		height: "100%-" + (frame.top + frame.bottom + 8),
@@ -134,8 +76,16 @@ Logs.initialize = async (window, frame, blessed) => {
 		shouldFocus: true,
 		mouse: true,
 		alwaysScroll: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
+		scrollbar: {
+			ch: " ",
+			track: {
+				bg: "black",
+			},
+			style: {
+				inverse: true,
+			},
+		},
+		border: "line",
 		style: {
 			fg: "white",
 			bg: "transparent",
@@ -146,9 +96,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	};
 
 	let logs = [window.createElement("console0", consoleStyle)];
-
 	logs.forEach((log) => {
-		log.think = logThink;
 		log.setFront();
 		log.focus();
 	});
@@ -164,9 +112,6 @@ Logs.initialize = async (window, frame, blessed) => {
 			selectedLine: 0,
 		},
 	});
-
-	//save to file default values if written
-	window.saveOptions();
 
 	//create buttons
 	let alwaysScroll = window.createElement("alwaysScroll", {
@@ -212,7 +157,6 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.data.log.options.alwaysScroll =
 			!window.data.log.options.alwaysScroll;
 		window.data.log.options.scrollToSelectedLine = false;
-		window.saveOptions();
 		alwaysScrollUpdate();
 		window.getScreen().render();
 	});
@@ -265,7 +209,6 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.data.log.options.pipe = keys[selected];
 		window.data.log.setScroll(0);
 		window.data.log.focus();
-		window.saveOptions();
 		updateContent(window);
 		form.hide();
 	});
@@ -371,7 +314,6 @@ Logs.initialize = async (window, frame, blessed) => {
 		);
 
 		window.data.log.setContent("");
-		window.saveOptions();
 		form.hide();
 	});
 
@@ -385,8 +327,16 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	changePipe.setFront();
 	changePipe.on("click", onChangePipe);
+	window.key("p", onChangePipe);
+
+	updateContent(window);
+};
+
+//runs after all elements have been appended and screen has been rendered
+Logs.postInitialize = async (window, frame, blessed) => {
 	let cb = (msg: string, pipe: string, index: number) => {
 		if (!window.isVisible()) return;
+		if (!window.data.log) return;
 
 		if (pipe === window.data.log.options.pipe) {
 			if (lastLogMessage === msg)
@@ -396,12 +346,20 @@ Logs.initialize = async (window, frame, blessed) => {
 			else window.data.log.pushLine(lineNumber(index) + msg);
 		}
 		lastLogMessage = msg;
+
+		window.data.log.setLabel(
+			"{bold}{white-fg}Pipe: {/white-fg}" +
+				window.data.log.options.pipe +
+				"{/bold}"
+		);
+
+		if (window.data.log.options.alwaysScroll)
+			window.data.log.setScrollPerc(100);
 	};
 	Pipes.emitter.on("log", cb);
 
 	//save when the window is destroyed
 	window.on("destroy", () => {
-		window.saveOptions();
 		Pipes.emitter.off("log", cb);
 	});
 
@@ -410,13 +368,64 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.saveOptions();
 	});
 
+	//focus the log when the window is shown
 	window.on("show", () => {
 		window.data.log.focus();
 	});
 
-	window.key("p", onChangePipe);
+	window.unkey("up");
+	window.key("up", (ch: string, key: string) => {
+		let console = window.data.log;
+		if (!console) return;
 
-	updateContent(window);
+		//don't if we are invisible
+		if (window.isVisible() === false) return;
+
+		if (window.data.log.options.alwaysScroll) {
+			window.data.log.options.alwaysScroll = false;
+			window.saveOptions();
+		}
+
+		window.data.log.options.selectedLine = Math.max(
+			0,
+			window.data.log.options.selectedLine - 1
+		);
+	});
+
+	//various keyboard commands
+
+	window.unkey("down");
+	window.key("down", (ch: string, key: string) => {
+		let console = window.data.log;
+		if (!console) return;
+		if (window.isVisible() === false) return;
+
+		window.data.log.options.selectedLine = Math.min(
+			(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]).length -
+				1,
+			window.data.log.options.selectedLine + 1
+		);
+	});
+
+	//centers the scroll of the console to the selected line position when you do Control-Q
+	window.unkey("C-q");
+	window.key("C-q", (ch: string, key: string) => {
+		let console = window.data.log;
+		if (!console) return;
+		if (window.isVisible() === false) return;
+
+		let selectedLinePosition = [
+			...(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]),
+		]
+			.slice(0, window.data.log.options.selectedLine)
+			.join("\n")
+			.split("\n").length;
+
+		console.setScroll(selectedLinePosition);
+	});
+
+	if (window.data.log.options.alwaysScroll)
+		window.data.log.setScrollPerc(100);
 };
 
 export default Logs;

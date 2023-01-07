@@ -201,11 +201,12 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	//if we aren't overwriting console methods and console is false
 	if (
-		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
-		getConfigFile().console === false &&
-		isEnvTrue("PIPE_SILENCE") === false
+		!isEnvTrue("OVERWRITE_CONSOLE_METHODS") ||
+		(isEnvTrue("OVERWRITE_CONSOLE_METHODS") &&
+			getConfigFile().console === false &&
+			isEnvTrue("PIPE_SILENCE") === false)
 	)
-		console.log(msg);
+		console.log(`[${pipe || "default"}] ` + msg);
 
 	Pipes.log(msg.toString(), pipe);
 };
@@ -569,8 +570,7 @@ export const prepareConfig = () => {
 	prepareHardhatConfig(session, config);
 
 	//overwrite the console methods
-	if (config.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
-		overwriteConsoleMethods();
+	if (isEnvTrue("OVERWRITE_CONSOLE_METHODS")) overwriteConsoleMethods();
 
 	let solidityModuleFolder =
 		process.cwd() +
@@ -1221,8 +1221,9 @@ export const saveSession = (session: InfinityMintSession) => {
  */
 export const error = (error: string | Error) => {
 	if (
-		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
-		getConfigFile().console === false
+		!isEnvTrue("OVERWRITE_CONSOLE_METHODS") ||
+		(isEnvTrue("OVERWRITE_CONSOLE_METHODS") &&
+			getConfigFile().console === false)
 	)
 		console.error(error);
 

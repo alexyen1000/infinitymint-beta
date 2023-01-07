@@ -1061,6 +1061,7 @@ export class InfinityConsole {
 			this.currentWindow.setContainer(this);
 
 		this.windowManager.hide();
+		this.currentWindow.createFrame();
 		await this.currentWindow.create();
 		this.windowManager.show();
 		this.windowManager.setBack();
@@ -1259,6 +1260,7 @@ export class InfinityConsole {
 							instantInstantiate[i].setContainer(this);
 
 						instantInstantiate[i].setScreen(this.screen);
+						instantInstantiate[i].createFrame();
 						await instantInstantiate[i].create();
 						instantInstantiate[i].hide();
 						//register events

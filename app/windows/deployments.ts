@@ -27,8 +27,8 @@ Deployments.initialize = async (window, frame, blessed) => {
 			tags: true,
 			scrollable: true,
 			mouse: true,
-			scrollbar: window.getScrollbar() || {},
-			border: window.getBorder() || {},
+			scrollbar: window.getScrollbar(),
+			border: "line",
 			style: {
 				fg: "white",
 				bg: "transparent",

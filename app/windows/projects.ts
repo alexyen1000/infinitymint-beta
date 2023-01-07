@@ -127,7 +127,6 @@ Projects.initialize = async (window, frame, blessed) => {
 		right: 2,
 		width: "shrink",
 		height: "shrink",
-		parent: preview,
 		padding: 2,
 		keys: true,
 		vi: true,

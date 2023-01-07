@@ -196,19 +196,6 @@ Menu.think = (window, frame, blessed) => {
 };
 
 Menu.initialize = async (window, frame, blessed) => {
-	window.on("hide", () => {
-		if (!getCurrentProjectPath()) noProject.show();
-		else noProject.hide();
-	});
-	window.on("show", () => {
-		if (!getCurrentProjectPath()) noProject.show();
-		else noProject.hide();
-	});
-	window.on("focus", () => {
-		if (!getCurrentProjectPath()) noProject.show();
-		else noProject.hide();
-	});
-
 	let background = window.createElement("background", {
 		width: "100%",
 		height: "100%-8",
@@ -220,8 +207,8 @@ Menu.initialize = async (window, frame, blessed) => {
 		tags: true,
 		scrollable: true,
 		mouse: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
+		scrollbar: window.getScrollbar(),
+		border: "line",
 		style: {
 			fg: "white",
 			bg: "transparent",
@@ -272,9 +259,6 @@ Menu.initialize = async (window, frame, blessed) => {
 			bg: "gray",
 		},
 	});
-
-	//render screen
-	window.getScreen().render();
 
 	if (container.height > 16) {
 		//hide logo if screen too small
@@ -430,9 +414,10 @@ Menu.initialize = async (window, frame, blessed) => {
 		bold: true,
 		padding: 2,
 		style: {
-			bg: "red",
+			fg: "green",
+			bg: "black",
 			border: {
-				fg: "yellow",
+				fg: "red",
 			},
 			hover: {
 				bg: "black",
@@ -445,10 +430,26 @@ Menu.initialize = async (window, frame, blessed) => {
 		window.openWindow("Projects");
 	});
 
+	createButtons(window);
+};
+
+Menu.postInitialize = async (window) => {
+	let noProject = window.getElement("noProjectWarning");
+	window.on("hide", () => {
+		if (!getCurrentProjectPath()) noProject.show();
+		else noProject.hide();
+	});
+	window.on("show", () => {
+		if (!getCurrentProjectPath()) noProject.show();
+		else noProject.hide();
+	});
+	window.on("focus", () => {
+		if (!getCurrentProjectPath()) noProject.show();
+		else noProject.hide();
+	});
+
 	if (!getCurrentProjectPath()) noProject.show();
 	else noProject.hide();
-
-	createButtons(window);
 };
 
 export default Menu;
