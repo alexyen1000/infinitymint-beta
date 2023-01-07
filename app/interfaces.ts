@@ -912,7 +912,7 @@ export interface InfinityMintEnvironmentVariables {
 	PIPE_LOG_ERRORS_TO_DEBUG?: boolean;
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
 	PIPE_SILENCE?: boolean;
-	OVERWRITE_CONSOLE_METHODS?: boolean;
+	PIPE_IGNORE_CONSOLE?: boolean;
 	INFINITYMINT_INCLUDE_DEPLOY?: boolean;
 	INFINITYMINT_INCLUDE_SCRIPTS?: boolean;
 	GANACHE_PORT?: number;

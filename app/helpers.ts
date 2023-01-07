@@ -204,8 +204,8 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	//if we aren't overwriting console methods and console is false
 	if (
-		!isEnvTrue("OVERWRITE_CONSOLE_METHODS") ||
-		(isEnvTrue("OVERWRITE_CONSOLE_METHODS") &&
+		isEnvTrue("PIPE_IGNORE_CONSOLE") ||
+		(!isEnvTrue("PIPE_IGNORE_CONSOLE") &&
 			getConfigFile().console === false &&
 			isEnvTrue("PIPE_SILENCE") === false)
 	)
@@ -585,7 +585,7 @@ export const prepareConfig = () => {
 	prepareHardhatConfig(session, config);
 
 	//overwrite the console methods
-	if (isEnvTrue("OVERWRITE_CONSOLE_METHODS")) overwriteConsoleMethods();
+	if (!isEnvTrue("PIPE_IGNORE_CONSOLE")) overwriteConsoleMethods();
 
 	let solidityModuleFolder =
 		process.cwd() +
@@ -1108,7 +1108,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 			fs.copyFileSync(path, process.cwd() + "/.env");
 		}
 
-		debugLog("made /env from " + path);
+		debugLog("made .env from " + path);
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
@@ -1246,9 +1246,8 @@ export const getGanacheMnemonic = () => {
  */
 export const error = (error: string | Error) => {
 	if (
-		!isEnvTrue("OVERWRITE_CONSOLE_METHODS") ||
-		(isEnvTrue("OVERWRITE_CONSOLE_METHODS") &&
-			getConfigFile().console === false)
+		isEnvTrue("PIPE_IGNORE_CONSOLE") ||
+		(!isEnvTrue("PIPE_IGNORE_CONSOLE") && getConfigFile().console === false)
 	)
 		console.error(error);
 

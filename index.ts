@@ -155,9 +155,7 @@ export const startTelnet = () => {
 
 			//when the client closes
 			client.on("close", function () {
-				if (!screen.destroyed) {
-					screen.destroy();
-				}
+				logDirect(client.remoteAddress + " disconnected");
 			});
 
 			//screen on
@@ -165,7 +163,6 @@ export const startTelnet = () => {
 				if (client.writable) {
 					client.destroy();
 				}
-				logDirect(client.remoteAddress + " disconnected");
 			});
 		})();
 	}).listen(2000);
