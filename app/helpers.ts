@@ -291,7 +291,7 @@ export const readSession = (forceRead?: true): InfinityMintSession => {
  *
  * @param msg
  */
-export const logDirect = (msg: string) => {
+export const logDirect = (msg: any) => {
 	if ((console as any)._log) (console as any)._log(msg);
 	console.log(msg);
 };

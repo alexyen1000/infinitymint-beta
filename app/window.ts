@@ -783,10 +783,9 @@ export class InfinityMintWindow {
 
 	public async updateFrameTitle() {
 		if (!this.hasInfinityConsole()) return;
-
 		let account = this.getInfinityConsole().getAccount();
 		let balance = this.getInfinityConsole().getBalance();
-		let etherBalance = ethers.utils.formatEther(balance);
+		let etherBalance = ethers.utils.formatEther(balance || 0);
 		let musicOptions = this.getInfinityConsole().windowExists("Music")
 			? this.getInfinityConsole().getWindow("Music").options
 			: {
@@ -798,7 +797,7 @@ export class InfinityMintWindow {
 		this.elements["frame"].setContent(
 			`{bold}${this.name}{/bold} {magenta-fg}=>{/magenta-fg} {yellow-fg}${
 				hre.network.name
-			}[${this.getInfinityConsole().getCurrentChainId()}] {underline}${account.address.substring(
+			}[${this.getInfinityConsole().getCurrentChainId()}] {underline}${account?.address.substring(
 				0,
 				16
 			)}...{/underline}{/yellow-fg} {black-bg}{white-fg}${

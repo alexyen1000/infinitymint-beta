@@ -17,6 +17,7 @@ import {
 	getPackageJson,
 	isEnvTrue,
 	log,
+	logDirect,
 	requireScript,
 	requireWindow,
 	warning,
@@ -921,10 +922,14 @@ export class InfinityConsole {
 	}
 
 	public async refreshWeb3() {
-		this.network = hre.network;
-		this.chainId = (await getProvider().getNetwork()).chainId;
-		this.account = await getDefaultSigner();
-		this.balance = await this.account.getBalance();
+		try {
+			this.network = hre.network;
+			this.chainId = (await getProvider().getNetwork()).chainId;
+			this.account = await getDefaultSigner();
+			this.balance = await this.account.getBalance();
+		} catch (error) {
+			logDirect("BAD WEB3: " + error?.message);
+		}
 	}
 
 	/**

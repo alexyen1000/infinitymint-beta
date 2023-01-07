@@ -21,6 +21,7 @@ import {
 	isEnvSet,
 	warning,
 	logDirect,
+	BlessedElement,
 } from "./app/helpers";
 import Pipes from "./app/pipes";
 import { InfinityMintConsoleOptions } from "./app/interfaces";
@@ -47,33 +48,39 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 
 	//start ganache
 	if (hre.config.networks?.ganache !== undefined) {
-		//ask if they want to start ganache
-		//start ganache here
-		let obj = { ...config.ganache } as any;
-		if (obj.wallet === undefined) obj.wallet = {};
-		if (session.environment.ganacheMnemonic === undefined)
-			throw new Error("no ganache mnemonic");
+		try {
+			//ask if they want to start ganache
+			//start ganache here
+			let obj = { ...config.ganache } as any;
+			if (obj.wallet === undefined) obj.wallet = {};
+			if (session.environment.ganacheMnemonic === undefined)
+				throw new Error("no ganache mnemonic");
 
-		obj.wallet.mnemonic = session.environment.ganacheMnemonic;
-		saveSession(session);
-		debugLog("starting ganache with menomic of: " + obj.wallet.mnemonic);
+			obj.wallet.mnemonic = session.environment.ganacheMnemonic;
+			saveSession(session);
+			debugLog(
+				"starting ganache with menomic of: " + obj.wallet.mnemonic
+			);
 
-		//get private keys and save them to file
-		let keys = getPrivateKeys(session.environment.ganacheMnemonic);
-		debugLog(
-			"found " +
-				keys.length +
-				" private keys for mnemonic: " +
-				session.environment.ganacheMnemonic
-		);
-		keys.forEach((key, index) => {
-			debugLog(`[${index}] => ${key}`);
-		});
-		session.environment.ganachePrivateKeys = keys;
-		saveSession(session);
+			//get private keys and save them to file
+			let keys = getPrivateKeys(session.environment.ganacheMnemonic);
+			debugLog(
+				"found " +
+					keys.length +
+					" private keys for mnemonic: " +
+					session.environment.ganacheMnemonic
+			);
+			keys.forEach((key, index) => {
+				debugLog(`[${index}] => ${key}`);
+			});
+			session.environment.ganachePrivateKeys = keys;
+			saveSession(session);
 
-		let provider = await GanacheServer.start(obj);
-		startNetworkPipe(provider as Web3Provider, "ganache");
+			let provider = await GanacheServer.start(obj);
+			startNetworkPipe(provider as Web3Provider, "ganache");
+		} catch (error) {
+			warning("could not start ganache: " + error);
+		}
 	} else {
 		warning("no ganache network found");
 	}
@@ -96,7 +103,9 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 	debugLog(
 		"starting InfinityConsole with solidity root of " + getSolidityFolder()
 	);
+
 	let infinityConsole = new InfinityConsole(options);
+	logDirect("initializing...");
 	await infinityConsole.initialize();
 	log(
 		"{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<" +
@@ -108,50 +117,57 @@ export const start = async (options?: InfinityMintConsoleOptions) => {
 
 export const telnet = require("telnet2");
 export const startTelnet = () => {
-	console.log("Starting InfinityMint on Telnet port 2000");
+	logDirect("starting telnet server on port 2000 with basic permissions");
 	telnet({ tty: true }, (client) => {
-		let func = async () => {
-			infinityConsole = await start({
-				blessed: {
-					smartCSR: true,
-					input: client,
-					output: client,
-					terminal: "xterm-256color",
-					fullUnicode: true,
-				},
-			});
-			let screen = infinityConsole.getScreen();
+		(async () => {
+			let screen: BlessedElement;
+			try {
+				infinityConsole = await start({
+					blessed: {
+						smartCSR: true,
+						input: client,
+						output: client,
+						terminal: "xterm-256color",
+						fullUnicode: true,
+					},
+				});
+				screen = infinityConsole.getScreen();
 
-			client.on("term", function (terminal) {
-				screen.terminal = terminal;
-				screen.render();
-			});
+				client.on("term", function (terminal) {
+					screen.terminal = terminal;
+					screen.render();
+				});
 
+				logDirect(client.input.remoteAddress + " connected");
+			} catch (error) {
+				logDirect(
+					client.input.remoteAddress + " error: " + error?.message
+				);
+				return;
+			}
+
+			//when its resizes
 			client.on("size", function (width, height) {
 				client.columns = width;
 				client.rows = height;
 				client.emit("resize");
 			});
 
+			//when the client closes
 			client.on("close", function () {
 				if (!screen.destroyed) {
 					screen.destroy();
 				}
 			});
 
-			screen.key(["C-c", "q"], function (ch, key) {
-				screen.destroy();
-			});
-
+			//screen on
 			screen.on("destroy", function () {
 				if (client.writable) {
 					client.destroy();
 				}
+				logDirect(client.remoteAddress + " disconnected");
 			});
-		};
-		func().catch((error) => {
-			client.stdout.write("error: " + error?.message);
-		});
+		})();
 	}).listen(2000);
 };
 
