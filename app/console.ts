@@ -1003,6 +1003,7 @@ export class InfinityConsole {
 	}
 
 	public async refreshScripts() {
+		let config = getConfigFile();
 		//call reloads
 		if (this.scripts && this.scripts.length !== 0) {
 			for (let i = 0; i < this.scripts.length; i++) {
@@ -1036,8 +1037,25 @@ export class InfinityConsole {
 					scriptSource.fileName = script.dir + "/" + script.base;
 					this.scripts.push(scriptSource);
 				} else {
+					let _potentialSource: any = {};
+					if (
+						config.settings.scripts.disableJavascriptRequire.filter(
+							(value: string) => script.dir.indexOf(value) !== -1
+						).length === 0
+					) {
+						(process as any)._exit = (code?: number) => {
+							warning("prevented process exit");
+						};
+						_potentialSource = await requireScript(
+							script.dir + "/" + script.base,
+							this
+						);
+						(process as any).exit = (process as any)._exit;
+					}
+
 					this.scripts.push({
-						name: script.name,
+						..._potentialSource,
+						name: _potentialSource?.name || script.name,
 						fileName: script.dir + "/" + script.base,
 						javascript: true,
 						execute: async (infinitymint) => {
@@ -1245,7 +1263,6 @@ export class InfinityConsole {
 
 		this.think = setInterval(() => {
 			if (!this.hasInitialized) return;
-			if (!this.loadingBox.hidden) this.loadingBox.setFront();
 			(this.options?.think || int)();
 			this.tick++;
 
@@ -1259,10 +1276,10 @@ export class InfinityConsole {
 							element.alwaysBack
 					)
 					.forEach((element) => {
-						if (!this.options.dontDraw && element.alwaysFront)
-							element.setFront();
 						if (!this.options.dontDraw && element.alwaysBack)
 							element.setBack();
+						if (!this.options.dontDraw && element.alwaysFront)
+							element.setFront();
 
 						if (
 							element.think &&
@@ -1271,8 +1288,6 @@ export class InfinityConsole {
 						)
 							element.think(this.currentWindow, element, blessed);
 					});
-
-				if (!this.loadingBox.hidden) this.loadingBox.setFront();
 			}
 
 			if (this.errorBox && !this.errorBox.hidden)

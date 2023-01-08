@@ -1349,6 +1349,9 @@ export interface InfinityMintConfigSettings extends KeyValue {
 	 * @see {@link InfinityMintConfigSettingsCompile}
 	 */
 	compile?: InfinityMintConfigSettingsCompile;
+	scripts?: {
+		disableJavascriptRequire: PathLike[];
+	};
 }
 
 /**
