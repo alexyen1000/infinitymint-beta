@@ -23,6 +23,7 @@ import {
 	logDirect,
 	BlessedElement,
 	isRegistered,
+	allowPiping,
 } from "./app/helpers";
 import Pipes from "./app/pipes";
 import {
@@ -45,6 +46,8 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	logDirect("🪐 Starting InfinityConsole");
 	//register current network pipes
 	registerNetworkPipes();
+	//allow piping
+	allowPiping();
 
 	//start ganache
 	if (hre.config.networks?.ganache !== undefined) {
