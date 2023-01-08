@@ -204,6 +204,7 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	//if we aren't overwriting console methods and console is false
 	if (
+		!isAllowPiping ||
 		isEnvTrue("PIPE_IGNORE_CONSOLE") ||
 		(!isEnvTrue("PIPE_IGNORE_CONSOLE") &&
 			getConfigFile().console === false &&
@@ -301,6 +302,11 @@ export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let _log = console.log;
 	console.log = (msg: string | object) => {
+		if (!isAllowPiping) {
+			_log(msg);
+			return;
+		}
+
 		try {
 			if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
 		} catch (error) {
@@ -325,6 +331,10 @@ export const overwriteConsoleMethods = () => {
 
 	let _error = console.error;
 	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
+		if (!isAllowPiping) {
+			_error(error);
+			return;
+		}
 		if (Pipes.pipes[Pipes.currentPipeKey] && !dontSendToPipe)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
@@ -966,6 +976,11 @@ export const isInfinityMint = () => {
 
 		return false;
 	}
+};
+
+let isAllowPiping = false;
+export const allowPiping = () => {
+	isAllowPiping = true;
 };
 
 /**
