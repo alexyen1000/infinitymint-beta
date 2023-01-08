@@ -16,6 +16,7 @@ import {
 	getInfinityMintVersion,
 	getPackageJson,
 	isEnvTrue,
+	isRegistered,
 	log,
 	logDirect,
 	requireScript,
@@ -74,6 +75,7 @@ export class InfinityConsole {
 	private sessionId: string;
 	private tick: number;
 	private currentAudio: any;
+	private user: any;
 	private currentAudioKilled: boolean;
 	private hasInitialized: boolean;
 	private currentAudioAwaitingKill: boolean;
@@ -132,6 +134,14 @@ export class InfinityConsole {
 
 	private generateId() {
 		return uuidv4();
+	}
+
+	public getUsername() {
+		if (!this.user) return "root";
+	}
+
+	public setUser(client: any) {
+		this.user = client;
 	}
 
 	/**
@@ -285,6 +295,11 @@ export class InfinityConsole {
 						this.gotoWindow("CloseBox");
 						//if the closeBox aka the current window is visible and we press control-c again just exit
 					} else if (this.currentWindow?.name === "CloseBox") {
+						if (this.user !== undefined) {
+							this.destroy();
+							return;
+						}
+
 						if (this.currentWindow.isVisible()) {
 							this.currentAudio?.kill();
 							process.exit(0);
@@ -379,6 +394,7 @@ export class InfinityConsole {
 	}
 
 	public async gotoWindow(thatWindow: string | Window) {
+		if (this.currentWindow?.isForcedOpen()) return;
 		if (this.currentWindow) this.currentWindow.hide();
 
 		for (let i = 0; i < this.windows.length; i++) {
@@ -397,9 +413,14 @@ export class InfinityConsole {
 		}
 	}
 
-	public async reload() {
-		this.emit("reloaded");
-		this.setLoading("Reloading InfinityConsole", 10);
+	public destroy() {
+		this.emit("destroyed");
+		this.cleanup();
+		this.screen.destroy();
+		this.user = undefined;
+	}
+
+	public cleanup() {
 		this.hasInitialized = false;
 		//reset pipes
 		Object.values(Pipes.pipes).forEach((pipe) => {
@@ -418,17 +439,26 @@ export class InfinityConsole {
 		this.windows = [];
 		this.windowManager.destroy();
 		this.registerDefaultKeys();
+		this.network = undefined;
+		this.windowManager = undefined;
+	}
+
+	public async reload() {
+		this.emit("reloaded");
+		this.setLoading("Reloading InfinityConsole", 10);
+		this.cleanup();
 		//render
 		this.screen.render();
 
-		this.network = undefined;
-		this.windowManager = undefined;
 		//do a hard refresh of imports (TODO: Maybe remove)
 		await this.refreshImports(true);
+		this.setLoading("Initializing", 90);
 		await this.initialize();
-		this.setLoading("Reloaded", 90);
+
 		this.updateWindowsList();
 		this.stopLoading();
+
+		if (this.user && !isRegistered(this.user)) this.gotoWindow("Login");
 	}
 
 	public getWindows() {
@@ -625,9 +655,13 @@ export class InfinityConsole {
 
 	public stopLoading() {
 		if (this.options.dontDraw) return;
-		this.loadingBox.stop();
-		this.loadingBox.setFront();
-		this.loadingBox.hide();
+
+		//so you can see wtf IM is doing, it so fast...
+		setTimeout(() => {
+			this.loadingBox.stop();
+			this.loadingBox.setFront();
+			this.loadingBox.hide();
+		}, 350);
 	}
 
 	/**
@@ -652,6 +686,7 @@ export class InfinityConsole {
 			padding: 2,
 			keys: true,
 			mouse: true,
+			parent: this.screen,
 			vi: true,
 			border: "line",
 			scrollbar: {
@@ -682,6 +717,10 @@ export class InfinityConsole {
 		//when an item is selected form the list box, attempt to show or hide that Windoiw.
 		this.windowManager.on("select", async (_el: Element, selected: any) => {
 			try {
+				if (this.currentWindow?.isForcedOpen()) {
+					this.currentWindow.show();
+					return;
+				}
 				//disable the select if the current window is visible
 				if (this.currentWindow?.isVisible()) return;
 				//set the current window to the one that was selected
@@ -855,6 +894,10 @@ export class InfinityConsole {
 		this.allowExit = canExit;
 	}
 
+	public getCurrentUser() {
+		return this.user;
+	}
+
 	public canExit() {
 		return this.allowExit;
 	}
@@ -867,6 +910,7 @@ export class InfinityConsole {
 	public async changeNetwork(string: string) {
 		changeNetwork(string);
 		await this.reload();
+
 		return ethers.provider;
 	}
 
@@ -1042,6 +1086,7 @@ export class InfinityConsole {
 	 */
 
 	public async setWindow(window: InfinityMintWindow) {
+		if (this.currentWindow?.isForcedOpen()) return;
 		if (this.currentWindow) this.currentWindow?.hide();
 
 		for (let i = 0; i < this.windows.length; i++) {

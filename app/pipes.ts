@@ -53,11 +53,12 @@ export class Pipe {
 		this.errorHandler = (err: Error) => {
 			if (
 				this.listen &&
-				(!isEnvTrue("PIPE_IGNORE_CONSOLE") || getConfigFile().console)
+				!isEnvTrue("PIPE_IGNORE_CONSOLE") &&
+				getConfigFile().console
 			)
 				console.error(err, false);
 
-			if (isEnvTrue("PIPE_IGNORE_CONSOLE") || !getConfigFile().console)
+			if (isEnvTrue("PIPE_IGNORE_CONSOLE") && !getConfigFile().console)
 				console.error(err);
 
 			this.errors.push(err);

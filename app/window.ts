@@ -67,6 +67,7 @@ export class InfinityMintWindow {
 	private destroyed: boolean;
 	private backgroundThink: boolean;
 	private destroyId: boolean;
+	private forcedOpen: boolean;
 	private initialized: boolean;
 	private creation: any;
 	private initialCreation: any;
@@ -150,6 +151,14 @@ export class InfinityMintWindow {
 
 	public isHiddenFromMenu() {
 		return this.hideFromMenu;
+	}
+
+	public setForcedOpen(forcedOpen: boolean) {
+		this.forcedOpen = forcedOpen;
+	}
+
+	public isForcedOpen() {
+		return this.forcedOpen;
 	}
 	/**
 	 * Will hide the close button if true, can be called when ever but be aware screen must be re-rendered in some circumstances.

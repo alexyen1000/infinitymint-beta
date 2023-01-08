@@ -267,8 +267,6 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 	if (!fs.existsSync(process.cwd() + "/.session"))
 		return { created: Date.now(), environment: {} };
 
-	if (memorySession) return memorySession;
-
 	try {
 		let result = JSON.parse(
 			fs.readFileSync(process.cwd() + "/.session", {
@@ -1238,6 +1236,35 @@ export const getGanacheMnemonic = () => {
 				encoding: "utf-8",
 		  })
 		: generateMnemonic();
+};
+
+export const usernameList: KeyValue = {};
+export const registerUsername = (username: string, client: any) => {
+	if (usernameList[username])
+		throw new Error("username already taken: " + username);
+
+	usernameList[username] = client;
+};
+
+/**
+ *
+ * @param client
+ * @returns
+ */
+export const isRegistered = (client: any) => {
+	return getUsernames(client).length !== 0;
+};
+
+/**
+ *
+ * @param client
+ * @returns
+ */
+export const getUsernames = (client: any): any[] => {
+	return Object.values(usernameList).filter(
+		(thatClient) =>
+			thatClient.input?.remoteAddress === client?.input?.remoteAddress
+	);
 };
 
 /**

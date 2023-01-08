@@ -17,6 +17,7 @@ const envs: InfinityMintEnvironmentVariables = {
 	PIPE_SILENCE: false,
 	PIPE_SEPERATE_WARNINGS: false,
 	PIPE_IGNORE_CONSOLE: false,
+	INFINITYMINT_TELNET: false,
 	GANACHE_PORT: 8545,
 	THROW_ALL_ERRORS: false,
 	INFINITYMINT_CONSOLE: false,
