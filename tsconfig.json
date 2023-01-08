@@ -9,7 +9,9 @@
 		"strict": false,
 		"allowJs": true,
 		"rootDirs": ["./app"],
+		"skipLibCheck": true,
 		"moduleResolution": "node",
+		"importHelpers": true,
 		"paths": {
 			"@app/*": ["./app/*"],
 			"@typechain-types/*": ["./typechain-types/*"]

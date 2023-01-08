@@ -31,7 +31,6 @@ import {
 	InfinityMintConsoleOptions,
 	InfinityMintTelnetOptions,
 } from "./app/interfaces";
-import ipfs from "./app/ipfs";
 
 //export helpers
 export * as Helpers from "./app/helpers";
@@ -52,7 +51,6 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	registerNetworkPipes();
 	try {
 		//create IPFS node
-		if (config.ipfs) await ipfs.create();
 	} catch (error) {
 		warning(`could not start IPFS: ` + error?.message);
 	}
