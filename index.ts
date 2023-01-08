@@ -155,9 +155,16 @@ export const startTelnet = (port?: number) => {
 					screen.render();
 				});
 
-				logDirect(`🦊 New Connection ${client.input.remoteAddress}`);
+				if (!isRegistered(client, infinityConsole.getSessionId()))
+					infinityConsole.gotoWindow("Login");
 
-				if (!isRegistered(client)) infinityConsole.gotoWindow("Login");
+				logDirect(
+					`🦊 New Connection ${
+						client.remoteAddress ||
+						client.output.remoteAddress ||
+						client.input.remoteAddress
+					}<${infinityConsole.getSessionId()}>`
+				);
 			} catch (error) {
 				logDirect(
 					`💥 error<${client.input.remoteAddress}>:\n${error.stack}`
@@ -174,7 +181,11 @@ export const startTelnet = (port?: number) => {
 
 			//when the client closes
 			client.on("close", function () {
-				logDirect(`💀 Disconnected ${client.input.remoteAddress}`);
+				logDirect(
+					`💀 Disconnected ${
+						client.remoteAddress || client.input.remoteAddress
+					}`
+				);
 			});
 
 			//screen on

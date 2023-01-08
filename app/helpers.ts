@@ -1252,11 +1252,19 @@ export const getGanacheMnemonic = () => {
 };
 
 export const usernameList: KeyValue = {};
-export const registerUsername = (username: string, client: any) => {
+export const registerUsername = (
+	username: string,
+	client: any,
+	sessionId: any
+) => {
 	if (usernameList[username])
 		throw new Error("username already taken: " + username);
 
-	usernameList[username] = client;
+	usernameList[username] = {
+		username: username,
+		client: client,
+		sessionId: sessionId,
+	};
 };
 
 /**
@@ -1264,8 +1272,8 @@ export const registerUsername = (username: string, client: any) => {
  * @param client
  * @returns
  */
-export const isRegistered = (client: any) => {
-	return getUsernames(client).length !== 0;
+export const isRegistered = (client: any, sessionId: any) => {
+	return getUsernames(client, sessionId).length !== 0;
 };
 
 /**
@@ -1273,10 +1281,11 @@ export const isRegistered = (client: any) => {
  * @param client
  * @returns
  */
-export const getUsernames = (client: any): any[] => {
+export const getUsernames = (client: any, sessionId?: any): any[] => {
 	return Object.values(usernameList).filter(
-		(thatClient) =>
-			thatClient.input?.remoteAddress === client?.input?.remoteAddress
+		(entry) =>
+			client.remoteAddress === entry.remoteAddress &&
+			(sessionId ? entry.sessionId === sessionId : true)
 	);
 };
 

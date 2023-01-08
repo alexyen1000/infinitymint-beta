@@ -458,7 +458,8 @@ export class InfinityConsole {
 		this.updateWindowsList();
 		this.stopLoading();
 
-		if (this.user && !isRegistered(this.user)) this.gotoWindow("Login");
+		if (this.user && !isRegistered(this.user, this.getSessionId()))
+			this.gotoWindow("Login");
 	}
 
 	public getWindows() {
