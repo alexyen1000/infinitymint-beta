@@ -6,6 +6,8 @@ import {
 	InfinityMintProject,
 	InfinityMintDeploymentLocal,
 	InfinityMintEventKeys,
+	InfinityMintCompiledProject,
+	InfinityMintDeployedProject,
 } from "./interfaces";
 import {
 	debugLog,
@@ -135,7 +137,7 @@ export class InfinityMintDeployment {
 	 */
 	async reloadScript() {
 		let location = process.cwd() + this.deploymentScriptLocation;
-		if (require.cache[location] !== undefined) {
+		if (require.cache[location]) {
 			debugLog("deleting old cache of " + location);
 			delete require.cache[location];
 			debugLog(`reloading <${location}>`);
@@ -214,8 +216,8 @@ export class InfinityMintDeployment {
 		);
 
 		if (
-			(result.project !== undefined && result.project !== this.project) ||
-			(result.network !== undefined && result.network !== this.network)
+			(result.project && result.project !== this.project) ||
+			(result.network && result.network !== this.network)
 		)
 			throw new Error(
 				"bad file: " +
@@ -258,19 +260,19 @@ export class InfinityMintDeployment {
 	}
 
 	isImportant() {
-		return this.deploymentScript?.important === true;
+		return this.deploymentScript?.important;
 	}
 
 	isUnique() {
-		return this.deploymentScript?.unique === true;
+		return this.deploymentScript?.unique;
 	}
 
 	hasDeployed() {
-		return this.hasDeployedAll === true;
+		return this.hasDeployedAll;
 	}
 
 	hasSetup() {
-		return this.hasSetupDeployments === true;
+		return this.hasSetupDeployments;
 	}
 
 	save() {
@@ -403,21 +405,23 @@ export class InfinityMintDeployment {
 		return this.deploymentScriptLocation;
 	}
 
+	/**
+	 * Deploys this ssmart contract
+	 * @param args
+	 * @returns
+	 */
 	async deploy(...args: any) {
 		this.reloadScript();
 		let result = await this.execute("deploy", args);
 
 		let contracts: Contract[];
-		if (result instanceof Array !== true)
-			contracts = [result] as Contract[];
+		if (!(result instanceof Array)) contracts = [result] as Contract[];
 		else contracts = result as Contract[];
 
 		let session = readSession();
 
 		contracts.forEach((contract) => {
-			if (
-				session.environment?.deployments[contract.address] === undefined
-			)
+			if (!session.environment?.deployments[contract.address])
 				throw new Error(
 					"contract " +
 						contract.address +
@@ -451,7 +455,7 @@ export class InfinityMintDeployment {
 		let contract = await this.getSignedContract();
 		let authenticator = contract;
 
-		if (authenticator?.multiApprove === undefined) {
+		if (!authenticator?.multiApprove) {
 			if (isEnvTrue("THROW_ALL_ERRORS"))
 				throw new Error(`${this.key} does not have an approve method`);
 			else warning(`${this.key} does not have an approve method`);
@@ -515,7 +519,7 @@ export class InfinityMintDeployment {
  * @returns
  */
 export const loadDeploymentClasses = async (
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	console?: InfinityConsole
 ) => {
 	let deployments = [...(await getDeploymentClasses(project, console))];
@@ -544,7 +548,7 @@ export const getProjectDeploymentClasses = async (
 	console?: InfinityConsole,
 	loadedDeploymentClasses?: InfinityMintDeployment[]
 ) => {
-	let compiledProject: InfinityMintProject;
+	let compiledProject: InfinityMintCompiledProject;
 	if (typeof project === "string")
 		compiledProject = getCompiledProject(project);
 	else compiledProject = project;
@@ -635,13 +639,12 @@ export const readLocalDeployment = (contractName: string, network: string) => {
  */
 export const hasDeploymentManifest = (
 	contractName: string,
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	network?: string
 ) => {
 	network = network || project?.network?.name;
 
-	if (network === undefined)
-		throw new Error("unable to automatically determain network");
+	if (!network) throw new Error("unable to automatically determain network");
 
 	let path =
 		process.cwd() +
@@ -653,13 +656,12 @@ export const hasDeploymentManifest = (
 
 export const getDeploymentClass = (
 	contractName: string,
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject,
 	network?: string
 ) => {
 	network = network || project?.network?.name;
 
-	if (network === undefined)
-		throw new Error("unable to automatically determin network");
+	if (!network) throw new Error("unable to automatically determin network");
 
 	let liveDeployments = getLiveDeployments(contractName, project, network);
 	return create(liveDeployments[0]);
@@ -667,7 +669,7 @@ export const getDeploymentClass = (
 
 export const getLiveDeployments = (
 	contractName: string,
-	project: InfinityMintProject,
+	project: InfinityMintCompiledProject | InfinityMintDeployedProject,
 	network: string
 ) => {
 	let path =
@@ -710,15 +712,14 @@ export const create = (
  * @returns
  */
 export const getDeploymentClasses = async (
-	project: InfinityMintProject,
+	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	console?: InfinityConsole,
 	network?: string,
 	roots?: string[]
 ): Promise<InfinityMintDeployment[]> => {
 	network = network || project.network?.name;
 
-	if (network === undefined)
-		throw new Error("unable to automatically determain network");
+	if (!network) throw new Error("unable to automatically determain network");
 
 	let searchLocations = [...(roots || [])];
 	searchLocations.push(process.cwd() + "/deploy/**/*.js");

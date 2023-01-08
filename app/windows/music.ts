@@ -44,10 +44,15 @@ const onFinished = async (window: InfinityMintWindow) => {
 		window.getInfinityConsole().getCurrentWindow()?.updateFrameTitle();
 };
 Music.initialize = async (window, frame, blessed) => {
-	if (getConfigFile().music !== true) return;
+	if (!getConfigFile().music) return;
 
 	if (clockInterval) clearInterval(clockInterval);
 	window.options.clock = 0;
+
+	//key to stop audio
+	window.key("m", (ch: string, key: string) => {
+		window.getInfinityConsole().stopAudio();
+	});
 
 	clockInterval = setInterval(() => {
 		if (!window.hasInfinityConsole()) return;
@@ -86,5 +91,5 @@ Music.initialize = async (window, frame, blessed) => {
 };
 Music.setBackgroundThink(true);
 Music.setShouldInstantiate(true);
-Music.setHiddenFromMenu(getConfigFile().music !== true);
+Music.setHiddenFromMenu(!getConfigFile().music);
 export default Music;

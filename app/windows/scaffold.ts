@@ -18,7 +18,7 @@ Scaffold.initialize = async (window, frame, blessed) => {
 	let form = window.createElement(
 		"form",
 		{
-			label: " {bold}{white-fg}Artifacts{/white-fg} (Enter/Double-Click to select){/bold}",
+			label: "{bold}(Enter/Double-Click to select){/bold}",
 			tags: true,
 			top: 4,
 			left: 0,

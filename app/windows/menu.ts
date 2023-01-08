@@ -2,6 +2,7 @@ import {
 	calculateWidth,
 	debugLog,
 	getConfigFile,
+	getCurrentProjectPath,
 	getInfinityMintVersion,
 	getPackageJson,
 	getSolidityFolder,
@@ -13,6 +14,7 @@ import {
 import { InfinityMintWindow } from "../window";
 import hre from "hardhat";
 import { getDefaultAccountIndex } from "../web3";
+import { importCount } from "../imports";
 
 const Menu = new InfinityMintWindow(
 	"Menu",
@@ -28,8 +30,8 @@ const Menu = new InfinityMintWindow(
 	}
 );
 
-let createButtons = (window) => {
-	let deploy = window.createElement("deploy", {
+let createButtons = (window: InfinityMintWindow) => {
+	let projects = window.createElement("deploy", {
 		bottom: 0,
 		left: 0,
 		shrink: true,
@@ -37,7 +39,7 @@ let createButtons = (window) => {
 		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
-		content: "Deploy Projects",
+		content: "View Projects",
 		tags: true,
 		border: {
 			type: "line",
@@ -53,19 +55,19 @@ let createButtons = (window) => {
 			},
 		},
 	});
-	deploy.on("click", async () => {
-		await window.openWindow("Deploy");
+	projects.on("click", async () => {
+		await window.openWindow("Projects");
 	});
 
 	let browser = window.createElement("browser", {
 		bottom: 0,
-		left: calculateWidth(deploy),
+		left: calculateWidth(projects),
 		shrink: true,
 		alwaysFront: true,
 		width: "shrink",
 		height: "shrink",
 		padding: 1,
-		content: "Download Projects",
+		content: "Web3 Browser",
 		tags: true,
 		border: {
 			type: "line",
@@ -85,40 +87,15 @@ let createButtons = (window) => {
 		await window.openWindow("Browser");
 	});
 
-	let compile = window.createElement("compile", {
-		bottom: 0,
-		left: calculateWidth(deploy, browser),
-		shrink: true,
-		alwaysFront: true,
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Compile Projects",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-
 	let scripts = window.createElement("scripts", {
 		bottom: 0,
-		left: calculateWidth(deploy, browser, compile),
+		left: calculateWidth(projects, browser),
 		shrink: true,
 		width: "shrink",
 		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
-		content: "Run Scripts",
+		content: "Execute Scripts",
 		tags: true,
 		border: {
 			type: "line",
@@ -140,13 +117,13 @@ let createButtons = (window) => {
 
 	let deployments = window.createElement("deployments", {
 		bottom: 0,
-		left: calculateWidth(deploy, browser, compile, scripts),
+		left: calculateWidth(projects, browser, scripts),
 		shrink: true,
 		width: "shrink",
 		height: "shrink",
 		alwaysFront: true,
 		padding: 1,
-		content: "All Deployments",
+		content: "View Deployments",
 		tags: true,
 		border: {
 			type: "line",
@@ -174,7 +151,7 @@ let createButtons = (window) => {
 		alwaysFront: true,
 		height: "shrink",
 		padding: 1,
-		content: "Change Network",
+		content: "Set Network",
 		tags: true,
 		border: {
 			type: "line",
@@ -221,17 +198,17 @@ Menu.think = (window, frame, blessed) => {
 Menu.initialize = async (window, frame, blessed) => {
 	let background = window.createElement("background", {
 		width: "100%",
-		height: "100%-" + (frame.top + frame.bottom + 8),
-		padding: 1,
+		height: "100%-8",
 		top: 4,
+		padding: 1,
 		label: "{bold}{white-fg}Menu{/white-fg}{/bold}",
 		left: "center",
 		keys: true,
 		tags: true,
 		scrollable: true,
 		mouse: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
+		scrollbar: window.getScrollbar(),
+		border: "line",
 		style: {
 			fg: "white",
 			bg: "transparent",
@@ -252,16 +229,13 @@ Menu.initialize = async (window, frame, blessed) => {
 	}
 
 	let container = window.createElement("container", {
-		width: "100%",
-		height: "100%-" + (frame.top + frame.bottom + 10),
+		width: "100%-3",
+		height: "100%-10",
 		top: 5,
-		left: 1,
+		left: 2,
 		style: {
 			fg: "white",
 			bg: "black",
-			border: {
-				fg: "#f0f0f0",
-			},
 		},
 	});
 
@@ -274,6 +248,42 @@ Menu.initialize = async (window, frame, blessed) => {
 		) / 2.75
 	);
 	let logoHeight = Math.floor(logoWidth / 2.45);
+	//hide logo if screen too small
+	if (container.width > 120)
+		window.createElement(
+			"logo",
+			{
+				top: 6,
+				parent: container,
+				left: 12,
+				draggable: true,
+				width: logoWidth,
+				height: Math.max(
+					6,
+					Math.min(
+						parseInt(container.height.toString()) - 4,
+						logoHeight + 1
+					)
+				),
+				padding: 0,
+				file: isInfinityMint()
+					? process.cwd() +
+					  files[Math.floor(Math.random() * files.length)]
+					: process.cwd() +
+					  "/node_modules/infinitymint" +
+					  files[Math.floor(Math.random() * files.length)],
+				animate: true,
+				style: {
+					bg: "gray",
+					border: {
+						fg: "#f0f0f0",
+					},
+				},
+				border: window.getBorder(),
+				alwaysFocus: true,
+			},
+			"image"
+		);
 
 	window.createElement("stripe", {
 		width: 8,
@@ -286,40 +296,7 @@ Menu.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	//render screen
-	window.getScreen().render();
-
 	if (container.height > 16) {
-		//hide logo if screen too small
-		if (container.width > 120)
-			window.createElement(
-				"logo",
-				{
-					top: -1,
-					parent: container,
-					left: 8,
-					draggable: true,
-					width: logoWidth,
-					height: logoHeight,
-					padding: 0,
-					file: isInfinityMint()
-						? process.cwd() +
-						  files[Math.floor(Math.random() * files.length)]
-						: process.cwd() +
-						  "/node_modules/infinitymint" +
-						  files[Math.floor(Math.random() * files.length)],
-					animate: true,
-					style: {
-						bg: "gray",
-						border: {
-							fg: "#f0f0f0",
-						},
-					},
-					border: window.getBorder(),
-				},
-				"image"
-			);
-
 		window.createElement(
 			"title",
 			{
@@ -363,19 +340,6 @@ Menu.initialize = async (window, frame, blessed) => {
 		content: `version ${packageVersion}`,
 	});
 
-	window.createElement("companyLabel", {
-		left: container.left,
-		top: container.top - 1,
-		width: "shrink",
-		height: "shrink",
-		tags: true,
-		bold: true,
-		style: {
-			fg: "white",
-		},
-		content: `0x0z`,
-	});
-
 	window.createElement("networkLabel", {
 		right: container.right,
 		bottom: container.bottom + 1,
@@ -404,10 +368,10 @@ Menu.initialize = async (window, frame, blessed) => {
 		).toString()}{/black-fg}{/white-bg}`,
 	});
 
-	if (container.height >= 9)
+	if (container.height > 8)
 		window.createElement("infoLabel", {
-			left: -1,
-			bottom: 1,
+			left: 4,
+			bottom: 6,
 			parent: container,
 			width: "shrink",
 			height: "shrink",
@@ -427,10 +391,58 @@ Menu.initialize = async (window, frame, blessed) => {
 				isTypescript() ? "true" : "false"
 			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}hardhat_tasks =>{/magenta-fg} {white-fg}${
 				Object.keys(hre.tasks).length
-			}{/white-fg}{/gray-bg}`,
+			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}imports =>{/magenta-fg} {white-fg}${importCount(
+				window.getInfinityConsole().getImports()
+			)}{/white-fg}{/gray-bg}`,
 		});
 
+	let noProject = window.createElement("noProjectWarning", {
+		top: "center",
+		right: 4,
+		width: "shrink",
+		height: "shrink",
+		tags: true,
+		alwaysFront: true,
+		bold: true,
+		padding: 1,
+		style: {
+			fg: "black",
+			bg: "red",
+			border: {
+				fg: "red",
+			},
+			hover: {
+				fg: "red",
+				bg: "black",
+			},
+		},
+		border: window.getBorder(),
+		content: `{bold}{underline}warning!{/underline}{/bold}\nno current project is set!\nclick me to set one...`,
+	});
+	noProject.on("click", () => {
+		window.openWindow("Projects");
+	});
+
 	createButtons(window);
+};
+
+Menu.postInitialize = async (window) => {
+	let noProject = window.getElement("noProjectWarning");
+	window.on("hide", () => {
+		if (!getCurrentProjectPath()) noProject.show();
+		else noProject.hide();
+	});
+	window.on("show", () => {
+		if (!getCurrentProjectPath()) noProject.show();
+		else noProject.hide();
+	});
+	window.on("focus", () => {
+		if (!getCurrentProjectPath()) noProject.show();
+		else noProject.hide();
+	});
+
+	if (!getCurrentProjectPath()) noProject.show();
+	else noProject.hide();
 };
 
 export default Menu;

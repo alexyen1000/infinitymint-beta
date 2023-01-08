@@ -1,16 +1,44 @@
 import {
+	Blessed,
+	BlessedElement,
 	calculateWidth,
 	log,
 	readSession,
 	saveSession,
 	saveSessionVariable,
+	warning,
 } from "../helpers";
 import Pipes from "../pipes";
 import { InfinityMintWindow } from "../window";
 
-let lastLength = 0;
-let lastCount = 0;
-let extraLines = 0;
+let lastLogMessage: string;
+let updateContent = (window: InfinityMintWindow) => {
+	window.data.log.setContent(
+		Pipes.pipes[window.data.log.options.pipe].logs
+			.map((log, index) => {
+				if (lastLogMessage && lastLogMessage === log.message)
+					return (
+						lineNumber(index, true) +
+						`{grey-fg}${log.pure}{/grey-fg}`
+					);
+				else {
+					lastLogMessage = log.message;
+					return lineNumber(index) + log.message;
+				}
+			})
+			.join("\n")
+	);
+};
+
+let lineNumber = (indexCount: number | string, gray?: boolean) => {
+	return `${gray ? "{white-bg}" : "{white-bg}"}{black-fg}${indexCount
+		.toString()
+		.padEnd(6, " ")}{/black-fg}${gray ? "{/white-bg}" : "{/white-bg}"}`;
+};
+
+/**
+ * Allows you to view the output of pipes
+ */
 const Logs = new InfinityMintWindow(
 	"Logs",
 	{
@@ -34,155 +62,31 @@ const Logs = new InfinityMintWindow(
 	}
 );
 
-Logs.think = (window, frame, blessed) => {
-	let element = window.getElement("console");
-	let lines = Pipes.getPipe(window.options.pipe).logs;
-	let currentCount = 0;
-
-	//bleseed push line doesnt work for some reason so we have to do it this way
-
-	//counts lined changes
-	if (window.options.showDuplicateEntries !== true)
-		lines.forEach((object) => {
-			currentCount = currentCount + object.count;
-		});
-
-	element.setLabel(
-		"{bold}{white-fg}Pipe: {/white-fg}" + window.options.pipe + "{/bold}"
-	);
-
-	if (currentCount !== lastCount || lastLength !== lines.length) {
-		lastCount = 0;
-		lines
-			.slice(lastLength - 1 < 0 ? 0 : lastLength - 1)
-			.forEach((object) => {
-				let line = object.message;
-				lastCount = lastCount + object.count;
-				let lineCount = (indexCount: number | string) => {
-					return `{white-bg}{black-fg}${indexCount
-						.toString()
-						.padEnd(6, " ")}{/black-fg}{/white-bg} `;
-				};
-
-				if (
-					object.count <= 1 ||
-					window.options.showDuplicateEntries !== true
-				) {
-					let finalLine = lineCount(object.index) + line.toString();
-					finalLine =
-						finalLine +
-						` {blue-fg}{bold}${
-							window.options.showDuplicateEntries !== true &&
-							object.count > 1
-								? "x" + object.count
-								: ""
-						}{/bold}{/blue-fg}`;
-					finalLine =
-						object.index % 2 === 0
-							? `{white-fg}${finalLine}{/white-fg}`
-							: `{black-bg}${finalLine}{/black-bg}`;
-
-					element.setLine(object.index + extraLines, finalLine);
-				} else {
-					let currentExtraLines = extraLines;
-					for (let i = 0; i < object.count; i++) {
-						let finalLine =
-							lineCount(object.index + " " + i) + line.toString();
-						finalLine =
-							(object.index + i) % 2 === 0
-								? `{white-fg}${finalLine}{/white-fg}`
-								: `{black-bg}${finalLine}{/black-bg}`;
-
-						element.setLine(
-							object.index + currentExtraLines + i,
-							finalLine
-						);
-						if (i > 0 && lastLength !== lines.length) extraLines++;
-					}
-				}
-			});
-
-		if (window.options.alwaysScroll === true) {
-			element.setScrollPerc(100);
-			window.options.selectedLine = lines.length - 1;
-		}
-
-		lastLength = lines.length;
-	}
-};
-
-//initializes the console
+//initializes the logging window.
 Logs.initialize = async (window, frame, blessed) => {
-	window.unkey("up");
-	window.key("up", (ch: string, key: string) => {
-		//don't if we are invisible
-		if (window.isVisible() === false) return;
-
-		if (window.options.alwaysScroll) {
-			window.options.alwaysScroll = false;
-			alwaysScrollUpdate();
-			window.saveOptions();
-		}
-
-		window.options.selectedLine = Math.max(
-			0,
-			window.options.selectedLine - 1
-		);
-	});
-
-	window.unkey("down");
-	window.key("down", (ch: string, key: string) => {
-		if (window.isVisible() === false) return;
-
-		window.options.selectedLine = Math.min(
-			(Pipes.pipes[window.options.pipe]?.logs || [""]).length - 1,
-			window.options.selectedLine + 1
-		);
-	});
-
-	//centers the scroll of the console to the selected line position when you do Control-Q
-	window.unkey("C-q");
-	window.key("C-q", (ch: string, key: string) => {
-		if (window.isVisible() === false) return;
-
-		let selectedLinePosition = [
-			...(Pipes.pipes[window.options.pipe]?.logs || [""]),
-		]
-			.slice(0, window.options.selectedLine)
-			.join("\n")
-			.split("\n").length;
-
-		console.setScroll(selectedLinePosition);
-	});
-
-	//load the options with default values
-	window.loadOptions({
-		alwaysScroll: true,
-		scrollToSelectedLine: false,
-		showDuplicateEntries: false,
-		pipe: "default",
-		selectedLine: 0,
-	});
-	//save to file default values if written
-	window.saveOptions();
-
-	let console = window.createElement("console", {
-		width: "100%",
+	//register the console first
+	let consoleStyle = {
 		height: "100%-" + (frame.top + frame.bottom + 8),
 		padding: 0,
 		top: 4,
-		label: `{bold}{white-fg}Pipe: {/white-fg}${
-			window.options?.pipe || "undefined"
-		}{/bold}`,
-		left: "center",
+		label: `{bold}{white-fg}Pipe: {/white-fg}${"(LOADING)"}{/bold}`,
 		keys: true,
 		tags: true,
 		scrollable: true,
 		vi: true,
+		shouldFocus: true,
 		mouse: true,
 		alwaysScroll: true,
-		scrollbar: window.getScrollbar() || {},
-		border: window.getBorder() || {},
+		scrollbar: {
+			ch: " ",
+			track: {
+				bg: "black",
+			},
+			style: {
+				inverse: true,
+			},
+		},
+		border: "line",
 		style: {
 			fg: "white",
 			bg: "transparent",
@@ -190,9 +94,25 @@ Logs.initialize = async (window, frame, blessed) => {
 				fg: "#f0f0f0",
 			},
 		},
+	};
+
+	let logs = [window.createElement("console0", consoleStyle)];
+	logs.forEach((log) => {
+		log.setFront();
+		log.focus();
 	});
-	console.setBack();
-	console.focus();
+
+	window.data.log = logs[0];
+	//load the options with default values
+	window.loadOptions(null, {
+		console0: {
+			alwaysScroll: true,
+			scrollToSelectedLine: false,
+			showDuplicateEntries: false,
+			pipe: "default",
+			selectedLine: 0,
+		},
+	});
 
 	//create buttons
 	let alwaysScroll = window.createElement("alwaysScroll", {
@@ -202,32 +122,8 @@ Logs.initialize = async (window, frame, blessed) => {
 		height: "shrink",
 		padding: 1,
 		content:
-			"Auto Scroll [" + (window.options.alwaysScroll ? "O" : "X") + "]",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: window.options.alwaysScroll ? "green" : "red",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-
-	let showDuplicateEntries = window.createElement("showDuplicateEntries", {
-		bottom: 0,
-		left: calculateWidth(alwaysScroll),
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content:
-			"Show Dupe Entries [" +
-			(window.options.showDuplicateEntries ? "O" : "X") +
+			"Auto Scroll [" +
+			(window.data.log.options.alwaysScroll ? "O" : "X") +
 			"]",
 		tags: true,
 		border: {
@@ -235,7 +131,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 		style: {
 			fg: "white",
-			bg: window.options.showDuplicateEntries ? "green" : "red",
+			bg: window.data.log.options.alwaysScroll ? "green" : "red",
 			border: {
 				fg: "#ffffff",
 			},
@@ -244,171 +140,28 @@ Logs.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	showDuplicateEntries.on("click", () => {
-		window.options.showDuplicateEntries =
-			!window.options.showDuplicateEntries;
-		//change style
-		showDuplicateEntries.style.bg = window.options.showDuplicateEntries
-			? "green"
-			: "red";
-		showDuplicateEntries.setContent(
-			"Show Dupe Entries [" +
-				(window.options.showDuplicateEntries ? "O" : "X") +
-				"]"
-		);
-		console.setContent("");
-		console.setScroll(0);
-		lastLength = 0;
-		extraLines = 0;
-		lastCount = 0;
-		window.saveOptions();
-	});
 
 	let alwaysScrollUpdate = () => {
 		//change style
-		alwaysScroll.style.bg = window.options.alwaysScroll ? "green" : "red";
+		alwaysScroll.style.bg = window.data.log.options.alwaysScroll
+			? "green"
+			: "red";
 		alwaysScroll.setContent(
-			"Auto Scroll [" + (window.options.alwaysScroll ? "O" : "X") + "]"
+			"Auto Scroll [" +
+				(window.data.log.options.alwaysScroll ? "O" : "X") +
+				"]"
 		);
 	};
 
 	alwaysScroll.on("click", () => {
 		//save option
-		window.options.alwaysScroll = !window.options.alwaysScroll;
-		window.options.scrollToSelectedLine = false;
-
-		window.saveOptions();
-
+		window.data.log.options.alwaysScroll =
+			!window.data.log.options.alwaysScroll;
+		window.data.log.options.scrollToSelectedLine = false;
 		alwaysScrollUpdate();
-
 		window.getScreen().render();
 	});
 	alwaysScroll.setFront();
-
-	//create buttons
-	let gotoEnd = window.createElement("gotoEnd", {
-		bottom: 0,
-		left: calculateWidth(alwaysScroll, showDuplicateEntries),
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Scroll To End",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-	gotoEnd.setFront();
-	gotoEnd.on("click", () => {
-		console.setScroll(lastLength);
-		window.options.selectedLine =
-			(Pipes.pipes[window.options.pipe]?.logs || [""]).length - 1;
-	});
-
-	let gotoTop = window.createElement("gotoTop", {
-		bottom: 0,
-		left: calculateWidth(alwaysScroll, showDuplicateEntries, gotoEnd),
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Scroll To Top",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-	gotoTop.setFront();
-	gotoTop.on("click", () => {
-		console.setScroll(0);
-		window.options.selectedLine = 0;
-	});
-
-	let gotoSelected = window.createElement("gotoSelected", {
-		bottom: 0,
-		left: calculateWidth(
-			alwaysScroll,
-			showDuplicateEntries,
-			gotoEnd,
-			gotoTop
-		),
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Scroll To Selected",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
-	gotoSelected.on("click", () => {
-		let selectedLinePosition = [
-			...(Pipes.pipes[window.options.pipe]?.logs || [""]),
-		]
-			.slice(0, window.options.selectedLine)
-			.join("\n")
-			.split("\n").length;
-
-		console.setScroll(selectedLinePosition);
-	});
-
-	let save = window.createElement("save", {
-		bottom: 0,
-		left: calculateWidth(
-			alwaysScroll,
-			showDuplicateEntries,
-			gotoEnd,
-			gotoTop,
-			gotoSelected
-		),
-		width: "shrink",
-		height: "shrink",
-		padding: 1,
-		content: "Save Output To File",
-		tags: true,
-		border: {
-			type: "line",
-		},
-		style: {
-			fg: "white",
-			bg: "black",
-			border: {
-				fg: "#ffffff",
-			},
-			hover: {
-				bg: "grey",
-			},
-		},
-	});
 
 	let form = window.createElement(
 		"form",
@@ -417,8 +170,8 @@ Logs.initialize = async (window, frame, blessed) => {
 			tags: true,
 			top: "center",
 			left: "center",
-			width: "95%",
-			height: "50%",
+			width: "100%-4",
+			height: "100%-12",
 			padding: 2,
 			keys: true,
 			vi: true,
@@ -454,33 +207,21 @@ Logs.initialize = async (window, frame, blessed) => {
 	let keys = Object.keys(Pipes.pipes);
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
-		window.options.pipe = keys[selected];
-		window.saveOptions();
+		window.data.log.options.pipe = keys[selected];
+		window.data.log.setScroll(0);
+		window.data.log.focus();
+		updateContent(window);
 		form.hide();
-		console.setContent("");
-		console.setScroll(0);
-		lastLength = 0;
-		extraLines = 0;
-		lastCount = 0;
-		console.focus();
 	});
 	form.hide();
 
-	//create buttons
-	let changePipe = window.createElement("changePipe", {
-		bottom: 0,
-		left: calculateWidth(
-			alwaysScroll,
-			showDuplicateEntries,
-			gotoEnd,
-			gotoTop,
-			gotoSelected,
-			save
-		),
+	let save = window.createElement("save", {
+		top: 3,
+		right: 2,
 		width: "shrink",
 		height: "shrink",
-		padding: 1,
-		content: "Change Pipe",
+		padding: 0,
+		content: "Save",
 		tags: true,
 		border: {
 			type: "line",
@@ -497,6 +238,86 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 
+	//create buttons
+	let changePipe = window.createElement("changePipe", {
+		top: 3,
+		right: calculateWidth(save) + 2,
+		width: "shrink",
+		height: "shrink",
+		padding: 0,
+		content: "Edit",
+		tags: true,
+		border: {
+			type: "line",
+		},
+		style: {
+			fg: "white",
+			bg: "black",
+			border: {
+				fg: "#ffffff",
+			},
+			hover: {
+				bg: "grey",
+			},
+		},
+	});
+
+	//create buttons
+	let newPipe = window.createElement("newPipe", {
+		top: 3,
+		right: calculateWidth(save, changePipe) + 2,
+		width: "shrink",
+		height: "shrink",
+		padding: 0,
+		content: "Split",
+		tags: true,
+		border: {
+			type: "line",
+		},
+		style: {
+			fg: "white",
+			bg: "black",
+			border: {
+				fg: "#ffffff",
+			},
+			hover: {
+				bg: "grey",
+			},
+		},
+	});
+
+	let deletePipe = window.createElement("delete", {
+		top: 3,
+		right: calculateWidth(changePipe, save, newPipe) + 2,
+		width: "shrink",
+		height: "shrink",
+		padding: 0,
+		content: "Delete",
+		tags: true,
+		border: {
+			type: "line",
+		},
+		style: {
+			fg: "white",
+			bg: "black",
+			border: {
+				fg: "#ffffff",
+			},
+			hover: {
+				bg: "grey",
+			},
+		},
+	});
+	deletePipe.on("click", () => {
+		Pipes.getPipe(window.data.log.options.pipe).logs = [];
+		Pipes.getPipe(window.data.log.options.pipe).log(
+			"{red-fg}pipe deleted{/red-fg}"
+		);
+
+		window.data.log.setContent("");
+		form.hide();
+	});
+
 	let onChangePipe = () => {
 		if (!window.isVisible()) return;
 
@@ -507,10 +328,47 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	changePipe.setFront();
 	changePipe.on("click", onChangePipe);
+	window.key("p", onChangePipe);
+
+	updateContent(window);
+
+	window.data.log.setLabel(
+		"{bold}{white-fg}Pipe: {/white-fg}" +
+			window.data.log.options.pipe +
+			"{/bold}"
+	);
+};
+
+//runs after all elements have been appended and screen has been rendered
+Logs.postInitialize = async (window, frame, blessed) => {
+	let cb = (msg: string, pipe: string, index: number) => {
+		if (!window.isVisible()) return;
+		if (!window.data.log) return;
+
+		if (pipe === window.data.log.options.pipe) {
+			window.data.log.setLabel(
+				"{bold}{white-fg}Pipe: {/white-fg}" +
+					window.data.log.options.pipe +
+					"{/bold}"
+			);
+
+			if (window.data.log.options.alwaysScroll)
+				window.data.log.setScrollPerc(100);
+
+			if (lastLogMessage === msg)
+				window.data.log.pushLine(
+					lineNumber(index, true) +
+						`{gray-fg}${blessed.cleanTags(msg)}{/gray-fg}`
+				);
+			else window.data.log.pushLine(lineNumber(index) + msg);
+			lastLogMessage = msg;
+		}
+	};
+	Pipes.emitter.on("log", cb);
 
 	//save when the window is destroyed
 	window.on("destroy", () => {
-		window.saveOptions();
+		Pipes.emitter.off("log", cb);
 	});
 
 	//save when the window is hidden
@@ -518,14 +376,64 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.saveOptions();
 	});
 
-	window.key("p", onChangePipe);
+	//focus the log when the window is shown
+	window.on("show", () => {
+		window.data.log.focus();
+	});
 
-	lastLength = 0;
-	extraLines = 0;
-	lastCount = 0;
+	window.unkey("up");
+	window.key("up", (ch: string, key: string) => {
+		let console = window.data.log;
+		if (!console) return;
+
+		//don't if we are invisible
+		if (window.isVisible() === false) return;
+
+		if (window.data.log.options.alwaysScroll) {
+			window.data.log.options.alwaysScroll = false;
+			window.saveOptions();
+		}
+
+		window.data.log.options.selectedLine = Math.max(
+			0,
+			window.data.log.options.selectedLine - 1
+		);
+	});
+
+	//various keyboard commands
+
+	window.unkey("down");
+	window.key("down", (ch: string, key: string) => {
+		let console = window.data.log;
+		if (!console) return;
+		if (window.isVisible() === false) return;
+
+		window.data.log.options.selectedLine = Math.min(
+			(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]).length -
+				1,
+			window.data.log.options.selectedLine + 1
+		);
+	});
+
+	//centers the scroll of the console to the selected line position when you do Control-Q
+	window.unkey("C-q");
+	window.key("C-q", (ch: string, key: string) => {
+		let console = window.data.log;
+		if (!console) return;
+		if (window.isVisible() === false) return;
+
+		let selectedLinePosition = [
+			...(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]),
+		]
+			.slice(0, window.data.log.options.selectedLine)
+			.join("\n")
+			.split("\n").length;
+
+		console.setScroll(selectedLinePosition);
+	});
+
+	if (window.data.log.options.alwaysScroll)
+		window.data.log.setScrollPerc(100);
 };
-
-Logs.setShouldInstantiate(false);
-Logs.setBackgroundThink(false);
 
 export default Logs;

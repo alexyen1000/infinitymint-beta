@@ -1,6 +1,7 @@
 import Pipes, { Pipe } from "./pipes";
 import fsExtra from "fs-extra";
 import fs, { PathLike } from "fs";
+import { Dictionary } from "form-data";
 import path from "path";
 import {
 	InfinityMintConfig,
@@ -10,6 +11,12 @@ import {
 	InfinityMintProjectJavascript,
 	InfinityMintScript,
 	InfinityMintSession,
+	InfinityMintCompiledProject,
+	InfinityMintTempProject,
+	InfinityMintEventEmitter,
+	InfinityMintScriptArguments,
+	InfinityMintGemScript,
+	InfinityMintDeployedProject,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
 import { HardhatUserConfig } from "hardhat/types";
@@ -29,9 +36,16 @@ export interface Vector {
 
 export interface Blessed {
 	screen: (options: any) => BlessedElement;
+	escape: (input: string) => string;
+	stripTags: (input: string) => string;
+	cleanTags: (input: string) => string;
 	box: (options: BlessedElementOptions) => BlessedElement;
+	layout: (options: BlessedElementOptions) => BlessedElement;
+	loading: (options: BlessedElementOptions) => BlessedElement;
 	button: (options: BlessedElementOptions) => BlessedElement;
 	list: (options: BlessedElementOptions) => BlessedElement;
+	listbox: (options: BlessedElementOptions) => BlessedElement;
+	listtable: (options: BlessedElementOptions) => BlessedElement;
 	image: (options: BlessedElementOptions) => BlessedElement;
 	form: (options: BlessedElementOptions) => BlessedElement;
 }
@@ -62,6 +76,7 @@ export interface BlessedElementOptions extends KeyValue {
 	mouse?: boolean;
 	keyboard?: boolean;
 	think?: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, void>;
+	options?: KeyValue;
 	width?: string | number;
 	height?: string | number;
 	padding?: BlessedElementPadding | string | number;
@@ -96,6 +111,8 @@ export interface BlessedElement extends BlessedElementOptions, KeyValue {
 	 */
 	pushLine: Function;
 	disableMouse: Function;
+	instantlyCreate: boolean;
+	instantlyAppend: boolean;
 	/**
 	 * Returns the current window this element is assigned too. Will be undefined if the element has not been registered with an InfinityMintWindow
 	 */
@@ -187,11 +204,12 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	//if we aren't overwriting console methods and console is false
 	if (
-		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
-		getConfigFile().console === false &&
-		isEnvTrue("PIPE_SILENCE") === false
+		isEnvTrue("PIPE_IGNORE_CONSOLE") ||
+		(!isEnvTrue("PIPE_IGNORE_CONSOLE") &&
+			getConfigFile().console === false &&
+			isEnvTrue("PIPE_SILENCE") === false)
 	)
-		console.log(msg);
+		console.log(`[${pipe || "default"}] ` + msg);
 
 	Pipes.log(msg.toString(), pipe);
 };
@@ -202,17 +220,6 @@ export const log = (msg: string | object | number, pipe?: string) => {
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
-	///TODO: implement as an option on the pipe
-	if (
-		Pipes.getPipe("debug") !== undefined &&
-		Pipes.getPipe("debug").logs.length > 1480
-	) {
-		Pipes.getPipe("debug").logs = [];
-		log(
-			"{red-fg}debug pipe cleaned due to exceeding 1480{red-fg}",
-			"debug"
-		);
-	}
 	log(msg, "debug");
 };
 
@@ -232,10 +239,8 @@ export const getElementPadding = (
 	element: BlessedElement,
 	type: "left" | "right" | "up" | "down"
 ) => {
-	if (element?.padding === undefined) return 0;
-
-	if (element?.padding[type] === undefined) return 0;
-
+	if (!element.padding) return 0;
+	if (!element?.padding[type]) return 0;
 	return parseInt(element?.padding[type].toString());
 };
 
@@ -246,7 +251,7 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
 			(element) =>
 				element.strWidth(element.content) +
 				//for the border
-				(element.border !== undefined ? 2 : 0) +
+				(element.border ? 2 : 0) +
 				getElementPadding(element, "left") +
 				getElementPadding(element, "right")
 		)
@@ -255,19 +260,21 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
 };
 
 /**
- * Reads the current .session file in the cwd which holds settings relating to the current instance of InfinityMint.
+ * Will return the current session file as stored in memorys. Make sure to specify if to forceRead from the .session file agead.
  * @returns
  */
-export const readSession = (): InfinityMintSession => {
+export const readSession = (forceRead?: boolean): InfinityMintSession => {
 	if (!fs.existsSync(process.cwd() + "/.session"))
 		return { created: Date.now(), environment: {} };
 
 	try {
-		return JSON.parse(
+		let result = JSON.parse(
 			fs.readFileSync(process.cwd() + "/.session", {
 				encoding: "utf-8",
 			})
 		);
+		memorySession = result;
+		return result;
 	} catch (error) {
 		Pipes.error(error);
 	}
@@ -279,12 +286,20 @@ export const readSession = (): InfinityMintSession => {
 };
 
 /**
+ *
+ * @param msg
+ */
+export const logDirect = (msg: any) => {
+	if ((console as any)._log) (console as any)._log(msg);
+	console.log(msg);
+};
+
+/**
  * Overwrites default behaviour of console.log and console.error
  */
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
-	let consoleLog = console.log;
-
+	let _log = console.log;
 	console.log = (msg: string | object) => {
 		try {
 			if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
@@ -293,22 +308,24 @@ export const overwriteConsoleMethods = () => {
 		}
 
 		if (
+			msg.indexOf &&
 			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
-			Pipes.pipes[Pipes.currentPipeKey] !== undefined
+			Pipes.pipes[Pipes.currentPipeKey]
 		)
 			Pipes.getPipe(Pipes.currentPipeKey).log(msg);
 
 		if (
 			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
-			(Pipes.pipes[Pipes.currentPipeKey] === undefined &&
+			(!Pipes.pipes[Pipes.currentPipeKey] &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
-			consoleLog(msg.replace("<#DONT_LOG_ME$>", ""));
+			_log(msg.replace("<#DONT_LOG_ME$>", ""));
 	};
+	(console as any)._log = _log;
 
-	let consoleError = console.error;
+	let _error = console.error;
 	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
-		if (Pipes.pipes[Pipes.currentPipeKey] && dontSendToPipe !== true)
+		if (Pipes.pipes[Pipes.currentPipeKey] && !dontSendToPipe)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
 		if (
@@ -335,8 +352,9 @@ export const overwriteConsoleMethods = () => {
 			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
 			isEnvTrue("PIPE_ECHO_ERRORS")
 		)
-			consoleError(error);
+			_error(error);
 	};
+	(console as any)._error = _error;
 };
 
 /**
@@ -361,10 +379,10 @@ export const getCompiledProject = (projectName: string) => {
 		".compiled.json");
 	res = res.default || res;
 	//
-	if (res.compiled !== true)
+	if (!res.compiled)
 		throw new Error(`project ${projectName} has not been compiled`);
 
-	return res as InfinityMintProject;
+	return res as InfinityMintCompiledProject;
 };
 
 export const hasTempDeployedProject = (projectName: string) => {
@@ -380,7 +398,7 @@ export const hasTempCompiledProject = (projectName: string) => {
 };
 
 export const saveTempDeployedProject = (project: InfinityMintProject) => {
-	debugLog("saving " + project.name + ".temp.json");
+	log("saving " + project.name + ".temp.json", "fs");
 	fs.writeFileSync(
 		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
 		JSON.stringify(project)
@@ -388,7 +406,7 @@ export const saveTempDeployedProject = (project: InfinityMintProject) => {
 };
 
 export const saveTempCompiledProject = (project: InfinityMintProject) => {
-	debugLog("saving " + project.name + ".compiled.temp.json");
+	log("saving " + project.name + ".compiled.temp.json", "fs");
 	fs.writeFileSync(
 		process.cwd() +
 			"/temp/projects/" +
@@ -411,7 +429,7 @@ export const getTempDeployedProject = (projectName: string) => {
 			projectName +
 			".temp.deployed.json");
 		res = res.default || res;
-		return res as InfinityMintProject;
+		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error(
 			"could not load temp deployed project: " + error.message
@@ -433,7 +451,7 @@ export const getTempCompiledProject = (projectName: string) => {
 			".temp.compiled.json");
 		res = res.default || res;
 
-		return res as InfinityMintProject;
+		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error(
 			"could not load temp deployed project: " + error.message
@@ -452,10 +470,10 @@ export const getDeployedProject = (projectName: string, version?: any) => {
 		`@${version}.json`);
 	res = res.default || res;
 	//
-	if (res.deployed !== true)
+	if (!res.deployed)
 		throw new Error(`project ${projectName} has not been deployed`);
 
-	return res as InfinityMintProject;
+	return res as InfinityMintDeployedProject;
 };
 
 /**
@@ -464,13 +482,17 @@ export const getDeployedProject = (projectName: string, version?: any) => {
  * @param isJavaScript
  * @throws
  */
-export const getProject = (projectName: string, isJavaScript?: boolean) => {
-	let res = require(process.cwd() +
-		"/projects/" +
-		projectName +
-		(isJavaScript ? ".js" : ".ts"));
+export const getProject = (
+	projectPath: PathLike,
+	isJavaScript: boolean,
+	clearCache?: boolean
+) => {
+	if (clearCache && require.cache[projectPath as string])
+		delete require.cache[projectPath as string];
+
+	let res = require(projectPath as string);
 	res = res.default || res;
-	res.javascript = isJavaScript === true;
+	res.javascript = isJavaScript;
 
 	if (isJavaScript) return res as InfinityMintProjectJavascript;
 	return res as InfinityMintProject;
@@ -492,7 +514,7 @@ export const copyContractsFromNodeModule = (
 		);
 
 	if (fs.existsSync(destination) && isEnvTrue("SOLIDITY_CLEAN_NAMESPACE")) {
-		debugLog("cleaning " + source);
+		log("cleaning " + source, "fs");
 		fs.rmdirSync(destination, {
 			recursive: true,
 			force: true,
@@ -500,7 +522,7 @@ export const copyContractsFromNodeModule = (
 	}
 
 	if (!fs.existsSync(destination)) {
-		debugLog("copying " + source + " to " + destination);
+		log("copying " + source + " to " + destination, "fs");
 		fsExtra.copySync(source, destination);
 		fs.chmodSync(destination, 0o777);
 	}
@@ -514,16 +536,13 @@ export const prepareHardhatConfig = (
 	config.hardhat.defaultNetwork =
 		config.hardhat?.defaultNetwork || session.environment?.defaultNetwork;
 
-	if (config.hardhat.networks === undefined) config.hardhat.networks = {};
+	if (!config.hardhat.networks) config.hardhat.networks = {};
 
 	//copy ganache settings to localhost settings if ganache exists
-	if (
-		config.hardhat.networks.localhost === undefined &&
-		config.hardhat.networks.ganache !== undefined
-	)
+	if (!config.hardhat.networks.localhost && config.hardhat.networks.ganache)
 		config.hardhat.networks.localhost = config.hardhat.networks.ganache;
 
-	if (config.hardhat.paths === undefined) config.hardhat.paths = {};
+	if (!config.hardhat.paths) config.hardhat.paths = {};
 
 	return config;
 };
@@ -564,8 +583,7 @@ export const prepareConfig = () => {
 	prepareHardhatConfig(session, config);
 
 	//overwrite the console methods
-	if (config.console || isEnvTrue("OVERWRITE_CONSOLE_METHODS"))
-		overwriteConsoleMethods();
+	if (!isEnvTrue("PIPE_IGNORE_CONSOLE")) overwriteConsoleMethods();
 
 	let solidityModuleFolder =
 		process.cwd() +
@@ -578,14 +596,14 @@ export const prepareConfig = () => {
 		copyContractsFromNodeModule(solidityFolder, solidityModuleFolder);
 
 	//if the sources is undefined, then set the solidityFolder to be the source foot
-	if (config.hardhat.paths.sources === undefined) {
+	if (!config.hardhat.paths.sources) {
 		//set the sources
 		config.hardhat.paths.sources = solidityFolder;
 
 		//delete artifacts folder if namespace changes
 		if (
-			process.env.DEFAULT_SOLIDITY_FOLDER !== undefined &&
-			session.environment.solidityFolder !== undefined &&
+			process.env.DEFAULT_SOLIDITY_FOLDER &&
+			session.environment.solidityFolder &&
 			session.environment.solidityFolder !==
 				process.env.DEFAULT_SOLIDITY_FOLDER
 		) {
@@ -607,7 +625,7 @@ export const prepareConfig = () => {
 	}
 
 	//set the solidityFolder in the environment if it is undefined
-	if (session.environment.solidityFolder === undefined)
+	if (!session.environment.solidityFolder)
 		session.environment.solidityFolder =
 			process.env.DEFAULT_SOLIDITY_FOLDER || "alpha";
 
@@ -633,7 +651,7 @@ export const findWindows = async (roots?: PathLike[]) => {
 	let files = [];
 
 	for (let i = 0; i < searchLocations.length; i++) {
-		debugLog("scanning for windows in => " + searchLocations[i]);
+		log("searching for windows with glob => " + searchLocations[i], "fs");
 		files = [...files, ...(await findFiles(searchLocations[i]))];
 	}
 
@@ -685,11 +703,10 @@ export const getPackageJson = () => {
  * @returns
  */
 export const findFiles = (globPattern: string) => {
-	debugLog("searching for files with glob pattern => " + globPattern);
+	log("searching for files with glob pattern => " + globPattern, "glob");
 	return new Promise<string[]>((resolve, reject) => {
 		glob(globPattern, (err: Error, matches: string[]) => {
 			if (err) throw err;
-
 			resolve(matches);
 		});
 	});
@@ -698,7 +715,7 @@ export const findFiles = (globPattern: string) => {
 export const isTypescript = () => {
 	let session = readSession();
 
-	return session.environment?.javascript !== true;
+	return !session.environment?.javascript;
 };
 
 export const getFileImportExtension = () => {
@@ -716,6 +733,7 @@ export const getFileImportExtension = () => {
  * @returns
  */
 export const findScripts = async (roots?: string[]) => {
+	let config = getConfigFile();
 	roots = roots || [];
 
 	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_SCRIPTS"))
@@ -725,11 +743,30 @@ export const findScripts = async (roots?: string[]) => {
 
 	if (isTypescript()) roots.push(process.cwd() + "/scripts/**/*.ts");
 	roots.push(process.cwd() + "/scripts/**/*.js");
+	roots = [
+		...roots,
+		...(config.roots || []).map(
+			(root: string) =>
+				process.cwd() +
+				"/" +
+				root +
+				(root[root.length - 1] !== "/" ? "/scripts/" : "scripts/") +
+				"**/*.ts"
+		),
+		...(config.roots || []).map(
+			(root: string) =>
+				process.cwd() +
+				"/" +
+				root +
+				(root[root.length - 1] !== "/" ? "/scripts/" : "scripts/") +
+				"**/*.js"
+		),
+	];
 
 	let scanned = [];
 	for (let i = 0; i < roots.length; i++) {
 		let path = roots[i];
-		debugLog("scanning for scripts in => " + path);
+		log("searching for scripts with glob => " + path, "fs");
 		scanned = [...scanned, ...(await findFiles(path))];
 	}
 
@@ -741,25 +778,126 @@ export const findScripts = async (roots?: string[]) => {
 };
 
 /**
- *
- * @param fullPath
+ * Returns the current project
  * @returns
  */
-export const requireWindow = (fullPath: string) => {
-	if (!fs.existsSync(fullPath))
-		throw new Error("cannot find script: " + fullPath);
+export const getCurrentProjectPath = () => {
+	let session = readSession();
 
-	if (require.cache[fullPath]) {
-		debugLog("deleting old cache  => " + fullPath);
-		delete require.cache[fullPath];
+	if (!session.environment.project) return undefined;
+	return session.environment.project as path.ParsedPath;
+};
+
+export const getCurrentDeployedProject = () => {
+	if (!getCurrentProjectPath()) throw new Error("no current project");
+
+	return getDeployedProject(getCurrentProjectPath().name);
+};
+
+/**
+ *
+ * @returns
+ */
+export const getCurrentCompiledProject = () => {
+	if (!getCurrentProjectPath()) throw new Error("no current project");
+
+	return getCompiledProject(getCurrentProjectPath().name);
+};
+
+/**
+ *
+ * @param script
+ * @param eventEmitter
+ * @param gems
+ * @param args
+ * @param console
+ */
+export const executeScript = async (
+	script: InfinityMintScript,
+	eventEmitter: InfinityMintEventEmitter,
+	gems?: Dictionary<InfinityMintGemScript>,
+	args?: Dictionary<InfinityMintScriptArguments>,
+	console?: InfinityConsole
+) => {
+	if (!script.javascript)
+		await script.execute({
+			script: script,
+			eventEmitter: eventEmitter,
+			log: log,
+			debugLog: debugLog,
+			gems: gems,
+			args: args,
+
+			infinityConsole: console,
+			project: getCurrentProject(true),
+		});
+	else throw new Error("javascript files are not supported yet");
+};
+
+/**
+ *
+ * @returns
+ */
+export const getCurrentProject = (cleanCache?: boolean) => {
+	return getProject(
+		getCurrentProjectPath().dir + "/" + getCurrentProjectPath().base,
+		getCurrentProjectPath().ext === ".js",
+		cleanCache
+	);
+};
+
+/**
+ *
+ * @param fileName
+ * @returns
+ */
+export const requireWindow = (fileName: string) => {
+	if (!fs.existsSync(fileName))
+		throw new Error("cannot find script: " + fileName);
+
+	if (require.cache[fileName]) {
+		debugLog("deleting old cache  => " + fileName);
+		delete require.cache[fileName];
 	}
 
-	debugLog("requiring => " + fullPath);
-	let result = require(fullPath);
+	debugLog("requiring => " + fileName);
+	let result = require(fileName);
 	result = result.default || result;
-	//log
+	result.setFileName(fileName);
 	result.log("required");
 	return result as InfinityMintWindow;
+};
+
+/**
+ *
+ * @param roots
+ * @returns
+ */
+export const findProjects = async (roots?: PathLike[]) => {
+	let config = getConfigFile();
+	roots = roots || [];
+	roots = [
+		...roots,
+		process.cwd() + "/projects/",
+		...(config.roots || []).map(
+			(root: string) =>
+				process.cwd() +
+				"/" +
+				root +
+				(root[root.length - 1] !== "/" ? "/projects/" : "projects/")
+		),
+	];
+
+	let projects = [];
+	for (let i = 0; i < roots.length; i++) {
+		projects = [
+			...projects,
+			...(await findFiles(roots[i] + "**/*.ts")),
+			...(await findFiles(roots[i] + "**/*.js")),
+		];
+	}
+
+	return projects.map((filePath) => path.parse(filePath));
 };
 
 /**
@@ -786,7 +924,7 @@ export const requireScript = async (
 	result = result.default || result;
 	result.fileName = fullPath;
 
-	if (console !== undefined && result.events !== undefined) {
+	if (console && result.events) {
 		Object.keys(result.events).forEach((key) => {
 			try {
 				console.getEventEmitter().off(key, result.events[key]);
@@ -808,7 +946,7 @@ export const requireScript = async (
 		});
 	}
 
-	if (result?.loaded !== undefined) {
+	if (result?.loaded) {
 		debugLog("calling (loaded) on " + fullPath);
 		await (result as InfinityMintScript).loaded({
 			log,
@@ -839,7 +977,7 @@ export const isInfinityMint = () => {
 export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
 	Object.keys(config?.settings?.networks || {}).forEach((key) => {
 		let network = config?.settings?.networks[key];
-		if (network.handlers === undefined) return;
+		if (!network.handlers) return;
 
 		if (network.handlers.gasPrice)
 			registerGasPriceHandler(key, network.handlers.gasPrice);
@@ -856,14 +994,18 @@ export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
  * @see {@link app/pipes.Pipe}
  * @param useJavascript Will return infinitymint.config.js instead of infinitymint.config.ts
  * @param useInternalRequire  Will use require('./app/interfaces') instead of require('infinitymint/dist/app/interfaces')
+ * @returns
  */
 export const loadInfinityMint = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean
 ) => {
+	initializeGanacheMnemonic();
+
+	//try to automatically add module alias
 	try {
 		let projectJson = getPackageJson();
-		if (projectJson._moduleAliases === undefined) {
+		if (!projectJson._moduleAliases) {
 			projectJson._moduleAliases = {
 				"@app": "./node_modules/infinitymint/dist/app/",
 			};
@@ -876,7 +1018,6 @@ export const loadInfinityMint = (
 
 	createInfinityMintConfig(useJavascript, useInternalRequire);
 	preInitialize(useJavascript);
-	initializeGanacheMnemonic();
 };
 
 export const createDirs = (dirs: string[]) => {
@@ -904,7 +1045,7 @@ export const createEnvFile = (source: any) => {
 		stub = `${stub}${key.toUpperCase()}=${
 			typeof source[key] === "string"
 				? '"' + source[key] + '"'
-				: source[key] !== undefined
+				: source[key]
 				? source[key]
 				: ""
 		}\n`;
@@ -965,15 +1106,28 @@ export const preInitialize = (isJavascript?: boolean) => {
 			fs.copyFileSync(path, process.cwd() + "/.env");
 		}
 
-		debugLog("made /env from " + path);
+		debugLog("made .env from " + path);
 	}
 	//will log console.log output to the default pipe
 	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
-	//create the debug pipe
-	Pipes.registerSimplePipe("debug", {
-		listen: isEnvTrue("PIPE_ECHO_DEBUG"),
-		save: true,
-	});
+
+	let pipes = [
+		"debug",
+		"imports",
+		"gems",
+		"windows",
+		"glob",
+		"fs",
+		"receipts",
+	];
+	pipes.forEach((pipe) =>
+		Pipes.registerSimplePipe(pipe, {
+			listen:
+				envExists("PIPE_ECHO_" + pipe.toUpperCase()) &&
+				process.env["PIPE_ECHO_" + pipe.toUpperCase()] === "true",
+			save: true,
+		})
+	);
 
 	if (isEnvTrue("PIPE_SEPERATE_WARNINGS"))
 		Pipes.registerSimplePipe("warnings", {
@@ -984,16 +1138,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 
 export const initializeGanacheMnemonic = () => {
 	let session = readSession();
-	//if the ganache is not external and no mnemonic for ganache in the environment file then set one
-	if (
-		isEnvTrue("GANACHE_EXTERNAL") === false &&
-		session.environment?.ganacheMnemonic === undefined
-	)
-		session.environment.ganacheMnemonic = generateMnemonic();
-
-	debugLog(
-		"saving " + session.environment.ganacheMnemonic + " to .session file"
-	);
+	session.environment.ganacheMnemonic = getGanacheMnemonic();
 	saveSession(session);
 	return session.environment?.ganacheMnemonic;
 };
@@ -1062,32 +1207,88 @@ export const saveSessionVariable = (
 	key: string,
 	value: any
 ) => {
-	if (session.environment === undefined) session.environment = {};
+	if (!session.environment) session.environment = {};
 
 	session.environment[key] = value;
 	return session;
 };
 
+let memorySession: InfinityMintSession;
+/**
+ *
+ * @param session Saves the InfinityMint Session
+ */
 export const saveSession = (session: InfinityMintSession) => {
+	memorySession = session;
 	fs.writeFileSync(process.cwd() + "/.session", JSON.stringify(session));
 };
 
+/**
+ * gets ganache mnemonic
+ * @returns
+ */
+export const getGanacheMnemonic = () => {
+	if (readSession()?.environment?.ganacheMnemonic)
+		return readSession()?.environment?.ganacheMnemonic;
+
+	return fs.existsSync(process.cwd() + "/.mnemonic")
+		? fs.readFileSync(process.cwd() + "/.mnemonic", {
+				encoding: "utf-8",
+		  })
+		: generateMnemonic();
+};
+
+export const usernameList: KeyValue = {};
+export const registerUsername = (username: string, client: any) => {
+	if (usernameList[username])
+		throw new Error("username already taken: " + username);
+
+	usernameList[username] = client;
+};
+
+/**
+ *
+ * @param client
+ * @returns
+ */
+export const isRegistered = (client: any) => {
+	return getUsernames(client).length !== 0;
+};
+
+/**
+ *
+ * @param client
+ * @returns
+ */
+export const getUsernames = (client: any): any[] => {
+	return Object.values(usernameList).filter(
+		(thatClient) =>
+			thatClient.input?.remoteAddress === client?.input?.remoteAddress
+	);
+};
+
+/**
+ *
+ * @param error Logs an error
+ */
 export const error = (error: string | Error) => {
 	if (
-		isEnvTrue("OVERWRITE_CONSOLE_METHODS") === false &&
-		getConfigFile().console === false
+		isEnvTrue("PIPE_IGNORE_CONSOLE") ||
+		(!isEnvTrue("PIPE_IGNORE_CONSOLE") && getConfigFile().console === false)
 	)
 		console.error(error);
 
 	Pipes.error(error);
 };
 
+export const envExists = (key: string) => {
+	return process.env[key] && process.env[key]?.trim().length !== 0;
+};
+
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {
-	return process.env[key] !== undefined && process.env[key] === "true";
+	return process.env[key] && process.env[key] === "true";
 };
 
 export const isEnvSet = (key: InfinityMintEnvironmentKeys): boolean => {
-	return (
-		process.env[key] !== undefined && process.env[key]?.trim().length !== 0
-	);
+	return process.env[key] && process.env[key]?.trim().length !== 0;
 };

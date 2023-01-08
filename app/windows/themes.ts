@@ -1,10 +1,10 @@
 import { InfinityMintWindow } from "../window";
 
-const Browser = new InfinityMintWindow(
-	"Browser",
+const Themes = new InfinityMintWindow(
+	"Themes",
 	{
 		fg: "white",
-		bg: "yellow",
+		bg: "blue",
 		border: {
 			fg: "#f0f0f0",
 		},
@@ -13,7 +13,8 @@ const Browser = new InfinityMintWindow(
 		type: "line",
 	}
 );
-Browser.initialize = async (window, frame, blessed) => {
+
+Themes.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
 		"console",
 		blessed.box({
@@ -21,7 +22,7 @@ Browser.initialize = async (window, frame, blessed) => {
 			height: "100%-8",
 			padding: 1,
 			top: 4,
-			label: "{bold}{white-fg}Browser{/white-fg}{/bold}",
+			label: "{bold}{white-fg}Themes{/white-fg}{/bold}",
 			left: "center",
 			keys: true,
 			tags: true,
@@ -40,4 +41,4 @@ Browser.initialize = async (window, frame, blessed) => {
 	);
 	background.setBack();
 };
-export default Browser;
+export default Themes;

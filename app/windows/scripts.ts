@@ -1,4 +1,4 @@
-import { BlessedElement, calculateWidth } from "../helpers";
+import { BlessedElement, calculateWidth, warning } from "../helpers";
 import { InfinityMintScript } from "../interfaces";
 import { InfinityMintWindow } from "../window";
 
@@ -71,6 +71,7 @@ Scripts.think = (window, frame, blessed) => {
 	if (lastPreviewScript !== script) {
 		let preview = window.getElement("preview");
 		updatePreview(script, preview);
+		window.data.script = script;
 		preview.focus();
 	} else window.getElement("form").focus();
 };
@@ -176,6 +177,24 @@ Scripts.initialize = async (window, frame, blessed) => {
 		},
 		border: "line",
 	});
+	let runSelected = () => {
+		window.hide();
+		if (!window.data.script) {
+			warning("no data");
+			return;
+		}
+		let scriptData = window.data.script as InfinityMintScript;
+		let script = window
+			.getInfinityConsole()
+			.getWindow("Script")
+			.clone("Script_" + scriptData.name.replace(/ /g, "_"));
+		//data of the script
+		script.data.script = scriptData;
+		script.setHiddenFromMenu(false);
+		//show this script window, hiding this window
+		window.getInfinityConsole().setWindow(script);
+	};
+	runButton.on("click", runSelected);
 
 	let findScripts = window.createElement("findButton", {
 		width: "shrink",
@@ -201,9 +220,18 @@ Scripts.initialize = async (window, frame, blessed) => {
 	});
 
 	let scripts = window.getInfinityConsole().getScripts();
-	let names = [...scripts].map((script) => script.name);
+	let names = [...scripts].map(
+		(script) =>
+			`${
+				script.javascript
+					? "{yellow-fg}js{/yellow-fg}"
+					: "{blue-fg}ts{/blue-fg}"
+			} {bold}${script.name}{/bold} {gray-fg}(${
+				script.fileName
+			}){/gray-fg}`
+	);
 	form.setItems(names);
-	form.on("select", async (el: any, selected: any) => {});
+	form.on("select", runSelected);
 	form.focus();
 };
 export default Scripts;
