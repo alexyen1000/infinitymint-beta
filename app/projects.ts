@@ -200,13 +200,27 @@ export const saveProjects = (projects: path.ParsedPath[]) => {
 			cache.database[name];
 		} else cache.database[name] = path;
 
+		let root: string | string[] = path.dir.split("projects");
+		if (root.length > 2) root.slice(1).join("projects");
+		else root = root[1];
+		let nss = root[0] === "/" ? (root as string).substring(1) : root;
+
 		cache.keys[path.dir + "/" + path.base] = name;
 		cache.keys[path.dir + "/" + path.name] = name;
 		cache.keys["/" + path.name] = name;
+		cache.keys["/" + path.base] = name;
 		cache.keys["/projects/" + path.name] = name;
 		cache.keys["/projects/" + path.base] = name;
-		cache.keys["/" + path.base] = name;
+		cache.keys[process.cwd() + "/" + path.name] = name;
+		cache.keys[process.cwd() + "/" + path.base] = name;
+		cache.keys[process.cwd() + "/projects/" + path.name] = name;
+		cache.keys[process.cwd() + "/projects/" + path.base] = name;
+		cache.keys[root + "/" + path.name] = name;
+		cache.keys[root + "/" + path.base] = name;
+		cache.keys[nss + "/" + path.name] = name;
+		cache.keys[nss + "/" + path.base] = name;
 		cache.keys[path.name] = name;
+		cache.keys[path.base] = name;
 	});
 
 	fs.writeFileSync(

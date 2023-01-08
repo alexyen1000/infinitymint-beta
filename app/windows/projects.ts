@@ -138,7 +138,7 @@ Projects.initialize = async (window, frame, blessed) => {
 
 	if (window.data.currentProject) notice.hide();
 
-	let scripts = window.getInfinityConsole().getProjects();
+	let scripts = Object.values(window.getInfinityConsole().getProjects());
 	let projects = scripts.map(
 		(project) =>
 			`${
@@ -149,6 +149,7 @@ Projects.initialize = async (window, frame, blessed) => {
 				project.dir + "/" + project.base
 			}){gray-fg}`
 	);
+
 	list.setItems(projects);
 	list.on("select", (el: any, selected: any) => {
 		let path = scripts[selected];

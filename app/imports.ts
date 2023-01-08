@@ -3,7 +3,8 @@ import { PathLike } from "fs";
 import { debugLog, findFiles, getConfigFile, log, warning } from "./helpers";
 import { Dictionary } from "form-data";
 import path from "path";
-import fs from "fs";
+import fs, { promises } from "fs";
+import { createHash } from "node:crypto";
 
 export interface ImportInterface {
 	name?: string;
@@ -37,16 +38,15 @@ export interface CompiledImportInterface extends ImportInterface {
 }
 
 export interface ImportCache {
-	database: Dictionary<
-		Dictionary<{
-			extension: string;
-			name: string;
-			base: string;
-			root: string;
-			dir: string;
-			settings: Array<path.ParsedPath>;
-		}>
-	>;
+	updated: number;
+	database: Dictionary<{
+		extension: string;
+		name: string;
+		base: string;
+		checksum: string;
+		dir: string;
+		settings: Array<path.ParsedPath>;
+	}>;
 	keys: Dictionary<string>;
 }
 
@@ -54,13 +54,30 @@ export const hasImportCache = () => {
 	return fs.existsSync(process.cwd() + "/temp/import_cache.json");
 };
 
+/**
+ * counts the amount of assets we've found
+ * @param imports
+ * @returns
+ */
 export const importCount = (imports?: ImportCache) => {
-	imports = imports || readImportCache();
-	let count = 0;
-	Object.values(imports.database).forEach((dirs) => {
-		count += Object.values(dirs).length;
-	});
-	return count;
+	imports = imports || importCache || readImportCache();
+	return Object.values(imports.database).length;
+};
+
+/**
+ * Searches the import cache for that particular import, can search by full path or just the name of the asset.
+ * @param fileNameOrPath
+ * @returns
+ */
+export const hasImport = async (fileNameOrPath: string) => {
+	let imports = await getImports();
+	if (
+		!imports.keys[fileNameOrPath] ||
+		!imports.database[imports.keys[fileNameOrPath]]
+	)
+		return false;
+
+	return true;
 };
 
 /**
@@ -70,10 +87,9 @@ export const importCount = (imports?: ImportCache) => {
  */
 export const getImport = async (fileNameOrPath: string) => {
 	let imports = await getImports();
-	if (!imports.keys[fileNameOrPath])
-		throw new Error("import not found: " + imports.keys[fileNameOrPath]);
 
-	if (!imports.database[imports.keys[fileNameOrPath]]) throw new Error("bad");
+	if (!hasImport(fileNameOrPath))
+		throw new Error("import not found: " + fileNameOrPath);
 
 	return imports.database[imports.keys[fileNameOrPath]];
 };
@@ -89,7 +105,7 @@ export const saveImportCache = (cache: ImportCache) => {
 
 export const readImportCache = (): ImportCache => {
 	if (!fs.existsSync(process.cwd() + "/temp/import_cache.json"))
-		return {} as ImportCache;
+		return { keys: {}, database: {}, updated: Date.now() } as ImportCache;
 
 	return JSON.parse(
 		fs.readFileSync(process.cwd() + "/temp/import_cache.json", {
@@ -191,60 +207,74 @@ export const getImportCache = async (
 	);
 
 	let imports: ImportCache = {
+		updated: Date.now(),
 		database: {},
 		keys: {},
 	};
 	for (let i = 0; i < infinityImports.length; i++) {
 		let normalImport = infinityImports[i];
-		if (!imports.database[normalImport.dir]) {
-			log(`[${i}] found dir => ${normalImport.dir}`, "imports");
-			imports.database[normalImport.dir] = {};
-		}
+		let name = normalImport.dir + "/" + normalImport.base;
 
-		let importLessDir = normalImport.dir.substring(
-			0,
-			normalImport.dir.length - "/imports".length
-		);
+		if (imports.database[name]) throw new Error("conflict: " + name);
 
-		imports.keys[normalImport.dir + "/" + normalImport.base] =
-			normalImport.dir;
-		imports.keys[normalImport.dir + "/" + normalImport.name] =
-			normalImport.dir;
-		imports.keys[process.cwd() + "/imports/" + normalImport.name] =
-			normalImport.dir;
-		imports.keys[process.cwd() + "/imports/" + normalImport.base] =
-			normalImport.dir;
-		imports.keys["imports/" + normalImport.name] = normalImport.dir;
-		imports.keys["/imports/" + normalImport.name] = normalImport.dir;
-		imports.keys["imports/" + normalImport.base] = normalImport.dir;
-		imports.keys["/imports/" + normalImport.base] = normalImport.dir;
-		if (
-			!imports.database[normalImport.dir][
-				normalImport.name + normalImport.ext
-			]
-		)
-			imports.database[normalImport.dir][
-				normalImport.name + normalImport.ext
-			] = {
-				extension: normalImport.ext,
-				name: normalImport.name,
-				dir: normalImport.dir,
-				root: importLessDir,
-				base: normalImport.base,
-				settings: importSettings.filter(
-					(thatSetting) =>
-						thatSetting.base.indexOf(
-							normalImport.name + normalImport.ext + ".settings."
-						) !== -1
-				),
-			};
-		else
-			throw new Error(
-				"conflicting name: " +
-					normalImport.dir +
-					normalImport.name +
-					normalImport.ext
-			);
+		let root: string | string[] = normalImport.dir.split("imports");
+		if (root.length > 2) root.slice(1).join("imports");
+		else root = root[1];
+
+		log(`[${i}] found file => ${normalImport.dir}`, "imports");
+		log(`\t -> perfoming checksum`, "imports");
+
+		let checksum = createHash("md5")
+			.update(
+				await promises.readFile(
+					normalImport.dir + "/" + normalImport.base,
+					{
+						encoding: "utf-8",
+					}
+				)
+			)
+			.digest("hex");
+		log(`\t -> checksum calculated: ${checksum}`, "imports");
+		imports.database[name] = {
+			extension: normalImport.ext,
+			name: normalImport.name,
+			dir: normalImport.dir,
+			base: normalImport.base,
+			checksum: checksum,
+			settings: importSettings.filter(
+				(thatSetting) =>
+					thatSetting.base.indexOf(
+						normalImport.name + normalImport.ext + ".settings."
+					) !== -1
+			),
+		};
+
+		imports.keys[normalImport.dir + "/" + normalImport.base] = name;
+		imports.keys[normalImport.dir + "/" + normalImport.name] = name;
+		imports.keys[
+			process.cwd() + "/imports" + root + "/" + normalImport.name
+		] = name;
+		imports.keys[
+			process.cwd() + "/imports" + root + "/" + normalImport.base
+		] = name;
+		imports.keys["imports/" + normalImport.name] = name;
+		imports.keys["/imports/" + normalImport.name] = name;
+		imports.keys["imports/" + normalImport.base] = name;
+		imports.keys["/imports/" + normalImport.base] = name;
+		imports.keys["imports" + root + "/" + normalImport.name] = name;
+		imports.keys["/imports" + root + "/" + normalImport.name] = name;
+		imports.keys["imports" + root + "/" + normalImport.base] = name;
+		imports.keys["/imports" + root + "/" + normalImport.base] = name;
+		imports.keys[root + "/" + normalImport.name] = name;
+		imports.keys[root + "/" + normalImport.name] = name;
+		imports.keys[root + "/" + normalImport.base] = name;
+		imports.keys[root + "/" + normalImport.base] = name;
+
+		let nss = root[0] === "/" ? (root as string).substring(1) : root;
+		imports.keys[nss + "/" + normalImport.name] = name;
+		imports.keys[nss + "/" + normalImport.name] = name;
+		imports.keys[nss + "/" + normalImport.base] = name;
+		imports.keys[nss + "/" + normalImport.base] = name;
 	}
 
 	return imports as ImportCache;

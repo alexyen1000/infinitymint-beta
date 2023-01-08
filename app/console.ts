@@ -1211,6 +1211,9 @@ export class InfinityConsole {
 		}
 	}
 
+	/**
+	 *
+	 */
 	public async refreshWindows() {
 		let windows = await findWindows();
 
@@ -1228,12 +1231,20 @@ export class InfinityConsole {
 		}
 	}
 
+	/**
+	 *
+	 * @param useFresh
+	 */
 	public async refreshImports(useFresh?: boolean) {
 		this.imports = await getImports(useFresh);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	public getProjects() {
-		return Object.values(this.projects.database);
+		return this.projects.database;
 	}
 
 	public async initialize() {
