@@ -204,6 +204,7 @@ export const saveProjects = (projects: path.ParsedPath[]) => {
 		cache.keys[path.dir + "/" + path.name] = name;
 		cache.keys["/" + path.name] = name;
 		cache.keys["/projects/" + path.name] = name;
+		cache.keys["/projects/" + path.base] = name;
 		cache.keys["/" + path.base] = name;
 		cache.keys[path.name] = name;
 	});
