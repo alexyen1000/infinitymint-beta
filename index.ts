@@ -5,7 +5,7 @@ import {
 	registerNetworkPipes,
 	startNetworkPipe,
 } from "./app/web3";
-import GanacheServer from "./app/ganacheServer";
+import GanacheServer from "./app/ganache";
 import { Web3Provider } from "@ethersproject/providers";
 import fs from "fs";
 

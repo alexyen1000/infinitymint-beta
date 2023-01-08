@@ -9,6 +9,7 @@
 		"strict": false,
 		"allowJs": true,
 		"rootDirs": ["./app"],
+		"moduleResolution": "node",
 		"paths": {
 			"@app/*": ["./app/*"],
 			"@typechain-types/*": ["./typechain-types/*"]

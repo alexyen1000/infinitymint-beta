@@ -583,7 +583,7 @@ export const getProjectDeploymentClasses = async (
 			).length !== 0 &&
 			[
 				...(setings?.disabledContracts || []),
-				...(compiledProject?.settings?.disabledContracts || []),
+				...(compiledProject.settings?.disabledContracts || ([] as any)),
 			].filter(
 				(value) =>
 					value === deployment.getContractName() ||

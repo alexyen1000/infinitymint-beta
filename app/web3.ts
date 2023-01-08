@@ -17,7 +17,7 @@ import {
 	TransactionReceipt,
 	Provider,
 } from "@ethersproject/providers";
-import GanacheServer from "./ganacheServer";
+import GanacheServer from "./ganache";
 import {
 	ContractFactory,
 	ContractReceipt,

@@ -98,4 +98,5 @@ export class GanacheServer {
 		return this.provider;
 	}
 }
+
 export default new GanacheServer();
