@@ -99,7 +99,7 @@ export class InfinityConsole {
 			this.screen = blessed.screen(
 				this.options?.blessed || {
 					smartCRS: true,
-					fullUnicore: true,
+					fullUnicode: true,
 					autoPadding: true,
 					dockBorders: true,
 					sendFocus: true,

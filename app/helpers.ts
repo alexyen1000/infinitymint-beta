@@ -1131,6 +1131,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 		"windows",
 		"glob",
 		"fs",
+		"ipfs",
 		"receipts",
 	];
 	pipes.forEach((pipe) =>

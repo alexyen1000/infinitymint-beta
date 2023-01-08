@@ -50,8 +50,12 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	logDirect("🪐 Starting InfinityConsole");
 	//register current network pipes
 	registerNetworkPipes();
-	//create IPFS node
-	await ipfs.create();
+	try {
+		//create IPFS node
+		await ipfs.create();
+	} catch (error) {
+		warning(`could not start IPFS: ` + error?.message);
+	}
 
 	//start ganache
 	if (hre.config.networks?.ganache !== undefined) {

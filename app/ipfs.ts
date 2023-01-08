@@ -1,25 +1,51 @@
 //didnt work
 import { IPFS, create } from "ipfs-core";
-import { logDirect } from "./helpers";
+import { log, logDirect } from "./helpers";
 
 export class IPFSNode {
 	protected node: IPFS;
+	protected lastError: Error;
+	protected successful: boolean;
+
 	async create() {
-		logDirect("💘 Starting IPFS Node");
-		this.node = await create();
-		logDirect("💘 IPFS started");
-		let version = await this.node.version();
-		Object.keys(version).forEach((key, index) => {
-			if (key === "commit") return;
-			logDirect(`\t [${index}] => ${key} ${version[key]}`);
-		});
+		try {
+			log("💘 Starting IPFS Node", "ipfs");
+			this.node = await create();
+			log("💘 {green-fg}IPFS started{/green-fg}", "ipfs");
+			let version = await this.node.version();
+			Object.keys(version).forEach((key, index) => {
+				if (key === "commit") return;
+				log(`\t [${index}] => ${key} ${version[key]}`, "ipfs");
+			});
+			this.successful = true;
+			log(
+				"💘 {cyan-fg}IPFS running at http://localhost:4001{/cyan-fg}",
+				"ipfs"
+			);
+		} catch (error) {
+			this.lastError = error;
+			throw error;
+		}
 	}
 
-	async get(ipfs: IPFS, cid: any): Promise<string> {
+	public isRunning() {
+		return this.successful;
+	}
+
+	public getLastError() {
+		return this.lastError;
+	}
+
+	async put(fileName: string, contents: string) {
+		log("💘 Uploading to IPFS " + fileName, "ipfs");
+	}
+
+	async get(cid: any): Promise<string> {
 		const decoder = new TextDecoder();
 		let content = "";
 
-		for await (const chunk of ipfs.cat(cid)) {
+		log("💘 Fetching " + cid, "ipfs");
+		for await (const chunk of this.node.cat(cid)) {
 			content += decoder.decode(chunk, {
 				stream: true,
 			});
