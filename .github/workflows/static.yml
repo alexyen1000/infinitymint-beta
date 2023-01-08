@@ -38,7 +38,7 @@ jobs:
               with:
                   cache: "npm"
             - run: npm ci
-            - run: npx hardhat compile
+            - run: npx tsc
             - run: npm run build --if-present
             - run: npm run doc
             - name: Setup Pages
