@@ -819,19 +819,17 @@ export const executeScript = async (
 	args?: Dictionary<InfinityMintScriptArguments>,
 	console?: InfinityConsole
 ) => {
-	if (!script.javascript)
-		await script.execute({
-			script: script,
-			eventEmitter: eventEmitter,
-			log: log,
-			debugLog: debugLog,
-			gems: gems,
-			args: args,
+	await script.execute({
+		script: script,
+		eventEmitter: eventEmitter,
+		log: log,
+		debugLog: debugLog,
+		gems: gems,
+		args: args,
 
-			infinityConsole: console,
-			project: getCurrentProject(true),
-		});
-	else throw new Error("javascript files are not supported yet");
+		infinityConsole: console,
+		project: getCurrentProject(true),
+	});
 };
 
 /**

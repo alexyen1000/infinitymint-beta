@@ -1041,12 +1041,19 @@ export class InfinityConsole {
 						fileName: script.dir + "/" + script.base,
 						javascript: true,
 						execute: async (infinitymint) => {
+							(process as any)._exit = (code?: number) => {
+								if (code === 1) warning("exited with code 0");
+							};
 							let result = await requireScript(
 								script.dir + "/" + script.base,
 								this
 							);
 							if (typeof result === "function")
 								await (result as any)(infinitymint);
+							else if (result.execute !== undefined)
+								await result.execute(infinitymint);
+
+							(process as any).exit = (process as any)._exit;
 						},
 					});
 				}
