@@ -43,7 +43,13 @@ import {
 } from "./imports";
 //blessed
 import blessed from "blessed";
-
+import {
+	findProjects,
+	getProjects,
+	readProjects,
+	saveProjects,
+} from "./projects";
+import { ProjectCache } from "./projects";
 //uuid stuff
 const { v4: uuidv4 } = require("uuid");
 
@@ -79,6 +85,7 @@ export class InfinityConsole {
 	private currentAudioAwaitingKill: boolean;
 	private player: any;
 	private imports: ImportType;
+	private projects: ProjectCache;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -440,6 +447,14 @@ export class InfinityConsole {
 		this.registerDefaultKeys();
 		this.network = undefined;
 		this.windowManager = undefined;
+	}
+
+	/**
+	 *
+	 */
+	public async reloadProjects() {
+		let projects = await findProjects();
+		this.projects = saveProjects(projects);
 	}
 
 	public async reload() {
@@ -1230,6 +1245,10 @@ export class InfinityConsole {
 		}
 	}
 
+	public getProjects() {
+		return Object.values(this.projects.database);
+	}
+
 	public async initialize() {
 		//if the network member has been defined then we have already initialized
 		if (this.network) throw new Error("console already initialized");
@@ -1239,6 +1258,9 @@ export class InfinityConsole {
 		//create the window manager
 		this.setLoading("Loading Windows", 25);
 		await this.refreshWindows();
+
+		this.setLoading("Loading Projects", 35);
+		await this.reloadProjects();
 
 		log(`loading InfinityConsole<${this.sessionId}>`);
 		//the think method for this console

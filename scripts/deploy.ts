@@ -15,7 +15,7 @@ import {
 	getTempDeployedProject,
 	hasTempDeployedProject,
 	saveTempCompiledProject,
-} from "@app/helpers";
+} from "@app/projects";
 
 const deploy: InfinityMintScript = {
 	name: "Deploy Project",

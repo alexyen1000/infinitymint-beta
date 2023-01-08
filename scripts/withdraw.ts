@@ -1,4 +1,4 @@
-import { getCurrentProject, getDeployedProject } from "@app/helpers";
+import { getCurrentProject, getDeployedProject } from "@app/projects";
 import type {
 	InfinityMintDeployedProject,
 	InfinityMintScript,
