@@ -1312,6 +1312,8 @@ export class InfinityConsole {
 					});
 			}
 
+			this.loadingBox.setFront();
+
 			if (this.errorBox && !this.errorBox.hidden)
 				this.errorBox.setFront();
 		}, this.options?.tickRate || 33);
