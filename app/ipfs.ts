@@ -1,16 +1,22 @@
 //didnt work
-import { IPFS, create } from "ipfs-core";
-import { log, logDirect } from "./helpers";
+import { IPFS, create, Options } from "ipfs-core";
+import { getConfigFile, log, logDirect } from "./helpers";
 
 export class IPFSNode {
 	protected node: IPFS;
 	protected lastError: Error;
 	protected successful: boolean;
 
-	async create() {
+	async create(options?: Options) {
+		let config = getConfigFile();
 		try {
 			log("💘 Starting IPFS Node", "ipfs");
-			this.node = await create();
+			this.node = await create({
+				...options,
+				...(config.ipfs as Options),
+				start: true,
+			});
+
 			log("💘 {green-fg}IPFS started{/green-fg}", "ipfs");
 			let version = await this.node.version();
 			Object.keys(version).forEach((key, index) => {
@@ -19,7 +25,7 @@ export class IPFSNode {
 			});
 			this.successful = true;
 			log(
-				"💘 {cyan-fg}IPFS running at http://localhost:4001{/cyan-fg}",
+				"💘 {cyan-fg}IPFS running at http://localhost:4002{/cyan-fg}",
 				"ipfs"
 			);
 		} catch (error) {

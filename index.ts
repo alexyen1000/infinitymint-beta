@@ -52,7 +52,7 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	registerNetworkPipes();
 	try {
 		//create IPFS node
-		await ipfs.create();
+		if (config.ipfs) await ipfs.create();
 	} catch (error) {
 		warning(`could not start IPFS: ` + error?.message);
 	}
@@ -241,17 +241,15 @@ if (
 		.catch((error) => {
 			if ((console as any)._error) (console as any)._error(error);
 			console.error(error);
-			process.exit(1);
-		})
-		.then((result: InfinityConsole) => {
-			infinityConsole = result;
-		})
-		.finally(() => {
 			Object.keys(Pipes.pipes || {}).forEach((pipe) => {
 				try {
 					Pipes.savePipe(pipe);
 				} catch (error) {}
 			});
+			process.exit(1);
+		})
+		.then((result: InfinityConsole) => {
+			infinityConsole = result;
 		});
 
 //load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
@@ -266,17 +264,15 @@ if (
 		.catch((error) => {
 			if ((console as any)._error) (console as any)._error(error);
 			console.error(error);
-			process.exit(1);
-		})
-		.then((result: InfinityConsole) => {
-			infinityConsole = result;
-		})
-		.finally(() => {
 			Object.keys(Pipes.pipes || {}).forEach((pipe) => {
 				try {
 					Pipes.savePipe(pipe);
 				} catch (error) {}
 			});
+			process.exit(1);
+		})
+		.then((result: InfinityConsole) => {
+			infinityConsole = result;
 		});
 
 if (

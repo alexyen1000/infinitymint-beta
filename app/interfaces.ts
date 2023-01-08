@@ -10,7 +10,7 @@ import { InfinityMintDeployment } from "./deployments";
 import { PathLike } from "fs";
 import { InfinityMintSVGSettings } from "./content";
 import { GasPriceFunction, TokenPriceFunction } from "./gasAndPrices";
-
+import { Options } from "ipfs-core";
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -1185,7 +1185,7 @@ export interface InfinityMintConfig {
 	/**
 	 * ipfs cofiguration settings
 	 */
-	ipfs?: any;
+	ipfs?: Options | boolean;
 	/**
 	 * The settings inputted to ganache within the `server.run()` function of its startup. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
 	 */
