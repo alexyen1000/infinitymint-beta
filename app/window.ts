@@ -436,7 +436,6 @@ export class InfinityMintWindow {
 	}
 
 	public setBorder(border: any) {
-		this.elements["frame"].border = border;
 		this.options.border = border;
 	}
 
