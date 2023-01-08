@@ -234,8 +234,8 @@ if (
 
 //load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
 if (
-	!config.telnet &&
 	config.startup &&
+	!config.telnet &&
 	!config.console &&
 	!isEnvTrue("INFINITYMINT_CONSOLE") &&
 	!isEnvTrue("INFINITYMINT_TELNET")
