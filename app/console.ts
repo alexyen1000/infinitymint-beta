@@ -35,20 +35,15 @@ import { BigNumber } from "ethers";
 import { getProjectDeploymentClasses } from "./deployments";
 import {
 	getImportCache,
+	getImports,
 	hasImportCache,
-	importCount,
-	ImportType,
+	ImportCache,
 	readImportCache,
-	saveImportTache as saveImportCache,
+	saveImportCache as saveImportCache,
 } from "./imports";
 //blessed
 import blessed from "blessed";
-import {
-	findProjects,
-	getProjects,
-	readProjects,
-	saveProjects,
-} from "./projects";
+import { findProjects, saveProjects } from "./projects";
 import { ProjectCache } from "./projects";
 //uuid stuff
 const { v4: uuidv4 } = require("uuid");
@@ -84,7 +79,7 @@ export class InfinityConsole {
 	private hasInitialized: boolean;
 	private currentAudioAwaitingKill: boolean;
 	private player: any;
-	private imports: ImportType;
+	private imports: ImportCache;
 	private projects: ProjectCache;
 
 	constructor(options?: InfinityMintConsoleOptions) {
@@ -301,7 +296,7 @@ export class InfinityConsole {
 						this.gotoWindow("CloseBox");
 						//if the closeBox aka the current window is visible and we press control-c again just exit
 					} else if (this.currentWindow?.name === "CloseBox") {
-						if (this.user !== undefined) {
+						if (this.user) {
 							this.destroy();
 							return;
 						}
@@ -1083,7 +1078,7 @@ export class InfinityConsole {
 							);
 							if (typeof result === "function")
 								await (result as any)(infinitymint);
-							else if (result.execute !== undefined)
+							else if (result.execute)
 								await result.execute(infinitymint);
 
 							(process as any).exit = (process as any)._exit;
@@ -1233,16 +1228,8 @@ export class InfinityConsole {
 		}
 	}
 
-	public async refreshImports(dontUseCache?: boolean) {
-		this.imports =
-			hasImportCache() && !dontUseCache
-				? readImportCache()
-				: await getImportCache();
-
-		if (dontUseCache || !hasImportCache()) {
-			saveImportCache(this.imports);
-			warning("master imports file might need rebuilding");
-		}
+	public async refreshImports(useFresh?: boolean) {
+		this.imports = await getImports(useFresh);
 	}
 
 	public getProjects() {
@@ -1293,7 +1280,7 @@ export class InfinityConsole {
 				Object.values(this.currentWindow.elements)
 					.filter(
 						(element) =>
-							element.think !== undefined ||
+							element.think ||
 							element.alwaysFront ||
 							element.alwaysBack
 					)

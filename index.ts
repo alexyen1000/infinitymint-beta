@@ -56,13 +56,13 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	}
 
 	//start ganache
-	if (hre.config.networks?.ganache !== undefined) {
+	if (hre.config.networks?.ganache) {
 		try {
 			//ask if they want to start ganache
 			//start ganache here
 			let obj = { ...config.ganache } as any;
-			if (obj.wallet === undefined) obj.wallet = {};
-			if (session.environment.ganacheMnemonic === undefined)
+			if (!obj.wallet) obj.wallet = {};
+			if (!session.environment.ganacheMnemonic)
 				throw new Error("no ganache mnemonic");
 
 			obj.wallet.mnemonic = session.environment.ganacheMnemonic;

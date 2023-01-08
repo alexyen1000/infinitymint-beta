@@ -36,30 +36,49 @@ export interface CompiledImportInterface extends ImportInterface {
 	};
 }
 
-export type ImportType = Dictionary<
-	Dictionary<{
-		extension: string;
-		name: string;
-		base: string;
-		dir: string;
-		settings: Array<path.ParsedPath>;
-	}>
->;
+export interface ImportCache {
+	database: Dictionary<
+		Dictionary<{
+			extension: string;
+			name: string;
+			base: string;
+			root: string;
+			dir: string;
+			settings: Array<path.ParsedPath>;
+		}>
+	>;
+	keys: Dictionary<string>;
+}
 
 export const hasImportCache = () => {
 	return fs.existsSync(process.cwd() + "/temp/import_cache.json");
 };
 
-export const importCount = (imports?: ImportType) => {
+export const importCount = (imports?: ImportCache) => {
 	imports = imports || readImportCache();
 	let count = 0;
-	Object.values(imports).forEach((dirs) => {
+	Object.values(imports.database).forEach((dirs) => {
 		count += Object.values(dirs).length;
 	});
 	return count;
 };
 
-export const saveImportTache = (cache: ImportType) => {
+/**
+ *
+ * @param fileNameOrPath
+ * @returns
+ */
+export const getImport = async (fileNameOrPath: string) => {
+	let imports = await getImports();
+	if (!imports.keys[fileNameOrPath])
+		throw new Error("import not found: " + imports.keys[fileNameOrPath]);
+
+	if (!imports.database[imports.keys[fileNameOrPath]]) throw new Error("bad");
+
+	return imports.database[imports.keys[fileNameOrPath]];
+};
+
+export const saveImportCache = (cache: ImportCache) => {
 	log(`saving <${importCount(cache)}> imports to cache file`, "imports");
 	log("saving imports to /temp/import_cache.json", "fs");
 	fs.writeFileSync(
@@ -68,20 +87,33 @@ export const saveImportTache = (cache: ImportType) => {
 	);
 };
 
-export const readImportCache = (): ImportType => {
+export const readImportCache = (): ImportCache => {
 	if (!fs.existsSync(process.cwd() + "/temp/import_cache.json"))
-		return {} as ImportType;
+		return {} as ImportCache;
 
 	return JSON.parse(
 		fs.readFileSync(process.cwd() + "/temp/import_cache.json", {
 			encoding: "utf-8",
 		})
-	) as ImportType;
+	) as ImportCache;
+};
+
+let importCache: ImportCache;
+export const getImports = async (useFresh?: boolean) => {
+	if (
+		useFresh ||
+		(!importCache &&
+			!fs.existsSync(process.cwd() + "/temp/import_cache.json"))
+	) {
+		importCache = await getImportCache();
+		saveImportCache(importCache);
+	} else importCache = readImportCache();
+	return importCache;
 };
 
 export const getImportCache = async (
 	supportedExtensions?: string[]
-): Promise<ImportType> => {
+): Promise<ImportCache> => {
 	supportedExtensions = supportedExtensions || [];
 
 	let config = getConfigFile();
@@ -109,17 +141,24 @@ export const getImportCache = async (
 	let finalLocations = [];
 
 	[
-		...(config.imports || []).map((root: string) =>
-			root.indexOf("imports") === -1
-				? root +
-				  (root[root.length - 1] !== "/" ? "/imports/" : "imports/")
-				: root
+		...(config.imports || []).map(
+			(root: string) =>
+				process.cwd() +
+				"/" +
+				(root.indexOf("imports") === -1
+					? root +
+					  (root[root.length - 1] !== "/" ? "/imports/" : "imports/")
+					: root)
 		),
 		process.cwd() + "/imports/",
 		...(config.roots || []).map(
 			(root: string) =>
-				root +
-				(root[root.length - 1] !== "/" ? "/imports/" : "imports/")
+				process.cwd() +
+				"/" +
+				(root.indexOf("imports") === -1
+					? root +
+					  (root[root.length - 1] !== "/" ? "/imports/" : "imports/")
+					: root)
 		),
 	]
 		.map((location) => {
@@ -151,22 +190,46 @@ export const getImportCache = async (
 		(file) => file.base.indexOf(".settings.") !== -1
 	);
 
-	let imports: ImportType = {};
+	let imports: ImportCache = {
+		database: {},
+		keys: {},
+	};
 	for (let i = 0; i < infinityImports.length; i++) {
 		let normalImport = infinityImports[i];
-		if (!imports[normalImport.dir]) {
+		if (!imports.database[normalImport.dir]) {
 			log(`[${i}] found dir => ${normalImport.dir}`, "imports");
-			imports[normalImport.dir] = {};
+			imports.database[normalImport.dir] = {};
 		}
 
+		let importLessDir = normalImport.dir.substring(
+			0,
+			normalImport.dir.length - "/imports".length
+		);
+
+		imports.keys[normalImport.dir + "/" + normalImport.base] =
+			normalImport.dir;
+		imports.keys[normalImport.dir + "/" + normalImport.name] =
+			normalImport.dir;
+		imports.keys[process.cwd() + "/imports/" + normalImport.name] =
+			normalImport.dir;
+		imports.keys[process.cwd() + "/imports/" + normalImport.base] =
+			normalImport.dir;
+		imports.keys["imports/" + normalImport.name] = normalImport.dir;
+		imports.keys["/imports/" + normalImport.name] = normalImport.dir;
+		imports.keys["imports/" + normalImport.base] = normalImport.dir;
+		imports.keys["/imports/" + normalImport.base] = normalImport.dir;
 		if (
-			imports[normalImport.dir][normalImport.name + normalImport.ext] ===
-			undefined
+			!imports.database[normalImport.dir][
+				normalImport.name + normalImport.ext
+			]
 		)
-			imports[normalImport.dir][normalImport.name + normalImport.ext] = {
+			imports.database[normalImport.dir][
+				normalImport.name + normalImport.ext
+			] = {
 				extension: normalImport.ext,
 				name: normalImport.name,
 				dir: normalImport.dir,
+				root: importLessDir,
 				base: normalImport.base,
 				settings: importSettings.filter(
 					(thatSetting) =>
@@ -184,5 +247,5 @@ export const getImportCache = async (
 			);
 	}
 
-	return imports as ImportType;
+	return imports as ImportCache;
 };

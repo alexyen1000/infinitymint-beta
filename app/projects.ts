@@ -263,11 +263,11 @@ export const findProjects = async (roots?: PathLike[]) => {
 export const getProject = (projectNameOrPath: string) => {
 	let projects = getProjects();
 
-	if (projects.keys[projectNameOrPath] === undefined)
+	if (!projects.keys[projectNameOrPath])
 		throw new Error("cannot find path or name: " + projectNameOrPath);
 
 	let projectName = projects.keys[projectNameOrPath];
-	if (projects.database[projectName] === undefined)
+	if (!projects.database[projectName])
 		throw new Error("cannot find: " + projectName);
 
 	return requireProject(

@@ -333,11 +333,11 @@ export class InfinityMintWindow {
 	public saveOptions() {
 		let session = readSession();
 
-		if (this.options.style === undefined && this.data.style)
+		if (!this.options.style && this.data.style)
 			this.options.style = this.data.style;
-		if (this.options.border === undefined && this.data.border)
+		if (!this.options.border && this.data.border)
 			this.options.border = this.data.border;
-		if (this.options.scrollbar === undefined && this.data.scrollbar)
+		if (!this.options.scrollbar && this.data.scrollbar)
 			this.options.scrollbar = this.data.scrollbar;
 		if (this.options.padding == undefined && this.data.padding)
 			this.options.padding = this.data.padding;

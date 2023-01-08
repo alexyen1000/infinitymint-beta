@@ -46,7 +46,7 @@ const deploy: InfinityMintScript = {
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = "deploy_" + project.name;
-			if (script.infinityConsole.getPipes().pipes[pipeName] === undefined)
+			if (!script.infinityConsole.getPipes().pipes[pipeName])
 				script.infinityConsole.getPipes().registerSimplePipe(pipeName, {
 					listen: true,
 				});
@@ -105,7 +105,7 @@ const deploy: InfinityMintScript = {
 
 			try {
 				if (
-					script.args?.contract !== undefined &&
+					script.args?.contract &&
 					deployment.getKey() !== script.args?.contract.value &&
 					deployment.getContractName() !== script.args.contract.value
 				) {
