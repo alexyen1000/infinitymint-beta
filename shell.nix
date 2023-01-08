@@ -5,6 +5,7 @@ stdenv.mkDerivation {
     buildInputs = [
         jq
         nodejs-slim-18_x
+        ngrok
     ];
     shellHook = ''
         export PATH="$PWD/node_modules/.bin/:$PATH"
