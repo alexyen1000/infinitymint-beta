@@ -15,7 +15,7 @@
     "build": "rm -R -f ./dist && npx tsc",
     "start": "npx ts-node index.ts",
     "doc": "npx typedoc --options ./typedoc.json",
-    "postinstall": "npx hardhat compile"
+    "postinstall": "npx hardhat compile && npx tsc"
   },
   "repository": {
     "type": "git",
