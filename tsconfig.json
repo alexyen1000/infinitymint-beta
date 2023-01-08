@@ -11,6 +11,7 @@
 		"rootDirs": ["./app"],
 		"skipLibCheck": true,
 		"moduleResolution": "node",
+		"noEmit": true,
 		"importHelpers": true,
 		"paths": {
 			"@app/*": ["./app/*"],
