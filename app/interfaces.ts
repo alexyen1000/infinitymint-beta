@@ -566,6 +566,10 @@ export interface InfinityMintConfigEvents extends InfinityMintEvents {
 		InfinityMintEventEmit<string>,
 		Promise<void | boolean>
 	>;
+	destroyed?: FuncSingle<
+		InfinityMintEventEmit<string>,
+		Promise<void | boolean>
+	>;
 }
 
 export type InfinityMintConfigEventKeys = keyof InfinityMintConfigEvents;
@@ -914,6 +918,7 @@ export interface InfinityMintEnvironmentVariables {
 	PIPE_SILENCE?: boolean;
 	PIPE_IGNORE_CONSOLE?: boolean;
 	INFINITYMINT_INCLUDE_DEPLOY?: boolean;
+	INFINITYMINT_TELNET?: boolean;
 	INFINITYMINT_INCLUDE_SCRIPTS?: boolean;
 	GANACHE_PORT?: number;
 	THROW_ALL_ERRORS?: boolean;
@@ -1138,7 +1143,7 @@ export interface InfinityMintConfig {
 	 * ```
 	 */
 	console?: InfinityMintConsoleOptions | boolean;
-	telnet?: boolean;
+	telnet?: boolean | InfinityMintTelnetOptions;
 	/**
 	 * enabled music playback functionality
 	 * @experimental
@@ -1381,6 +1386,13 @@ export interface InfinityMintConsoleOptions {
 	initialWindow?: string | Window;
 	//will not start blessed and draw nothing to this console.
 	dontDraw?: boolean;
+}
+
+export interface InfinityMintTelnetOptions {
+	/**
+	 * port to run telnet on
+	 */
+	port?: number;
 }
 
 /**
