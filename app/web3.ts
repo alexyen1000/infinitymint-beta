@@ -8,6 +8,7 @@ import {
 	saveSession,
 	warning,
 } from "./helpers";
+import { BaseContract } from "ethers";
 import fs from "fs";
 import Pipes from "./pipes";
 import {
@@ -29,6 +30,7 @@ import {
 	InfinityMintConfigSettingsNetwork,
 	InfinityMintDeploymentLive,
 } from "./interfaces";
+import { ContractType } from "hardhat/internal/hardhat-network/stack-traces/model";
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -241,17 +243,12 @@ export const getContract = (
  * @returns
  */
 export const getSignedContract = async (
-	artifactOrDeployment: InfinityMintDeploymentLive | string,
+	deployment: InfinityMintDeploymentLive,
 	signer?: SignerWithAddress
-) => {
+): Promise<BaseContract> => {
 	signer = signer || (await getDefaultSigner());
-	if (typeof artifactOrDeployment === "string") {
-		let factory = await ethers.getContractFactory(artifactOrDeployment);
-		return factory.connect(signer);
-	}
-
-	let contract = getContract(artifactOrDeployment, signer.provider);
-	return contract.connect(signer);
+	let factory = await ethers.getContractFactory(deployment.name);
+	return factory.connect(signer).attach(deployment.address);
 };
 
 export const logTransaction = async (

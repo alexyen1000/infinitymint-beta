@@ -5,7 +5,6 @@ import type {
 	InfinityMintScriptParameters,
 } from "@app/interfaces";
 import { getDefaultSigner, getSignedContract } from "@app/web3";
-import { InfinityMint } from "../typechain-types/InfinityMint";
 import { Royalty } from "../typechain-types/Royalty";
 
 const Withdraw: InfinityMintScript = {
@@ -31,11 +30,11 @@ const Withdraw: InfinityMintScript = {
 		if (withdrawTotal.isZero())
 			throw new Error("you currently have no balance to withdraw");
 
-		let erc721 = (await getSignedContract(
+		let erc721 = await getSignedContract(
 			project.deployments.erc721,
 			currentSigner
-		)) as InfinityMint;
-		await erc721.withdraw();
+		);
+		await erc721.functions.withdraw();
 	},
 };
 
