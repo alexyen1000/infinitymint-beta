@@ -31,6 +31,7 @@ import {
 	InfinityMintConsoleOptions,
 	InfinityMintTelnetOptions,
 } from "./app/interfaces";
+import ipfs from "./app/ipfs";
 
 //export helpers
 export * as Helpers from "./app/helpers";
@@ -43,11 +44,14 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	let session = readSession();
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
+	//allow piping
+	allowPiping();
+	//
 	logDirect("🪐 Starting InfinityConsole");
 	//register current network pipes
 	registerNetworkPipes();
-	//allow piping
-	allowPiping();
+	//create IPFS node
+	await ipfs.create();
 
 	//start ganache
 	if (hre.config.networks?.ganache !== undefined) {

@@ -41,13 +41,11 @@ import {
 	readImportCache,
 	saveImportTache as saveImportCache,
 } from "./imports";
-import fs from "fs";
-import infinitymint from "../index";
-
-//const
-const { v4: uuidv4 } = require("uuid");
 //blessed
-const blessed = require("blessed") as Blessed;
+import blessed from "blessed";
+
+//uuid stuff
+const { v4: uuidv4 } = require("uuid");
 
 /**
  * Powered by Blessed-cli the InfinityConsole is the container of InfinityMintWindows. See {@link app/window.InfinityMintWindow}.
@@ -101,6 +99,7 @@ export class InfinityConsole {
 			this.screen = blessed.screen(
 				this.options?.blessed || {
 					smartCRS: true,
+					fullUnicore: true,
 					autoPadding: true,
 					dockBorders: true,
 					sendFocus: true,
@@ -1390,6 +1389,7 @@ export class InfinityConsole {
 					this.options?.blessed || {
 						smartCRS: true,
 						dockBorders: true,
+						fullUnicore: true,
 						cursor: {
 							artificial: true,
 							shape: {
