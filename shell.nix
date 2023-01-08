@@ -4,7 +4,7 @@ stdenv.mkDerivation {
     name = "node";
     buildInputs = [
         jq
-        nodejs
+        nodejs-slim-18_x
     ];
     shellHook = ''
         export PATH="$PWD/node_modules/.bin/:$PATH"
