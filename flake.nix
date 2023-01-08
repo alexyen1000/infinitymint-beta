@@ -1,6 +1,5 @@
 {
-  description = "InfinityMint Nix Flake";
-
+  description = "InfinityMint Nix Flake";       
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -25,6 +24,7 @@
       };
     in rec {
       defaultPackage = package.nodenix;
+    
       package.nodenix = nl2nix.build {
         src = ./.;
         buildCommands = ["npm run build"];
