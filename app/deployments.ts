@@ -12,10 +12,6 @@ import {
 import {
 	debugLog,
 	findFiles,
-	getCompiledProject,
-	getFileImportExtension,
-	getProject,
-	initializeGanacheMnemonic,
 	isEnvTrue,
 	isInfinityMint,
 	isTypescript,
@@ -23,6 +19,7 @@ import {
 	readSession,
 	warning,
 } from "./helpers";
+import { requireProject, getCompiledProject } from "./projects";
 import { glob } from "glob";
 import fs from "fs";
 import path from "path";
@@ -583,7 +580,7 @@ export const getProjectDeploymentClasses = async (
 			).length !== 0 &&
 			[
 				...(setings?.disabledContracts || []),
-				...(compiledProject?.settings?.disabledContracts || []),
+				...(compiledProject.settings?.disabledContracts || ([] as any)),
 			].filter(
 				(value) =>
 					value === deployment.getContractName() ||
@@ -698,7 +695,10 @@ export const create = (
 	liveDeployment: InfinityMintDeploymentLive,
 	deploymentScript?: string
 ) => {
-	let project = getProject(liveDeployment.project, liveDeployment.javascript);
+	let project = requireProject(
+		liveDeployment.project,
+		liveDeployment.javascript
+	);
 	return new InfinityMintDeployment(
 		deploymentScript || liveDeployment.deploymentScript,
 		liveDeployment.key,

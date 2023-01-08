@@ -2,7 +2,7 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "../InfinityMintAsset.sol";
+import "../../InfinityMintAsset.sol";
 
 contract SimpleSVG is InfinityMintAsset {
 	constructor(string memory _tokenName, address valuesContract)

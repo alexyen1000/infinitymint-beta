@@ -1,9 +1,8 @@
 import {
 	getCompiledProject,
-	getCurrentProject,
 	getTempCompiledProject,
 	hasTempCompiledProject,
-} from "@app/helpers";
+} from "@app/projects";
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,

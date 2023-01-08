@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "ES2019",
+		"target": "ES2015",
 		"module": "NodeNext",
 		"declaration": true,
 		"declarationMap": true,
@@ -9,8 +9,12 @@
 		"strict": false,
 		"allowJs": true,
 		"rootDirs": ["./app"],
+		"skipLibCheck": true,
+		"moduleResolution": "node",
+		"importHelpers": true,
 		"paths": {
-			"@app/*": ["./app/*"]
+			"@app/*": ["./app/*"],
+			"@typechain-types/*": ["./typechain-types/*"]
 		},
 		"esModuleInterop": true
 	},

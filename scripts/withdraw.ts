@@ -1,11 +1,11 @@
-import { getCurrentProject, getDeployedProject } from "@app/helpers";
+import { getCurrentProject, getDeployedProject } from "@app/projects";
 import type {
 	InfinityMintDeployedProject,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from "@app/interfaces";
 import { getDefaultSigner, getSignedContract } from "@app/web3";
-import { Royalty } from "../typechain-types/Royalty";
+import { Royalty } from "@typechain-types/Royalty";
 
 const Withdraw: InfinityMintScript = {
 	name: "Withdraw",

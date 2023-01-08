@@ -4,13 +4,13 @@ stdenv.mkDerivation {
     name = "node";
     buildInputs = [
         jq
-        nodejs
+        nodejs-slim-18_x
+        ngrok
     ];
     shellHook = ''
         export PATH="$PWD/node_modules/.bin/:$PATH"
         alias scripts='jq ".scripts" package.json'
-				alias run='npm run'
-				alias xo='npx xo'
+		alias run='npm run'
         alias g='git' \
             ga='g add' \
             gl='g pull' \
@@ -19,5 +19,6 @@ stdenv.mkDerivation {
             gst='g status' \
             gcm='g commit -m' \
             gcmsg='g add -A; g commit -am'
+        alias hht='PIPE_IGNORE_CONSOLE=true hardhat test'
     '';
 }

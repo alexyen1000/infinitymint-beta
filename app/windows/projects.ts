@@ -1,16 +1,10 @@
 import { InfinityMintWindow } from "../window";
-import {
-	BlessedElement,
-	findProjects,
-	getProject,
-	log,
-	readSession,
-	saveSession,
-} from "../helpers";
+import { BlessedElement, log, readSession, saveSession } from "../helpers";
 import {
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
 } from "../interfaces";
+import { requireProject } from "../projects";
 
 const Projects = new InfinityMintWindow(
 	"Projects",
@@ -144,7 +138,7 @@ Projects.initialize = async (window, frame, blessed) => {
 
 	if (window.data.currentProject) notice.hide();
 
-	let scripts = await findProjects();
+	let scripts = window.getInfinityConsole().getProjects();
 	let projects = scripts.map(
 		(project) =>
 			`${
@@ -158,7 +152,7 @@ Projects.initialize = async (window, frame, blessed) => {
 	list.setItems(projects);
 	list.on("select", (el: any, selected: any) => {
 		let path = scripts[selected];
-		let project = getProject(
+		let project = requireProject(
 			path.dir + "/" + path.base,
 			path.ext === ".js"
 		);

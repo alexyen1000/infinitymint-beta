@@ -1,11 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 //llydia cross 2021
 pragma solidity ^0.8.0;
-import "../Royalty.sol";
+import "../../Royalty.sol";
 
-/**
-    Needs
- */
 contract SplitRoyalty is Royalty {
 	mapping(uint256 => uint256) public counter;
 

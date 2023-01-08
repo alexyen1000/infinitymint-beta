@@ -5,7 +5,7 @@ import {
 	registerNetworkPipes,
 	startNetworkPipe,
 } from "./app/web3";
-import GanacheServer from "./app/ganacheServer";
+import GanacheServer from "./app/ganache";
 import { Web3Provider } from "@ethersproject/providers";
 import fs from "fs";
 
@@ -23,6 +23,7 @@ import {
 	logDirect,
 	BlessedElement,
 	isRegistered,
+	allowPiping,
 } from "./app/helpers";
 import Pipes from "./app/pipes";
 import {
@@ -42,9 +43,17 @@ export const init = async (options: InfinityMintConsoleOptions) => {
 	let session = readSession();
 	if (!fs.existsSync("./artifacts")) await hre.run("compile");
 
+	//allow piping
+	allowPiping();
+	//
 	logDirect("🪐 Starting InfinityConsole");
 	//register current network pipes
 	registerNetworkPipes();
+	try {
+		//create IPFS node
+	} catch (error) {
+		warning(`could not start IPFS: ` + error?.message);
+	}
 
 	//start ganache
 	if (hre.config.networks?.ganache !== undefined) {
@@ -152,9 +161,16 @@ export const startTelnet = (port?: number) => {
 					screen.render();
 				});
 
-				logDirect(`🦊 New Connection ${client.input.remoteAddress}`);
+				if (!isRegistered(client, infinityConsole.getSessionId()))
+					infinityConsole.gotoWindow("Login");
 
-				if (!isRegistered(client)) infinityConsole.gotoWindow("Login");
+				logDirect(
+					`🦊 New Connection ${
+						client.remoteAddress ||
+						client.output.remoteAddress ||
+						client.input.remoteAddress
+					}<${infinityConsole.getSessionId()}>`
+				);
 			} catch (error) {
 				logDirect(
 					`💥 error<${client.input.remoteAddress}>:\n${error.stack}`
@@ -171,7 +187,11 @@ export const startTelnet = (port?: number) => {
 
 			//when the client closes
 			client.on("close", function () {
-				logDirect(`💀 Disconnected ${client.input.remoteAddress}`);
+				logDirect(
+					`💀 Disconnected ${
+						client.remoteAddress || client.input.remoteAddress
+					}`
+				);
 			});
 
 			//screen on
@@ -219,17 +239,15 @@ if (
 		.catch((error) => {
 			if ((console as any)._error) (console as any)._error(error);
 			console.error(error);
-			process.exit(1);
-		})
-		.then((result: InfinityConsole) => {
-			infinityConsole = result;
-		})
-		.finally(() => {
 			Object.keys(Pipes.pipes || {}).forEach((pipe) => {
 				try {
 					Pipes.savePipe(pipe);
 				} catch (error) {}
 			});
+			process.exit(1);
+		})
+		.then((result: InfinityConsole) => {
+			infinityConsole = result;
 		});
 
 //load infinitymint but with no blessed UI with the idea of InfinityMint being used in a stack
@@ -244,17 +262,15 @@ if (
 		.catch((error) => {
 			if ((console as any)._error) (console as any)._error(error);
 			console.error(error);
-			process.exit(1);
-		})
-		.then((result: InfinityConsole) => {
-			infinityConsole = result;
-		})
-		.finally(() => {
 			Object.keys(Pipes.pipes || {}).forEach((pipe) => {
 				try {
 					Pipes.savePipe(pipe);
 				} catch (error) {}
 			});
+			process.exit(1);
+		})
+		.then((result: InfinityConsole) => {
+			infinityConsole = result;
 		});
 
 if (

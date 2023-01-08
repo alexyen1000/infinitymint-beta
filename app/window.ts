@@ -11,8 +11,8 @@ import {
 	BlessedElementOptions,
 	getConfigFile,
 	log,
-	getCurrentProjectPath,
 } from "./helpers";
+import { getCurrentProjectPath } from "./projects";
 import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
@@ -436,7 +436,6 @@ export class InfinityMintWindow {
 	}
 
 	public setBorder(border: any) {
-		this.elements["frame"].border = border;
 		this.options.border = border;
 	}
 

@@ -44,5 +44,6 @@ Login.setForcedOpen(true);
 Login.setHideRefreshButton(true);
 Login.setHideMinimizeButton(true);
 Login.setHideCloseButton(true);
+Login.setHiddenFromMenu(true);
 
 export default Login;

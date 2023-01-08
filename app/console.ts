@@ -41,13 +41,17 @@ import {
 	readImportCache,
 	saveImportTache as saveImportCache,
 } from "./imports";
-import fs from "fs";
-import infinitymint from "../index";
-
-//const
-const { v4: uuidv4 } = require("uuid");
 //blessed
-const blessed = require("blessed") as Blessed;
+import blessed from "blessed";
+import {
+	findProjects,
+	getProjects,
+	readProjects,
+	saveProjects,
+} from "./projects";
+import { ProjectCache } from "./projects";
+//uuid stuff
+const { v4: uuidv4 } = require("uuid");
 
 /**
  * Powered by Blessed-cli the InfinityConsole is the container of InfinityMintWindows. See {@link app/window.InfinityMintWindow}.
@@ -81,6 +85,7 @@ export class InfinityConsole {
 	private currentAudioAwaitingKill: boolean;
 	private player: any;
 	private imports: ImportType;
+	private projects: ProjectCache;
 
 	constructor(options?: InfinityMintConsoleOptions) {
 		this.screen = undefined;
@@ -101,6 +106,7 @@ export class InfinityConsole {
 			this.screen = blessed.screen(
 				this.options?.blessed || {
 					smartCRS: true,
+					fullUnicode: true,
 					autoPadding: true,
 					dockBorders: true,
 					sendFocus: true,
@@ -443,6 +449,14 @@ export class InfinityConsole {
 		this.windowManager = undefined;
 	}
 
+	/**
+	 *
+	 */
+	public async reloadProjects() {
+		let projects = await findProjects();
+		this.projects = saveProjects(projects);
+	}
+
 	public async reload() {
 		this.emit("reloaded");
 		this.setLoading("Reloading InfinityConsole", 10);
@@ -458,7 +472,8 @@ export class InfinityConsole {
 		this.updateWindowsList();
 		this.stopLoading();
 
-		if (this.user && !isRegistered(this.user)) this.gotoWindow("Login");
+		if (this.user && !isRegistered(this.user, this.getSessionId()))
+			this.gotoWindow("Login");
 	}
 
 	public getWindows() {
@@ -1003,6 +1018,7 @@ export class InfinityConsole {
 	}
 
 	public async refreshScripts() {
+		let config = getConfigFile();
 		//call reloads
 		if (this.scripts && this.scripts.length !== 0) {
 			for (let i = 0; i < this.scripts.length; i++) {
@@ -1036,17 +1052,41 @@ export class InfinityConsole {
 					scriptSource.fileName = script.dir + "/" + script.base;
 					this.scripts.push(scriptSource);
 				} else {
+					let _potentialSource: any = {};
+					if (
+						config.settings.scripts.disableJavascriptRequire.filter(
+							(value: string) => script.dir.indexOf(value) !== -1
+						).length === 0
+					) {
+						(process as any)._exit = (code?: number) => {
+							warning("prevented process exit");
+						};
+						_potentialSource = await requireScript(
+							script.dir + "/" + script.base,
+							this
+						);
+						(process as any).exit = (process as any)._exit;
+					}
+
 					this.scripts.push({
-						name: script.name,
+						..._potentialSource,
+						name: _potentialSource?.name || script.name,
 						fileName: script.dir + "/" + script.base,
 						javascript: true,
 						execute: async (infinitymint) => {
+							(process as any)._exit = (code?: number) => {
+								if (code === 1) warning("exited with code 0");
+							};
 							let result = await requireScript(
 								script.dir + "/" + script.base,
 								this
 							);
 							if (typeof result === "function")
 								await (result as any)(infinitymint);
+							else if (result.execute !== undefined)
+								await result.execute(infinitymint);
+
+							(process as any).exit = (process as any)._exit;
 						},
 					});
 				}
@@ -1205,6 +1245,10 @@ export class InfinityConsole {
 		}
 	}
 
+	public getProjects() {
+		return Object.values(this.projects.database);
+	}
+
 	public async initialize() {
 		//if the network member has been defined then we have already initialized
 		if (this.network) throw new Error("console already initialized");
@@ -1214,6 +1258,9 @@ export class InfinityConsole {
 		//create the window manager
 		this.setLoading("Loading Windows", 25);
 		await this.refreshWindows();
+
+		this.setLoading("Loading Projects", 35);
+		await this.reloadProjects();
 
 		log(`loading InfinityConsole<${this.sessionId}>`);
 		//the think method for this console
@@ -1238,7 +1285,6 @@ export class InfinityConsole {
 
 		this.think = setInterval(() => {
 			if (!this.hasInitialized) return;
-			if (!this.loadingBox.hidden) this.loadingBox.setFront();
 			(this.options?.think || int)();
 			this.tick++;
 
@@ -1252,10 +1298,10 @@ export class InfinityConsole {
 							element.alwaysBack
 					)
 					.forEach((element) => {
-						if (!this.options.dontDraw && element.alwaysFront)
-							element.setFront();
 						if (!this.options.dontDraw && element.alwaysBack)
 							element.setBack();
+						if (!this.options.dontDraw && element.alwaysFront)
+							element.setFront();
 
 						if (
 							element.think &&
@@ -1264,8 +1310,6 @@ export class InfinityConsole {
 						)
 							element.think(this.currentWindow, element, blessed);
 					});
-
-				if (!this.loadingBox.hidden) this.loadingBox.setFront();
 			}
 
 			if (this.errorBox && !this.errorBox.hidden)
@@ -1367,6 +1411,7 @@ export class InfinityConsole {
 					this.options?.blessed || {
 						smartCRS: true,
 						dockBorders: true,
+						fullUnicore: true,
 						cursor: {
 							artificial: true,
 							shape: {

@@ -10,7 +10,7 @@ import { InfinityMintDeployment } from "./deployments";
 import { PathLike } from "fs";
 import { InfinityMintSVGSettings } from "./content";
 import { GasPriceFunction, TokenPriceFunction } from "./gasAndPrices";
-
+import { Options } from "ipfs-core";
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -1185,7 +1185,7 @@ export interface InfinityMintConfig {
 	/**
 	 * ipfs cofiguration settings
 	 */
-	ipfs?: any;
+	ipfs?: InfinityMintIPFSOptions | boolean;
 	/**
 	 * The settings inputted to ganache within the `server.run()` function of its startup. Uses all valid configuration options found within their docs. <https://www.npmjs.com/package/ganache>
 	 */
@@ -1205,6 +1205,17 @@ export interface InfinityMintConfig {
 	 * @see {@link InfinityMintConfigSettings}
 	 */
 	settings?: InfinityMintConfigSettings;
+}
+
+export interface InfinityMintIPFSOptions {
+	web3Storage: {
+		token?: string;
+		useAlways?: boolean;
+	};
+	endpoints: string[] | string;
+	kubo: {
+		useAlways?: boolean;
+	};
 }
 
 /**
@@ -1349,6 +1360,9 @@ export interface InfinityMintConfigSettings extends KeyValue {
 	 * @see {@link InfinityMintConfigSettingsCompile}
 	 */
 	compile?: InfinityMintConfigSettingsCompile;
+	scripts?: {
+		disableJavascriptRequire: PathLike[];
+	};
 }
 
 /**

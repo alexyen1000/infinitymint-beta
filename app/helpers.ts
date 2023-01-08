@@ -27,6 +27,7 @@ import {
 } from "./gasAndPrices";
 import { glob } from "glob";
 import { InfinityConsole } from "./console";
+import { getCurrentProject } from "./projects";
 
 export interface Vector {
 	x: number;
@@ -204,6 +205,7 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	//if we aren't overwriting console methods and console is false
 	if (
+		!isAllowPiping ||
 		isEnvTrue("PIPE_IGNORE_CONSOLE") ||
 		(!isEnvTrue("PIPE_IGNORE_CONSOLE") &&
 			getConfigFile().console === false &&
@@ -290,7 +292,7 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
  * @param msg
  */
 export const logDirect = (msg: any) => {
-	if ((console as any)._log) (console as any)._log(msg);
+	if ((console as any)._log && isAllowPiping) (console as any)._log(msg);
 	console.log(msg);
 };
 
@@ -301,6 +303,11 @@ export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let _log = console.log;
 	console.log = (msg: string | object) => {
+		if (!isAllowPiping) {
+			_log(msg);
+			return;
+		}
+
 		try {
 			if (typeof msg === "object") msg = JSON.stringify(msg, null, 2);
 		} catch (error) {
@@ -325,6 +332,10 @@ export const overwriteConsoleMethods = () => {
 
 	let _error = console.error;
 	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
+		if (!isAllowPiping) {
+			_error(error);
+			return;
+		}
 		if (Pipes.pipes[Pipes.currentPipeKey] && !dontSendToPipe)
 			Pipes.getPipe(Pipes.currentPipeKey).error(error);
 
@@ -365,137 +376,6 @@ export const getConfigFile = () => {
 	let res = require(process.cwd() + "/infinitymint.config");
 	res = res.default || res;
 	return res as InfinityMintConfig;
-};
-
-/**
- * Returns a compiled InfinityMintProject ready to be deployed, see {@link app/interfaces.InfinityMintProject}.
- * @param projectName
- * @throws
- */
-export const getCompiledProject = (projectName: string) => {
-	let res = require(process.cwd() +
-		"/projects/compiled/" +
-		projectName +
-		".compiled.json");
-	res = res.default || res;
-	//
-	if (!res.compiled)
-		throw new Error(`project ${projectName} has not been compiled`);
-
-	return res as InfinityMintCompiledProject;
-};
-
-export const hasTempDeployedProject = (projectName: string) => {
-	return fs.existsSync(
-		process.cwd() + "/temp/projects/" + projectName + ".temp.json"
-	);
-};
-
-export const hasTempCompiledProject = (projectName: string) => {
-	return fs.existsSync(
-		process.cwd() + "/temp/projects/" + projectName + ".compiled.temp.json"
-	);
-};
-
-export const saveTempDeployedProject = (project: InfinityMintProject) => {
-	log("saving " + project.name + ".temp.json", "fs");
-	fs.writeFileSync(
-		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
-		JSON.stringify(project)
-	);
-};
-
-export const saveTempCompiledProject = (project: InfinityMintProject) => {
-	log("saving " + project.name + ".compiled.temp.json", "fs");
-	fs.writeFileSync(
-		process.cwd() +
-			"/temp/projects/" +
-			project.name +
-			".compiled.temp.json",
-		JSON.stringify(project)
-	);
-};
-
-/**
- * Returns a temporary deployed InfinityMintProject which can be picked up and completed.
- * @param projectName
- * @returns
- * @throws
- */
-export const getTempDeployedProject = (projectName: string) => {
-	try {
-		let res = require(process.cwd() +
-			"/temp/projects/" +
-			projectName +
-			".temp.deployed.json");
-		res = res.default || res;
-		return res as InfinityMintTempProject;
-	} catch (error) {
-		throw new Error(
-			"could not load temp deployed project: " + error.message
-		);
-	}
-};
-
-/**
- * Returns a temporary compiled InfinityMintProject which can be picked up and completed.
- * @param projectName
- * @returns
- * @throws
- */
-export const getTempCompiledProject = (projectName: string) => {
-	try {
-		let res = require(process.cwd() +
-			"/temp/projects/" +
-			projectName +
-			".temp.compiled.json");
-		res = res.default || res;
-
-		return res as InfinityMintTempProject;
-	} catch (error) {
-		throw new Error(
-			"could not load temp deployed project: " + error.message
-		);
-	}
-};
-
-/**
- * Returns a deployed InfinityMintProject, see {@link app/interfaces.InfinityMintProject}.
- * @param projectName
- */
-export const getDeployedProject = (projectName: string, version?: any) => {
-	let res = require(process.cwd() +
-		"/projects/deployed/" +
-		projectName +
-		`@${version}.json`);
-	res = res.default || res;
-	//
-	if (!res.deployed)
-		throw new Error(`project ${projectName} has not been deployed`);
-
-	return res as InfinityMintDeployedProject;
-};
-
-/**
- * Returns an InfinityMintProject file relative to the /projects/ folder, see {@link app/interfaces.InfinityMintProject}. Will return type of InfinityMintProjectClassic if second param is true.
- * @param projectName
- * @param isJavaScript
- * @throws
- */
-export const getProject = (
-	projectPath: PathLike,
-	isJavaScript: boolean,
-	clearCache?: boolean
-) => {
-	if (clearCache && require.cache[projectPath as string])
-		delete require.cache[projectPath as string];
-
-	let res = require(projectPath as string);
-	res = res.default || res;
-	res.javascript = isJavaScript;
-
-	if (isJavaScript) return res as InfinityMintProjectJavascript;
-	return res as InfinityMintProject;
 };
 
 export const copyContractsFromNodeModule = (
@@ -778,33 +658,6 @@ export const findScripts = async (roots?: string[]) => {
 };
 
 /**
- * Returns the current project
- * @returns
- */
-export const getCurrentProjectPath = () => {
-	let session = readSession();
-
-	if (!session.environment.project) return undefined;
-	return session.environment.project as path.ParsedPath;
-};
-
-export const getCurrentDeployedProject = () => {
-	if (!getCurrentProjectPath()) throw new Error("no current project");
-
-	return getDeployedProject(getCurrentProjectPath().name);
-};
-
-/**
- *
- * @returns
- */
-export const getCurrentCompiledProject = () => {
-	if (!getCurrentProjectPath()) throw new Error("no current project");
-
-	return getCompiledProject(getCurrentProjectPath().name);
-};
-
-/**
  *
  * @param script
  * @param eventEmitter
@@ -819,31 +672,16 @@ export const executeScript = async (
 	args?: Dictionary<InfinityMintScriptArguments>,
 	console?: InfinityConsole
 ) => {
-	if (!script.javascript)
-		await script.execute({
-			script: script,
-			eventEmitter: eventEmitter,
-			log: log,
-			debugLog: debugLog,
-			gems: gems,
-			args: args,
-
-			infinityConsole: console,
-			project: getCurrentProject(true),
-		});
-	else throw new Error("javascript files are not supported yet");
-};
-
-/**
- *
- * @returns
- */
-export const getCurrentProject = (cleanCache?: boolean) => {
-	return getProject(
-		getCurrentProjectPath().dir + "/" + getCurrentProjectPath().base,
-		getCurrentProjectPath().ext === ".js",
-		cleanCache
-	);
+	await script.execute({
+		script: script,
+		eventEmitter: eventEmitter,
+		log: log,
+		debugLog: debugLog,
+		gems: gems,
+		args: args,
+		infinityConsole: console,
+		project: getCurrentProject(true),
+	});
 };
 
 /**
@@ -866,38 +704,6 @@ export const requireWindow = (fileName: string) => {
 	result.setFileName(fileName);
 	result.log("required");
 	return result as InfinityMintWindow;
-};
-
-/**
- *
- * @param roots
- * @returns
- */
-export const findProjects = async (roots?: PathLike[]) => {
-	let config = getConfigFile();
-	roots = roots || [];
-	roots = [
-		...roots,
-		process.cwd() + "/projects/",
-		...(config.roots || []).map(
-			(root: string) =>
-				process.cwd() +
-				"/" +
-				root +
-				(root[root.length - 1] !== "/" ? "/projects/" : "projects/")
-		),
-	];
-
-	let projects = [];
-	for (let i = 0; i < roots.length; i++) {
-		projects = [
-			...projects,
-			...(await findFiles(roots[i] + "**/*.ts")),
-			...(await findFiles(roots[i] + "**/*.js")),
-		];
-	}
-
-	return projects.map((filePath) => path.parse(filePath));
 };
 
 /**
@@ -968,6 +774,11 @@ export const isInfinityMint = () => {
 
 		return false;
 	}
+};
+
+let isAllowPiping = false;
+export const allowPiping = () => {
+	isAllowPiping = true;
 };
 
 /**
@@ -1118,6 +929,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 		"windows",
 		"glob",
 		"fs",
+		"ipfs",
 		"receipts",
 	];
 	pipes.forEach((pipe) =>
@@ -1239,11 +1051,19 @@ export const getGanacheMnemonic = () => {
 };
 
 export const usernameList: KeyValue = {};
-export const registerUsername = (username: string, client: any) => {
+export const registerUsername = (
+	username: string,
+	client: any,
+	sessionId: any
+) => {
 	if (usernameList[username])
 		throw new Error("username already taken: " + username);
 
-	usernameList[username] = client;
+	usernameList[username] = {
+		username: username,
+		client: client,
+		sessionId: sessionId,
+	};
 };
 
 /**
@@ -1251,8 +1071,8 @@ export const registerUsername = (username: string, client: any) => {
  * @param client
  * @returns
  */
-export const isRegistered = (client: any) => {
-	return getUsernames(client).length !== 0;
+export const isRegistered = (client: any, sessionId: any) => {
+	return getUsernames(client, sessionId).length !== 0;
 };
 
 /**
@@ -1260,10 +1080,11 @@ export const isRegistered = (client: any) => {
  * @param client
  * @returns
  */
-export const getUsernames = (client: any): any[] => {
+export const getUsernames = (client: any, sessionId?: any): any[] => {
 	return Object.values(usernameList).filter(
-		(thatClient) =>
-			thatClient.input?.remoteAddress === client?.input?.remoteAddress
+		(entry) =>
+			client.remoteAddress === entry.remoteAddress &&
+			(sessionId ? entry.sessionId === sessionId : true)
 	);
 };
 

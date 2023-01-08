@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 //SafeMath Contract
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../RandomNumber.sol";
+import "../../RandomNumber.sol";
 
 /// @title InfinityMint Seeded Random
 /// @author Llydia Cross

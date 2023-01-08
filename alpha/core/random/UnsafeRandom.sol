@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 //SafeMath Contract
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../RandomNumber.sol";
+import "../../RandomNumber.sol";
 
 contract UnsafeRandom is RandomNumber {
 	uint256 internal numberSeed = 12456789;

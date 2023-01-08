@@ -2,7 +2,6 @@ import {
 	calculateWidth,
 	debugLog,
 	getConfigFile,
-	getCurrentProjectPath,
 	getInfinityMintVersion,
 	getPackageJson,
 	getSolidityFolder,
@@ -11,6 +10,7 @@ import {
 	isTypescript,
 	warning,
 } from "../helpers";
+import { getCurrentProjectPath } from "../projects";
 import { InfinityMintWindow } from "../window";
 import hre from "hardhat";
 import { getDefaultAccountIndex } from "../web3";
