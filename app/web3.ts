@@ -121,7 +121,9 @@ export const startInfinityConsole = async (
 		eventEmitter,
 	);
 	logDirect(
-		'💭 Initializing InfinityConsole<' + infinityConsole.getSessionId() + '>',
+		'💭 Initializing InfinityConsole{cyan-fg}<' +
+			infinityConsole.getSessionId() +
+			'>{/cyan-fg}',
 	);
 	await infinityConsole.initialize();
 	log(

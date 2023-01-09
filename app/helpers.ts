@@ -293,8 +293,11 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
  *
  * @param msg
  */
+const _blessed = require('blessed');
 export const logDirect = (msg: any) => {
-	if ((console as any)._log && isAllowPiping) (console as any)._log(msg);
+	if ((console as any)._log && isAllowPiping)
+		(console as any)._log(_blessed.cleanTags(msg));
+
 	console.log(msg);
 };
 
@@ -307,7 +310,7 @@ export const overwriteConsoleMethods = () => {
 	console.log = (msg: string) => {
 		msg = msg.toString();
 		if (!isAllowPiping) {
-			_log(msg);
+			_log(_blessed.cleanTags(msg));
 			return;
 		}
 
@@ -337,7 +340,7 @@ export const overwriteConsoleMethods = () => {
 			(!defaultFactory.pipes[defaultFactory.currentPipeKey] &&
 				!isEnvTrue('PIPE_SILENCE_UNDEFINED_PIPE'))
 		)
-			_log(msg.replace('<#DONT_LOG_ME$>', ''));
+			_log(_blessed.cleanTags(msg.replace('<#DONT_LOG_ME$>', '')));
 	};
 	(console as any)._log = _log;
 
