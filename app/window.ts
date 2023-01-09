@@ -987,6 +987,8 @@ export class InfinityMintWindow {
 
 		this.log('calling initialize');
 		try {
+			//update the title and frame
+			this.elements['frame'].setFront();
 			await this.initialize(this, this.elements['frame'], blessed);
 			this.destroyed = false;
 			this.initialized = true;
@@ -1012,7 +1014,6 @@ export class InfinityMintWindow {
 			if (element.alwaysFront) element.setFront();
 		});
 
-		//update the title and frame
 		this.elements['hideButton'].setFront();
 		this.elements['closeButton'].setFront();
 		//frame title

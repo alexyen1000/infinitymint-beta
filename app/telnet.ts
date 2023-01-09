@@ -5,14 +5,7 @@ import {
 } from './interfaces';
 import {createHash} from 'node:crypto';
 import fs from 'fs';
-import {
-	Blessed,
-	BlessedElement,
-	debugLog,
-	getConfigFile,
-	log,
-	warning,
-} from './helpers';
+import {BlessedElement, getConfigFile} from './helpers';
 import InfinityConsole from './console';
 import {Dictionary} from 'form-data';
 import {logDirect} from './helpers';

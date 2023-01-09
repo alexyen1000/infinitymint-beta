@@ -3,7 +3,13 @@ import hre from 'hardhat';
 import fs from 'fs';
 
 //import things we need
-import {isEnvTrue, log, getConfigFile, logDirect} from './app/helpers';
+import {
+	isEnvTrue,
+	log,
+	getConfigFile,
+	logDirect,
+	readSession,
+} from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
 import {
@@ -46,8 +52,7 @@ export const load = async (
 		...(options || {}),
 		...(typeof config?.console === 'object' ? config.console : {}),
 	} as InfinityMintConsoleOptions;
-
-	if (!fs.existsSync('./artifacts')) await hre.run('compile');
+	let session = readSession();
 
 	//if we arenttelnet
 	if (!config.telnet) {
@@ -55,6 +60,9 @@ export const load = async (
 			config,
 			hre.config.networks.ganache !== undefined,
 		);
+
+		if (!fs.existsSync('./artifacts')) await hre.run('compile');
+		hre.changeNetwork(session.environment.defaultNetwork || 'hardhat');
 
 		//do not start an InfinityConsole normally if we have nothing in config, run InfinityMint as NPM module in the back
 		if (!config.console && !config.startup && !config.telnet)
@@ -82,7 +90,6 @@ export const load = async (
 				hre.config.networks.ganache !== undefined,
 			).then((config: InfinityMintConfig) => {
 				let port = (config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
-
 				let telnet = new TelnetServer();
 				telnet.start(port);
 			});

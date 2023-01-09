@@ -473,12 +473,6 @@ export class InfinityConsole {
 
 	public cleanup() {
 		this.hasInitialized = false;
-		//reset pipes
-		Object.values(this.logs.pipes).forEach(pipe => {
-			pipe.logs = [];
-			pipe.errors = [];
-			this.logs.log('{red-fg}pipe reset{/red-fg}');
-		});
 
 		//then start destorying
 		Object.keys(this.inputKeys).forEach(key => {
@@ -1316,11 +1310,18 @@ export class InfinityConsole {
 		this.setLoading('Loading Imports', 10);
 		//refresh imports
 		if (!this.imports || !hasImportCache()) await this.refreshImports();
+
+		this.setLoading('Loading Web3', 10);
+		await this.refreshWeb3();
+
+		this.setLoading('Loading Scripts', 25);
+		await this.refreshScripts();
+
 		//create the window manager
-		this.setLoading('Loading Windows', 25);
+		this.setLoading('Loading Windows', 35);
 		await this.refreshWindows();
 
-		this.setLoading('Loading Projects', 35);
+		this.setLoading('Loading Projects', 45);
 		await this.reloadProjects();
 
 		if (this.options.dontDraw) {
@@ -1342,12 +1343,6 @@ export class InfinityConsole {
 
 			this.screen.render();
 		};
-
-		this.setLoading('Loading Web3', 30);
-		await this.refreshWeb3();
-
-		this.setLoading('Loading Scripts', 45);
-		await this.refreshScripts();
 
 		this.think = setInterval(() => {
 			if (!this.hasInitialized) return;
@@ -1375,6 +1370,7 @@ export class InfinityConsole {
 					});
 			}
 
+			this.windowManager.setBack();
 			this.loadingBox.setFront();
 
 			if (this.errorBox && !this.errorBox.hidden) this.errorBox.setFront();
