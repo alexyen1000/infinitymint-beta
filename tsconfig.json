@@ -8,23 +8,30 @@
 		"outDir": "dist",
 		"strict": false,
 		"allowJs": true,
-		"rootDirs": ["./app"],
+		"rootDirs": [
+			"./app"
+		],
 		"skipLibCheck": true,
 		"moduleResolution": "node",
 		"importHelpers": true,
 		"paths": {
-			"@app/*": ["./app/*"],
-			"@typechain-types/*": ["./typechain-types/*"]
+			"@app/*": [
+				"./app/*"
+			],
+			"@typechain-types/*": [
+				"./typechain-types/*"
+			]
 		},
 		"esModuleInterop": true
 	},
 	"exclude": [
 		"dist",
+		"dist/tests",
 		"node_modules",
 		"gems/__",
 		"gems/__cache",
 		"gems/@",
-		"projects"
+		"tests"
 	],
 	"include": [
 		"./app",
@@ -34,7 +41,12 @@
 		"./imports",
 		"./examples",
 		"./typechain-types",
-		"./index.ts"
+		"./index.ts",
+		"./tests"
 	],
-	"files": ["./hardhat.config.ts", "./index.ts", "./examples/example.env.ts"]
+	"files": [
+		"./hardhat.config.ts",
+		"./index.ts",
+		"./examples/example.env.ts"
+	]
 }
