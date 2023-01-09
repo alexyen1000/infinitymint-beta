@@ -207,7 +207,7 @@ export const log = (msg: string | object | number, pipe?: string) => {
 			isEnvTrue("PIPE_SILENCE") === false)
 	)
 		console.log(
-			msg + (pipe !== "default" ? ` <${pipe || "default"}>` : "")
+			msg + (pipe === "default" || !pipe ? "" : ` <${pipe || "unkown"}>`)
 		);
 
 	defaultFactory.log(msg.toString(), pipe);
