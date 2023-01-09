@@ -933,7 +933,7 @@ export class InfinityMintWindow {
 		if (this.initialized && this.destroyed && this.destroyId) {
 			let oldId = this.id;
 			this.id = this.generateId();
-			debugLog(`old id <${this.name}>[${oldId}] destroyed`);
+			this.debugLog(`old id <${this.name}>[${oldId}] destroyed`);
 		}
 		this.creation = Date.now();
 		let closeButton = this.createElement("closeButton", {

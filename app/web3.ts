@@ -47,7 +47,7 @@ export const initializeInfinityMint = async (
 	//
 	logDirect("🪐 Starting InfinityConsole");
 	//register current network pipes
-	registerNetworkdefaultFactory();
+	registerNetworkLogs();
 	try {
 		//create IPFS node
 	} catch (error) {
@@ -84,10 +84,8 @@ export const initializeInfinityMint = async (
 			session.environment.ganachePrivateKeys = keys;
 			saveSession(session);
 
-			let provider = (await import("./ganache")).default.start(
-				config.ganache || {}
-			);
-			startNetworkPipe(provider as any, "ganache");
+			let provider = await GanacheServer.start(config.ganache || {});
+			startNetworkPipe(provider, "ganache");
 		} catch (error) {
 			warning("could not start ganache: " + error);
 		}
@@ -422,7 +420,7 @@ export const getDefaultAccountIndex = () => {
 	return config?.settings?.networks[hre.network.name]?.defaultAccount || 0;
 };
 
-export const registerNetworkdefaultFactory = () => {
+export const registerNetworkLogs = () => {
 	let networks = Object.keys(hre.config.networks);
 	let config = getConfigFile();
 

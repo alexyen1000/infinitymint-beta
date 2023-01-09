@@ -247,7 +247,7 @@ export class PipeFactory {
 
 export let defaultFactory: PipeFactory;
 export const createDefaultFactory = () => {
-	console.log("creating default pipe factory");
+	console.log("🛸 Creating Default Logger");
 	defaultFactory = new PipeFactory();
 };
 //create default pipe
