@@ -81,7 +81,6 @@ export class GanacheServer {
 
 	getProvider() {
 		if (this.provider == undefined) throw new Error('invalid ethers provider');
-
 		return this.provider;
 	}
 }

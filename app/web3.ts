@@ -38,68 +38,6 @@ import {TelnetServer} from './telnet';
 //stores listeners for the providers
 const ProviderListeners = {} as any;
 
-export const initializeInfinityMint = async (
-	config?: InfinityMintConfig,
-	startGanache?: boolean,
-) => {
-	let session = readSession();
-	//register current network pipes
-	registerNetworkLogs();
-
-	//start ganache
-	if (startGanache) {
-		try {
-			//ask if they want to start ganache
-			//start ganache here
-			let obj = {...config.ganache} as any;
-			if (!obj.wallet) obj.wallet = {};
-			if (!session.environment.ganacheMnemonic)
-				throw new Error('no ganache mnemonic');
-
-			obj.wallet.mnemonic = session.environment.ganacheMnemonic;
-			saveSession(session);
-			debugLog('starting ganache with menomic of: ' + obj.wallet.mnemonic);
-
-			//get private keys and save them to file
-			let keys = getPrivateKeys(session.environment.ganacheMnemonic);
-			debugLog(
-				'found ' +
-					keys.length +
-					' private keys for mnemonic: ' +
-					session.environment.ganacheMnemonic,
-			);
-			keys.forEach((key, index) => {
-				debugLog(`[${index}] => ${key}`);
-			});
-			session.environment.ganachePrivateKeys = keys;
-			saveSession(session);
-
-			let provider = await GanacheServer.start(config.ganache || {});
-			startNetworkPipe(provider, 'ganache');
-		} catch (error) {
-			warning('could not start ganache: ' + error.stack);
-		}
-	} else {
-		warning('no ganache network found');
-	}
-
-	//allow piping
-	allowPiping();
-	//
-	logDirect('🪐 Starting InfinityConsole');
-
-	try {
-		//create IPFS node
-	} catch (error) {
-		warning(`could not start IPFS: ` + error?.message);
-	}
-
-	//start a network pipe if we aren't ganache as we do something different if we are
-	if (startGanache) startNetworkPipe();
-	//initialize console
-	return config;
-};
-
 //function to launch the console
 export const startInfinityConsole = async (
 	options?: InfinityMintConsoleOptions,
@@ -300,6 +238,7 @@ export const changeNetwork = (network: string) => {
  * @returns
  */
 export const getProvider = () => {
+	logDirect(hre.network.name);
 	if (hre.network.name === 'ganache' && isEnvTrue('GANACHE_EXTERNAL') === false)
 		return GanacheServer.getProvider();
 

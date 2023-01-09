@@ -27,5 +27,6 @@ import 'hardhat-change-network'; //allows hre.changeNetwork to occur
 let config = prepareConfig();
 
 debugLog('loaded hardhat.config.ts');
+debugLog('default network: ' + config.hardhat.defaultNetwork);
 
 export default config.hardhat; //export the infinity mint configuration file
