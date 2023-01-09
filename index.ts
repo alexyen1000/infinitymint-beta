@@ -1,7 +1,4 @@
-import InfinityConsole from './app/console';
 import hre from 'hardhat';
-import fs from 'fs';
-
 //import things we need
 import {
 	isEnvTrue,
@@ -10,6 +7,14 @@ import {
 	logDirect,
 	readSession,
 } from './app/helpers';
+
+logDirect('✨ Reading InfinityMint Config');
+//get the infinitymint config file and export it
+export const config = getConfigFile();
+export const session = readSession();
+
+import fs from 'fs';
+import InfinityConsole from './app/console';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
 import {
@@ -34,10 +39,6 @@ let errorHandler = (error: Error) => {
 	process.exit(1);
 };
 
-logDirect('✨ Reading InfinityMint Config');
-//get the infinitymint config file and export it
-export const config = getConfigFile();
-
 /**
  * if you spawned InfinityMint through load, then this is the current infinity console instance, this will be the instance of the admin InfinityConsole if you are running through telnet
  */
@@ -52,7 +53,6 @@ export const load = async (
 		...(options || {}),
 		...(typeof config?.console === 'object' ? config.console : {}),
 	} as InfinityMintConsoleOptions;
-	let session = readSession();
 
 	//if we arenttelnet
 	if (!config.telnet) {
@@ -60,8 +60,6 @@ export const load = async (
 			config,
 			hre.config.networks.ganache !== undefined,
 		);
-		//change network to the right network or keep it as ganache
-		hre.changeNetwork(session.environment.defaultNetwork || 'hardhat');
 
 		if (!fs.existsSync('./artifacts')) await hre.run('compile');
 

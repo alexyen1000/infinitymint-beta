@@ -412,10 +412,6 @@ export const prepareHardhatConfig = (
 	session: InfinityMintSession,
 	config: InfinityMintConfig,
 ) => {
-	//fuck about with hardhat config
-	config.hardhat.defaultNetwork =
-		config.hardhat?.defaultNetwork || session.environment?.defaultNetwork;
-
 	if (!config.hardhat.networks) config.hardhat.networks = {};
 
 	//copy ganache settings to localhost settings if ganache exists
