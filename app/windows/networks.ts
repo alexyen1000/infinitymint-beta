@@ -1,7 +1,6 @@
 import { InfinityMintWindow } from "../window";
 import hre from "hardhat";
 import { readSession, saveSession } from "../helpers";
-import { changeNetwork } from "../web3";
 
 const Networks = new InfinityMintWindow("Networks");
 

@@ -1407,6 +1407,7 @@ export interface InfinityMintTelnetOptions {
 	 * port to run telnet on
 	 */
 	port?: number;
+	defaultGroup: string;
 }
 
 /**

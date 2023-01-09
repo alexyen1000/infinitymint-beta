@@ -1,5 +1,4 @@
-import Pipes from "../pipes";
-import { debugLog, executeScript, log } from "../helpers";
+import { executeScript } from "../helpers";
 import { InfinityMintWindow } from "../window";
 import { InfinityMintScript } from "../interfaces";
 
@@ -115,7 +114,7 @@ Script.initialize = async (window, frame, blessed) => {
 	retry.on("click", async () => {
 		await window.getInfinityConsole().refreshScripts();
 		//set the new script
-		debugLog("{cyan-fg}retrying script{/cyan-fg}");
+		window.debugLog("{cyan-fg}retrying script{/cyan-fg}");
 		window.data.script =
 			window
 				.getInfinityConsole()
@@ -165,7 +164,7 @@ Script.initialize = async (window, frame, blessed) => {
 		//run in the background
 		window.data.processing = true;
 		try {
-			log(
+			window.log(
 				`{bold}{cyan-fg}executing ${
 					(window.data.script as InfinityMintScript).fileName
 				}{/cyan-fg}{/bold}`
@@ -177,19 +176,19 @@ Script.initialize = async (window, frame, blessed) => {
 				window.data.args || {},
 				window.getInfinityConsole()
 			);
-			log(
+			window.log(
 				"{bold}{green-fg}script executed successfully{/green-fg}{/bold}"
 			);
 			window.setHideCloseButton(false);
 			output.setScrollPerc(100);
 			outputDebug.setScrollPerc(100);
 			close.show();
-			//stop logs after 1 second
+			//stop window.logs after 1 second
 			setTimeout(() => {
 				window.data.processing = false;
 			}, 1000);
 		} catch (error) {
-			log("{red-fg}{bold}script failed exectuion{/bold}{/red-fg}");
+			window.log("{red-fg}{bold}script failed exectuion{/bold}{/red-fg}");
 			window.getInfinityConsole().errorHandler(error);
 			window.setHideCloseButton(false);
 			output.setScrollPerc(100);
@@ -201,7 +200,7 @@ Script.initialize = async (window, frame, blessed) => {
 		}
 	};
 
-	//when logs occur
+	//when window.logs occur
 	let cb = (msg: string, pipe: string) => {
 		//keep showing debug
 		if (pipe === "debug") outputDebug.pushLine(msg);
@@ -209,10 +208,10 @@ Script.initialize = async (window, frame, blessed) => {
 		if (!window.data.processing) return;
 		if (pipe === "default") output.pushLine(msg);
 	};
-	Pipes.emitter.on("log", cb);
+	window.getInfinityConsole().getLogs().emitter.on("window.log", cb);
 	//when this window is destroyed, destroy the output emitter
 	window.on("destroy", () => {
-		Pipes.emitter.off("log", cb);
+		window.getInfinityConsole().getLogs().emitter.off("window.log", cb);
 	});
 	(() => execute())();
 };

@@ -1,14 +1,10 @@
 import {
 	calculateWidth,
-	debugLog,
-	getConfigFile,
 	getInfinityMintVersion,
-	getPackageJson,
 	getSolidityFolder,
 	isEnvTrue,
 	isInfinityMint,
 	isTypescript,
-	warning,
 } from "../helpers";
 import { getCurrentProjectPath } from "../projects";
 import { InfinityMintWindow } from "../window";

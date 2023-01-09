@@ -1,4 +1,4 @@
-import Pipes, { Pipe } from "./pipes";
+import { defaultFactory } from "./pipes";
 import fsExtra from "fs-extra";
 import fs, { PathLike } from "fs";
 import { Dictionary } from "form-data";
@@ -7,16 +7,11 @@ import {
 	InfinityMintConfig,
 	KeyValue,
 	InfinityMintEnvironmentKeys,
-	InfinityMintProject,
-	InfinityMintProjectJavascript,
 	InfinityMintScript,
 	InfinityMintSession,
-	InfinityMintCompiledProject,
-	InfinityMintTempProject,
 	InfinityMintEventEmitter,
 	InfinityMintScriptArguments,
 	InfinityMintGemScript,
-	InfinityMintDeployedProject,
 } from "./interfaces";
 import { generateMnemonic } from "bip39";
 import { HardhatUserConfig } from "hardhat/types";
@@ -213,7 +208,7 @@ export const log = (msg: string | object | number, pipe?: string) => {
 	)
 		console.log(`[${pipe || "default"}] ` + msg);
 
-	Pipes.log(msg.toString(), pipe);
+	defaultFactory.log(msg.toString(), pipe);
 };
 
 /**
@@ -269,6 +264,8 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 	if (!fs.existsSync(process.cwd() + "/.session"))
 		return { created: Date.now(), environment: {} };
 
+	if (memorySession && !forceRead) return memorySession;
+
 	try {
 		let result = JSON.parse(
 			fs.readFileSync(process.cwd() + "/.session", {
@@ -278,7 +275,7 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 		memorySession = result;
 		return result;
 	} catch (error) {
-		Pipes.error(error);
+		defaultFactory.error(error);
 	}
 
 	return {
@@ -317,13 +314,13 @@ export const overwriteConsoleMethods = () => {
 		if (
 			msg.indexOf &&
 			msg.indexOf("<#DONT_LOG_ME$>") === -1 &&
-			Pipes.pipes[Pipes.currentPipeKey]
+			defaultFactory.pipes[defaultFactory.currentPipeKey]
 		)
-			Pipes.getPipe(Pipes.currentPipeKey).log(msg);
+			defaultFactory.getPipe(defaultFactory.currentPipeKey).log(msg);
 
 		if (
-			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
-			(!Pipes.pipes[Pipes.currentPipeKey] &&
+			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
+			(!defaultFactory.pipes[defaultFactory.currentPipeKey] &&
 				!isEnvTrue("PIPE_SILENCE_UNDEFINED_PIPE"))
 		)
 			_log(msg.replace("<#DONT_LOG_ME$>", ""));
@@ -336,8 +333,11 @@ export const overwriteConsoleMethods = () => {
 			_error(error);
 			return;
 		}
-		if (Pipes.pipes[Pipes.currentPipeKey] && !dontSendToPipe)
-			Pipes.getPipe(Pipes.currentPipeKey).error(error);
+		if (
+			defaultFactory.pipes[defaultFactory.currentPipeKey] &&
+			!dontSendToPipe
+		)
+			defaultFactory.getPipe(defaultFactory.currentPipeKey).error(error);
 
 		if (
 			isEnvTrue("PIPE_LOG_ERRORS_TO_DEBUG") ||
@@ -360,7 +360,7 @@ export const overwriteConsoleMethods = () => {
 		}
 
 		if (
-			Pipes.pipes[Pipes.currentPipeKey]?.listen ||
+			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
 			isEnvTrue("PIPE_ECHO_ERRORS")
 		)
 			_error(error);
@@ -675,10 +675,12 @@ export const executeScript = async (
 	await script.execute({
 		script: script,
 		eventEmitter: eventEmitter,
-		log: log,
-		debugLog: debugLog,
 		gems: gems,
 		args: args,
+		log: console.getLogs().log,
+		debugLog: (msg: string) => {
+			console.getLogs().log(msg, "debug");
+		},
 		infinityConsole: console,
 		project: getCurrentProject(true),
 	});
@@ -920,7 +922,8 @@ export const preInitialize = (isJavascript?: boolean) => {
 		debugLog("made .env from " + path);
 	}
 	//will log console.log output to the default pipe
-	if (isEnvTrue("PIPE_ECHO_DEFAULT")) Pipes.getPipe("default").listen = true;
+	if (isEnvTrue("PIPE_ECHO_DEFAULT"))
+		defaultFactory.getPipe("default").listen = true;
 
 	let pipes = [
 		"debug",
@@ -933,7 +936,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 		"receipts",
 	];
 	pipes.forEach((pipe) =>
-		Pipes.registerSimplePipe(pipe, {
+		defaultFactory.registerSimplePipe(pipe, {
 			listen:
 				envExists("PIPE_ECHO_" + pipe.toUpperCase()) &&
 				process.env["PIPE_ECHO_" + pipe.toUpperCase()] === "true",
@@ -942,7 +945,7 @@ export const preInitialize = (isJavascript?: boolean) => {
 	);
 
 	if (isEnvTrue("PIPE_SEPERATE_WARNINGS"))
-		Pipes.registerSimplePipe("warnings", {
+		defaultFactory.registerSimplePipe("warnings", {
 			listen: isEnvTrue("PIPE_ECHO_WARNINGS"),
 			save: true,
 		});
@@ -1050,44 +1053,6 @@ export const getGanacheMnemonic = () => {
 		: generateMnemonic();
 };
 
-export const usernameList: KeyValue = {};
-export const registerUsername = (
-	username: string,
-	client: any,
-	sessionId: any
-) => {
-	if (usernameList[username])
-		throw new Error("username already taken: " + username);
-
-	usernameList[username] = {
-		username: username,
-		client: client,
-		sessionId: sessionId,
-	};
-};
-
-/**
- *
- * @param client
- * @returns
- */
-export const isRegistered = (client: any, sessionId: any) => {
-	return getUsernames(client, sessionId).length !== 0;
-};
-
-/**
- *
- * @param client
- * @returns
- */
-export const getUsernames = (client: any, sessionId?: any): any[] => {
-	return Object.values(usernameList).filter(
-		(entry) =>
-			client.remoteAddress === entry.remoteAddress &&
-			(sessionId ? entry.sessionId === sessionId : true)
-	);
-};
-
 /**
  *
  * @param error Logs an error
@@ -1099,7 +1064,7 @@ export const error = (error: string | Error) => {
 	)
 		console.error(error);
 
-	Pipes.error(error);
+	defaultFactory.error(error);
 };
 
 export const envExists = (key: string) => {

@@ -1,4 +1,3 @@
-import { debugLog } from "../helpers";
 import { InfinityMintWindow } from "../window";
 
 const CloseBox = new InfinityMintWindow(

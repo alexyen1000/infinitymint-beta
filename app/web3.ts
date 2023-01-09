@@ -5,12 +5,15 @@ import {
 	isEnvTrue,
 	log,
 	readSession,
+	logDirect,
+	allowPiping,
 	saveSession,
+	getSolidityFolder,
 	warning,
 } from "./helpers";
 import { BaseContract } from "ethers";
 import fs from "fs";
-import Pipes from "./pipes";
+import { defaultFactory, PipeFactory } from "./pipes";
 import {
 	Web3Provider,
 	JsonRpcProvider,
@@ -18,22 +21,109 @@ import {
 	Provider,
 } from "@ethersproject/providers";
 import GanacheServer from "./ganache";
-import {
-	ContractFactory,
-	ContractReceipt,
-	ContractTransaction,
-} from "@ethersproject/contracts";
+import { ContractFactory, ContractTransaction } from "@ethersproject/contracts";
 import { EthereumProvider } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getLocalDeployment, create } from "./deployments";
 import {
 	InfinityMintConfigSettingsNetwork,
 	InfinityMintDeploymentLive,
+	InfinityMintConsoleOptions,
+	InfinityMintConfig,
 } from "./interfaces";
-import { ContractType } from "hardhat/internal/hardhat-network/stack-traces/model";
+import InfinityConsole from "./console";
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
+
+export const initializeInfinityMint = async (
+	config?: InfinityMintConfig,
+	startGanache?: boolean
+) => {
+	let session = readSession();
+
+	//allow piping
+	allowPiping();
+	//
+	logDirect("🪐 Starting InfinityConsole");
+	//register current network pipes
+	registerNetworkdefaultFactory();
+	try {
+		//create IPFS node
+	} catch (error) {
+		warning(`could not start IPFS: ` + error?.message);
+	}
+
+	//start ganache
+	if (startGanache) {
+		try {
+			//ask if they want to start ganache
+			//start ganache here
+			let obj = { ...config.ganache } as any;
+			if (!obj.wallet) obj.wallet = {};
+			if (!session.environment.ganacheMnemonic)
+				throw new Error("no ganache mnemonic");
+
+			obj.wallet.mnemonic = session.environment.ganacheMnemonic;
+			saveSession(session);
+			debugLog(
+				"starting ganache with menomic of: " + obj.wallet.mnemonic
+			);
+
+			//get private keys and save them to file
+			let keys = getPrivateKeys(session.environment.ganacheMnemonic);
+			debugLog(
+				"found " +
+					keys.length +
+					" private keys for mnemonic: " +
+					session.environment.ganacheMnemonic
+			);
+			keys.forEach((key, index) => {
+				debugLog(`[${index}] => ${key}`);
+			});
+			session.environment.ganachePrivateKeys = keys;
+			saveSession(session);
+
+			let provider = (await import("./ganache")).default.start(
+				config.ganache || {}
+			);
+			startNetworkPipe(provider as any, "ganache");
+		} catch (error) {
+			warning("could not start ganache: " + error);
+		}
+	} else {
+		warning("no ganache network found");
+	}
+
+	//start a network pipe if we aren't ganache as we do something different if we are
+	if (startGanache) startNetworkPipe();
+	//initialize console
+	return config;
+};
+
+//function to launch the console
+export const startInfinityConsole = async (
+	options?: InfinityMintConsoleOptions,
+	pipeFactory?: PipeFactory
+) => {
+	debugLog(
+		"starting InfinityConsole with solidity root of " + getSolidityFolder()
+	);
+
+	let infinityConsole = new InfinityConsole(options, pipeFactory);
+	logDirect(
+		"💭 Initializing InfinityConsole<" +
+			infinityConsole.getSessionId() +
+			">"
+	);
+	await infinityConsole.initialize();
+	log(
+		"{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<" +
+			infinityConsole.getSessionId() +
+			">"
+	);
+	return infinityConsole;
+};
 
 export const getDefaultSigner = async () => {
 	if (
@@ -332,7 +422,7 @@ export const getDefaultAccountIndex = () => {
 	return config?.settings?.networks[hre.network.name]?.defaultAccount || 0;
 };
 
-export const registerNetworkPipes = () => {
+export const registerNetworkdefaultFactory = () => {
 	let networks = Object.keys(hre.config.networks);
 	let config = getConfigFile();
 
@@ -340,7 +430,7 @@ export const registerNetworkPipes = () => {
 		let settings = config?.settings?.networks[network] || {};
 		if (settings.useDefaultPipe) return;
 		debugLog("registered pipe for " + network);
-		Pipes.registerSimplePipe(network);
+		defaultFactory.registerSimplePipe(network);
 	});
 };
 
@@ -371,9 +461,9 @@ export const stopNetworkPipe = (
 		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
 		warning("failed to stop pipe: " + network);
 	}
-	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
-		"{red-fg}stopped pipe{/red-fg}"
-	);
+	defaultFactory
+		.getPipe(settings.useDefaultPipe ? "default" : network)
+		.log("{red-fg}stopped pipe{/red-fg}");
 	delete ProviderListeners[network];
 };
 
@@ -404,14 +494,16 @@ export const startNetworkPipe = (
 	};
 
 	ProviderListeners[network].error = (tx: any) => {
-		Pipes.getPipe(settings.useDefaultPipe ? "default" : network).error(
-			"{red-fg}tx error{/reg-fg} => " + JSON.stringify(tx, null, 2)
-		);
+		defaultFactory
+			.getPipe(settings.useDefaultPipe ? "default" : network)
+			.error(
+				"{red-fg}tx error{/reg-fg} => " + JSON.stringify(tx, null, 2)
+			);
 	};
 
-	Pipes.getPipe(settings.useDefaultPipe ? "default" : network).log(
-		"{cyan-fg}started pipe{/cyan-fg}"
-	);
+	defaultFactory
+		.getPipe(settings.useDefaultPipe ? "default" : network)
+		.log("{cyan-fg}started pipe{/cyan-fg}");
 	Object.keys(ProviderListeners[network]).forEach((key) => {
 		provider.on(key, ProviderListeners[network][key]);
 	});

@@ -97,7 +97,7 @@ export interface PipeOptions {
 /**
  * Logging factory class
  */
-export class Pipes {
+export class PipeFactory {
 	public pipes: Dictionary<Pipe>;
 	public emitter: EventEmitter;
 	public currentPipeKey: string;
@@ -244,4 +244,11 @@ export class Pipes {
 		return this.pipes[key];
 	}
 }
-export default new Pipes();
+
+export let defaultFactory: PipeFactory;
+export const createDefaultFactory = () => {
+	console.log("creating default pipe factory");
+	defaultFactory = new PipeFactory();
+};
+//create default pipe
+createDefaultFactory();

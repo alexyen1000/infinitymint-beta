@@ -7,12 +7,8 @@
  */
 
 import "module-alias/register";
-import {
-	debugLog,
-	prepareConfig,
-	loadInfinityMint,
-	readSession,
-} from "./app/helpers";
+import "./app/pipes"; //creates default pipe
+import { debugLog, prepareConfig, loadInfinityMint } from "./app/helpers";
 
 //require dotenv
 require("dotenv").config({

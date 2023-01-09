@@ -1,16 +1,13 @@
 import {
-	InfinityMintDeployedProject,
 	InfinityMintDeploymentLive,
 	InfinityMintDeploymentParameters,
 	InfinityMintEventEmit,
-	InfinityMintProject,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 	InfinityMintTempProject,
 } from "@app/interfaces";
 import { InfinityMintDeployment } from "@app/deployments";
 import {
-	getCurrentProject,
 	getDeployedProject,
 	getTempDeployedProject,
 	hasTempDeployedProject,
@@ -46,13 +43,13 @@ const deploy: InfinityMintScript = {
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = "deploy_" + project.name;
-			if (!script.infinityConsole.getPipes().pipes[pipeName])
-				script.infinityConsole.getPipes().registerSimplePipe(pipeName, {
+			if (!script.infinityConsole.getLogs().pipes[pipeName])
+				script.infinityConsole.getLogs().registerSimplePipe(pipeName, {
 					listen: true,
 				});
 
 			//all log messages will now go to deploy
-			script.infinityConsole.getPipes().setCurrentPipe(pipeName);
+			script.infinityConsole.getLogs().setCurrentPipe(pipeName);
 		}
 
 		if (isTemp)

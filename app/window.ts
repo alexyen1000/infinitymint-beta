@@ -17,6 +17,7 @@ import { BlessedElement, Blessed } from "./helpers";
 import hre, { ethers } from "hardhat";
 import InfinityConsole from "./console";
 import { KeyValue } from "./interfaces";
+import { UserEntry } from "./telnet";
 
 const { v4: uuidv4 } = require("uuid");
 const blessed = require("blessed") as Blessed;
@@ -62,6 +63,7 @@ export class InfinityMintWindow {
 	protected screen: BlessedElement;
 	protected container?: InfinityConsole;
 	protected inputKeys?: Dictionary<Array<Function>>;
+	protected permissions: Array<string>;
 
 	private id: any;
 	private destroyed: boolean;
@@ -94,6 +96,7 @@ export class InfinityMintWindow {
 		this.data = data || {};
 		this.initialCreation = Date.now();
 		this.elements = {};
+		this.permissions = ["all"];
 
 		this.data.style = style || {};
 		this.data.scrollbar = scrollbar || {};
@@ -105,6 +108,20 @@ export class InfinityMintWindow {
 		this.initialize = async () => {
 			this.log("window initialized");
 		};
+	}
+
+	public setPermissions(permissions: string[]) {
+		this.permissions = permissions;
+	}
+
+	public canAccess(user: UserEntry) {
+		return (
+			this.permissions.filter(
+				(thatPerm) =>
+					thatPerm === "all" ||
+					thatPerm.toLowerCase() === user.group.toLowerCase()
+			).length !== 0
+		);
 	}
 
 	public createFrame() {
@@ -277,6 +294,16 @@ export class InfinityMintWindow {
 	 */
 	public getInitialCreation() {
 		return this.initialCreation;
+	}
+
+	/**
+	 * Will log a message to the current InfinityConsoles logger. This is because in telnet mode InfinityMint would combine all log messages together. By default, always use the log, debugLog provided to you on the various console/script classes. If you use the import for log/debug the the log will only be seen by the defaultFactory
+	 * @param msg
+	 */
+	public debugLog(msg: string) {
+		if (!this.hasInfinityConsole()) debugLog(msg);
+
+		this.getInfinityConsole().debugLog(msg);
 	}
 
 	/**
@@ -579,9 +606,22 @@ export class InfinityMintWindow {
 		if (returnString)
 			return string + ` => <${window.name}>[${window.getId()}]`;
 
-		log(string + ` => <${window.name}>[${window.getId()}]`, "windows");
+		if (!this.hasInfinityConsole())
+			log(string + ` => <${window.name}>[${window.getId()}]`, "windows");
+		else
+			this.getInfinityConsole().log(
+				string + ` => <${window.name}>[${window.getId()}]`,
+				"windows"
+			);
 	}
 
+	/**
+	 * Warnings are logged to the default pipe
+	 * @param string
+	 * @param window
+	 * @param returnString
+	 * @returns
+	 */
 	public warning(
 		string?: string | string[],
 		window?: any,
@@ -739,7 +779,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 * Removes a key binding on the window, pass it a callback of the key to only remove that one. Else will remove all keys
+	 * Removes a key bindi fng on the window, pass it a callback of the key to only remove that one. Else will remove all keys
 	 * @param key
 	 * @param cb
 	 * @returns

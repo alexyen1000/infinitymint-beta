@@ -1,11 +1,11 @@
 import { calculateWidth } from "../helpers";
-import Pipes from "../pipes";
+import { defaultFactory } from "../pipes";
 import { InfinityMintWindow } from "../window";
 
 let lastLogMessage: string;
 let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.setContent(
-		Pipes.pipes[window.data.log.options.pipe].logs
+		defaultFactory.pipes[window.data.log.options.pipe].logs
 			.map((log, index) => {
 				if (lastLogMessage && lastLogMessage === log.message)
 					return (
@@ -157,7 +157,7 @@ Logs.initialize = async (window, frame, blessed) => {
 	let form = window.createElement(
 		"form",
 		{
-			label: " {bold}{white-fg}Pipes{/white-fg} (Enter/Double-Click to select){/bold}",
+			label: " {bold}{white-fg}defaultFactory{/white-fg} (Enter/Double-Click to select){/bold}",
 			tags: true,
 			top: "center",
 			left: "center",
@@ -195,7 +195,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 		"list"
 	);
-	let keys = Object.keys(Pipes.pipes);
+	let keys = Object.keys(defaultFactory.pipes);
 	form.setItems(keys);
 	form.on("select", (el: any, selected: any) => {
 		window.data.log.options.pipe = keys[selected];
@@ -300,10 +300,10 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 	deletePipe.on("click", () => {
-		Pipes.getPipe(window.data.log.options.pipe).logs = [];
-		Pipes.getPipe(window.data.log.options.pipe).log(
-			"{red-fg}pipe deleted{/red-fg}"
-		);
+		defaultFactory.getPipe(window.data.log.options.pipe).logs = [];
+		defaultFactory
+			.getPipe(window.data.log.options.pipe)
+			.log("{red-fg}pipe deleted{/red-fg}");
 
 		window.data.log.setContent("");
 		form.hide();
@@ -355,11 +355,11 @@ Logs.postInitialize = async (window, frame, blessed) => {
 			lastLogMessage = msg;
 		}
 	};
-	Pipes.emitter.on("log", cb);
+	defaultFactory.emitter.on("log", cb);
 
 	//save when the window is destroyed
 	window.on("destroy", () => {
-		Pipes.emitter.off("log", cb);
+		defaultFactory.emitter.off("log", cb);
 	});
 
 	//save when the window is hidden
@@ -400,8 +400,8 @@ Logs.postInitialize = async (window, frame, blessed) => {
 		if (window.isVisible() === false) return;
 
 		window.data.log.options.selectedLine = Math.min(
-			(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]).length -
-				1,
+			(defaultFactory.pipes[window.data.log.options.pipe]?.logs || [""])
+				.length - 1,
 			window.data.log.options.selectedLine + 1
 		);
 	});
@@ -414,7 +414,9 @@ Logs.postInitialize = async (window, frame, blessed) => {
 		if (window.isVisible() === false) return;
 
 		let selectedLinePosition = [
-			...(Pipes.pipes[window.data.log.options.pipe]?.logs || [""]),
+			...(defaultFactory.pipes[window.data.log.options.pipe]?.logs || [
+				"",
+			]),
 		]
 			.slice(0, window.data.log.options.selectedLine)
 			.join("\n")

@@ -1,5 +1,5 @@
 import { InfinityMintWindow } from "../window";
-import { BlessedElement, log, readSession, saveSession } from "../helpers";
+import { BlessedElement } from "../helpers";
 import {
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
