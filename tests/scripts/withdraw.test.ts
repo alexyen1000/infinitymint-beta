@@ -1,19 +1,20 @@
 import {ethers} from 'hardhat';
 import {expect} from 'chai';
 import Withdraw from '../../scripts/withdraw';
-import { InfinityMintScript, InfinityMintScriptParameters } from 'infinitymint/dist/app/interfaces';
+import {
+	InfinityMintScript,
+	InfinityMintScriptParameters,
+} from 'infinitymint/dist/app/interfaces';
 
 describe('InfinityMint withdraw script', () => {
 	it('Function runs as normal', async () => {
 		let script = Withdraw as InfinityMintScript;
-		await script.execute({
-
-		} as InfinityMintScriptParameters);
+		await script.execute({} as InfinityMintScriptParameters);
 	});
-	
+
 	it('Should return the current owner address', async () => {
 		const [owner] = await ethers.getSigners();
-		const Token = await ethers.getContractFactory("Token");
+		const Token = await ethers.getContractFactory('Token');
 
 		const hardhatToken = await Token.deploy();
 
@@ -21,11 +22,7 @@ describe('InfinityMint withdraw script', () => {
 		expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
 	});
 
-	it('Returns current project name correctly', () => {
+	it('Returns current project name correctly', () => {});
 
-	});
-
-	it('Fails when current minter balance is 0', () => {
-
-	});
+	it('Fails when current minter balance is 0', () => {});
 });

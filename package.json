@@ -12,6 +12,7 @@
     "@app": "dist/app/",
     "@typechain-types": "dist/typechain/"
   },
+  "prettier": "prettier-config-xo",
   "scripts": {
     "test": "npx hardhat test",
     "build": "rm -R -f ./dist && npx tsc",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "chai": "^4.3.7",
+    "prettier-config-xo": "^2.0.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
     "typedoc": "^0.23.22",
