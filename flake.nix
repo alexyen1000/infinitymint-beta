@@ -1,53 +1,28 @@
 {
-  description = "InfinityMint Nix Flake";       
-  inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    npmlock2nix = {
-      url = "github:nix-community/npmlock2nix/master";
-      flake = false;
-    };
-  };
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    npmlock2nix,
-  }:
-    flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = nixpkgs.legacyPackages."${system}";
-      nl2nix = import npmlock2nix {inherit pkgs;};
-      node = pkgs.nodejs-16_x;
-      nodeModules = nl2nix.node_modules {
-        src = ./.;
-        nodejs = node;
-      };
-    in rec {
-      defaultPackage = package.nodenix;
-    
-      package.nodenix = nl2nix.build {
-        src = ./.;
-        buildCommands = ["npm run build"];
-        installPhase = ''
-        npm i
-        '';
-        # Use this specific node version.
-        node_modules_attrs = {
-          nodejs = node;
-        };
-      };
+  description = "InfinityMint Nix Flake";
 
-      devShell = nl2nix.shell {
-        src = ./.;
-        node_modules_attrs = {
-          nodejs = node;
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs.flake-utils.url = "github:numtide/flake-utils";
+
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        inherit (import ./default.nix { inherit pkgs; })
+          sources package shell nodeDependencies;
+        node2nix = package;
+        app = flake-utils.lib.mkApp {
+          drv = package;
+          exePath = "/bin/node2nix";
         };
-        nativeBuildInputs =
-          (with pkgs; ([
-            # Alejandra is used for nix file formatting
-            alejandra
-          ]
-        ));
-      };
-    });
+        overlays = final: prev: { node2nix = node2nix; };
+      in {
+        packages.node2nix = node2nix;
+        defaultPackage = node2nix;
+        apps.node2nix = app;
+        defaultApp = app;
+        nodeDependencies = nodeDependencies;
+        nodeShell = shell;
+        inherit overlays;
+      });
 }

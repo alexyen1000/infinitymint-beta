@@ -4,7 +4,7 @@ stdenv.mkDerivation {
     name = "node";
     buildInputs = [
         jq
-        nodejs-slim-18_x
+        nodejs-18_x
         ngrok
     ];
     shellHook = ''
