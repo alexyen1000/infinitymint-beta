@@ -189,6 +189,10 @@ Script.initialize = async (window, frame, blessed) => {
 		} catch (error) {
 			window.log('{red-fg}{bold}script failed exectuion{/bold}{/red-fg}');
 			retry.show();
+
+			//log normally to default console if we aren't telnet
+			if (!window.getInfinityConsole().isTelnet()) console.error(error);
+
 			window.getInfinityConsole().errorHandler(error);
 			window.setHideCloseButton(false);
 			output.setScrollPerc(100);

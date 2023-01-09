@@ -926,10 +926,10 @@ export class InfinityConsole {
 			else this.errorBox.destroy();
 		});
 
-		this.errorBox.setFront();
-		this.errorBox.focus();
 		this.screen.append(this.errorBox);
 		this.screen.render();
+		this.errorBox.setFront();
+		this.errorBox.focus();
 		this.screen.focus();
 	}
 
