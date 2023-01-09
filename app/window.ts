@@ -5,7 +5,6 @@ import {
 	debugLog,
 	readSession,
 	saveSession,
-	isEnvTrue,
 	calculateWidth,
 	warning,
 	BlessedElementOptions,

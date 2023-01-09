@@ -6,12 +6,12 @@
  * put inside of here.
  */
 
-import "module-alias/register";
-import "./app/pipes"; //creates default pipe
-import { debugLog, prepareConfig, loadInfinityMint } from "./app/helpers";
+import 'module-alias/register';
+import './app/pipes'; //creates default pipe
+import {debugLog, prepareConfig, loadInfinityMint} from './app/helpers';
 
 //require dotenv
-require("dotenv").config({
+require('dotenv').config({
 	override: false, //will not override already established environment variables
 });
 
@@ -19,13 +19,13 @@ require("dotenv").config({
 loadInfinityMint(false, true);
 
 //import our hardhat plugins
-import "@nomicfoundation/hardhat-toolbox";
-import "@nomiclabs/hardhat-ethers";
-import "hardhat-change-network"; //allows hre.changeNetwork to occur
+import '@nomicfoundation/hardhat-toolbox';
+import '@nomiclabs/hardhat-ethers';
+import 'hardhat-change-network'; //allows hre.changeNetwork to occur
 
 //return the infinitymint config file
 let config = prepareConfig();
 
-debugLog("loaded hardhat.config.ts");
+debugLog('loaded hardhat.config.ts');
 
 export default config.hardhat; //export the infinity mint configuration file

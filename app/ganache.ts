@@ -2,12 +2,12 @@ import {
 	Web3Provider,
 	JsonRpcProvider,
 	ExternalProvider,
-} from "@ethersproject/providers";
-import ganache, { Server, ServerOptions } from "ganache";
-import hre, { ethers } from "hardhat";
-import { debugLog, log, logDirect, readSession, warning } from "./helpers";
-import { defaultFactory } from "./pipes";
-const { tcpPingPort } = require("tcp-ping-port");
+} from '@ethersproject/providers';
+import ganache, {Server, ServerOptions} from 'ganache';
+import hre, {ethers} from 'hardhat';
+import {debugLog, log, logDirect, readSession, warning} from './helpers';
+import {defaultFactory} from './pipes';
+const {tcpPingPort} = require('tcp-ping-port');
 
 export class GanacheServer {
 	public server?: Server;
@@ -17,21 +17,16 @@ export class GanacheServer {
 
 	async start(
 		options: ServerOptions,
-		port?: number
+		port?: number,
 	): Promise<Web3Provider | JsonRpcProvider> {
 		this.options = options;
-		this.port = parseInt(
-			(port || process.env.GANACHE_PORT || 8545).toString()
-		);
+		this.port = parseInt((port || process.env.GANACHE_PORT || 8545).toString());
 
-		if ((await tcpPingPort("localhost", this.port)).online === true) {
-			log(
-				"previous ganache server alive at => http://localhost:" +
-					this.port
-			);
+		if ((await tcpPingPort('localhost', this.port)).online === true) {
+			log('previous ganache server alive at => http://localhost:' + this.port);
 
 			this.provider = ethers.providers.getDefaultProvider(
-				"http://localhost:" + this.port
+				'http://localhost:' + this.port,
 			);
 			return this.provider;
 		}
@@ -60,30 +55,27 @@ export class GanacheServer {
 									defaultFactory.log(
 										`${msg
 											.toString()
-											.replace(/>/g, "")
-											.replace(/\n/g, "")
-											.replace(/  /g, " ")
+											.replace(/>/g, '')
+											.replace(/\n/g, '')
+											.replace(/  /g, ' ')
 											.trim()}`,
-										"ganache"
+										'ganache',
 									);
-									if (
-										params &&
-										Object.values(params).length !== 0
-									)
+									if (params && Object.values(params).length !== 0)
 										defaultFactory.log(
 											JSON.stringify(params, null, 2),
-											"ganache"
+											'ganache',
 										);
 								},
 							},
 						},
 						...options,
-					}) as any
+					}) as any,
 				);
 				this.provider = provider as Web3Provider;
 				log(
-					"{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:" +
-						this.port
+					'{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:' +
+						this.port,
 				);
 				resolve(this.provider as Web3Provider);
 			});
@@ -92,8 +84,7 @@ export class GanacheServer {
 	}
 
 	getProvider() {
-		if (this.provider == undefined)
-			throw new Error("invalid ethers provider");
+		if (this.provider == undefined) throw new Error('invalid ethers provider');
 
 		return this.provider;
 	}

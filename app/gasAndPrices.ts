@@ -1,8 +1,8 @@
-import { Dictionary } from "form-data";
-import { debugLog } from "./helpers";
-import { FuncSingle } from "./helpers";
+import {Dictionary} from 'form-data';
+import {debugLog} from './helpers';
+import {FuncSingle} from './helpers';
 
-export type TokenPriceFunction = FuncSingle<void, Promise<{ usd: number }>>;
+export type TokenPriceFunction = FuncSingle<void, Promise<{usd: number}>>;
 export type GasPriceFunction = FuncSingle<
 	void,
 	Promise<{
@@ -20,50 +20,50 @@ export const handlers = {} as Dictionary<NetworkHandler>;
 
 export const registerGasPriceHandler = (
 	network: string,
-	handler: GasPriceFunction
+	handler: GasPriceFunction,
 ) => {
-	return registerHandler(network, "gas", handler);
+	return registerHandler(network, 'gas', handler);
 };
 
 export const removeGasHandler = (
 	network: string,
-	handler?: GasPriceFunction
+	handler?: GasPriceFunction,
 ) => {
 	if (!handler) handlers[network].gas = [];
-	else removeHandler(network, "gas", handler);
+	else removeHandler(network, 'gas', handler);
 };
 
 export const removeTokenPriceHandler = (
 	network: string,
-	handler?: GasPriceFunction
+	handler?: GasPriceFunction,
 ) => {
 	if (!handlers[network]) handlers[network].price = [];
-	else removeHandler(network, "price", handler);
+	else removeHandler(network, 'price', handler);
 };
 
 export const removeHandler = (
 	network: string,
-	type: "gas" | "price",
-	handler: GasPriceFunction | TokenPriceFunction
+	type: 'gas' | 'price',
+	handler: GasPriceFunction | TokenPriceFunction,
 ) => {
 	if (!handlers[network] || !handlers[network][type]) return;
 
 	if (handlers[network][type].length === 0) handlers[network][type] = [];
 
-	if (type === "gas")
-		handlers[network]["gas"] = handlers[network]["gas"].filter(
-			(thatHandler) => thatHandler.toString() !== handler.toString()
+	if (type === 'gas')
+		handlers[network]['gas'] = handlers[network]['gas'].filter(
+			thatHandler => thatHandler.toString() !== handler.toString(),
 		);
 	else
-		handlers[network]["price"] = handlers[network]["price"].filter(
-			(thatHandler) => thatHandler.toString() !== handler.toString()
+		handlers[network]['price'] = handlers[network]['price'].filter(
+			thatHandler => thatHandler.toString() !== handler.toString(),
 		);
 };
 
 export const registerHandler = (
 	network: string,
 	type: string,
-	handler: TokenPriceFunction | GasPriceFunction
+	handler: TokenPriceFunction | GasPriceFunction,
 ) => {
 	if (!handlers[network])
 		handlers[network] = {
@@ -74,19 +74,19 @@ export const registerHandler = (
 
 	handlers[network][type].push(handler as any);
 
-	debugLog("registered new (" + type + ") handler for " + network);
+	debugLog('registered new (' + type + ') handler for ' + network);
 	return handler;
 };
 
 export const registerTokenPriceHandler = (
 	network: string,
-	handler: TokenPriceFunction
+	handler: TokenPriceFunction,
 ) => {
-	return registerHandler(network, "price", handler);
+	return registerHandler(network, 'price', handler);
 };
 
 export const getTokenPriceHandlers = (network: string) => {
-	if (!handlers[network] || !handlers[network]["price"])
+	if (!handlers[network] || !handlers[network]['price'])
 		return [
 			async () => {
 				return {
@@ -95,11 +95,11 @@ export const getTokenPriceHandlers = (network: string) => {
 			},
 		];
 
-	return handlers[network]["price"];
+	return handlers[network]['price'];
 };
 
 export const getGasPriceHandlers = (network: string) => {
-	if (!handlers[network] || !handlers[network]["gas"])
+	if (!handlers[network] || !handlers[network]['gas'])
 		return [
 			async () => {
 				return {
@@ -110,5 +110,5 @@ export const getGasPriceHandlers = (network: string) => {
 			},
 		];
 
-	return handlers[network]["gas"];
+	return handlers[network]['gas'];
 };

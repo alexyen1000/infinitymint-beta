@@ -1,16 +1,16 @@
-import { BigNumber } from "ethers";
-import { Dictionary } from "form-data";
-import { HardhatUserConfig } from "hardhat/types";
-import { debugLog, FuncDouble, FuncSingle, log } from "./helpers";
-import { ServerOptions } from "ganache";
-import { EventEmitter } from "events";
-import { Contract } from "@ethersproject/contracts";
-import InfinityConsole from "./console";
-import { InfinityMintDeployment } from "./deployments";
-import { PathLike } from "fs";
-import { InfinityMintSVGSettings } from "./content";
-import { GasPriceFunction, TokenPriceFunction } from "./gasAndPrices";
-import { Options } from "ipfs-core";
+import {BigNumber} from 'ethers';
+import {Dictionary} from 'form-data';
+import {HardhatUserConfig} from 'hardhat/types';
+import {debugLog, FuncDouble, FuncSingle, log} from './helpers';
+import {ServerOptions} from 'ganache';
+import {EventEmitter} from 'events';
+import {Contract} from '@ethersproject/contracts';
+import InfinityConsole from './console';
+import {InfinityMintDeployment} from './deployments';
+import {PathLike} from 'fs';
+import {InfinityMintSVGSettings} from './content';
+import {GasPriceFunction, TokenPriceFunction} from './gasAndPrices';
+import {Options} from 'ipfs-core';
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -594,10 +594,7 @@ export interface InfinityMintEvents {
 	/**
 	 * @event
 	 */
-	preCompile?: FuncSingle<
-		InfinityMintEventEmit<void>,
-		Promise<void | boolean>
-	>;
+	preCompile?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
 	/**
 	 * Will be called when project is compiled
 	 * @event
@@ -708,10 +705,7 @@ export interface InfinityMintEvents {
 	/**
 	 * @event
 	 */
-	preScript?: FuncSingle<
-		InfinityMintEventEmit<void>,
-		Promise<void | boolean>
-	>;
+	preScript?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
 	/**
 	 * @event
 	 */
@@ -1374,7 +1368,7 @@ export interface InfinityMintScriptArguments {
 	optional?: boolean;
 	validator?: Function;
 	//defines which type of UI element to render for this element, also takes over as a basic validator if no validor function is defined
-	type?: "boolean" | "string" | "number";
+	type?: 'boolean' | 'string' | 'number';
 	value?: any;
 }
 

@@ -1,4 +1,4 @@
-import { readSession, log, getConfigFile, findFiles } from "./helpers";
+import {readSession, log, getConfigFile, findFiles} from './helpers';
 import {
 	InfinityMintProject,
 	InfinityMintDeployedProject,
@@ -6,10 +6,10 @@ import {
 	InfinityMintTempProject,
 	InfinityMintProjectJavascript,
 	KeyValue,
-} from "./interfaces";
-import path from "path";
-import { Dictionary } from "form-data";
-import fs, { PathLike } from "fs";
+} from './interfaces';
+import path from 'path';
+import {Dictionary} from 'form-data';
+import fs, {PathLike} from 'fs';
 
 /**
  *
@@ -17,9 +17,9 @@ import fs, { PathLike } from "fs";
  */
 export const getCurrentProject = (cleanCache?: boolean) => {
 	return requireProject(
-		getCurrentProjectPath().dir + "/" + getCurrentProjectPath().base,
-		getCurrentProjectPath().ext === ".js",
-		cleanCache
+		getCurrentProjectPath().dir + '/' + getCurrentProjectPath().base,
+		getCurrentProjectPath().ext === '.js',
+		cleanCache,
 	);
 };
 
@@ -35,7 +35,7 @@ export const getCurrentProjectPath = () => {
 };
 
 export const getCurrentDeployedProject = () => {
-	if (!getCurrentProjectPath()) throw new Error("no current project");
+	if (!getCurrentProjectPath()) throw new Error('no current project');
 
 	return getDeployedProject(getCurrentProjectPath().name);
 };
@@ -47,9 +47,9 @@ export const getCurrentDeployedProject = () => {
  */
 export const getCompiledProject = (projectName: string) => {
 	let res = require(process.cwd() +
-		"/projects/compiled/" +
+		'/projects/compiled/' +
 		projectName +
-		".compiled.json");
+		'.compiled.json');
 	res = res.default || res;
 	//
 	if (!res.compiled)
@@ -60,32 +60,29 @@ export const getCompiledProject = (projectName: string) => {
 
 export const hasTempDeployedProject = (projectName: string) => {
 	return fs.existsSync(
-		process.cwd() + "/temp/projects/" + projectName + ".temp.json"
+		process.cwd() + '/temp/projects/' + projectName + '.temp.json',
 	);
 };
 
 export const hasTempCompiledProject = (projectName: string) => {
 	return fs.existsSync(
-		process.cwd() + "/temp/projects/" + projectName + ".compiled.temp.json"
+		process.cwd() + '/temp/projects/' + projectName + '.compiled.temp.json',
 	);
 };
 
 export const saveTempDeployedProject = (project: InfinityMintProject) => {
-	log("saving " + project.name + ".temp.json", "fs");
+	log('saving ' + project.name + '.temp.json', 'fs');
 	fs.writeFileSync(
-		process.cwd() + "/temp/projects/" + project.name + ".temp.json",
-		JSON.stringify(project)
+		process.cwd() + '/temp/projects/' + project.name + '.temp.json',
+		JSON.stringify(project),
 	);
 };
 
 export const saveTempCompiledProject = (project: InfinityMintProject) => {
-	log("saving " + project.name + ".compiled.temp.json", "fs");
+	log('saving ' + project.name + '.compiled.temp.json', 'fs');
 	fs.writeFileSync(
-		process.cwd() +
-			"/temp/projects/" +
-			project.name +
-			".compiled.temp.json",
-		JSON.stringify(project)
+		process.cwd() + '/temp/projects/' + project.name + '.compiled.temp.json',
+		JSON.stringify(project),
 	);
 };
 
@@ -98,15 +95,13 @@ export const saveTempCompiledProject = (project: InfinityMintProject) => {
 export const getTempDeployedProject = (projectName: string) => {
 	try {
 		let res = require(process.cwd() +
-			"/temp/projects/" +
+			'/temp/projects/' +
 			projectName +
-			".temp.deployed.json");
+			'.temp.deployed.json');
 		res = res.default || res;
 		return res as InfinityMintTempProject;
 	} catch (error) {
-		throw new Error(
-			"could not load temp deployed project: " + error.message
-		);
+		throw new Error('could not load temp deployed project: ' + error.message);
 	}
 };
 
@@ -119,16 +114,14 @@ export const getTempDeployedProject = (projectName: string) => {
 export const getTempCompiledProject = (projectName: string) => {
 	try {
 		let res = require(process.cwd() +
-			"/temp/projects/" +
+			'/temp/projects/' +
 			projectName +
-			".temp.compiled.json");
+			'.temp.compiled.json');
 		res = res.default || res;
 
 		return res as InfinityMintTempProject;
 	} catch (error) {
-		throw new Error(
-			"could not load temp deployed project: " + error.message
-		);
+		throw new Error('could not load temp deployed project: ' + error.message);
 	}
 };
 
@@ -138,7 +131,7 @@ export const getTempCompiledProject = (projectName: string) => {
  */
 export const getDeployedProject = (projectName: string, version?: any) => {
 	let res = require(process.cwd() +
-		"/projects/deployed/" +
+		'/projects/deployed/' +
 		projectName +
 		`@${version}.json`);
 	res = res.default || res;
@@ -160,7 +153,7 @@ export interface ProjectCache {
  * @returns
  */
 export const readProjects = (): ProjectCache => {
-	if (!fs.existsSync(process.cwd() + "/temp/project_cache.json"))
+	if (!fs.existsSync(process.cwd() + '/temp/project_cache.json'))
 		return {
 			updated: Date.now(),
 			database: {},
@@ -168,9 +161,9 @@ export const readProjects = (): ProjectCache => {
 		};
 
 	return JSON.parse(
-		fs.readFileSync(process.cwd() + "/temp/project_cache.json", {
-			encoding: "utf-8",
-		})
+		fs.readFileSync(process.cwd() + '/temp/project_cache.json', {
+			encoding: 'utf-8',
+		}),
 	) as ProjectCache;
 };
 
@@ -185,47 +178,46 @@ export const saveProjects = (projects: path.ParsedPath[]) => {
 		keys: {},
 	};
 
-	projects.forEach((path) => {
+	projects.forEach(path => {
 		let project = requireProject(
-			path.dir + "/" + path.base,
-			path.ext === ".js"
+			path.dir + '/' + path.base,
+			path.ext === '.js',
 		);
-		let name = (project.name || path.name) + "#" + path.dir;
+		let name = (project.name || path.name) + '#' + path.dir;
 		if (cache.database[name]) {
 			name =
 				name +
-				"_" +
-				Object.keys(cache.database).filter((key) => key === name)
-					.length;
+				'_' +
+				Object.keys(cache.database).filter(key => key === name).length;
 			cache.database[name];
 		} else cache.database[name] = path;
 
-		let root: string | string[] = path.dir.split("projects");
-		if (root.length > 2) root.slice(1).join("projects");
+		let root: string | string[] = path.dir.split('projects');
+		if (root.length > 2) root.slice(1).join('projects');
 		else root = root[1];
-		let nss = root[0] === "/" ? (root as string).substring(1) : root;
+		let nss = root[0] === '/' ? (root as string).substring(1) : root;
 
-		cache.keys[path.dir + "/" + path.base] = name;
-		cache.keys[path.dir + "/" + path.name] = name;
-		cache.keys["/" + path.name] = name;
-		cache.keys["/" + path.base] = name;
-		cache.keys["/projects/" + path.name] = name;
-		cache.keys["/projects/" + path.base] = name;
-		cache.keys[process.cwd() + "/" + path.name] = name;
-		cache.keys[process.cwd() + "/" + path.base] = name;
-		cache.keys[process.cwd() + "/projects/" + path.name] = name;
-		cache.keys[process.cwd() + "/projects/" + path.base] = name;
-		cache.keys[root + "/" + path.name] = name;
-		cache.keys[root + "/" + path.base] = name;
-		cache.keys[nss + "/" + path.name] = name;
-		cache.keys[nss + "/" + path.base] = name;
+		cache.keys[path.dir + '/' + path.base] = name;
+		cache.keys[path.dir + '/' + path.name] = name;
+		cache.keys['/' + path.name] = name;
+		cache.keys['/' + path.base] = name;
+		cache.keys['/projects/' + path.name] = name;
+		cache.keys['/projects/' + path.base] = name;
+		cache.keys[process.cwd() + '/' + path.name] = name;
+		cache.keys[process.cwd() + '/' + path.base] = name;
+		cache.keys[process.cwd() + '/projects/' + path.name] = name;
+		cache.keys[process.cwd() + '/projects/' + path.base] = name;
+		cache.keys[root + '/' + path.name] = name;
+		cache.keys[root + '/' + path.base] = name;
+		cache.keys[nss + '/' + path.name] = name;
+		cache.keys[nss + '/' + path.base] = name;
 		cache.keys[path.name] = name;
 		cache.keys[path.base] = name;
 	});
 
 	fs.writeFileSync(
-		process.cwd() + "/temp/projects_cache.json",
-		JSON.stringify(cache)
+		process.cwd() + '/temp/projects_cache.json',
+		JSON.stringify(cache),
 	);
 
 	return cache;
@@ -247,13 +239,13 @@ export const findProjects = async (roots?: PathLike[]) => {
 	roots = roots || [];
 	roots = [
 		...roots,
-		process.cwd() + "/projects/",
+		process.cwd() + '/projects/',
 		...(config.roots || []).map(
 			(root: string) =>
 				process.cwd() +
-				"/" +
+				'/' +
 				root +
-				(root[root.length - 1] !== "/" ? "/projects/" : "projects/")
+				(root[root.length - 1] !== '/' ? '/projects/' : 'projects/'),
 		),
 	];
 
@@ -261,12 +253,12 @@ export const findProjects = async (roots?: PathLike[]) => {
 	for (let i = 0; i < roots.length; i++) {
 		projects = [
 			...projects,
-			...(await findFiles(roots[i] + "**/*.ts")),
-			...(await findFiles(roots[i] + "**/*.js")),
+			...(await findFiles(roots[i] + '**/*.ts')),
+			...(await findFiles(roots[i] + '**/*.js')),
 		];
 	}
 
-	return projects.map((filePath) => path.parse(filePath));
+	return projects.map(filePath => path.parse(filePath));
 };
 
 /**
@@ -278,18 +270,18 @@ export const getProject = (projectNameOrPath: string) => {
 	let projects = getProjects();
 
 	if (!projects.keys[projectNameOrPath])
-		throw new Error("cannot find path or name: " + projectNameOrPath);
+		throw new Error('cannot find path or name: ' + projectNameOrPath);
 
 	let projectName = projects.keys[projectNameOrPath];
 	if (!projects.database[projectName])
-		throw new Error("cannot find: " + projectName);
+		throw new Error('cannot find: ' + projectName);
 
 	return requireProject(
 		projects.database[projectName].dir +
-			"/" +
+			'/' +
 			projects.database[projectName].base,
-		projects.database[projectName].ext === ".js",
-		true
+		projects.database[projectName].ext === '.js',
+		true,
 	);
 };
 
@@ -302,7 +294,7 @@ export const getProject = (projectNameOrPath: string) => {
 export const requireProject = (
 	projectPath: PathLike,
 	isJavaScript: boolean,
-	clearCache?: boolean
+	clearCache?: boolean,
 ) => {
 	if (clearCache && require.cache[projectPath as string])
 		delete require.cache[projectPath as string];
@@ -320,7 +312,7 @@ export const requireProject = (
  * @returns
  */
 export const getCurrentCompiledProject = () => {
-	if (!getCurrentProjectPath()) throw new Error("no current project");
+	if (!getCurrentProjectPath()) throw new Error('no current project');
 
 	return getCompiledProject(getCurrentProjectPath().name);
 };

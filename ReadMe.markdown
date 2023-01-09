@@ -2,9 +2,9 @@
 
 ## 🗿 Requirements
 
--   Mac OSX (any version), Windows (XP, Vista, 7, 8, 10, 11), Debian (5+), Ubuntu (14+)
--   Node **16.0.0** or Higher
--   (Optional) Nix
+- Mac OSX (any version), Windows (XP, Vista, 7, 8, 10, 11), Debian (5+), Ubuntu (14+)
+- Node **16.0.0** or Higher
+- (Optional) Nix
 
 ## 🗿 Boilerplates & Starterkits
 

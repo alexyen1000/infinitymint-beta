@@ -1,4 +1,4 @@
-import hre, { ethers, artifacts } from "hardhat";
+import hre, {ethers, artifacts} from 'hardhat';
 import {
 	debugLog,
 	getConfigFile,
@@ -10,42 +10,42 @@ import {
 	saveSession,
 	getSolidityFolder,
 	warning,
-} from "./helpers";
-import { BaseContract } from "ethers";
-import fs from "fs";
-import { defaultFactory, PipeFactory } from "./pipes";
+} from './helpers';
+import {BaseContract} from 'ethers';
+import fs from 'fs';
+import {defaultFactory, PipeFactory} from './pipes';
 import {
 	Web3Provider,
 	JsonRpcProvider,
 	TransactionReceipt,
 	Provider,
-} from "@ethersproject/providers";
-import GanacheServer from "./ganache";
-import { ContractFactory, ContractTransaction } from "@ethersproject/contracts";
-import { EthereumProvider } from "hardhat/types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getLocalDeployment, create } from "./deployments";
+} from '@ethersproject/providers';
+import GanacheServer from './ganache';
+import {ContractFactory, ContractTransaction} from '@ethersproject/contracts';
+import {EthereumProvider} from 'hardhat/types';
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
+import {getLocalDeployment, create} from './deployments';
 import {
 	InfinityMintConfigSettingsNetwork,
 	InfinityMintDeploymentLive,
 	InfinityMintConsoleOptions,
 	InfinityMintConfig,
-} from "./interfaces";
-import InfinityConsole from "./console";
+} from './interfaces';
+import InfinityConsole from './console';
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
 
 export const initializeInfinityMint = async (
 	config?: InfinityMintConfig,
-	startGanache?: boolean
+	startGanache?: boolean,
 ) => {
 	let session = readSession();
 
 	//allow piping
 	allowPiping();
 	//
-	logDirect("🪐 Starting InfinityConsole");
+	logDirect('🪐 Starting InfinityConsole');
 	//register current network pipes
 	registerNetworkLogs();
 	try {
@@ -59,24 +59,22 @@ export const initializeInfinityMint = async (
 		try {
 			//ask if they want to start ganache
 			//start ganache here
-			let obj = { ...config.ganache } as any;
+			let obj = {...config.ganache} as any;
 			if (!obj.wallet) obj.wallet = {};
 			if (!session.environment.ganacheMnemonic)
-				throw new Error("no ganache mnemonic");
+				throw new Error('no ganache mnemonic');
 
 			obj.wallet.mnemonic = session.environment.ganacheMnemonic;
 			saveSession(session);
-			debugLog(
-				"starting ganache with menomic of: " + obj.wallet.mnemonic
-			);
+			debugLog('starting ganache with menomic of: ' + obj.wallet.mnemonic);
 
 			//get private keys and save them to file
 			let keys = getPrivateKeys(session.environment.ganacheMnemonic);
 			debugLog(
-				"found " +
+				'found ' +
 					keys.length +
-					" private keys for mnemonic: " +
-					session.environment.ganacheMnemonic
+					' private keys for mnemonic: ' +
+					session.environment.ganacheMnemonic,
 			);
 			keys.forEach((key, index) => {
 				debugLog(`[${index}] => ${key}`);
@@ -85,12 +83,12 @@ export const initializeInfinityMint = async (
 			saveSession(session);
 
 			let provider = await GanacheServer.start(config.ganache || {});
-			startNetworkPipe(provider, "ganache");
+			startNetworkPipe(provider, 'ganache');
 		} catch (error) {
-			warning("could not start ganache: " + error);
+			warning('could not start ganache: ' + error);
 		}
 	} else {
-		warning("no ganache network found");
+		warning('no ganache network found');
 	}
 
 	//start a network pipe if we aren't ganache as we do something different if we are
@@ -102,34 +100,32 @@ export const initializeInfinityMint = async (
 //function to launch the console
 export const startInfinityConsole = async (
 	options?: InfinityMintConsoleOptions,
-	pipeFactory?: PipeFactory
+	pipeFactory?: PipeFactory,
 ) => {
 	debugLog(
-		"starting InfinityConsole with solidity root of " + getSolidityFolder()
+		'starting InfinityConsole with solidity root of ' + getSolidityFolder(),
 	);
 
 	let infinityConsole = new InfinityConsole(options, pipeFactory);
 	logDirect(
-		"💭 Initializing InfinityConsole<" +
-			infinityConsole.getSessionId() +
-			">"
+		'💭 Initializing InfinityConsole<' + infinityConsole.getSessionId() + '>',
 	);
 	await infinityConsole.initialize();
 	log(
-		"{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<" +
+		'{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<' +
 			infinityConsole.getSessionId() +
-			">"
+			'>',
 	);
 	return infinityConsole;
 };
 
 export const getDefaultSigner = async () => {
 	if (
-		hre.network.name === "ganache" &&
-		isEnvTrue("GANACHE_EXTERNAL") === false
+		hre.network.name === 'ganache' &&
+		isEnvTrue('GANACHE_EXTERNAL') === false
 	) {
 		let obj = GanacheServer.getProvider().getSigner(
-			getDefaultAccountIndex()
+			getDefaultAccountIndex(),
 		) as any;
 		obj.address = await obj.getAddress();
 		return obj as SignerWithAddress;
@@ -140,11 +136,11 @@ export const getDefaultSigner = async () => {
 
 	if (!signers[defaultAccount])
 		throw new Error(
-			"bad default account for network " +
+			'bad default account for network ' +
 				hre.network.name +
-				" index " +
+				' index ' +
 				defaultAccount +
-				"does not exist"
+				'does not exist',
 		);
 
 	return signers[defaultAccount];
@@ -162,7 +158,7 @@ export const deploy = async (
 	args?: [],
 	save?: boolean,
 	logDeployment?: boolean,
-	usePreviousDeployment?: boolean
+	usePreviousDeployment?: boolean,
 ) => {
 	signer = signer || (await getDefaultSigner());
 	let artifact = await artifacts.readArtifact(artifactName);
@@ -174,19 +170,19 @@ export const deploy = async (
 	if (usePreviousDeployment && fs.existsSync(fileName)) {
 		let deployment = JSON.parse(
 			fs.readFileSync(fileName, {
-				encoding: "utf-8",
-			})
+				encoding: 'utf-8',
+			}),
 		);
 
 		if (logDeployment)
 			log(
-				`🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`
+				`🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`,
 			);
 
 		let contract = await ethers.getContractAt(
 			artifact.contractName,
 			deployment.address,
-			signer
+			signer,
 		);
 
 		let session = readSession();
@@ -205,19 +201,14 @@ export const deploy = async (
 				deployer: contract.deployTransaction.from,
 				receipt: contract.deployTransaction,
 			};
-			debugLog(
-				`saving deployment of ${artifact.contractName} to session`
-			);
+			debugLog(`saving deployment of ${artifact.contractName} to session`);
 			saveSession(session);
 		}
 
 		return contract;
 	}
 
-	let factory = await ethers.getContractFactory(
-		artifact.contractName,
-		signer
-	);
+	let factory = await ethers.getContractFactory(artifact.contractName, signer);
 	let contract = await deployContract(factory, args);
 	logTransaction(contract.deployTransaction);
 
@@ -245,10 +236,8 @@ export const deploy = async (
 	debugLog(`saving ${fileName}`);
 	log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
 
-	if (
-		!fs.existsSync(process.cwd() + "/deployments/" + hre.network.name + "/")
-	)
-		fs.mkdirSync(process.cwd() + "/deployments/" + hre.network.name + "/");
+	if (!fs.existsSync(process.cwd() + '/deployments/' + hre.network.name + '/'))
+		fs.mkdirSync(process.cwd() + '/deployments/' + hre.network.name + '/');
 
 	fs.writeFileSync(fileName, JSON.stringify(savedDeployment, null, 2));
 	return contract;
@@ -278,7 +267,7 @@ export const deployBytecode = async (
 	abi: string[],
 	bytecode: string,
 	args?: [],
-	signer?: SignerWithAddress
+	signer?: SignerWithAddress,
 ) => {
 	signer = signer || (await getDefaultSigner());
 	let factory = await ethers.getContractFactory(abi, bytecode, signer);
@@ -288,7 +277,7 @@ export const deployBytecode = async (
 export const changeNetwork = (network: string) => {
 	stopNetworkPipe(ethers.provider, hre.network.name);
 	hre.changeNetwork(network);
-	if (network !== "ganache") startNetworkPipe(ethers.provider, network);
+	if (network !== 'ganache') startNetworkPipe(ethers.provider, network);
 };
 
 /**
@@ -301,10 +290,7 @@ export const changeNetwork = (network: string) => {
  * @returns
  */
 export const getProvider = () => {
-	if (
-		hre.network.name === "ganache" &&
-		isEnvTrue("GANACHE_EXTERNAL") === false
-	)
+	if (hre.network.name === 'ganache' && isEnvTrue('GANACHE_EXTERNAL') === false)
 		return GanacheServer.getProvider();
 
 	return ethers.provider;
@@ -318,7 +304,7 @@ export const getProvider = () => {
  */
 export const getContract = (
 	deployment: InfinityMintDeploymentLive,
-	provider?: Provider | JsonRpcProvider
+	provider?: Provider | JsonRpcProvider,
 ) => {
 	provider = provider || getProvider();
 	return new ethers.Contract(deployment.address, deployment.abi, provider);
@@ -332,7 +318,7 @@ export const getContract = (
  */
 export const getSignedContract = async (
 	deployment: InfinityMintDeploymentLive,
-	signer?: SignerWithAddress
+	signer?: SignerWithAddress,
 ): Promise<BaseContract> => {
 	signer = signer || (await getDefaultSigner());
 	let factory = await ethers.getContractFactory(deployment.name);
@@ -342,7 +328,7 @@ export const getSignedContract = async (
 export const logTransaction = async (
 	execution: Promise<ContractTransaction> | ContractTransaction,
 	logMessage?: string,
-	printGasUsage?: boolean
+	printGasUsage?: boolean,
 ) => {
 	if (logMessage?.length !== 0) {
 		log(`🏳️‍🌈 ${logMessage}`);
@@ -370,13 +356,11 @@ export const logTransaction = async (
 		gasUsedEther: ethers.utils.formatEther(receipt.gasUsed.toString()),
 		gasUsedNumerical: parseInt(receipt.gasUsed.toString()),
 	};
-	session.environment.temporaryGasReceipts.push({ savedReceipt });
+	session.environment.temporaryGasReceipts.push({savedReceipt});
 
 	if (printGasUsage)
 		log(
-			"{magenta-fg}⛽ gas: {/magenta-fg}" +
-				savedReceipt.gasUsedEther +
-				" ETH"
+			'{magenta-fg}⛽ gas: {/magenta-fg}' + savedReceipt.gasUsedEther + ' ETH',
 		);
 
 	saveSession(session);
@@ -402,9 +386,7 @@ export const get = (contractName: string, network?: string, provider?: any) => {
  * @returns
  */
 export const getDeployment = (contractName: string, network?: string) => {
-	return create(
-		getLocalDeployment(contractName, network || hre.network.name)
-	);
+	return create(getLocalDeployment(contractName, network || hre.network.name));
 };
 
 export const getNetworkSettings = (network: string) => {
@@ -424,10 +406,10 @@ export const registerNetworkLogs = () => {
 	let networks = Object.keys(hre.config.networks);
 	let config = getConfigFile();
 
-	networks.forEach((network) => {
+	networks.forEach(network => {
 		let settings = config?.settings?.networks[network] || {};
 		if (settings.useDefaultPipe) return;
-		debugLog("registered pipe for " + network);
+		debugLog('registered pipe for ' + network);
 		defaultFactory.registerSimplePipe(network);
 	});
 };
@@ -437,8 +419,7 @@ export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
 	walletLength = walletLength || 20;
 	for (let i = 0; i < walletLength; i++) {
 		keys.push(
-			ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/` + i)
-				.privateKey
+			ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/` + i).privateKey,
 		);
 	}
 	return keys;
@@ -446,28 +427,28 @@ export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
 
 export const stopNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
-	network?: any
+	network?: any,
 ) => {
 	if (!network) network = hre.network.name;
 	let settings = getNetworkSettings(network);
 	//register events
 	try {
-		Object.keys(ProviderListeners[network]).forEach((key) => {
+		Object.keys(ProviderListeners[network]).forEach(key => {
 			provider.off(key, ProviderListeners[network][key]);
 		});
 	} catch (error) {
-		if (isEnvTrue("THROW_ALL_ERRORS")) throw error;
-		warning("failed to stop pipe: " + network);
+		if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
+		warning('failed to stop pipe: ' + network);
 	}
 	defaultFactory
-		.getPipe(settings.useDefaultPipe ? "default" : network)
-		.log("{red-fg}stopped pipe{/red-fg}");
+		.getPipe(settings.useDefaultPipe ? 'default' : network)
+		.log('{red-fg}stopped pipe{/red-fg}');
 	delete ProviderListeners[network];
 };
 
 export const startNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
-	network?: any
+	network?: any,
 ) => {
 	if (!network) network = hre.network.name;
 	let settings = getNetworkSettings(network);
@@ -478,33 +459,31 @@ export const startNetworkPipe = (
 	ProviderListeners[network] = ProviderListeners[network] || {};
 	ProviderListeners[network].block = (blockNumber: any) => {
 		log(
-			"{green-fg}new block{/green-fg} => [" + blockNumber + "]",
-			settings.useDefaultPipe ? "default" : network
+			'{green-fg}new block{/green-fg} => [' + blockNumber + ']',
+			settings.useDefaultPipe ? 'default' : network,
 		);
 	};
 
 	ProviderListeners[network].pending = (tx: any) => {
 		log(
-			"{yellow-fg}new transaction pending{/yellow-fg} => " +
+			'{yellow-fg}new transaction pending{/yellow-fg} => ' +
 				JSON.stringify(tx, null, 2),
-			settings.useDefaultPipe ? "default" : network
+			settings.useDefaultPipe ? 'default' : network,
 		);
 	};
 
 	ProviderListeners[network].error = (tx: any) => {
 		defaultFactory
-			.getPipe(settings.useDefaultPipe ? "default" : network)
-			.error(
-				"{red-fg}tx error{/reg-fg} => " + JSON.stringify(tx, null, 2)
-			);
+			.getPipe(settings.useDefaultPipe ? 'default' : network)
+			.error('{red-fg}tx error{/reg-fg} => ' + JSON.stringify(tx, null, 2));
 	};
 
 	defaultFactory
-		.getPipe(settings.useDefaultPipe ? "default" : network)
-		.log("{cyan-fg}started pipe{/cyan-fg}");
-	Object.keys(ProviderListeners[network]).forEach((key) => {
+		.getPipe(settings.useDefaultPipe ? 'default' : network)
+		.log('{cyan-fg}started pipe{/cyan-fg}');
+	Object.keys(ProviderListeners[network]).forEach(key => {
 		provider.on(key, ProviderListeners[network][key]);
 	});
 
-	debugLog("registered provider event hooks for " + network);
+	debugLog('registered provider event hooks for ' + network);
 };

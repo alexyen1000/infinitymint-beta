@@ -1,13 +1,13 @@
-import { InfinityMintTelnetOptions, KeyValue } from "./interfaces";
-import { createHash } from "node:crypto";
-import fs from "fs";
-import { Blessed, BlessedElement, getConfigFile, warning } from "./helpers";
-import InfinityConsole from "./console";
-import { Dictionary } from "form-data";
-import { logDirect } from "./helpers";
-import { startInfinityConsole } from "./web3";
+import {InfinityMintTelnetOptions, KeyValue} from './interfaces';
+import {createHash} from 'node:crypto';
+import fs from 'fs';
+import {Blessed, BlessedElement, getConfigFile, warning} from './helpers';
+import InfinityConsole from './console';
+import {Dictionary} from 'form-data';
+import {logDirect} from './helpers';
+import {startInfinityConsole} from './web3';
 
-const telnet = require("telnet2");
+const telnet = require('telnet2');
 export class TelnetServer {
 	private clients: any;
 	private consoles: Dictionary<InfinityConsole>;
@@ -28,13 +28,13 @@ export class TelnetServer {
 	 * @returns
 	 */
 	public login(username: string, password: string, sessionId: string) {
-		logDirect("Logging in " + username + ` <${sessionId}>`);
+		logDirect('Logging in ' + username + ` <${sessionId}>`);
 		try {
 			loginUser(
 				username,
 				password,
 				this.clients[sessionId].remoteAddress,
-				sessionId
+				sessionId,
 			);
 			this.online[username] = true;
 			this.consoles[sessionId].setUser(usernames[username]);
@@ -49,7 +49,7 @@ export class TelnetServer {
 	public logout(sessionId: string) {
 		if (!sessions[sessionId]) return;
 
-		logDirect("Logging out " + sessionId);
+		logDirect('Logging out ' + sessionId);
 
 		let session = sessions[sessionId];
 		this.online[session.username] = false;
@@ -86,9 +86,8 @@ export class TelnetServer {
 				this.clients[sessionId],
 				//make the first user admin
 				Object.values(username).length === 0
-					? "admin"
-					: (config.telnet as InfinityMintTelnetOptions)
-							.defaultGroup || "user"
+					? 'admin'
+					: (config.telnet as InfinityMintTelnetOptions).defaultGroup || 'user',
 			);
 			//save the usernames file
 			saveUsernames();
@@ -98,7 +97,7 @@ export class TelnetServer {
 	}
 
 	async start(port?: number) {
-		telnet({ tty: true }, (client) => {
+		telnet({tty: true}, client => {
 			logDirect(`\n🚀 New Client Detected`);
 			(async () => {
 				let screen: BlessedElement;
@@ -110,7 +109,7 @@ export class TelnetServer {
 							smartCSR: true,
 							input: client,
 							output: client,
-							terminal: "xterm-256color",
+							terminal: 'xterm-256color',
 							fullUnicode: true,
 						},
 					});
@@ -120,20 +119,20 @@ export class TelnetServer {
 					screen = infinityConsole.getScreen();
 					infinityConsole.setClient(client);
 
-					client.on("term", (terminal) => {
+					client.on('term', terminal => {
 						screen.terminal = terminal;
 						screen.render();
 					});
 
 					//when its resizes
-					client.on("size", (width, height) => {
+					client.on('size', (width, height) => {
 						client.columns = width;
 						client.rows = height;
-						client.emit("resize");
+						client.emit('resize');
 					});
 
 					//when the client closes
-					client.on("close", () => {
+					client.on('close', () => {
 						try {
 							if (this.clients || this.clients[sessionId])
 								delete this.clients[sessionId];
@@ -143,45 +142,41 @@ export class TelnetServer {
 								delete this.consoles[sessionId];
 							}
 						} catch (error) {
-							logDirect("💥 warning: " + error.message);
+							logDirect('💥 warning: ' + error.message);
 						}
 
 						logDirect(
 							`💀 Disconnected ${
-								client.remoteAddress ||
-								client.input.remoteAddress
-							}\n`
+								client.remoteAddress || client.input.remoteAddress
+							}\n`,
 						);
 					});
 
 					//screen on
-					screen.on("destroy", () => {
+					screen.on('destroy', () => {
 						if (client.writable) {
 							client.destroy();
 						}
 
 						logDirect(
 							`⚰️ Screen Destroyed ${
-								client.remoteAddress ||
-								client.input.remoteAddress
-							}`
+								client.remoteAddress || client.input.remoteAddress
+							}`,
 						);
 					});
 
 					if (!hasLoggedIn(client, sessionId))
-						infinityConsole.gotoWindow("Login");
+						infinityConsole.gotoWindow('Login');
 
 					logDirect(
 						`🦊 Successful Connection ${
 							client.remoteAddress ||
 							client.output.remoteAddress ||
 							client.input.remoteAddress
-						}<${sessionId}>`
+						}<${sessionId}>`,
 					);
 				} catch (error) {
-					logDirect(
-						`💥 error<${client.input.remoteAddress}>:\n${error.stack}`
-					);
+					logDirect(`💥 error<${client.input.remoteAddress}>:\n${error.stack}`);
 
 					if (client.writable) {
 						client.destroy();
@@ -190,8 +185,8 @@ export class TelnetServer {
 			})();
 		}).listen(port || 1337);
 		logDirect(
-			"🟢 Telnet Server Online! enter line below to connect\n\tbrew install telnet && telnet localhost " +
-				port
+			'🟢 Telnet Server Online! enter line below to connect\n\tbrew install telnet && telnet localhost ' +
+				port,
 		);
 	}
 	reload() {}
@@ -208,18 +203,18 @@ export const register = (
 	username: string,
 	password: string,
 	client: any,
-	group: string
+	group: string,
 ) => {
 	if (usernames[username])
-		throw new Error("username already taken: " + username);
+		throw new Error('username already taken: ' + username);
 
-	let salt = createHash("md5")
+	let salt = createHash('md5')
 		.update(btoa((Math.random() * Math.random() * Date.now()).toString()))
-		.digest("hex");
+		.digest('hex');
 
-	let saltedPassword = createHash("sha512")
+	let saltedPassword = createHash('sha512')
 		.update(btoa(salt + password))
-		.digest("hex");
+		.digest('hex');
 
 	usernames[username] = {
 		username,
@@ -234,8 +229,8 @@ export const register = (
 
 export const saveUsernames = () => {
 	fs.writeFileSync(
-		process.cwd() + "/temp/username_list.json",
-		JSON.stringify(usernames)
+		process.cwd() + '/temp/username_list.json',
+		JSON.stringify(usernames),
 	);
 };
 
@@ -252,18 +247,18 @@ export const loginUser = (
 	username: string,
 	password: string,
 	remoteAddress: string,
-	sessionId: string
+	sessionId: string,
 ) => {
-	if (sessions[sessionId]) throw new Error("session has already begun");
-	if (!usernames[username]) throw new Error("bad username or password");
+	if (sessions[sessionId]) throw new Error('session has already begun');
+	if (!usernames[username]) throw new Error('bad username or password');
 
 	let user = usernames[username];
 
-	let hash = createHash("sha512")
+	let hash = createHash('sha512')
 		.update(user.salt + password)
-		.digest("hex");
+		.digest('hex');
 
-	if (hash !== user.password) throw new Error("bad username or password");
+	if (hash !== user.password) throw new Error('bad username or password');
 
 	sessions[sessionId] = {
 		username,
@@ -276,10 +271,10 @@ export const loginUser = (
 };
 
 export const readUsernameList = () => {
-	if (!fs.existsSync(process.cwd() + "/temp/username_list.json"))
+	if (!fs.existsSync(process.cwd() + '/temp/username_list.json'))
 		return {} as typeof usernames;
 
-	return JSON.parse(process.cwd() + "/temp/username_list.json");
+	return JSON.parse(process.cwd() + '/temp/username_list.json');
 };
 
 export let usernames: Dictionary<UserEntry>;
@@ -306,8 +301,8 @@ export const hasLoggedIn = (client: any, sessionId: any) => {
  */
 export const getSession = (client: any, sessionId?: any): SessionEntry => {
 	return Object.values(sessions).filter(
-		(entry) =>
+		entry =>
 			client.remoteAddress === entry.remoteAddress &&
-			(sessionId ? entry.sessionId === sessionId : true)
+			(sessionId ? entry.sessionId === sessionId : true),
 	)[0];
 };

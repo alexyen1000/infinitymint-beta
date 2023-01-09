@@ -1,26 +1,26 @@
-import InfinityConsole from "./app/console";
-import hre from "hardhat";
-import fs from "fs";
+import InfinityConsole from './app/console';
+import hre from 'hardhat';
+import fs from 'fs';
 
 //import things we need
-import { isEnvTrue, log, getConfigFile, logDirect } from "./app/helpers";
-import { defaultFactory } from "./app/pipes";
-import { initializeInfinityMint, startInfinityConsole } from "./app/web3";
+import {isEnvTrue, log, getConfigFile, logDirect} from './app/helpers';
+import {defaultFactory} from './app/pipes';
+import {initializeInfinityMint, startInfinityConsole} from './app/web3';
 import {
 	InfinityMintConfig,
 	InfinityMintConsoleOptions,
 	InfinityMintTelnetOptions,
-} from "./app/interfaces";
-import { TelnetServer } from "./app/telnet";
+} from './app/interfaces';
+import {TelnetServer} from './app/telnet';
 
 //export helpers
-export * as Helpers from "./app/helpers";
+export * as Helpers from './app/helpers';
 
 //error handler
 let errorHandler = (error: Error) => {
 	if ((console as any)._error) (console as any)._error(error);
 	console.error(error);
-	Object.keys(defaultFactory.pipes || {}).forEach((pipe) => {
+	Object.keys(defaultFactory.pipes || {}).forEach(pipe => {
 		try {
 			defaultFactory.savePipe(pipe);
 		} catch (error) {}
@@ -28,7 +28,7 @@ let errorHandler = (error: Error) => {
 	process.exit(1);
 };
 
-logDirect("✨ Reading InfinityMint Config");
+logDirect('✨ Reading InfinityMint Config');
 //get the infinitymint config file and export it
 export const config = getConfigFile();
 
@@ -40,25 +40,25 @@ let infinityConsole: InfinityConsole;
  * Starts infinitymint in the background with no UI drawing
  */
 export const load = async (
-	options?: InfinityMintConsoleOptions
+	options?: InfinityMintConsoleOptions,
 ): Promise<InfinityConsole> => {
 	options = {
 		...(options || {}),
-		...(typeof config?.console === "object" ? config.console : {}),
+		...(typeof config?.console === 'object' ? config.console : {}),
 	} as InfinityMintConsoleOptions;
 
-	if (!fs.existsSync("./artifacts")) await hre.run("compile");
+	if (!fs.existsSync('./artifacts')) await hre.run('compile');
 
 	//if we arenttelnet
 	if (!config.telnet) {
 		await initializeInfinityMint(
 			config,
-			hre.config.networks.ganache !== undefined
+			hre.config.networks.ganache !== undefined,
 		);
 
 		//do not start an InfinityConsole normally if we have nothing in config, run InfinityMint as NPM module in the back
 		if (!config.console && !config.startup && !config.telnet)
-			return new InfinityConsole({ ...(options || {}) }, defaultFactory);
+			return new InfinityConsole({...(options || {})}, defaultFactory);
 
 		return await startInfinityConsole(
 			{
@@ -66,27 +66,26 @@ export const load = async (
 				dontDraw:
 					config.console === false &&
 					config.console === undefined &&
-					!isEnvTrue("INFINITYMINT_CONSOLE"),
+					!isEnvTrue('INFINITYMINT_CONSOLE'),
 			},
-			defaultFactory
+			defaultFactory,
 		);
 	} else {
 		await new Promise((resolve, reject) => {
-			logDirect("🔷 Starting InfinityMint Telnet Server");
+			logDirect('🔷 Starting InfinityMint Telnet Server');
 			initializeInfinityMint(config.console as any).then(
 				(config: InfinityMintConfig) => {
 					let port =
-						(config?.telnet as InfinityMintTelnetOptions)?.port ||
-						1337;
+						(config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
 
 					let telnet = new TelnetServer();
 					telnet.start(port);
-				}
+				},
 			);
 		})
 			.catch(errorHandler)
 			.then(() => {
-				logDirect("🔷 Destroying InfinityMint Telnet Server");
+				logDirect('🔷 Destroying InfinityMint Telnet Server');
 				process.exit(0);
 			});
 	}
