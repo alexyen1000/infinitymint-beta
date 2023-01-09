@@ -293,23 +293,6 @@ export const changeNetwork = (network: string) => {
 };
 
 /**
- * Returns the current provider to use for web3 interaction.
- * Used to ensure that output from the ganache chain is piped correctly into the logger.
- * Since ganache is ran inside of this instance we use the EIP-1199 provider
- * and return that, if we aren't then we will assume hardhat has managed our provider for us and return what ever ethers uses, use this
- * over ethers.provider or hre.network.provider
- *
- * @returns
- */
-export const getProvider = () => {
-	logDirect(hre.network.name);
-	if (hre.network.name === 'ganache' && isEnvTrue('GANACHE_EXTERNAL') === false)
-		return GanacheServer.getProvider();
-
-	return ethers.provider;
-};
-
-/**
  * Returns an ethers contract instance but takes an InfinityMintDeployment directly
  * @param deployment
  * @param provider
@@ -319,7 +302,7 @@ export const getContract = (
 	deployment: InfinityMintDeploymentLive,
 	provider?: Provider | JsonRpcProvider,
 ) => {
-	provider = provider || getProvider();
+	provider = provider || ethers.provider;
 	return new ethers.Contract(deployment.address, deployment.abi, provider);
 };
 
@@ -355,7 +338,7 @@ export const logTransaction = async (
 	let receipt: TransactionReceipt;
 	if (tx.wait) {
 		receipt = await tx.wait();
-	} else receipt = await getProvider().getTransactionReceipt(tx.blockHash);
+	} else receipt = await ethers.provider.getTransactionReceipt(tx.blockHash);
 
 	log(`{green-fg}😊 Success{/green-fg}`);
 
@@ -388,7 +371,7 @@ export const logTransaction = async (
  * @returns
  */
 export const get = (contractName: string, network?: string, provider?: any) => {
-	provider = provider || getProvider();
+	provider = provider || ethers.provider;
 	return getContract(getLocalDeployment(contractName, network), provider);
 };
 
@@ -494,6 +477,7 @@ export const startNetworkPipe = (
 	defaultFactory
 		.getPipe(settings.useDefaultPipe ? 'default' : network)
 		.log('{cyan-fg}started pipe{/cyan-fg}');
+
 	Object.keys(ProviderListeners[network]).forEach(key => {
 		provider.on(key, ProviderListeners[network][key]);
 	});

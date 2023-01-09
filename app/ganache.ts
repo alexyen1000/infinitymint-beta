@@ -44,37 +44,35 @@ export class GanacheServer {
 			this.server.listen(this.port, async (err: any) => {
 				if (err) throw err;
 				//creates a new ethers provider with the logger piping to ganache
-				let provider = new ethers.providers.Web3Provider(
-					ganache.provider({
-						logging: {
-							debug: true,
-							verbose: true,
-							logger: {
-								log: (msg: any, ...params) => {
-									log(
-										`${msg
-											.toString()
-											.replace(/>/g, '')
-											.replace(/\n/g, '')
-											.replace(/  /g, ' ')
-											.trim()}`,
-										'ganache',
-									);
-									if (params && Object.values(params).length !== 0)
-										log(JSON.stringify(params, null, 2), 'ganache');
-								},
+				let provider = ganache.provider({
+					logging: {
+						debug: true,
+						verbose: true,
+						logger: {
+							log: (msg: any, ...params) => {
+								log(
+									`${msg
+										.toString()
+										.replace(/>/g, '')
+										.replace(/\n/g, '')
+										.replace(/  /g, ' ')
+										.trim()}`,
+									'ganache',
+								);
+								if (params && Object.values(params).length !== 0)
+									log(JSON.stringify(params, null, 2), 'ganache');
 							},
 						},
-						...options,
-					}) as any,
-					'any',
-				);
-				this.provider = provider as Web3Provider;
+						quiet: true,
+					},
+					...options,
+				});
+				this.provider = provider;
 				log(
 					'{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:' +
 						this.port,
 				);
-				resolve(this.provider as Web3Provider);
+				resolve(provider);
 			});
 		});
 		return this.provider;

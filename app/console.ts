@@ -29,7 +29,7 @@ import {InfinityMintEventEmitter} from './interfaces';
 import {InfinityMintWindow} from './window';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
-import {changeNetwork, getDefaultSigner, getProvider} from './web3';
+import {changeNetwork, getDefaultSigner} from './web3';
 import {PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
@@ -1030,7 +1030,7 @@ export class InfinityConsole {
 	public async refreshWeb3() {
 		try {
 			this.network = (await import('hardhat')).network;
-			this.chainId = (await getProvider().getNetwork()).chainId;
+			this.chainId = (await ethers.provider.getNetwork()).chainId;
 			this.account = await getDefaultSigner();
 			this.balance = await this.account.getBalance();
 		} catch (error) {
@@ -1044,7 +1044,7 @@ export class InfinityConsole {
 	 */
 
 	public async getProvider() {
-		return getProvider();
+		return ethers.provider;
 	}
 
 	public getScripts() {
