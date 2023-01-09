@@ -5,6 +5,7 @@ import {
 	InfinityMintEventKeys,
 	InfinityMintScript,
 } from './interfaces';
+import {ethers} from 'hardhat';
 import {
 	BlessedElement,
 	createPipes,
@@ -13,7 +14,6 @@ import {
 	getConfigFile,
 	getInfinityMintVersion,
 	isEnvTrue,
-	log,
 	logDirect,
 	requireScript,
 	requireWindow,
@@ -27,11 +27,10 @@ import {
 } from './telnet';
 import {InfinityMintEventEmitter} from './interfaces';
 import {InfinityMintWindow} from './window';
-import hre, {ethers} from 'hardhat';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {changeNetwork, getDefaultSigner, getProvider} from './web3';
-import {Pipe, PipeFactory} from './pipes';
+import {PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
 import {getProjectDeploymentClasses} from './deployments';
@@ -40,6 +39,7 @@ import {getImports, hasImportCache, ImportCache} from './imports';
 import blessed from 'blessed';
 import {findProjects, saveProjects} from './projects';
 import {ProjectCache} from './projects';
+
 //uuid stuff
 const {v4: uuidv4} = require('uuid');
 
@@ -1029,7 +1029,7 @@ export class InfinityConsole {
 
 	public async refreshWeb3() {
 		try {
-			this.network = hre.network;
+			this.network = (await import('hardhat')).network;
 			this.chainId = (await getProvider().getNetwork()).chainId;
 			this.account = await getDefaultSigner();
 			this.balance = await this.account.getBalance();

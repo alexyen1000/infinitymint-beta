@@ -67,6 +67,7 @@ export class GanacheServer {
 						},
 						...options,
 					}) as any,
+					'any',
 				);
 				this.provider = provider as Web3Provider;
 				log(
