@@ -35,7 +35,7 @@ export const config = getConfigFile();
 /**
  * if you spawned InfinityMint through load, then this is the current infinity console instance, this will be the instance of the admin InfinityConsole if you are running through telnet
  */
-let infinityConsole: InfinityConsole;
+export let infinityConsole: InfinityConsole;
 /**
  * Starts infinitymint in the background with no UI drawing
  */
@@ -58,15 +58,19 @@ export const load = async (
 
 		//do not start an InfinityConsole normally if we have nothing in config, run InfinityMint as NPM module in the back
 		if (!config.console && !config.startup && !config.telnet)
-			return new InfinityConsole({...(options || {})}, defaultFactory);
+			return new InfinityConsole(
+				{...(options || {}), dontDraw: true},
+				defaultFactory,
+			);
 
 		return await startInfinityConsole(
 			{
 				...(options || {}),
 				dontDraw:
-					config.console === false &&
-					config.console === undefined &&
-					!isEnvTrue('INFINITYMINT_CONSOLE'),
+					config.startup ||
+					(config.console === false &&
+						config.console === undefined &&
+						!isEnvTrue('INFINITYMINT_CONSOLE')),
 			},
 			defaultFactory,
 		);
@@ -90,7 +94,10 @@ export const load = async (
 			});
 	}
 };
-export const infinitymint = infinityConsole as InfinityConsole;
+
+const infinitymint = () => {
+	return infinityConsole;
+};
 export default infinitymint;
 
 //load infinitymint

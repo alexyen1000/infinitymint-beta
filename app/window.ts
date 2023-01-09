@@ -518,7 +518,7 @@ export class InfinityMintWindow {
 
 	public getWidth() {
 		return !this.elements['frame']
-			? this.options?.style?.width || '100%'
+			? this.options?.style?.width || this.data?.style?.width || '100%'
 			: this.elements['frame'].width;
 	}
 
@@ -536,7 +536,7 @@ export class InfinityMintWindow {
 
 	public getHeight() {
 		return !this.elements['frame']
-			? this.options?.style?.height || '100%'
+			? this.options?.style?.height || this.data?.style?.height || '100%'
 			: this.elements['frame'].height;
 	}
 
