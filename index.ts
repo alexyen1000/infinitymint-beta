@@ -60,9 +60,10 @@ export const load = async (
 			config,
 			hre.config.networks.ganache !== undefined,
 		);
+		//change network to the right network or keep it as ganache
+		hre.changeNetwork(session.environment.defaultNetwork || 'hardhat');
 
 		if (!fs.existsSync('./artifacts')) await hre.run('compile');
-		hre.changeNetwork(session.environment.defaultNetwork || 'hardhat');
 
 		//do not start an InfinityConsole normally if we have nothing in config, run InfinityMint as NPM module in the back
 		if (!config.console && !config.startup && !config.telnet)

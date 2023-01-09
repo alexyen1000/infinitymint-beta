@@ -478,6 +478,7 @@ export class InfinityConsole {
 		Object.keys(this.inputKeys).forEach(key => {
 			this.unkey(key);
 		});
+
 		//more destroying
 		this.imports = undefined;
 		this.currentWindow = undefined;
