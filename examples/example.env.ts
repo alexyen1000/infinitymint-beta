@@ -15,6 +15,7 @@ const envs: InfinityMintEnvironmentVariables = {
 	PIPE_LOG_ERRORS_TO_DEBUG: false,
 	PIPE_SILENCE_UNDEFINED_PIPE: false,
 	PIPE_SILENCE: false,
+	PIPE_SILENCE_DEBUG: false,
 	PIPE_SEPERATE_WARNINGS: false,
 	PIPE_IGNORE_CONSOLE: false,
 	INFINITYMINT_TELNET: false,

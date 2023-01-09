@@ -206,7 +206,9 @@ export const log = (msg: string | object | number, pipe?: string) => {
 			getConfigFile().console === false &&
 			isEnvTrue("PIPE_SILENCE") === false)
 	)
-		console.log(`[${pipe || "default"}] ` + msg);
+		console.log(
+			msg + (pipe !== "default" ? ` <${pipe || "default"}>` : "")
+		);
 
 	defaultFactory.log(msg.toString(), pipe);
 };
@@ -217,6 +219,9 @@ export const log = (msg: string | object | number, pipe?: string) => {
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
+	//throw away debug msgs if no pipe for it
+	if (!defaultFactory.pipes["debug"]) return;
+
 	log(msg, "debug");
 };
 
@@ -935,6 +940,10 @@ export const preInitialize = (isJavascript?: boolean) => {
 		"ipfs",
 		"receipts",
 	];
+
+	//removes debug pipe
+	if (isEnvTrue("PIPE_SILENCE_DEBUG")) pipes = pipes.slice(1);
+
 	pipes.forEach((pipe) =>
 		defaultFactory.registerSimplePipe(pipe, {
 			listen:
