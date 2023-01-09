@@ -1,7 +1,6 @@
 import {
 	InfinityMintEventEmitter,
 	InfinityMintTelnetOptions,
-	KeyValue,
 } from './interfaces';
 import {createHash} from 'node:crypto';
 import fs from 'fs';

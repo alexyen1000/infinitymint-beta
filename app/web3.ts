@@ -22,7 +22,6 @@ import {
 } from '@ethersproject/providers';
 import GanacheServer from './ganache';
 import {ContractFactory, ContractTransaction} from '@ethersproject/contracts';
-import {EthereumProvider} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {getLocalDeployment, create} from './deployments';
 import {
@@ -32,6 +31,7 @@ import {
 	InfinityMintConfig,
 	InfinityMintEventEmitter,
 } from './interfaces';
+import {EthereumProvider} from 'ganache';
 import InfinityConsole from './console';
 import {TelnetServer} from './telnet';
 
@@ -42,6 +42,7 @@ export const initializeInfinityMint = async (
 	config?: InfinityMintConfig,
 	startGanache?: boolean,
 ) => {
+	config = config || getConfigFile();
 	let session = readSession();
 	//register current network pipes
 	registerNetworkLogs();
@@ -97,7 +98,7 @@ export const initializeInfinityMint = async (
 	}
 
 	//start a network pipe if we aren't ganache as we do something different if we are
-	if (startGanache) startNetworkPipe();
+	if (!startGanache) startNetworkPipe();
 	//initialize console
 	return config;
 };
@@ -132,17 +133,6 @@ export const startInfinityConsole = async (
 };
 
 export const getDefaultSigner = async () => {
-	if (
-		hre.network.name === 'ganache' &&
-		isEnvTrue('GANACHE_EXTERNAL') === false
-	) {
-		let obj = GanacheServer.getProvider().getSigner(
-			getDefaultAccountIndex(),
-		) as any;
-		obj.address = await obj.getAddress();
-		return obj as SignerWithAddress;
-	}
-
 	let defaultAccount = getDefaultAccountIndex();
 	let signers = await ethers.getSigners();
 
@@ -430,7 +420,7 @@ export const stopNetworkPipe = (
 	//register events
 	try {
 		Object.keys(ProviderListeners[network]).forEach(key => {
-			provider.off(key, ProviderListeners[network][key]);
+			provider.off(key as any, ProviderListeners[network][key]);
 		});
 	} catch (error) {
 		if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
@@ -479,7 +469,7 @@ export const startNetworkPipe = (
 		.log('{cyan-fg}started pipe{/cyan-fg}');
 
 	Object.keys(ProviderListeners[network]).forEach(key => {
-		provider.on(key, ProviderListeners[network][key]);
+		provider.on(key as any, ProviderListeners[network][key]);
 	});
 
 	debugLog('registered provider event hooks for ' + network);

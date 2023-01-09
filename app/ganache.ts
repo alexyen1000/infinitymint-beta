@@ -1,9 +1,5 @@
-import {
-	Web3Provider,
-	JsonRpcProvider,
-	ExternalProvider,
-} from '@ethersproject/providers';
 import ganache, {Server, ServerOptions} from 'ganache';
+import {EthereumProvider} from 'ganache';
 import hre, {ethers} from 'hardhat';
 import {debugLog, log, logDirect, readSession, warning} from './helpers';
 const {tcpPingPort} = require('tcp-ping-port');
@@ -12,22 +8,21 @@ export class GanacheServer {
 	public server?: Server;
 	public options?: ServerOptions;
 	public port?: number;
-	public provider?: Web3Provider | any;
+	public provider: EthereumProvider;
 
 	async start(
 		options: ServerOptions,
 		port?: number,
-	): Promise<Web3Provider | JsonRpcProvider> {
+	): Promise<EthereumProvider> {
 		this.options = options;
 		this.port = parseInt((port || process.env.GANACHE_PORT || 8545).toString());
 
 		if ((await tcpPingPort('localhost', this.port)).online === true) {
-			log('previous ganache server alive at => http://localhost:' + this.port);
-
-			this.provider = ethers.providers.getDefaultProvider(
-				'http://localhost:' + this.port,
+			log(
+				'{cyan-fg}{bold}Previous Ganache Server{/bold}{/cyan-fg} => http://localhost:' +
+					this.port,
 			);
-			return this.provider;
+			return hre.getProvider('ganache') as any;
 		}
 
 		return await this.createProvider(options);
@@ -38,13 +33,13 @@ export class GanacheServer {
 	 * @param options
 	 * @returns
 	 */
-	async createProvider(options: any): Promise<Web3Provider> {
+	async createProvider(options: any): Promise<EthereumProvider> {
 		await new Promise((resolve, reject) => {
 			this.server = ganache.server(options as any);
 			this.server.listen(this.port, async (err: any) => {
 				if (err) throw err;
 				//creates a new ethers provider with the logger piping to ganache
-				let provider = ganache.provider({
+				this.provider = ganache.provider({
 					logging: {
 						debug: true,
 						verbose: true,
@@ -65,14 +60,12 @@ export class GanacheServer {
 						},
 						quiet: true,
 					},
-					...options,
 				});
-				this.provider = provider;
 				log(
 					'{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:' +
 						this.port,
 				);
-				resolve(provider);
+				resolve(this.provider);
 			});
 		});
 		return this.provider;

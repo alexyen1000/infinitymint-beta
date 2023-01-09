@@ -1000,18 +1000,22 @@ export class InfinityMintWindow {
 		Object.keys(this.elements).forEach(key => {
 			let element = this.elements[key];
 
-			if (
-				key !== 'frame' &&
-				!element.instantlyAppend &&
-				!element.instantlyCreate
-			) {
-				this.screen.append(element);
-				this.screen.render();
-			}
+			try {
+				if (
+					key !== 'frame' &&
+					!element.instantlyAppend &&
+					!element.instantlyCreate
+				) {
+					this.screen.append(element);
+					this.screen.render();
+				}
 
-			if (element.shouldFocus) element.focus();
-			if (element.alwaysBack) element.setBack();
-			if (element.alwaysFront) element.setFront();
+				if (element.shouldFocus) element.focus();
+				if (element.alwaysBack) element.setBack();
+				if (element.alwaysFront) element.setFront();
+			} catch (error) {
+				warning(error.message);
+			}
 		});
 
 		this.elements['hideButton'].setFront();

@@ -304,9 +304,19 @@ export const logDirect = (msg: any) => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let _log = console.log;
-	console.log = (msg: string | object) => {
+	console.log = (msg: string) => {
+		msg = msg.toString();
 		if (!isAllowPiping) {
 			_log(msg);
+			return;
+		}
+
+		if (
+			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
+			msg.toString().substring(0, 4) === 'eth_' &&
+			defaultFactory.pipes['ganache']
+		) {
+			defaultFactory.getPipe('ganache').log(msg);
 			return;
 		}
 
@@ -317,7 +327,6 @@ export const overwriteConsoleMethods = () => {
 		}
 
 		if (
-			msg.indexOf &&
 			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
 			defaultFactory.pipes[defaultFactory.currentPipeKey]
 		)

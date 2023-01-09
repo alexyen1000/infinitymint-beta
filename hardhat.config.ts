@@ -6,6 +6,11 @@
  * put inside of here.
  */
 
+//import our hardhat plugins
+import '@nomicfoundation/hardhat-toolbox';
+import '@nomiclabs/hardhat-ethers';
+import 'hardhat-change-network'; //allows hre.changeNetwork to occur
+//then aliases
 import 'module-alias/register';
 import './app/pipes'; //creates default pipe
 import {debugLog, prepareConfig, loadInfinityMint} from './app/helpers';
@@ -17,11 +22,6 @@ require('dotenv').config({
 
 //load infinitymint and create default files
 loadInfinityMint(false, true);
-
-//import our hardhat plugins
-import '@nomicfoundation/hardhat-toolbox';
-import '@nomiclabs/hardhat-ethers';
-import 'hardhat-change-network'; //allows hre.changeNetwork to occur
 
 //return the infinitymint config file
 let config = prepareConfig();

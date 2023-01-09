@@ -1,14 +1,7 @@
 import InfinityConsole from './app/console';
-import fs from 'fs';
 
 //import things we need
-import {
-	isEnvTrue,
-	log,
-	getConfigFile,
-	logDirect,
-	readSession,
-} from './app/helpers';
+import {isEnvTrue, getConfigFile, logDirect, readSession} from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
 import {
@@ -63,18 +56,18 @@ export const load = async (
 				{...(options || {}), dontDraw: true},
 				defaultFactory,
 			);
-
-		return await startInfinityConsole(
-			{
-				...(options || {}),
-				dontDraw:
-					config.startup ||
-					(config.console === false &&
-						config.console === undefined &&
-						!isEnvTrue('INFINITYMINT_CONSOLE')),
-			},
-			defaultFactory,
-		);
+		else
+			return await startInfinityConsole(
+				{
+					...(options || {}),
+					dontDraw:
+						config.startup ||
+						(config.console === false &&
+							config.console === undefined &&
+							!isEnvTrue('INFINITYMINT_CONSOLE')),
+				},
+				defaultFactory,
+			);
 	} else {
 		await new Promise((resolve, reject) => {
 			logDirect('🔷 Starting InfinityMint Telnet Server');

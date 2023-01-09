@@ -90,7 +90,6 @@ export class InfinityConsole {
 		this.logs = pipeFactory || new PipeFactory();
 		createPipes(this.logs);
 
-		this.screen = undefined;
 		this.windows = [];
 		this.allowExit = true;
 		this.options = options;
@@ -99,12 +98,12 @@ export class InfinityConsole {
 		this.registerDefaultKeys();
 		this.server = telnetServer;
 		this.sessionId = this.generateId();
-
-		let config = getConfigFile();
-		if (config.music) this.player = require('play-sound')({player: 'afplay'});
 		this.eventEmitter = eventEmitter || this.createEventEmitter();
 
 		if (!options.dontDraw) {
+			let config = getConfigFile();
+			if (config.music) this.player = require('play-sound')({player: 'afplay'});
+
 			this.debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
 			this.screen = blessed.screen(
 				this.options?.blessed || {
@@ -878,6 +877,7 @@ export class InfinityConsole {
 			width: '80%',
 			mouse: true,
 			keyboard: true,
+			parent: this.screen,
 			height: '80%',
 			scrollable: true,
 			scrollbar: {
@@ -1280,7 +1280,7 @@ export class InfinityConsole {
 			let window = requireWindow(windows[i]);
 			window.setContainer(this);
 			window.setFileName(windows[i]);
-			this.windows.push(window);
+			this.windows.push(Object.create(window) as InfinityMintWindow);
 			this.debugLog(
 				`[${i}]` +
 					' {green-fg}successfully required{/green-fg} => ' +
@@ -1461,6 +1461,7 @@ export class InfinityConsole {
 				}
 
 				this.screen.destroy();
+
 				this.screen = blessed.screen(
 					this.options?.blessed || {
 						smartCRS: true,
