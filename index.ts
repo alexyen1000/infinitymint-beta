@@ -28,7 +28,7 @@ let errorHandler = (error: Error) => {
 	process.exit(1);
 };
 
-log("reading infinitymint.config.ts");
+logDirect("✨ Reading InfinityMint Config");
 //get the infinitymint config file and export it
 export const config = getConfigFile();
 

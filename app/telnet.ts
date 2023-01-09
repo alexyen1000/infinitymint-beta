@@ -1,7 +1,7 @@
 import { InfinityMintTelnetOptions, KeyValue } from "./interfaces";
 import { createHash } from "node:crypto";
 import fs from "fs";
-import { Blessed, BlessedElement, getConfigFile } from "./helpers";
+import { Blessed, BlessedElement, getConfigFile, warning } from "./helpers";
 import InfinityConsole from "./console";
 import { Dictionary } from "form-data";
 import { logDirect } from "./helpers";
@@ -98,8 +98,8 @@ export class TelnetServer {
 	}
 
 	async start(port?: number) {
-		logDirect(`🚀 Starting InfinityMint Telnet Server`);
 		telnet({ tty: true }, (client) => {
+			logDirect(`\n🚀 New Client Detected`);
 			(async () => {
 				let screen: BlessedElement;
 				let infinityConsole: InfinityConsole;
@@ -115,52 +115,64 @@ export class TelnetServer {
 						},
 					});
 					sessionId = infinityConsole.getSessionId();
+					this.clients[sessionId] = client;
 					this.consoles[sessionId] = infinityConsole;
 					screen = infinityConsole.getScreen();
 					infinityConsole.setClient(client);
 
-					client.on("term", function (terminal) {
+					client.on("term", (terminal) => {
 						screen.terminal = terminal;
 						screen.render();
 					});
 
 					//when its resizes
-					client.on("size", function (width, height) {
+					client.on("size", (width, height) => {
 						client.columns = width;
 						client.rows = height;
 						client.emit("resize");
 					});
 
 					//when the client closes
-					client.on("close", function () {
-						if (this.clients[sessionId])
-							delete this.clients[sessionId];
+					client.on("close", () => {
+						try {
+							if (this.clients || this.clients[sessionId])
+								delete this.clients[sessionId];
 
-						if (this.infinityConsole[sessionId]) {
-							this.infinityConsole[sessionId]?.destroy();
-							delete this.infinityConsole[sessionId];
+							if (this.consoles || this.consoles[sessionId]) {
+								this.consoles[sessionId]?.destroy();
+								delete this.consoles[sessionId];
+							}
+						} catch (error) {
+							logDirect("💥 warning: " + error.message);
 						}
 
 						logDirect(
 							`💀 Disconnected ${
 								client.remoteAddress ||
 								client.input.remoteAddress
-							}`
+							}\n`
 						);
 					});
 
 					//screen on
-					screen.on("destroy", function () {
+					screen.on("destroy", () => {
 						if (client.writable) {
 							client.destroy();
 						}
+
+						logDirect(
+							`⚰️ Screen Destroyed ${
+								client.remoteAddress ||
+								client.input.remoteAddress
+							}`
+						);
 					});
 
 					if (!hasLoggedIn(client, sessionId))
 						infinityConsole.gotoWindow("Login");
 
 					logDirect(
-						`🦊 New Connection ${
+						`🦊 Successful Connection ${
 							client.remoteAddress ||
 							client.output.remoteAddress ||
 							client.input.remoteAddress

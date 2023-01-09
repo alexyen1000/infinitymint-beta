@@ -441,14 +441,15 @@ export class InfinityConsole {
 		Object.keys(this.inputKeys).forEach((key) => {
 			this.unkey(key);
 		});
+		//more destroying
 		this.imports = undefined;
 		this.currentWindow = undefined;
-		this.windows.forEach((window) => window.destroy());
+		this.windows?.forEach((window) => window?.destroy());
 		this.windows = [];
-		this.windowManager.destroy();
-		this.registerDefaultKeys();
 		this.network = undefined;
 		this.windowManager = undefined;
+		this.windowManager?.destroy();
+		this?.registerDefaultKeys();
 	}
 
 	/**
