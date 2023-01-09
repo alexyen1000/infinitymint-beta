@@ -7,6 +7,7 @@ import {
 } from './interfaces';
 import {
 	BlessedElement,
+	createPipes,
 	findScripts,
 	findWindows,
 	getConfigFile,
@@ -18,14 +19,19 @@ import {
 	requireWindow,
 	warning,
 } from './helpers';
-import {hasLoggedIn, SessionEntry} from './telnet';
+import {
+	getTelnetOptions,
+	hasLoggedIn,
+	SessionEntry,
+	TelnetServer,
+} from './telnet';
 import {InfinityMintEventEmitter} from './interfaces';
 import {InfinityMintWindow} from './window';
 import hre, {ethers} from 'hardhat';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {changeNetwork, getDefaultSigner, getProvider} from './web3';
-import {PipeFactory} from './pipes';
+import {Pipe, PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
 import {getProjectDeploymentClasses} from './deployments';
@@ -71,10 +77,19 @@ export class InfinityConsole {
 	private imports: ImportCache;
 	private user: any;
 	private session: SessionEntry;
+	private server: TelnetServer;
 	private logs: PipeFactory;
 	private projects: ProjectCache;
 
-	constructor(options?: InfinityMintConsoleOptions, pipeFactory?: PipeFactory) {
+	constructor(
+		options?: InfinityMintConsoleOptions,
+		pipeFactory?: PipeFactory,
+		telnetServer?: TelnetServer,
+		eventEmitter?: InfinityMintEventEmitter,
+	) {
+		this.logs = pipeFactory || new PipeFactory();
+		createPipes(this.logs);
+
 		this.screen = undefined;
 		this.windows = [];
 		this.allowExit = true;
@@ -82,13 +97,13 @@ export class InfinityConsole {
 		this.windows = [];
 		this.tick = 0;
 		this.registerDefaultKeys();
+		this.server = telnetServer;
 		this.sessionId = this.generateId();
-		this.logs = pipeFactory || new PipeFactory();
 
-		if (getConfigFile().music)
-			this.player = require('play-sound')({player: 'afplay'});
+		let config = getConfigFile();
+		if (config.music) this.player = require('play-sound')({player: 'afplay'});
+		this.eventEmitter = eventEmitter || this.createEventEmitter();
 
-		this.createEventEmitter();
 		if (!options.dontDraw) {
 			this.debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
 			this.screen = blessed.screen(
@@ -149,10 +164,28 @@ export class InfinityConsole {
 	}
 
 	/**
+	 *
+	 * @returns
+	 */
+	public getServer() {
+		return this.server;
+	}
+
+	/**
+	 *
+	 * @returns
+	 */
+	public isTelnet() {
+		let config = getConfigFile();
+		return config.telnet && this.server;
+	}
+
+	/**
 	 * Creates a new event emitter, will remove all listeners on the old event emitter unless first param is true.
 	 * @returns
 	 */
 	public createEventEmitter(dontCleanListeners?: boolean) {
+		let config = getConfigFile();
 		if (!dontCleanListeners)
 			try {
 				if (this.eventEmitter) this.eventEmitter?.removeAllListeners();
@@ -163,6 +196,29 @@ export class InfinityConsole {
 			}
 
 		this.eventEmitter = new InfinityMintEventEmitter();
+
+		//define these events
+		if (config.events)
+			Object.keys(config.events).forEach(event => {
+				this.debugLog('new event registered => ' + event);
+				try {
+					this.eventEmitter.off(event, config.events[event]);
+				} catch (error) {}
+				this.eventEmitter.on(event, config.events[event]);
+			});
+
+		//define these events
+		let telnetEvents = getTelnetOptions();
+		if (telnetEvents?.events)
+			Object.keys(telnetEvents.events).forEach(event => {
+				this.debugLog('new telnet event registered => ' + event);
+				try {
+					this.eventEmitter.off(event, telnetEvents.events[event]);
+				} catch (error) {}
+
+				this.eventEmitter.on(event, telnetEvents.events[event]);
+			});
+
 		return this.eventEmitter;
 	}
 
@@ -645,6 +701,7 @@ export class InfinityConsole {
 
 	public setLoading(msg: string, filled?: number) {
 		if (this.options.dontDraw) return;
+
 		this.loadingBox.show();
 		this.loadingBox.setFront();
 		this.loadingBox.load(msg);
@@ -1265,6 +1322,11 @@ export class InfinityConsole {
 
 		this.setLoading('Loading Projects', 35);
 		await this.reloadProjects();
+
+		if (this.options.dontDraw) {
+			this.hasInitialized = true;
+			return;
+		}
 
 		this.log(`loading InfinityConsole<${this.sessionId}>`);
 		//the think method for this console

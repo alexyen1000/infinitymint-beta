@@ -587,6 +587,20 @@ export interface InfinityMintEvents {
 		Promise<void | boolean>
 	>;
 	/**
+	 * Fired when the InfinityConsole is initialized
+	 * @event
+	 */
+	connected?: FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>;
+	/**
+	 * Fired when the InfinityConsole is initialized
+	 * @event
+	 */
+	disconnected?: FuncSingle<
+		InfinityMintEventEmit<any>,
+		Promise<void | boolean>
+	>;
+
+	/**
 	 * Fired when the InfinityConsole is reinitialized
 	 * @event
 	 */
@@ -1202,13 +1216,17 @@ export interface InfinityMintConfig {
 	settings?: InfinityMintConfigSettings;
 }
 
+/**
+ * Configure IPFS capabilities inside infinity mint
+ */
 export interface InfinityMintIPFSOptions {
-	web3Storage: {
+	web3Storage?: {
 		token?: string;
 		useAlways?: boolean;
 	};
-	endpoints: string[] | string;
-	kubo: {
+	resolvers: string[];
+	endpoint?: string[] | string;
+	kubo?: {
 		useAlways?: boolean;
 	};
 }
@@ -1402,7 +1420,31 @@ export interface InfinityMintTelnetOptions {
 	 * port to run telnet on
 	 */
 	port?: number;
-	defaultGroup: string;
+	events?: InfinityMintEvents;
+	/**
+	 * the title to present on the login screen
+	 */
+	title?: string;
+	/**
+	 * the message of the day
+	 */
+	motd?: string;
+	/**
+	 * if only admins can log in
+	 */
+	adminsOnly?: boolean;
+	/**
+	 * only allow these username or ips to enter
+	 */
+	whitelist?: string[];
+	/**
+	 * do not require login/registration
+	 */
+	anonymous?: boolean;
+	/**
+	 * default group people are signed up witg
+	 */
+	defaultGroup?: string;
 }
 
 /**

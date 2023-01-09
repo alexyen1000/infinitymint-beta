@@ -1,66 +1,64 @@
-import { calculateWidth } from "../helpers";
-import { defaultFactory } from "../pipes";
-import { InfinityMintWindow } from "../window";
+import {calculateWidth} from '../helpers';
+import {InfinityMintWindow} from '../window';
 
 let lastLogMessage: string;
 let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.setContent(
-		defaultFactory.pipes[window.data.log.options.pipe].logs
-			.map((log, index) => {
+		window
+			.getInfinityConsole()
+			.getLogs()
+			.pipes[window.data.log.options.pipe].logs.map((log, index) => {
 				if (lastLogMessage && lastLogMessage === log.message)
-					return (
-						lineNumber(index, true) +
-						`{grey-fg}${log.pure}{/grey-fg}`
-					);
+					return lineNumber(index, true) + `{grey-fg}${log.pure}{/grey-fg}`;
 				else {
 					lastLogMessage = log.message;
 					return lineNumber(index) + log.message;
 				}
 			})
-			.join("\n")
+			.join('\n'),
 	);
 };
 
 let lineNumber = (indexCount: number | string, gray?: boolean) => {
-	return `${gray ? "{white-bg}" : "{white-bg}"}{black-fg}${indexCount
+	return `${gray ? '{white-bg}' : '{white-bg}'}{black-fg}${indexCount
 		.toString()
-		.padEnd(6, " ")}{/black-fg}${gray ? "{/white-bg}" : "{/white-bg}"}`;
+		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'}`;
 };
 
 /**
  * Allows you to view the output of pipes
  */
 const Logs = new InfinityMintWindow(
-	"Logs",
+	'Logs',
 	{
-		fg: "white",
-		bg: "grey",
+		fg: 'white',
+		bg: 'grey',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
+		type: 'line',
 	},
 	{
-		ch: " ",
+		ch: ' ',
 		track: {
-			bg: "black",
+			bg: 'black',
 		},
 		style: {
 			inverse: true,
 		},
-	}
+	},
 );
 
 //initializes the logging window.
 Logs.initialize = async (window, frame, blessed) => {
 	//register the console first
 	let consoleStyle = {
-		height: "100%-" + (frame.top + frame.bottom + 8),
+		height: '100%-' + (frame.top + frame.bottom + 8),
 		padding: 0,
 		top: 4,
-		label: `{bold}{white-fg}Pipe: {/white-fg}${"(LOADING)"}{/bold}`,
+		label: `{bold}{white-fg}Pipe: {/white-fg}${'(LOADING)'}{/bold}`,
 		keys: true,
 		tags: true,
 		scrollable: true,
@@ -69,26 +67,26 @@ Logs.initialize = async (window, frame, blessed) => {
 		mouse: true,
 		alwaysScroll: true,
 		scrollbar: {
-			ch: " ",
+			ch: ' ',
 			track: {
-				bg: "black",
+				bg: 'black',
 			},
 			style: {
 				inverse: true,
 			},
 		},
-		border: "line",
+		border: 'line',
 		style: {
-			fg: "white",
-			bg: "transparent",
+			fg: 'white',
+			bg: 'transparent',
 			border: {
-				fg: "#f0f0f0",
+				fg: '#f0f0f0',
 			},
 		},
 	};
 
-	let logs = [window.createElement("console0", consoleStyle)];
-	logs.forEach((log) => {
+	let logs = [window.createElement('console0', consoleStyle)];
+	logs.forEach(log => {
 		log.setFront();
 		log.focus();
 	});
@@ -100,34 +98,34 @@ Logs.initialize = async (window, frame, blessed) => {
 			alwaysScroll: true,
 			scrollToSelectedLine: false,
 			showDuplicateEntries: false,
-			pipe: "default",
+			pipe: 'default',
 			selectedLine: 0,
 		},
 	});
 
 	//create buttons
-	let alwaysScroll = window.createElement("alwaysScroll", {
+	let alwaysScroll = window.createElement('alwaysScroll', {
 		bottom: 0,
 		left: 0,
-		width: "shrink",
-		height: "shrink",
+		width: 'shrink',
+		height: 'shrink',
 		padding: 1,
 		content:
-			"Auto Scroll [" +
-			(window.data.log.options.alwaysScroll ? "O" : "X") +
-			"]",
+			'Auto Scroll [' +
+			(window.data.log.options.alwaysScroll ? 'O' : 'X') +
+			']',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: window.data.log.options.alwaysScroll ? "green" : "red",
+			fg: 'white',
+			bg: window.data.log.options.alwaysScroll ? 'green' : 'red',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
@@ -135,16 +133,16 @@ Logs.initialize = async (window, frame, blessed) => {
 	let alwaysScrollUpdate = () => {
 		//change style
 		alwaysScroll.style.bg = window.data.log.options.alwaysScroll
-			? "green"
-			: "red";
+			? 'green'
+			: 'red';
 		alwaysScroll.setContent(
-			"Auto Scroll [" +
-				(window.data.log.options.alwaysScroll ? "O" : "X") +
-				"]"
+			'Auto Scroll [' +
+				(window.data.log.options.alwaysScroll ? 'O' : 'X') +
+				']',
 		);
 	};
 
-	alwaysScroll.on("click", () => {
+	alwaysScroll.on('click', () => {
 		//save option
 		window.data.log.options.alwaysScroll =
 			!window.data.log.options.alwaysScroll;
@@ -155,49 +153,50 @@ Logs.initialize = async (window, frame, blessed) => {
 	alwaysScroll.setFront();
 
 	let form = window.createElement(
-		"form",
+		'form',
 		{
-			label: " {bold}{white-fg}defaultFactory{/white-fg} (Enter/Double-Click to select){/bold}",
+			label:
+				' {bold}{white-fg}window.getInfinityConsole().getLogs(){/white-fg} (Enter/Double-Click to select){/bold}',
 			tags: true,
-			top: "center",
-			left: "center",
-			width: "100%-4",
-			height: "100%-12",
+			top: 'center',
+			left: 'center',
+			width: '100%-4',
+			height: '100%-12',
 			padding: 2,
 			keys: true,
 			vi: true,
 			mouse: true,
-			border: "line",
+			border: 'line',
 			scrollbar: {
-				ch: " ",
+				ch: ' ',
 				track: {
-					bg: "black",
+					bg: 'black',
 				},
 				style: {
 					inverse: true,
 				},
 			},
 			style: {
-				bg: "black",
-				fg: "white",
+				bg: 'black',
+				fg: 'white',
 				item: {
 					hover: {
-						bg: "green",
-						fg: "black",
+						bg: 'green',
+						fg: 'black',
 					},
 				},
 				selected: {
-					bg: "grey",
-					fg: "green",
+					bg: 'grey',
+					fg: 'green',
 					bold: true,
 				},
 			},
 		},
-		"list"
+		'list',
 	);
-	let keys = Object.keys(defaultFactory.pipes);
+	let keys = Object.keys(window.getInfinityConsole().getLogs().pipes);
 	form.setItems(keys);
-	form.on("select", (el: any, selected: any) => {
+	form.on('select', (el: any, selected: any) => {
 		window.data.log.options.pipe = keys[selected];
 		window.data.log.setScroll(0);
 		window.data.log.focus();
@@ -206,106 +205,111 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 	form.hide();
 
-	let save = window.createElement("save", {
+	let save = window.createElement('save', {
 		top: 3,
 		right: 2,
-		width: "shrink",
-		height: "shrink",
+		width: 'shrink',
+		height: 'shrink',
 		padding: 0,
-		content: "Save",
+		content: 'Save',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: "black",
+			fg: 'white',
+			bg: 'black',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
 
 	//create buttons
-	let changePipe = window.createElement("changePipe", {
+	let changePipe = window.createElement('changePipe', {
 		top: 3,
 		right: calculateWidth(save) + 2,
-		width: "shrink",
-		height: "shrink",
+		width: 'shrink',
+		height: 'shrink',
 		padding: 0,
-		content: "Edit",
+		content: 'Edit',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: "black",
+			fg: 'white',
+			bg: 'black',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
 
 	//create buttons
-	let newPipe = window.createElement("newPipe", {
+	let newPipe = window.createElement('newPipe', {
 		top: 3,
 		right: calculateWidth(save, changePipe) + 2,
-		width: "shrink",
-		height: "shrink",
+		width: 'shrink',
+		height: 'shrink',
 		padding: 0,
-		content: "Split",
+		content: 'Split',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: "black",
+			fg: 'white',
+			bg: 'black',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
 
-	let deletePipe = window.createElement("delete", {
+	let deletePipe = window.createElement('delete', {
 		top: 3,
 		right: calculateWidth(changePipe, save, newPipe) + 2,
-		width: "shrink",
-		height: "shrink",
+		width: 'shrink',
+		height: 'shrink',
 		padding: 0,
-		content: "Delete",
+		content: 'Delete',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: "black",
+			fg: 'white',
+			bg: 'black',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
-	deletePipe.on("click", () => {
-		defaultFactory.getPipe(window.data.log.options.pipe).logs = [];
-		defaultFactory
+	deletePipe.on('click', () => {
+		window
+			.getInfinityConsole()
+			.getLogs()
+			.getPipe(window.data.log.options.pipe).logs = [];
+		window
+			.getInfinityConsole()
+			.getLogs()
 			.getPipe(window.data.log.options.pipe)
-			.log("{red-fg}pipe deleted{/red-fg}");
+			.log('{red-fg}pipe deleted{/red-fg}');
 
-		window.data.log.setContent("");
+		window.data.log.setContent('');
 		form.hide();
 	});
 
@@ -318,15 +322,15 @@ Logs.initialize = async (window, frame, blessed) => {
 	};
 
 	changePipe.setFront();
-	changePipe.on("click", onChangePipe);
-	window.key("p", onChangePipe);
+	changePipe.on('click', onChangePipe);
+	window.key('p', onChangePipe);
 
 	updateContent(window);
 
 	window.data.log.setLabel(
-		"{bold}{white-fg}Pipe: {/white-fg}" +
+		'{bold}{white-fg}Pipe: {/white-fg}' +
 			window.data.log.options.pipe +
-			"{/bold}"
+			'{/bold}',
 	);
 };
 
@@ -338,9 +342,9 @@ Logs.postInitialize = async (window, frame, blessed) => {
 
 		if (pipe === window.data.log.options.pipe) {
 			window.data.log.setLabel(
-				"{bold}{white-fg}Pipe: {/white-fg}" +
+				'{bold}{white-fg}Pipe: {/white-fg}' +
 					window.data.log.options.pipe +
-					"{/bold}"
+					'{/bold}',
 			);
 
 			if (window.data.log.options.alwaysScroll)
@@ -349,31 +353,31 @@ Logs.postInitialize = async (window, frame, blessed) => {
 			if (lastLogMessage === msg)
 				window.data.log.pushLine(
 					lineNumber(index, true) +
-						`{gray-fg}${blessed.cleanTags(msg)}{/gray-fg}`
+						`{gray-fg}${blessed.cleanTags(msg)}{/gray-fg}`,
 				);
 			else window.data.log.pushLine(lineNumber(index) + msg);
 			lastLogMessage = msg;
 		}
 	};
-	defaultFactory.emitter.on("log", cb);
+	window.getInfinityConsole().getLogs().emitter.on('log', cb);
 
 	//save when the window is destroyed
-	window.on("destroy", () => {
-		defaultFactory.emitter.off("log", cb);
+	window.on('destroy', () => {
+		window.getInfinityConsole().getLogs().emitter.off('log', cb);
 	});
 
 	//save when the window is hidden
-	window.on("hide", () => {
+	window.on('hide', () => {
 		window.saveOptions();
 	});
 
 	//focus the log when the window is shown
-	window.on("show", () => {
+	window.on('show', () => {
 		window.data.log.focus();
 	});
 
-	window.unkey("up");
-	window.key("up", (ch: string, key: string) => {
+	window.unkey('up');
+	window.key('up', (ch: string, key: string) => {
 		let console = window.data.log;
 		if (!console) return;
 
@@ -387,46 +391,48 @@ Logs.postInitialize = async (window, frame, blessed) => {
 
 		window.data.log.options.selectedLine = Math.max(
 			0,
-			window.data.log.options.selectedLine - 1
+			window.data.log.options.selectedLine - 1,
 		);
 	});
 
 	//various keyboard commands
 
-	window.unkey("down");
-	window.key("down", (ch: string, key: string) => {
+	window.unkey('down');
+	window.key('down', (ch: string, key: string) => {
 		let console = window.data.log;
 		if (!console) return;
 		if (window.isVisible() === false) return;
 
 		window.data.log.options.selectedLine = Math.min(
-			(defaultFactory.pipes[window.data.log.options.pipe]?.logs || [""])
-				.length - 1,
-			window.data.log.options.selectedLine + 1
+			(
+				window.getInfinityConsole().getLogs().pipes[
+					window.data.log.options.pipe
+				]?.logs || ['']
+			).length - 1,
+			window.data.log.options.selectedLine + 1,
 		);
 	});
 
 	//centers the scroll of the console to the selected line position when you do Control-Q
-	window.unkey("C-q");
-	window.key("C-q", (ch: string, key: string) => {
+	window.unkey('C-q');
+	window.key('C-q', (ch: string, key: string) => {
 		let console = window.data.log;
 		if (!console) return;
 		if (window.isVisible() === false) return;
 
 		let selectedLinePosition = [
-			...(defaultFactory.pipes[window.data.log.options.pipe]?.logs || [
-				"",
-			]),
+			...(window.getInfinityConsole().getLogs().pipes[
+				window.data.log.options.pipe
+			]?.logs || ['']),
 		]
 			.slice(0, window.data.log.options.selectedLine)
-			.join("\n")
-			.split("\n").length;
+			.join('\n')
+			.split('\n').length;
 
 		console.setScroll(selectedLinePosition);
 	});
 
-	if (window.data.log.options.alwaysScroll)
-		window.data.log.setScrollPerc(100);
+	if (window.data.log.options.alwaysScroll) window.data.log.setScrollPerc(100);
 };
 
 export default Logs;

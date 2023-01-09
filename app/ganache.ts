@@ -6,7 +6,6 @@ import {
 import ganache, {Server, ServerOptions} from 'ganache';
 import hre, {ethers} from 'hardhat';
 import {debugLog, log, logDirect, readSession, warning} from './helpers';
-import {defaultFactory} from './pipes';
 const {tcpPingPort} = require('tcp-ping-port');
 
 export class GanacheServer {
@@ -52,7 +51,7 @@ export class GanacheServer {
 							verbose: true,
 							logger: {
 								log: (msg: any, ...params) => {
-									defaultFactory.log(
+									log(
 										`${msg
 											.toString()
 											.replace(/>/g, '')
@@ -62,10 +61,7 @@ export class GanacheServer {
 										'ganache',
 									);
 									if (params && Object.values(params).length !== 0)
-										defaultFactory.log(
-											JSON.stringify(params, null, 2),
-											'ganache',
-										);
+										log(JSON.stringify(params, null, 2), 'ganache');
 								},
 							},
 						},

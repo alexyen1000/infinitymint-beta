@@ -30,8 +30,10 @@ import {
 	InfinityMintDeploymentLive,
 	InfinityMintConsoleOptions,
 	InfinityMintConfig,
+	InfinityMintEventEmitter,
 } from './interfaces';
 import InfinityConsole from './console';
+import {TelnetServer} from './telnet';
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -41,18 +43,8 @@ export const initializeInfinityMint = async (
 	startGanache?: boolean,
 ) => {
 	let session = readSession();
-
-	//allow piping
-	allowPiping();
-	//
-	logDirect('🪐 Starting InfinityConsole');
 	//register current network pipes
 	registerNetworkLogs();
-	try {
-		//create IPFS node
-	} catch (error) {
-		warning(`could not start IPFS: ` + error?.message);
-	}
 
 	//start ganache
 	if (startGanache) {
@@ -85,10 +77,21 @@ export const initializeInfinityMint = async (
 			let provider = await GanacheServer.start(config.ganache || {});
 			startNetworkPipe(provider, 'ganache');
 		} catch (error) {
-			warning('could not start ganache: ' + error);
+			warning('could not start ganache: ' + error.stack);
 		}
 	} else {
 		warning('no ganache network found');
+	}
+
+	//allow piping
+	allowPiping();
+	//
+	logDirect('🪐 Starting InfinityConsole');
+
+	try {
+		//create IPFS node
+	} catch (error) {
+		warning(`could not start IPFS: ` + error?.message);
 	}
 
 	//start a network pipe if we aren't ganache as we do something different if we are
@@ -101,12 +104,19 @@ export const initializeInfinityMint = async (
 export const startInfinityConsole = async (
 	options?: InfinityMintConsoleOptions,
 	pipeFactory?: PipeFactory,
+	telnetServer?: TelnetServer,
+	eventEmitter?: InfinityMintEventEmitter,
 ) => {
 	debugLog(
 		'starting InfinityConsole with solidity root of ' + getSolidityFolder(),
 	);
 
-	let infinityConsole = new InfinityConsole(options, pipeFactory);
+	let infinityConsole = new InfinityConsole(
+		options,
+		pipeFactory,
+		telnetServer,
+		eventEmitter,
+	);
 	logDirect(
 		'💭 Initializing InfinityConsole<' + infinityConsole.getSessionId() + '>',
 	);

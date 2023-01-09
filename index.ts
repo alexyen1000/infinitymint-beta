@@ -77,15 +77,15 @@ export const load = async (
 	} else {
 		await new Promise((resolve, reject) => {
 			logDirect('🔷 Starting InfinityMint Telnet Server');
-			initializeInfinityMint(config.console as any).then(
-				(config: InfinityMintConfig) => {
-					let port =
-						(config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
+			initializeInfinityMint(
+				config.console as any,
+				hre.config.networks.ganache !== undefined,
+			).then((config: InfinityMintConfig) => {
+				let port = (config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
 
-					let telnet = new TelnetServer();
-					telnet.start(port);
-				},
-			);
+				let telnet = new TelnetServer();
+				telnet.start(port);
+			});
 		})
 			.catch(errorHandler)
 			.then(() => {

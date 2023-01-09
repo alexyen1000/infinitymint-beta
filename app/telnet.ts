@@ -1,23 +1,37 @@
-import {InfinityMintTelnetOptions, KeyValue} from './interfaces';
+import {
+	InfinityMintEventEmitter,
+	InfinityMintTelnetOptions,
+	KeyValue,
+} from './interfaces';
 import {createHash} from 'node:crypto';
 import fs from 'fs';
-import {Blessed, BlessedElement, getConfigFile, warning} from './helpers';
+import {
+	Blessed,
+	BlessedElement,
+	debugLog,
+	getConfigFile,
+	log,
+	warning,
+} from './helpers';
 import InfinityConsole from './console';
 import {Dictionary} from 'form-data';
 import {logDirect} from './helpers';
 import {startInfinityConsole} from './web3';
+import {defaultFactory} from './pipes';
 
 const telnet = require('telnet2');
 export class TelnetServer {
 	private clients: any;
 	private consoles: Dictionary<InfinityConsole>;
 	private online: Dictionary<boolean>;
+	private eventEmitter: InfinityMintEventEmitter;
 
 	constructor() {
 		getUsernames(true);
 		this.consoles = {};
 		this.clients = {};
 		this.online = {};
+		this.eventEmitter = new InfinityMintEventEmitter();
 	}
 
 	/**
@@ -69,6 +83,20 @@ export class TelnetServer {
 		return undefined;
 	}
 
+	/**
+	 *
+	 * @param userId
+	 * @returns
+	 */
+	public getUser(userId: number) {
+		let _usernames = Object.values(usernames);
+		for (let i = 0; i < _usernames.length; i++) {
+			if (_usernames[i].userId === userId) return _usernames[i];
+		}
+
+		return undefined;
+	}
+
 	public getClient(sessionId: string) {
 		return this.clients[sessionId];
 	}
@@ -78,7 +106,7 @@ export class TelnetServer {
 	}
 
 	public register(username: string, password: string, sessionId: string) {
-		let config = getConfigFile();
+		let options = getTelnetOptions();
 		try {
 			register(
 				username,
@@ -87,7 +115,7 @@ export class TelnetServer {
 				//make the first user admin
 				Object.values(username).length === 0
 					? 'admin'
-					: (config.telnet as InfinityMintTelnetOptions).defaultGroup || 'user',
+					: options.defaultGroup || 'user',
 			);
 			//save the usernames file
 			saveUsernames();
@@ -97,6 +125,30 @@ export class TelnetServer {
 	}
 
 	async start(port?: number) {
+		let options = getTelnetOptions();
+		let config = getConfigFile();
+
+		//define these events
+		if (config.events)
+			Object.keys(config.events).forEach(event => {
+				logDirect('new event registered => ' + event);
+				try {
+					this.eventEmitter.off(event, config.events[event]);
+				} catch (error) {}
+				this.eventEmitter.on(event, config.events[event]);
+			});
+
+		//define these events
+		let telnetEvents = options.events;
+		if (telnetEvents)
+			Object.keys(telnetEvents).forEach(event => {
+				logDirect('new telnet event registered => ' + event);
+				try {
+					this.eventEmitter.off(event, telnetEvents[event]);
+				} catch (error) {}
+				this.eventEmitter.on(event, telnetEvents[event]);
+			});
+
 		telnet({tty: true}, client => {
 			logDirect(`\n🚀 New Client Detected`);
 			(async () => {
@@ -104,15 +156,20 @@ export class TelnetServer {
 				let infinityConsole: InfinityConsole;
 				let sessionId: string;
 				try {
-					infinityConsole = await startInfinityConsole({
-						blessed: {
-							smartCSR: true,
-							input: client,
-							output: client,
-							terminal: 'xterm-256color',
-							fullUnicode: true,
+					infinityConsole = await startInfinityConsole(
+						{
+							blessed: {
+								smartCSR: true,
+								input: client,
+								output: client,
+								terminal: 'xterm-256color',
+								fullUnicode: true,
+							},
 						},
-					});
+						defaultFactory,
+						this,
+						this.eventEmitter,
+					);
 					sessionId = infinityConsole.getSessionId();
 					this.clients[sessionId] = client;
 					this.consoles[sessionId] = infinityConsole;
@@ -133,6 +190,17 @@ export class TelnetServer {
 
 					//when the client closes
 					client.on('close', () => {
+						this.consoles[sessionId].emit(
+							'disconnected',
+							this.clients[sessionId],
+						);
+
+						logDirect(
+							`💀 Disconnected ${
+								client.remoteAddress || client.input.remoteAddress
+							}\n`,
+						);
+
 						try {
 							if (this.clients || this.clients[sessionId])
 								delete this.clients[sessionId];
@@ -144,12 +212,6 @@ export class TelnetServer {
 						} catch (error) {
 							logDirect('💥 warning: ' + error.message);
 						}
-
-						logDirect(
-							`💀 Disconnected ${
-								client.remoteAddress || client.input.remoteAddress
-							}\n`,
-						);
 					});
 
 					//screen on
@@ -165,8 +227,8 @@ export class TelnetServer {
 						);
 					});
 
-					if (!hasLoggedIn(client, sessionId))
-						infinityConsole.gotoWindow('Login');
+					if (!hasLoggedIn(client, sessionId) && !options.anonymous)
+						this.consoles[sessionId].gotoWindow('Login');
 
 					logDirect(
 						`🦊 Successful Connection ${
@@ -175,6 +237,8 @@ export class TelnetServer {
 							client.input.remoteAddress
 						}<${sessionId}>`,
 					);
+
+					this.consoles[sessionId].emit('connected', this.clients[sessionId]);
 				} catch (error) {
 					logDirect(`💥 error<${client.input.remoteAddress}>:\n${error.stack}`);
 
@@ -197,6 +261,7 @@ export interface UserEntry {
 	password: string;
 	salt: string;
 	client: any;
+	userId: number;
 	group: string;
 }
 export const register = (
@@ -221,6 +286,7 @@ export const register = (
 		salt,
 		password: saltedPassword,
 		client: client,
+		userId: Object.keys(usernames).length,
 		group,
 	} as UserEntry;
 
@@ -229,9 +295,17 @@ export const register = (
 
 export const saveUsernames = () => {
 	fs.writeFileSync(
-		process.cwd() + '/temp/username_list.json',
+		process.cwd() + '/temp/usernames.json',
 		JSON.stringify(usernames),
 	);
+};
+
+/**
+ *
+ * @returns
+ */
+export const getTelnetOptions = () => {
+	return getConfigFile().telnet as InfinityMintTelnetOptions;
 };
 
 export interface SessionEntry {
@@ -271,10 +345,10 @@ export const loginUser = (
 };
 
 export const readUsernameList = () => {
-	if (!fs.existsSync(process.cwd() + '/temp/username_list.json'))
+	if (!fs.existsSync(process.cwd() + '/temp/usernames.json'))
 		return {} as typeof usernames;
 
-	return JSON.parse(process.cwd() + '/temp/username_list.json');
+	return JSON.parse(process.cwd() + '/temp/username.json');
 };
 
 export let usernames: Dictionary<UserEntry>;

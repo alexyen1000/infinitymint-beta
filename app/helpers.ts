@@ -1,4 +1,4 @@
-import {defaultFactory} from './pipes';
+import {defaultFactory, PipeFactory} from './pipes';
 import fsExtra from 'fs-extra';
 import fs, {PathLike} from 'fs';
 import {Dictionary} from 'form-data';
@@ -914,10 +914,11 @@ export const preInitialize = (isJavascript?: boolean) => {
 
 		debugLog('made .env from ' + path);
 	}
-	//will log console.log output to the default pipe
-	if (isEnvTrue('PIPE_ECHO_DEFAULT'))
-		defaultFactory.getPipe('default').listen = true;
 
+	createPipes(defaultFactory);
+};
+
+export const createPipes = (factory: PipeFactory) => {
 	let pipes = [
 		'debug',
 		'imports',
@@ -929,20 +930,26 @@ export const preInitialize = (isJavascript?: boolean) => {
 		'receipts',
 	];
 
+	if (!factory.pipes['default']) factory.registerSimplePipe('default');
+
+	//will log console.log output to the default pipe
+	if (isEnvTrue('PIPE_ECHO_DEFAULT')) factory.getPipe('default').listen = true;
+
 	//removes debug pipe
 	if (isEnvTrue('PIPE_SILENCE_DEBUG')) pipes = pipes.slice(1);
 
-	pipes.forEach(pipe =>
-		defaultFactory.registerSimplePipe(pipe, {
-			listen:
-				envExists('PIPE_ECHO_' + pipe.toUpperCase()) &&
-				process.env['PIPE_ECHO_' + pipe.toUpperCase()] === 'true',
-			save: true,
-		}),
-	);
+	pipes.forEach(pipe => {
+		if (!factory.pipes[pipe])
+			factory.registerSimplePipe(pipe, {
+				listen:
+					envExists('PIPE_ECHO_' + pipe.toUpperCase()) &&
+					process.env['PIPE_ECHO_' + pipe.toUpperCase()] === 'true',
+				save: true,
+			});
+	});
 
 	if (isEnvTrue('PIPE_SEPERATE_WARNINGS'))
-		defaultFactory.registerSimplePipe('warnings', {
+		factory.registerSimplePipe('warnings', {
 			listen: isEnvTrue('PIPE_ECHO_WARNINGS'),
 			save: true,
 		});
