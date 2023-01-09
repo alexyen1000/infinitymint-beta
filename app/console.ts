@@ -329,6 +329,11 @@ export class InfinityConsole {
 						return;
 					}
 
+					if (this.errorBox && !this.errorBox.hidden) {
+						this.errorBox.destroy();
+						return;
+					}
+
 					if (!this.currentWindow) {
 						this.gotoWindow('CloseBox');
 						return;
@@ -877,7 +882,7 @@ export class InfinityConsole {
 			width: '80%',
 			mouse: true,
 			keyboard: true,
-			parent: this.screen,
+			parent: this.windowManager,
 			height: '80%',
 			scrollable: true,
 			scrollbar: {
@@ -913,11 +918,11 @@ export class InfinityConsole {
 			else this.errorBox.destroy();
 		});
 
-		this.screen.append(this.errorBox);
-		this.screen.render();
-
 		this.errorBox.setFront();
 		this.errorBox.focus();
+		this.screen.append(this.errorBox);
+		this.screen.render();
+		this.screen.focus();
 	}
 
 	public registerKeys() {
