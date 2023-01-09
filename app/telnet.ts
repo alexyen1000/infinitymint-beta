@@ -9,7 +9,7 @@ import InfinityConsole from './console';
 import {Dictionary} from 'form-data';
 import {logDirect} from './helpers';
 import {startInfinityConsole} from './web3';
-import {defaultFactory} from './pipes';
+import {defaultFactory, PipeFactory} from './pipes';
 
 const telnet = require('telnet2');
 export class TelnetServer {
@@ -158,7 +158,7 @@ export class TelnetServer {
 								fullUnicode: true,
 							},
 						},
-						defaultFactory,
+						new PipeFactory(),
 						this,
 						this.eventEmitter,
 					);

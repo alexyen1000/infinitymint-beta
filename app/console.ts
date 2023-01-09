@@ -9,6 +9,7 @@ import {ethers} from 'hardhat';
 import {
 	BlessedElement,
 	createPipes,
+	debugLog,
 	findScripts,
 	findWindows,
 	getConfigFile,
@@ -30,7 +31,7 @@ import {InfinityMintWindow} from './window';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {changeNetwork, getDefaultSigner} from './web3';
-import {PipeFactory} from './pipes';
+import {defaultFactory, PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
 import {getProjectDeploymentClasses} from './deployments';
@@ -87,7 +88,7 @@ export class InfinityConsole {
 		telnetServer?: TelnetServer,
 		eventEmitter?: InfinityMintEventEmitter,
 	) {
-		this.logs = pipeFactory || new PipeFactory();
+		this.logs = pipeFactory || defaultFactory;
 		createPipes(this.logs);
 
 		this.windows = [];
@@ -255,6 +256,11 @@ export class InfinityConsole {
 	}
 
 	public error(error: Error) {
+		if (this.isTelnet())
+			this.logs.log(
+				'{red-fg}' + error.message + ' ' + error.stack + '{/red-fg}',
+			);
+
 		this.logs.error(error);
 	}
 
@@ -1020,8 +1026,8 @@ export class InfinityConsole {
 		}
 	}
 
-	public errorHandler(error: Error | string) {
-		console.error(error);
+	public errorHandler(error: Error) {
+		this.error(error);
 
 		if (isEnvTrue('THROW_ALL_ERRORS') || this.options?.throwErrors) {
 			this.stopLoading();
@@ -1178,9 +1184,13 @@ export class InfinityConsole {
 		return this.eventEmitter.emit(eventName, {
 			infinityConsole: this,
 			event: eventParameters,
-			log: this.log,
+			log: msg => {
+				this.getLogs().log(msg.toString());
+			},
 			eventEmitter: this.eventEmitter,
-			debugLog: this.debugLog,
+			debugLog: msg => {
+				this.getLogs().log(msg.toString(), 'debug');
+			},
 		} as InfinityMintEventEmit<typeof eventType>);
 	}
 
