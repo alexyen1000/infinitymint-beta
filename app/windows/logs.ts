@@ -25,6 +25,21 @@ let lineNumber = (indexCount: number | string, gray?: boolean) => {
 		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'}`;
 };
 
+let alwaysScrollUpdate = (window, alwaysScroll) => {
+	window.data.log.setLabel(
+		'{bold}{white-fg}Pipe: {/white-fg}' +
+			window.data.log.options.pipe +
+			'{/bold}',
+	);
+
+	//change style
+	alwaysScroll.style.bg = window.data.log.options.alwaysScroll
+		? 'green'
+		: 'red';
+	alwaysScroll.setContent(
+		'Auto Scroll [' + (window.data.log.options.alwaysScroll ? 'O' : 'X') + ']',
+	);
+};
 /**
  * Allows you to view the output of pipes
  */
@@ -130,24 +145,12 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	let alwaysScrollUpdate = () => {
-		//change style
-		alwaysScroll.style.bg = window.data.log.options.alwaysScroll
-			? 'green'
-			: 'red';
-		alwaysScroll.setContent(
-			'Auto Scroll [' +
-				(window.data.log.options.alwaysScroll ? 'O' : 'X') +
-				']',
-		);
-	};
-
 	alwaysScroll.on('click', () => {
 		//save option
 		window.data.log.options.alwaysScroll =
 			!window.data.log.options.alwaysScroll;
 		window.data.log.options.scrollToSelectedLine = false;
-		alwaysScrollUpdate();
+		alwaysScrollUpdate(window, alwaysScroll);
 		window.getScreen().render();
 	});
 	alwaysScroll.setFront();
@@ -309,6 +312,12 @@ Logs.initialize = async (window, frame, blessed) => {
 			.getPipe(window.data.log.options.pipe)
 			.log('{red-fg}pipe deleted{/red-fg}');
 
+		window.data.log.setLabel(
+			'{bold}{white-fg}Pipe: {/white-fg}' +
+				window.data.log.options.pipe +
+				'{/bold}',
+		);
+
 		window.data.log.setContent('');
 		form.hide();
 	});
@@ -387,6 +396,7 @@ Logs.postInitialize = async (window, frame, blessed) => {
 		if (window.data.log.options.alwaysScroll) {
 			window.data.log.options.alwaysScroll = false;
 			window.saveOptions();
+			alwaysScrollUpdate(window, window.elements['alwaysScroll']);
 		}
 
 		window.data.log.options.selectedLine = Math.max(
@@ -411,6 +421,8 @@ Logs.postInitialize = async (window, frame, blessed) => {
 			).length - 1,
 			window.data.log.options.selectedLine + 1,
 		);
+
+		alwaysScrollUpdate(window, window.elements['alwaysScroll']);
 	});
 
 	//centers the scroll of the console to the selected line position when you do Control-Q

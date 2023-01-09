@@ -122,6 +122,7 @@ export class InfinityConsole {
 				width: '90%',
 				height: 20,
 				horizonal: true,
+				parent: this.screen,
 				pch: '-',
 				padding: 1,
 				border: 'line',
@@ -331,6 +332,7 @@ export class InfinityConsole {
 
 					if (this.errorBox && !this.errorBox.hidden) {
 						this.errorBox.destroy();
+						this.errorBox = undefined;
 						return;
 					}
 
