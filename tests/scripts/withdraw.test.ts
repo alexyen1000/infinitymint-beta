@@ -4,7 +4,7 @@ import Withdraw from '../../scripts/withdraw';
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
-} from 'infinitymint/dist/app/interfaces';
+} from '../../app/interfaces';
 
 describe('InfinityMint withdraw script', () => {
 	it('Function runs as normal', async () => {
