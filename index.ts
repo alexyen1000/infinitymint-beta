@@ -30,6 +30,7 @@ import {
 	InfinityMintConsoleOptions,
 	InfinityMintTelnetOptions,
 } from './app/interfaces';
+import {TelnetServer} from './app/telnet';
 
 //export helpers
 export * as Helpers from './app/helpers';
@@ -273,7 +274,8 @@ if (
 		logDirect('🔷 Starting InfinityMint Telnet Server');
 		init(config.console as any).then((config: InfinityMintConfig) => {
 			let port = (config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
-			startTelnet(port);
+			new TelnetServer().start(port);
+
 			logDirect(
 				'🟢 Telnet Server Online! enter line below to connect\n\tbrew install telnet && telnet localhost ' +
 					port,
