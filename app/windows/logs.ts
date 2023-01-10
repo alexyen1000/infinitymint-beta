@@ -3,20 +3,25 @@ import {InfinityMintWindow} from '../window';
 
 let lastLogMessage: string;
 let updateContent = (window: InfinityMintWindow) => {
-	window.data.log.setContent(
-		window
-			.getInfinityConsole()
-			.getLogs()
-			.pipes[window.data.log.options.pipe].logs.map((log, index) => {
-				if (lastLogMessage && lastLogMessage === log.message)
-					return lineNumber(index, true) + `{grey-fg}${log.pure}{/grey-fg}`;
-				else {
-					lastLogMessage = log.message;
-					return lineNumber(index) + log.message;
-				}
-			})
-			.join('\n'),
-	);
+	if (
+		window.getInfinityConsole()?.getLogs()?.pipes[
+			window.data.log.options.pipe
+		] !== undefined
+	)
+		window.data.log.setContent(
+			window
+				.getInfinityConsole()
+				.getLogs()
+				.pipes[window.data.log.options.pipe].logs.map((log, index) => {
+					if (lastLogMessage && lastLogMessage === log.message)
+						return lineNumber(index, true) + `{grey-fg}${log.pure}{/grey-fg}`;
+					else {
+						lastLogMessage = log.message;
+						return lineNumber(index) + log.message;
+					}
+				})
+				.join('\n'),
+		);
 };
 
 let lineNumber = (indexCount: number | string, gray?: boolean) => {
@@ -25,7 +30,7 @@ let lineNumber = (indexCount: number | string, gray?: boolean) => {
 		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'}`;
 };
 
-let alwaysScrollUpdate = (window, alwaysScroll) => {
+let alwaysScrollUpdate = (window: InfinityMintWindow, alwaysScroll) => {
 	window.data.log.setLabel(
 		'{bold}{white-fg}Pipe: {/white-fg}' +
 			window.data.log.options.pipe +
@@ -117,6 +122,9 @@ Logs.initialize = async (window, frame, blessed) => {
 			selectedLine: 0,
 		},
 	});
+
+	if (window.data.log?.options?.pipe === undefined)
+		window.data.log.options.pipe = 'default';
 
 	//create buttons
 	let alwaysScroll = window.createElement('alwaysScroll', {

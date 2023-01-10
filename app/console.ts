@@ -179,7 +179,7 @@ export class InfinityConsole {
 	 */
 	public isTelnet() {
 		let config = getConfigFile();
-		return config.telnet && this.server;
+		return config.telnet && this.server !== undefined;
 	}
 
 	/**
@@ -409,7 +409,7 @@ export class InfinityConsole {
 				window.log('reloading');
 				window.destroy();
 
-				let newWindow = requireWindow(fileName);
+				let newWindow = requireWindow(fileName, this.isTelnet());
 				newWindow.setFileName(fileName);
 
 				this.windows[i] = newWindow;
@@ -1082,18 +1082,23 @@ export class InfinityConsole {
 
 	public async refreshScripts() {
 		let config = getConfigFile();
-		//call reloads
-		if (this.scripts && this.scripts.length !== 0) {
-			for (let i = 0; i < this.scripts.length; i++) {
-				let script = this.scripts[i];
 
-				if (script?.reloaded)
-					await script.reloaded({
-						log: this.log,
-						debugLog: this.debugLog,
-						console: this,
-					});
+		try {
+			//call reloads
+			if (this.scripts && this.scripts.length !== 0) {
+				for (let i = 0; i < this.scripts.length; i++) {
+					let script = this.scripts[i];
+
+					if (script?.reloaded)
+						await script.reloaded({
+							log: this.log,
+							debugLog: this.debugLog,
+							console: this,
+						});
+				}
 			}
+		} catch (error) {
+			warning('bad reload: ' + error.message);
 		}
 
 		let scripts = await findScripts();
@@ -1115,6 +1120,7 @@ export class InfinityConsole {
 					let scriptSource = await requireScript(
 						script.dir + '/' + script.base,
 						this,
+						this.isTelnet(),
 					);
 					scriptSource.fileName = script.dir + '/' + script.base;
 					this.scripts.push(scriptSource);
@@ -1131,9 +1137,15 @@ export class InfinityConsole {
 						_potentialSource = await requireScript(
 							script.dir + '/' + script.base,
 							this,
+							this.isTelnet(),
 						);
 						(process as any).exit = (process as any)._exit;
-					}
+					} else
+						this.debugLog(
+							`[${i}] script skipping require <${script.name}> => ${
+								script.dir + '/' + script.base
+							}`,
+						);
 
 					this.scripts.push({
 						..._potentialSource,
@@ -1147,6 +1159,7 @@ export class InfinityConsole {
 							let result = await requireScript(
 								script.dir + '/' + script.base,
 								this,
+								this.isTelnet(),
 							);
 							if (typeof result === 'function')
 								await (result as any)(infinitymint);
@@ -1287,7 +1300,7 @@ export class InfinityConsole {
 				let fileName = this.windows[i].getFileName();
 				this.windows[i].log('reimporting ' + fileName);
 				this.windows[i].destroy();
-				this.windows[i] = requireWindow(fileName);
+				this.windows[i] = requireWindow(fileName, this.isTelnet());
 				this.windows[i].setFileName(fileName);
 			}
 		}
@@ -1301,8 +1314,10 @@ export class InfinityConsole {
 
 		this.debugLog('requiring windows and storing inside console instance...');
 		for (let i = 0; i < windows.length; i++) {
-			let window = requireWindow(windows[i]);
-			window.setContainer(this);
+			let window = requireWindow(windows[i], this.isTelnet());
+			if (!window.hasContainer(this)) window.setContainer(this);
+			else warning('window has container already');
+
 			window.setFileName(windows[i]);
 			this.windows.push(Object.create(window) as InfinityMintWindow);
 			this.debugLog(
@@ -1501,8 +1516,6 @@ export class InfinityConsole {
 							},
 							blink: true,
 						},
-						debug: true,
-						sendFocus: true,
 					},
 				);
 

@@ -461,7 +461,7 @@ export class InfinityMintWindow {
 
 	public getBorder() {
 		return (
-			this.data.border || this.options.border || this.elements['frame'].border
+			this.data?.border || this.options?.border || this.elements['frame'].border
 		);
 	}
 
@@ -511,7 +511,10 @@ export class InfinityMintWindow {
 
 	public getStyle(): object {
 		return (
-			this.options.style || this.data.style || this.elements['frame'].style
+			this.options?.style ||
+			this.data?.style ||
+			this?.elements['frame']?.style ||
+			{}
 		);
 	}
 
@@ -884,6 +887,8 @@ export class InfinityMintWindow {
 	) {
 		type = type || 'box';
 
+		if (options.parent === undefined) options.parent = this.screen;
+
 		if (!blessed[type] || typeof blessed[type] !== 'function')
 			throw new Error('bad blessed element: ' + type);
 
@@ -915,6 +920,42 @@ export class InfinityMintWindow {
 			this.debugLog(`old id <${this.name}>[${oldId}] destroyed`);
 		}
 		this.creation = Date.now();
+		this.log('calling initialize');
+		try {
+			//update the title and frame
+			this.elements['frame'].setFront();
+			await this.initialize(this, this.elements['frame'], blessed);
+			this.destroyed = false;
+			this.initialized = true;
+		} catch (error) {
+			this.getInfinityConsole().errorHandler(error);
+		}
+
+		//append each element
+		Object.keys(this.elements).forEach(key => {
+			let element = this.elements[key];
+
+			try {
+				if (
+					key !== 'frame' &&
+					!element.instantlyAppend &&
+					!element.instantlyCreate
+				) {
+					this.screen.append(element);
+					this.screen.render();
+				}
+
+				if (element.shouldFocus) element.focus();
+				if (element.alwaysBack) element.setBack();
+				if (element.alwaysFront) element.setFront();
+			} catch (error) {
+				warning(error.message);
+			}
+		});
+
+		//frame title
+		await this.updateFrameTitle();
+
 		let closeButton = this.createElement('closeButton', {
 			top: -1,
 			right: 2,
@@ -949,6 +990,7 @@ export class InfinityMintWindow {
 			shouldFocus: true,
 			tags: true,
 			padding: 0,
+			instantlyAppend: true,
 			content: ' ',
 			border: 'line',
 			style: {
@@ -975,6 +1017,7 @@ export class InfinityMintWindow {
 			height: 3,
 			alwaysFront: true,
 			shouldFocus: true,
+			instantlyAppend: true,
 			tags: true,
 			padding: 0,
 			content: ' ',
@@ -996,43 +1039,8 @@ export class InfinityMintWindow {
 		if (this.hideRefreshButton || !this.canRefresh)
 			this.elements['refreshButton'].hide();
 
-		this.log('calling initialize');
-		try {
-			//update the title and frame
-			this.elements['frame'].setFront();
-			await this.initialize(this, this.elements['frame'], blessed);
-			this.destroyed = false;
-			this.initialized = true;
-		} catch (error) {
-			this.getInfinityConsole().errorHandler(error);
-		}
-
-		//append each element
-		Object.keys(this.elements).forEach(key => {
-			let element = this.elements[key];
-
-			try {
-				if (
-					key !== 'frame' &&
-					!element.instantlyAppend &&
-					!element.instantlyCreate
-				) {
-					this.screen.append(element);
-					this.screen.render();
-				}
-
-				if (element.shouldFocus) element.focus();
-				if (element.alwaysBack) element.setBack();
-				if (element.alwaysFront) element.setFront();
-			} catch (error) {
-				warning(error.message);
-			}
-		});
-
 		this.elements['hideButton'].setFront();
 		this.elements['closeButton'].setFront();
-		//frame title
-		await this.updateFrameTitle();
 
 		//run post initialize
 		if (this.postInitialize) {

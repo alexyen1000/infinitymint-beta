@@ -838,21 +838,22 @@ export const executeScript = async (
  * @param fileName
  * @returns
  */
-export const requireWindow = (fileName: string) => {
+export const requireWindow = (fileName: string, keepCache?: boolean) => {
 	if (!fs.existsSync(fileName))
 		throw new Error('cannot find script: ' + fileName);
 
-	if (require.cache[fileName]) {
+	if (!keepCache && require.cache[fileName]) {
 		debugLog('deleting old cache  => ' + fileName);
 		delete require.cache[fileName];
-	}
+	} else if (keepCache) debugLog('keeping old cache  => ' + fileName);
 
 	debugLog('requiring => ' + fileName);
 	let result = require(fileName);
 	result = result.default || result;
+	result = result.clone(); //clone this window
 	result.setFileName(fileName);
 	result.log('required');
-	return result as InfinityMintWindow;
+	return result;
 };
 
 /**
@@ -861,54 +862,79 @@ export const requireWindow = (fileName: string) => {
  * @param root
  * @returns
  */
+
 export const requireScript = async (
 	fullPath: string,
-	console?: InfinityConsole,
+	infinityConsole?: InfinityConsole,
+	keepCache?: boolean,
 ) => {
 	let hasReloaded = false;
+
 	if (!fs.existsSync(fullPath))
 		throw new Error('cannot find script: ' + fullPath);
 
-	if (require.cache[fullPath]) {
-		debugLog('deleting old script cache of ' + fullPath);
+	if (!keepCache && require.cache[fullPath]) {
+		infinityConsole
+			? infinityConsole.debugLog('deleting old script cache of ' + fullPath)
+			: debugLog('deleting old script cache of ' + fullPath);
 		delete require.cache[fullPath];
 		hasReloaded = true;
+	} else if (keepCache) {
+		infinityConsole
+			? infinityConsole.debugLog('keeping old script cache of ' + fullPath)
+			: debugLog('keeping old script cache of ' + fullPath);
 	}
 
 	let result = await require(fullPath);
 	result = result.default || result;
+	if (hasReloaded && keepCache && infinityConsole.isTelnet())
+		result = Object.create(result); //clone this object if it has been reloaded, and keeping cache, and we are telnet
+
 	result.fileName = fullPath;
 
-	if (console && result.events) {
+	if (infinityConsole && result.events) {
 		Object.keys(result.events).forEach(key => {
 			try {
-				console.getEventEmitter().off(key, result.events[key]);
+				infinityConsole.getEventEmitter().off(key, result.events[key]);
 			} catch (error) {
 				warning('could not turn off event emitter: ' + error?.message);
 			}
-			debugLog('new event <EventEmitter>(' + key + ')');
-			console.getEventEmitter().on(key, result.events[key]);
+
+			infinityConsole
+				? infinityConsole.debugLog('new event <EventEmitter>(' + key + ')')
+				: debugLog('new event <EventEmitter>(' + key + ')');
+
+			infinityConsole.getEventEmitter().on(key, result.events[key]);
 		});
 	}
 
-	if (result?.reloaded && hasReloaded) {
-		debugLog('calling (reloaded) on ' + fullPath);
-		await (result as InfinityMintScript).reloaded({
-			log,
-			debugLog,
-			console,
-			script: result,
-		});
-	}
+	try {
+		if (result?.reloaded && hasReloaded) {
+			if (infinityConsole)
+				infinityConsole.debugLog('calling (reloaded) on ' + fullPath);
+			else debugLog('calling (reloaded) on ' + fullPath);
+			await (result as InfinityMintScript).reloaded({
+				log,
+				debugLog,
+				console: infinityConsole,
+				script: result,
+			});
+		}
 
-	if (result?.loaded) {
-		debugLog('calling (loaded) on ' + fullPath);
-		await (result as InfinityMintScript).loaded({
-			log,
-			debugLog,
-			console,
-			script: result,
-		});
+		if (result?.loaded) {
+			if (infinityConsole)
+				infinityConsole.debugLog('calling (loaded) on ' + fullPath);
+			else debugLog('calling (loaded) on ' + fullPath);
+
+			await (result as InfinityMintScript).loaded({
+				log,
+				debugLog,
+				console: infinityConsole,
+				script: result,
+			});
+		}
+	} catch (error) {
+		warning('bad reload/loaded: ' + error.message);
 	}
 
 	return result as InfinityMintScript;

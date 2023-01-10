@@ -160,7 +160,6 @@ export class TelnetServer {
 						},
 						new PipeFactory(),
 						this,
-						this.eventEmitter,
 					);
 					sessionId = infinityConsole.getSessionId();
 					this.clients[sessionId] = client;

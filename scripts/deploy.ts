@@ -99,7 +99,7 @@ const deploy: InfinityMintScript = {
 								return;
 							}
 
-							script.eventEmitter.emit('preDeploy', {
+							script.infinityConsole.emit('preDeploy', {
 								project: project,
 								deployments: deployments,
 								deployment,
@@ -123,7 +123,7 @@ const deploy: InfinityMintScript = {
 								});
 
 								//call post deploy with previous contracts
-								script.eventEmitter.emit('postDeploy', {
+								script.infinityConsole.emit('postDeploy', {
 									project: project,
 									deployments: deployments,
 									deployment,
@@ -161,7 +161,7 @@ const deploy: InfinityMintScript = {
 								] = contract;
 							});
 
-							script.eventEmitter.emit('postDeploy', {
+							script.infinityConsole.emit('postDeploy', {
 								project: project,
 								deployments: deployments,
 								deployment,
@@ -179,7 +179,7 @@ const deploy: InfinityMintScript = {
 										')',
 								);
 
-								script.eventEmitter.emit('preSetup', {
+								script.infinityConsole.emit('preSetup', {
 									project: project,
 									deployments: deployments,
 									deployment,
@@ -206,7 +206,7 @@ const deploy: InfinityMintScript = {
 
 								project.stages['setup_' + deployment.getKey()] = true;
 
-								script.eventEmitter.emit('postSetup', {
+								script.infinityConsole.emit('postSetup', {
 									project: project,
 									deployments: deployments,
 									deployment,
@@ -265,7 +265,7 @@ const deploy: InfinityMintScript = {
 								return;
 							}
 
-							script.eventEmitter.emit('preSetup', {
+							script.infinityConsole.emit('preSetup', {
 								project: project,
 								deployments: deployments,
 								event: deployment,
@@ -291,7 +291,7 @@ const deploy: InfinityMintScript = {
 								...script,
 							} as InfinityMintDeploymentParameters);
 
-							script.eventEmitter.emit('postSetup', {
+							script.infinityConsole.emit('postSetup', {
 								project: project,
 								deployments: deployments,
 								event: deployment,
