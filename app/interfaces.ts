@@ -477,6 +477,7 @@ export interface InfinityMintProject {
 		 */
 		version: string;
 	};
+	source?: string;
 	/**
 	 * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
 	 * @private

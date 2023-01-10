@@ -74,6 +74,7 @@ export const hasTempDeployedProject = (
 ) => {
 	version = version || '1.0.0';
 	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
+	logDirect(filename);
 	return fs.existsSync(process.cwd() + filename);
 };
 
@@ -83,6 +84,7 @@ export const hasTempCompiledProject = (
 ) => {
 	version = version || '1.0.0';
 	let filename = `/temp/projects/${projectName}@${version}.compiled.temp.json`;
+
 	return fs.existsSync(process.cwd() + filename);
 };
 
@@ -309,21 +311,34 @@ export const getScriptProject = (
 	version?: any,
 ) => {
 	let projectName = script.args?.project?.value || script.project.name;
+
 	if (
 		!script.args?.dontUseTemp?.value &&
-		(hasTempCompiledProject(projectName) || hasTempDeployedProject(projectName))
+		type === 'source' &&
+		hasTempCompiledProject(projectName, version)
 	) {
 		script.infinityConsole.log(
-			'{yellow-fg}found previous project attempting to retry{yellow-fg}',
+			'{yellow-fg}found previous compiled project attempting to retry{yellow-fg}',
 		);
-		return !type || type === 'source'
-			? getTempCompiledProject(projectName)
-			: getTempDeployedProject(projectName);
+		return getTempCompiledProject(projectName, version);
+	}
+
+	if (
+		!script.args?.dontUseTemp?.value &&
+		!type &&
+		hasTempDeployedProject(projectName, version)
+	) {
+		script.infinityConsole.log(
+			'{yellow-fg}found previous deployed project attempting to retry{yellow-fg}',
+		);
+		return getTempDeployedProject(projectName, version);
 	}
 
 	return !type || type === 'source'
-		? (getProject(projectName) as InfinityMintTempProject)
-		: getTempDeployedProject(projectName);
+		? (getProject(
+				projectName + ((script.project as any).javascript ? '.js' : '.ts'),
+		  ) as InfinityMintTempProject)
+		: getTempDeployedProject(projectName, version);
 };
 
 /**
@@ -370,6 +385,7 @@ export const requireProject = (
 	let res = require(projectPath as string);
 	res = res.default || res;
 	res.javascript = isJavaScript;
+	res.source = projectPath;
 	res.name =
 		res.name ||
 		res.description?.name ||
