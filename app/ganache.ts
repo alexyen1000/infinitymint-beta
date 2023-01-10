@@ -1,9 +1,8 @@
 import ganache, {Server, ServerOptions} from 'ganache';
 import {EthereumProvider} from 'ganache';
-import hre, {ethers} from 'hardhat';
-import {debugLog, log, logDirect, readSession, warning} from './helpers';
-const {tcpPingPort} = require('tcp-ping-port');
+import {log} from './helpers';
 
+const {tcpPingPort} = require('tcp-ping-port');
 export class GanacheServer {
 	public server?: Server;
 	public options?: ServerOptions;
@@ -22,7 +21,7 @@ export class GanacheServer {
 				'{cyan-fg}{bold}Previous Ganache Server{/bold}{/cyan-fg} => http://localhost:' +
 					this.port,
 			);
-			return hre.getProvider('ganache') as any;
+			return (await import('hardhat')).getProvider('ganache') as any;
 		}
 
 		return await this.createProvider(options);
