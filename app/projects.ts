@@ -82,7 +82,7 @@ export const hasTempCompiledProject = (
 	version?: string,
 ) => {
 	version = version || '1.0.0';
-	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
+	let filename = `/temp/projects/${projectName}@${version}.compiled.temp.json`;
 	return fs.existsSync(process.cwd() + filename);
 };
 
@@ -102,12 +102,14 @@ export const saveTempCompiledProject = (project: InfinityMintTempProject) => {
  * @returns
  * @throws
  */
-export const getTempDeployedProject = (projectName: string) => {
+export const getTempDeployedProject = (
+	projectName: string,
+	version?: string,
+) => {
+	version = version || '1.0.0';
+	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
 	try {
-		let res = require(process.cwd() +
-			'/temp/projects/' +
-			projectName +
-			'.temp.deployed.json');
+		let res = require(process.cwd() + filename);
 		res = res.default || res;
 		return res as InfinityMintTempProject;
 	} catch (error) {
@@ -121,17 +123,18 @@ export const getTempDeployedProject = (projectName: string) => {
  * @returns
  * @throws
  */
-export const getTempCompiledProject = (projectName: string) => {
+export const getTempCompiledProject = (
+	projectName: string,
+	version?: string,
+) => {
+	version = version || '1.0.0';
+	let filename = `/temp/projects/${projectName}@${version}.compiled.temp.json`;
 	try {
-		let res = require(process.cwd() +
-			'/temp/projects/' +
-			projectName +
-			'.temp.compiled.json');
+		let res = require(process.cwd() + filename);
 		res = res.default || res;
-
 		return res as InfinityMintTempProject;
 	} catch (error) {
-		throw new Error('could not load temp deployed project: ' + error.message);
+		throw new Error('could not load temp compiled project: ' + error.message);
 	}
 };
 

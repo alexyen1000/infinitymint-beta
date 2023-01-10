@@ -23,19 +23,20 @@ const compile: InfinityMintScript = {
 			`{cyan-fg}{bold}Compiling Project ${project.name}@${project.version.version}{/}`,
 		);
 		let result = await stage('compile', project, async () => {
-			let pathSetup = await stage('pathSetup', project, async () => {
-				throw new Error('fuck');
-			});
+			let pathSetup = await stage('pathSetup', project, async () => {});
 
 			if (pathSetup !== true) throw pathSetup;
 		});
 
-		if (result !== false) throw result;
+		if (result !== true) throw result;
 
 		script.log('{green-fg}{bold}Compilation Successful{/}');
 		script.log(`\t Project: ${project.name}`);
 		script.log(
 			`\t Version: ${project.version.version} (${project.version.tag})`,
+		);
+		script.log(
+			'{gray-fg}{bold}You can now go ahead and {cyan-fg}compile this project!{/}',
 		);
 	},
 	arguments: [
