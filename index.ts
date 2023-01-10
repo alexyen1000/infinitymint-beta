@@ -44,11 +44,12 @@ export const load = async (
 		...(options || {}),
 		...(typeof config?.console === 'object' ? config.console : {}),
 	} as InfinityMintConsoleOptions;
-	let session = readSession();
-
 	//if we arenttelnet
 	if (!config.telnet) {
-		await initializeInfinityMint(config, true);
+		await initializeInfinityMint(
+			config,
+			config.hardhat?.networks?.ganache !== undefined,
+		);
 
 		//do not start an InfinityConsole normally if we have nothing in config, run InfinityMint as NPM module in the back
 		if (!config.console && !config.startup && !config.telnet)
@@ -71,14 +72,14 @@ export const load = async (
 	} else {
 		await new Promise((resolve, reject) => {
 			logDirect('🔷 Starting InfinityMint Telnet Server');
-			initializeInfinityMint(config.console as any, true).then(
-				(config: InfinityMintConfig) => {
-					let port =
-						(config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
-					let telnet = new TelnetServer();
-					telnet.start(port);
-				},
-			);
+			initializeInfinityMint(
+				config.console as any,
+				config.hardhat?.networks?.ganache !== undefined,
+			).then((config: InfinityMintConfig) => {
+				let port = (config?.telnet as InfinityMintTelnetOptions)?.port || 1337;
+				let telnet = new TelnetServer();
+				telnet.start(port);
+			});
 		})
 			.catch(errorHandler)
 			.then(() => {
