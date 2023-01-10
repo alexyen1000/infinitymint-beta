@@ -1178,6 +1178,10 @@ export class InfinityConsole {
 		return this.logs.log(msg, 'debug');
 	}
 
+	public emitAny(eventName: string, eventParameters?: any, eventType?: any) {
+		return this.emit(eventName as any, eventParameters, eventType);
+	}
+
 	public emit(
 		eventName: InfinityMintConfigEventKeys | InfinityMintEventKeys,
 		eventParameters?: any,

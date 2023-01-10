@@ -23,7 +23,11 @@ import {
 } from './gasAndPrices';
 import {glob} from 'glob';
 import {InfinityConsole} from './console';
-import {getCurrentProject, saveTempCompiledProject} from './projects';
+import {
+	getCurrentProject,
+	saveTempCompiledProject,
+	saveTempDeployedProject,
+} from './projects';
 
 export interface Vector {
 	x: number;
@@ -325,39 +329,54 @@ export const stage = async (
 	stage: string,
 	project: InfinityMintTempProject,
 	call: () => Promise<void>,
+	type?: 'compile' | 'deploy',
 	infinityConsole?: InfinityConsole,
 ) => {
+	type = type || 'compile';
 	if (!project.stages) project.stages = {};
-
+	let eventName = 'stage' + (stage[0].toUpperCase() + stage.substring(1));
 	if (infinityConsole) infinityConsole.debugLog('executing stage => ' + stage);
 	else debugLog('executing stage => ' + stage);
 
+	if (infinityConsole) infinityConsole.emitAny(eventName);
+
 	if (project?.stages[stage]) {
 		if (infinityConsole)
-			infinityConsole.debugLog('\t{cyan-fg}Skipped{/cyan-fg}');
+			infinityConsole.debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 
+		if (infinityConsole) infinityConsole.emitAny(eventName + 'Skipped');
 		return true;
 	}
 
 	project.stages[stage] = false;
 
+	if (type === 'compile') saveTempCompiledProject(project);
+	else saveTempDeployedProject(project);
+
 	try {
+		if (infinityConsole) infinityConsole.emitAny(eventName + 'Pre');
 		await call();
 		project.stages[stage] = true;
-		saveTempCompiledProject(project);
+
+		if (infinityConsole) infinityConsole.emitAny(eventName + 'Post');
+		if (type === 'compile') saveTempCompiledProject(project);
+		else saveTempDeployedProject(project);
 
 		if (infinityConsole)
-			infinityConsole.debugLog('\t{green-fg}Success{/green-fg}');
+			infinityConsole.debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
 		else debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
-
+		if (infinityConsole) infinityConsole.emitAny(eventName + 'Success');
 		return true;
 	} catch (error) {
 		project.stages[stage] = error;
-		saveTempCompiledProject(project);
+
+		if (type === 'compile') saveTempCompiledProject(project);
+		else saveTempDeployedProject(project);
 
 		if (infinityConsole) infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
 		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
+		if (infinityConsole) infinityConsole.emitAny(eventName + 'Failure');
 		return error;
 	}
 };

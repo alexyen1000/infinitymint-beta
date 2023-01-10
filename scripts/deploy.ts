@@ -69,48 +69,91 @@ const deploy: InfinityMintScript = {
 		let contracts = {...project.deployments};
 
 		//deploy stage
-		let deploy = await stage('deploy', project, async () => {
-			script.log(`{cyan-fg}{bold}Deploying Smart Contracts{/}`);
-			for (let i = 0; i < deployments.length; i++) {
-				let deployment = deployments[i];
+		let deploy = await stage(
+			'deploy',
+			project,
+			async () => {
+				script.log(`{cyan-fg}{bold}Deploying Smart Contracts{/}`);
+				for (let i = 0; i < deployments.length; i++) {
+					let deployment = deployments[i];
 
-				//deploy each contract
-				let result = await stage(
-					'deploy_' + deployment.getKey(),
-					project,
-					async () => {
-						project.deployments = contracts;
+					//deploy each contract
+					let result = await stage(
+						'deploy_' + deployment.getKey(),
+						project,
+						async () => {
+							project.deployments = contracts;
 
-						if (
-							script.args?.contract &&
-							deployment.getKey() !== script.args?.contract.value &&
-							deployment.getContractName() !== script.args.contract.value
-						) {
+							if (
+								script.args?.contract &&
+								deployment.getKey() !== script.args?.contract.value &&
+								deployment.getContractName() !== script.args.contract.value
+							) {
+								script.log(
+									`[${i}] skipping <` +
+										deployment.getKey() +
+										'>(' +
+										deployment.getContractName() +
+										')',
+								);
+								return;
+							}
+
+							script.eventEmitter.emit('preDeploy', {
+								project: project,
+								deployments: deployments,
+								deployment,
+								event: deployment,
+								...script,
+							} as InfinityMintEventEmit<InfinityMintDeployment>);
+
+							if (
+								deployment.hasDeployed() &&
+								script.args?.redeploy?.value !== true
+							) {
+								let previousContracts = deployment.getDeployments();
+								previousContracts.forEach((contract, index) => {
+									script.log(
+										`[${i}] => (${index}) {yellow-fg}already deployed ${contract.name}{/yellow-fg} => <${contract.address}>`,
+									);
+									contracts[contract.name] = contract;
+									contracts[
+										index === 0 ? contract.key : contract.key + ':' + index
+									] = contract;
+								});
+
+								//call post deploy with previous contracts
+								script.eventEmitter.emit('postDeploy', {
+									project: project,
+									deployments: deployments,
+									deployment,
+									event: previousContracts,
+									...script,
+								} as InfinityMintEventEmit<InfinityMintDeploymentLive[]>);
+								return;
+							}
+
 							script.log(
-								`[${i}] skipping <` +
+								`[${i}] deploying <` +
 									deployment.getKey() +
 									'>(' +
 									deployment.getContractName() +
 									')',
 							);
-							return;
-						}
 
-						script.eventEmitter.emit('preDeploy', {
-							project: project,
-							deployments: deployments,
-							event: deployment,
-							...script,
-						} as InfinityMintEventEmit<InfinityMintDeployment>);
+							let deployedContracts = await deployment.deploy({
+								project: project,
+								deployments: deployments,
+								deployment: deployment,
+								contracts: contracts,
+								deployed: deployment.hasDeployed(),
+								deploymentScript: deployment.getDeploymentScript(),
+								...script,
+							} as InfinityMintDeploymentParameters);
 
-						if (
-							deployment.hasDeployed() &&
-							script.args?.redeploy?.value !== true
-						) {
-							let previousContracts = deployment.getDeployments();
-							previousContracts.forEach((contract, index) => {
+							deployedContracts.forEach((contract, index) => {
 								script.log(
-									`[${i}] => (${index}) {yellow-fg}already deployed ${contract.name}{/yellow-fg} => <${contract.address}>`,
+									`[${i}] => (${index}_ deployed ${contract.name} => <${contract.address}>`,
 								);
 								contracts[contract.name] = contract;
 								contracts[
@@ -118,101 +161,78 @@ const deploy: InfinityMintScript = {
 								] = contract;
 							});
 
-							return;
-						}
-
-						script.log(
-							`[${i}] deploying <` +
-								deployment.getKey() +
-								'>(' +
-								deployment.getContractName() +
-								')',
-						);
-
-						let deployedContracts = await deployment.deploy({
-							project: project,
-							deployments: deployments,
-							deployment: deployment,
-							contracts: contracts,
-							deployed: deployment.hasDeployed(),
-							deploymentScript: deployment.getDeploymentScript(),
-							...script,
-						} as InfinityMintDeploymentParameters);
-
-						deployedContracts.forEach((contract, index) => {
-							script.log(
-								`[${i}] => (${index}_ deployed ${contract.name} => <${contract.address}>`,
-							);
-							contracts[contract.name] = contract;
-							contracts[
-								index === 0 ? contract.key : contract.key + ':' + index
-							] = contract;
-						});
-
-						script.eventEmitter.emit('postDeploy', {
-							project: project,
-							deployments: deployments,
-							event: deployedContracts,
-							...script,
-						} as InfinityMintEventEmit<InfinityMintDeploymentLive[]>);
-
-						//if we are to instantly set up
-						if (deployment.getDeploymentScript().instantlySetup) {
-							script.log(
-								`[${i}] setting up <` +
-									deployment.getKey() +
-									'>(' +
-									deployment.getContractName() +
-									')',
-							);
-
-							script.eventEmitter.emit('preSetup', {
+							script.eventEmitter.emit('postDeploy', {
 								project: project,
 								deployments: deployments,
-								event: deployment,
+								deployment,
+								event: deployedContracts,
 								...script,
-							} as InfinityMintEventEmit<InfinityMintDeployment>);
+							} as InfinityMintEventEmit<InfinityMintDeploymentLive[]>);
 
-							project.stages['setup_' + deployment.getKey()] = false;
-							try {
-								await deployment.setup({
+							//if we are to instantly set up
+							if (deployment.getDeploymentScript().instantlySetup) {
+								script.log(
+									`[${i}] setting up <` +
+										deployment.getKey() +
+										'>(' +
+										deployment.getContractName() +
+										')',
+								);
+
+								script.eventEmitter.emit('preSetup', {
 									project: project,
 									deployments: deployments,
-									deployment: deployment,
+									deployment,
 									event: deployment,
-									contracts: contracts,
-									deployed: deployment.hasDeployed(),
-									deploymentScript: deployment.getDeploymentScript(),
 									...script,
-								} as InfinityMintDeploymentParameters);
-							} catch (error) {
-								project.stages['setup_' + deployment.getKey()] = error;
-								throw error;
+								} as InfinityMintEventEmit<InfinityMintDeployment>);
+
+								project.stages['setup_' + deployment.getKey()] = false;
+								try {
+									await deployment.setup({
+										project: project,
+										deployments: deployments,
+										deployment: deployment,
+										event: deployment,
+										contracts: contracts,
+										deployed: deployment.hasDeployed(),
+										deploymentScript: deployment.getDeploymentScript(),
+										...script,
+									} as InfinityMintDeploymentParameters);
+								} catch (error) {
+									project.stages['setup_' + deployment.getKey()] = error;
+									throw error;
+								}
+
+								project.stages['setup_' + deployment.getKey()] = true;
+
+								script.eventEmitter.emit('postSetup', {
+									project: project,
+									deployments: deployments,
+									deployment,
+									event: deployment,
+									...script,
+								} as InfinityMintEventEmit<InfinityMintDeployment>);
 							}
+						},
+						'deploy',
+						script.infinityConsole,
+					);
 
-							project.stages['setup_' + deployment.getKey()] = true;
+					//throw error from stage
+					if (result !== true) throw result;
 
-							script.eventEmitter.emit('postSetup', {
-								project: project,
-								deployments: deployments,
-								event: deployment,
-								...script,
-							} as InfinityMintEventEmit<InfinityMintDeployment>);
-						}
-					},
-				);
-
-				//throw error from stage
-				if (result !== true) throw result;
-
-				script.log(
-					`{green-fg}successfully deployed{/green-fg} ${deployment.getFilePath()}(` +
-						project.name +
-						')',
-				);
-			}
-			script.log(`{green-fg}{bold}Deployment Successful{/}`);
-		});
+					script.log(
+						`{green-fg}successfully deployed{/green-fg} ${deployment.getFilePath()}(` +
+							project.name +
+							')',
+					);
+				}
+				script.log(`{green-fg}{bold}Deployment Successful{/}`);
+			},
+			'deploy',
+			script.infinityConsole,
+		);
 
 		script.log('{green-fg}deploying project{/green-fg} (' + project.name + ')');
 
@@ -226,67 +246,77 @@ const deploy: InfinityMintScript = {
 			'{green-fg}setting up project{/green-fg} (' + project.name + ')',
 		);
 
-		let setup = await stage('setup', project, async () => {
-			script.log(`{cyan-fg}{bold}Configuring Smart Contracts{/}`);
-			for (let i = 0; i < setupContracts.length; i++) {
-				let deployment = setupContracts[i];
+		let setup = await stage(
+			'setup',
+			project,
+			async () => {
+				script.log(`{cyan-fg}{bold}Configuring Smart Contracts{/}`);
+				for (let i = 0; i < setupContracts.length; i++) {
+					let deployment = setupContracts[i];
 
-				let result = await stage(
-					'setup_' + deployment.getContractName(),
-					project,
-					async () => {
-						if (!deployment.getDeploymentScript().setup) {
+					let result = await stage(
+						'setup_' + deployment.getContractName(),
+						project,
+						async () => {
+							if (!deployment.getDeploymentScript().setup) {
+								script.log(
+									`[${i}] => {yellow-fg} Skipping ${deployment.getFilePath()} setup since already done`,
+								);
+								return;
+							}
+
+							script.eventEmitter.emit('preSetup', {
+								project: project,
+								deployments: deployments,
+								event: deployment,
+								...script,
+							} as InfinityMintEventEmit<InfinityMintDeployment>);
+
 							script.log(
-								`[${i}] => {yellow-fg} Skipping ${deployment.getFilePath()} setup since already done`,
+								`[${i}] setting up <` +
+									deployment.getKey() +
+									'>(' +
+									deployment.getContractName() +
+									')',
 							);
-							return;
-						}
 
-						script.eventEmitter.emit('preSetup', {
-							project: project,
-							deployments: deployments,
-							event: deployment,
-							...script,
-						} as InfinityMintEventEmit<InfinityMintDeployment>);
+							await deployment.setup({
+								project: project,
+								deployments: deployments,
+								deployment: deployment,
+								event: deployment,
+								contracts: contracts,
+								deployed: deployment.hasDeployed(),
+								deploymentScript: deployment.getDeploymentScript(),
+								...script,
+							} as InfinityMintDeploymentParameters);
 
-						script.log(
-							`[${i}] setting up <` +
-								deployment.getKey() +
-								'>(' +
-								deployment.getContractName() +
-								')',
-						);
+							script.eventEmitter.emit('postSetup', {
+								project: project,
+								deployments: deployments,
+								event: deployment,
+								...script,
+							} as InfinityMintEventEmit<InfinityMintDeployment>);
+						},
+						'deploy',
+						script.infinityConsole,
+					);
 
-						await deployment.setup({
-							project: project,
-							deployments: deployments,
-							deployment: deployment,
-							event: deployment,
-							contracts: contracts,
-							deployed: deployment.hasDeployed(),
-							deploymentScript: deployment.getDeploymentScript(),
-							...script,
-						} as InfinityMintDeploymentParameters);
+					if (result !== true) throw result;
 
-						script.eventEmitter.emit('postSetup', {
-							project: project,
-							deployments: deployments,
-							event: deployment,
-							...script,
-						} as InfinityMintEventEmit<InfinityMintDeployment>);
-					},
-				);
-
-				if (result !== true) throw result;
-
+					script.log(
+						`{green-fg}successfully setup ${deployment.getFilePath()}{/green-fg} (` +
+							project.name +
+							')',
+					);
+				}
 				script.log(
-					`{green-fg}successfully setup ${deployment.getFilePath()}{/green-fg} (` +
-						project.name +
-						')',
+					`{green-fg}{bold}Successfully Configured Smart Contracts{/}`,
 				);
-			}
-			script.log(`{green-fg}{bold}Successfully Configured Smart Contracts{/}`);
-		});
+			},
+			'deploy',
+			script.infinityConsole,
+		);
 
 		if (setup !== true) throw setup;
 	},

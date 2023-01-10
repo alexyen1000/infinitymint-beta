@@ -22,11 +22,23 @@ const compile: InfinityMintScript = {
 		script.log(
 			`{cyan-fg}{bold}Compiling Project ${project.name}@${project.version.version}{/}`,
 		);
-		let result = await stage('compile', project, async () => {
-			let pathSetup = await stage('pathSetup', project, async () => {});
+		let result = await stage(
+			'compile',
+			project,
+			async () => {
+				let pathSetup = await stage(
+					'pathSetup',
+					project,
+					async () => {},
+					'compile',
+					script.infinityConsole,
+				);
 
-			if (pathSetup !== true) throw pathSetup;
-		});
+				if (pathSetup !== true) throw pathSetup;
+			},
+			'compile',
+			script.infinityConsole,
+		);
 
 		if (result !== true) throw result;
 
