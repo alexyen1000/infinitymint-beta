@@ -153,6 +153,8 @@ Projects.initialize = async (window, frame, blessed) => {
 	let compile = window.createElement('scriptsButton', {
 		width: 'shrink',
 		bottom: 0,
+		mouse: true,
+		keys: true,
 		height: 5,
 		right: 0,
 		padding: 1,
@@ -180,6 +182,8 @@ Projects.initialize = async (window, frame, blessed) => {
 		right: calculateWidth(compile),
 		padding: 1,
 		content: 'Deploy',
+		mouse: true,
+		keys: true,
 		style: {
 			fg: 'white',
 			bg: 'black',
@@ -202,6 +206,8 @@ Projects.initialize = async (window, frame, blessed) => {
 		height: 5,
 		right: calculateWidth(compile, deploy),
 		padding: 1,
+		mouse: true,
+		keys: true,
 		content: 'Export',
 		style: {
 			fg: 'white',
@@ -229,6 +235,8 @@ Projects.initialize = async (window, frame, blessed) => {
 		bottom: 0,
 		height: 5,
 		left: 0,
+		mouse: true,
+		keys: true,
 		padding: 1,
 		content: 'Set As Current Project',
 		style: {

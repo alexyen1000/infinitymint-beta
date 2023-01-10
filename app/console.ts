@@ -462,7 +462,7 @@ export class InfinityConsole {
 				window.toString() !== thatWindow.toString() &&
 				window.name !== thatWindow.toString()
 			) {
-				if (window.isAlive()) window.hide();
+				if (thatWindow === 'CloseBox') window.hide();
 				continue;
 			}
 
@@ -1394,14 +1394,17 @@ export class InfinityConsole {
 			//bit of a hacky solution but keeps these buttons forward
 			if (this.currentWindow) {
 				Object.values(this.currentWindow.elements)
-					.filter(
-						element =>
-							element.think || element.alwaysFront || element.alwaysBack,
-					)
+					.filter(element => !element.hidden)
 					.forEach(element => {
 						if (!this.options.dontDraw && element.alwaysBack) element.setBack();
 						if (!this.options.dontDraw && element.alwaysFront)
 							element.setFront();
+						if (!this.options.dontDraw && element.alwaysFocus) element.focus();
+						if (
+							!this.options.dontDraw &&
+							(element.options.mouse || element.options.keys)
+						)
+							element.enableInput();
 
 						if (
 							element.think &&

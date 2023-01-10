@@ -584,7 +584,8 @@ export const prepareConfig = () => {
 	let session = readSession();
 
 	if (config.hardhat.defaultNetwork === undefined)
-		config.hardhat.defaultNetwork = session.environment.defaultNetwork;
+		config.hardhat.defaultNetwork =
+			session.environment.defaultNetwork || 'hardhat';
 
 	//
 	prepareHardhatConfig(session, config);

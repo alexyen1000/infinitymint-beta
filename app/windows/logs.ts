@@ -3,6 +3,8 @@ import {InfinityMintWindow} from '../window';
 
 let lastLogMessage: string;
 let updateContent = (window: InfinityMintWindow) => {
+	window.data.log.enableInput();
+	window.data.log.focus();
 	if (
 		window.getInfinityConsole()?.getLogs()?.pipes[
 			window.data.log.options.pipe
@@ -83,9 +85,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		tags: true,
 		scrollable: true,
 		vi: true,
-		shouldFocus: true,
 		mouse: true,
-		alwaysScroll: true,
 		scrollbar: {
 			ch: ' ',
 			track: {
@@ -107,10 +107,9 @@ Logs.initialize = async (window, frame, blessed) => {
 
 	let logs = [window.createElement('console0', consoleStyle)];
 	logs.forEach(log => {
-		log.setFront();
-		log.focus();
+		log.enableInput();
+		log.enableDrag();
 	});
-
 	window.data.log = logs[0];
 	//load the options with default values
 	window.loadOptions(null, {
@@ -132,6 +131,8 @@ Logs.initialize = async (window, frame, blessed) => {
 		left: 0,
 		width: 'shrink',
 		height: 'shrink',
+		mouse: true,
+		keys: true,
 		padding: 1,
 		content:
 			'Auto Scroll [' +
@@ -163,11 +164,114 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 	alwaysScroll.setFront();
 
+	let save = window.createElement('save', {
+		top: 3,
+		right: 2,
+		width: 'shrink',
+		height: 'shrink',
+		padding: 0,
+		mouse: true,
+		keys: true,
+		content: 'Save',
+		tags: true,
+		border: {
+			type: 'line',
+		},
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+	});
+
+	//create buttons
+	let changePipe = window.createElement('changePipe', {
+		top: 3,
+		right: calculateWidth(save) + 2,
+		width: 'shrink',
+		height: 'shrink',
+		mouse: true,
+		keys: true,
+		padding: 0,
+		content: 'Edit',
+		tags: true,
+		border: {
+			type: 'line',
+		},
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+	});
+
+	//create buttons
+	let newPipe = window.createElement('newPipe', {
+		top: 3,
+		right: calculateWidth(save, changePipe) + 2,
+		width: 'shrink',
+		mouse: true,
+		keys: true,
+		height: 'shrink',
+		padding: 0,
+		content: 'Split',
+		tags: true,
+		border: {
+			type: 'line',
+		},
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+	});
+
+	let deletePipe = window.createElement('delete', {
+		top: 3,
+		right: calculateWidth(changePipe, save, newPipe) + 2,
+		width: 'shrink',
+		height: 'shrink',
+		padding: 0,
+		mouse: true,
+		keys: true,
+		content: 'Delete',
+		tags: true,
+		border: {
+			type: 'line',
+		},
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+	});
+
 	let form = window.createElement(
 		'form',
 		{
-			label:
-				' {bold}{white-fg}window.getInfinityConsole().getLogs(){/white-fg} (Enter/Double-Click to select){/bold}',
+			label: ` {bold}{white-fg}${
+				window.data.log.options?.pipe || '(loading)'
+			}{/white-fg} (Enter/Double-Click to select){/bold}`,
 			tags: true,
 			top: 'center',
 			left: 'center',
@@ -221,99 +325,6 @@ Logs.initialize = async (window, frame, blessed) => {
 	});
 	form.hide();
 
-	let save = window.createElement('save', {
-		top: 3,
-		right: 2,
-		width: 'shrink',
-		height: 'shrink',
-		padding: 0,
-		content: 'Save',
-		tags: true,
-		border: {
-			type: 'line',
-		},
-		style: {
-			fg: 'white',
-			bg: 'black',
-			border: {
-				fg: '#ffffff',
-			},
-			hover: {
-				bg: 'grey',
-			},
-		},
-	});
-
-	//create buttons
-	let changePipe = window.createElement('changePipe', {
-		top: 3,
-		right: calculateWidth(save) + 2,
-		width: 'shrink',
-		height: 'shrink',
-		padding: 0,
-		content: 'Edit',
-		tags: true,
-		border: {
-			type: 'line',
-		},
-		style: {
-			fg: 'white',
-			bg: 'black',
-			border: {
-				fg: '#ffffff',
-			},
-			hover: {
-				bg: 'grey',
-			},
-		},
-	});
-
-	//create buttons
-	let newPipe = window.createElement('newPipe', {
-		top: 3,
-		right: calculateWidth(save, changePipe) + 2,
-		width: 'shrink',
-		height: 'shrink',
-		padding: 0,
-		content: 'Split',
-		tags: true,
-		border: {
-			type: 'line',
-		},
-		style: {
-			fg: 'white',
-			bg: 'black',
-			border: {
-				fg: '#ffffff',
-			},
-			hover: {
-				bg: 'grey',
-			},
-		},
-	});
-
-	let deletePipe = window.createElement('delete', {
-		top: 3,
-		right: calculateWidth(changePipe, save, newPipe) + 2,
-		width: 'shrink',
-		height: 'shrink',
-		padding: 0,
-		content: 'Delete',
-		tags: true,
-		border: {
-			type: 'line',
-		},
-		style: {
-			fg: 'white',
-			bg: 'black',
-			border: {
-				fg: '#ffffff',
-			},
-			hover: {
-				bg: 'grey',
-			},
-		},
-	});
 	deletePipe.on('click', () => {
 		window
 			.getInfinityConsole()

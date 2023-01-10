@@ -563,12 +563,6 @@ export class InfinityMintWindow {
 				element.shouldUnhide = true;
 				element.hide();
 			}
-
-			try {
-				element.disableMouse();
-			} catch (error) {
-				//element might not have disable mouse method
-			}
 		});
 	}
 
@@ -578,12 +572,6 @@ export class InfinityMintWindow {
 			if (element.shouldUnhide) {
 				element.shouldUnhide = false;
 				element.show();
-			}
-
-			try {
-				element.enableMouse();
-			} catch (error) {
-				//element might not have enable mouse method so
 			}
 		});
 	}
@@ -901,12 +889,14 @@ export class InfinityMintWindow {
 		if (options.alwaysBack) element.alwaysBack = options.alwaysBack;
 		if (options.alwaysUpdate) element.alwaysUpdate = options.alwaysUpdate;
 		if (options.think) element.think = options.think;
-		if (options.shouldFocus) element.shouldFocus = options.shouldFocus;
+		if (options.alwaysFocus) element.alwaysFocus = options.alwaysFront;
 
 		if (options.instantlyCreate || options.instantlyAppend) {
 			this.screen.append(element);
 			this.screen.render();
 		}
+
+		if (options.mouse || options.keys) element.enableInput();
 
 		return element;
 	}

@@ -159,9 +159,8 @@ Scripts.initialize = async (window, frame, blessed) => {
 		bottom: 0,
 		height: 5,
 		left: 0,
-		keys: true,
-		vi: true,
 		mouse: true,
+		keys: true,
 		padding: 1,
 		content: 'Execute Script',
 		style: {
@@ -230,5 +229,10 @@ Scripts.initialize = async (window, frame, blessed) => {
 	form.setItems(names);
 	form.on('select', runSelected);
 	form.focus();
+};
+
+Scripts.postInitialize = async window => {
+	window.elements['findButton']?.enableMouse();
+	window.elements['runButton']?.enableMouse();
 };
 export default Scripts;
