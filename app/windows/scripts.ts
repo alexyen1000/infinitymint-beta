@@ -1,19 +1,19 @@
-import { BlessedElement, calculateWidth, warning } from "../helpers";
-import { InfinityMintScript } from "../interfaces";
-import { InfinityMintWindow } from "../window";
+import {BlessedElement, calculateWidth, warning} from '../helpers';
+import {InfinityMintScript} from '../interfaces';
+import {InfinityMintWindow} from '../window';
 
 const Scripts = new InfinityMintWindow(
-	"Scripts",
+	'Scripts',
 	{
-		fg: "white",
-		bg: "grey",
+		fg: 'white',
+		bg: 'grey',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
-	}
+		type: 'line',
+	},
 );
 
 let lastPreviewScript: InfinityMintScript;
@@ -22,12 +22,10 @@ let updatePreview = (script: InfinityMintScript, preview: BlessedElement) => {
 	let parameters = Object.values(script.arguments || {}).map((arg, index) => {
 		return `\n{black-fg}[{white-fg}${index}{/white-fg}]{/black-fg} => {white-fg}{underline}${
 			arg.name
-		}{/underline}{/white-fg}\ntype: ${arg.type || "string"}\n${
-			arg.value || "{yellow-fg}no default value{/yellow-fg}"
+		}{/underline}{/white-fg}\ntype: ${arg.type || 'string'}\n${
+			arg.value || '{yellow-fg}no default value{/yellow-fg}'
 		}\noptional: ${
-			arg.optional
-				? "{green-fg}true{/green-fg}"
-				: "{red-fg}false{/red-fg}"
+			arg.optional ? '{green-fg}true{/green-fg}' : '{red-fg}false{/red-fg}'
 		}`;
 	});
 	preview.setContent(
@@ -36,127 +34,128 @@ let updatePreview = (script: InfinityMintScript, preview: BlessedElement) => {
 		}{/cyan-fg}{/bold}{/underline}\n{underline}${
 			script.fileName
 		}{/underline}\nsol folder: {magenta-fg}{bold}${
-			script.solidityFolder || "any"
+			script.solidityFolder || 'any'
 		}{/magenta-fg}{/bold}\n\n{cyan-fg}{bold}{underline}Description:{/underline}{/bold}{/cyan-fg}\n{white-fg}${
-			script.description || "No Decription Available..."
+			script.description || 'No Decription Available...'
 		}{/white-fg}\n\n{cyan-fg}{bold}{underline}Authors:{/underline}{/bold}{/cyan-fg}{white-fg}\n${
 			(script.author as any)?.name ||
 			script.author?.[0]?.name ||
-			"The 0x0zAgency Team"
+			'The 0x0zAgency Team'
 		}\n${
 			(script.author as any)?.twitter ||
 			script.author?.[0]?.twitter ||
-			"@0x0zAgency"
+			'@0x0zAgency'
 		}\n${
 			(script.author as any)?.email ||
 			script.author?.[0]?.email ||
-			"llydia@0x0z.me"
+			'llydia@0x0z.me'
 		}{/white-fg}\n\n{cyan-fg}{bold}{underline}Parameters{/bold}{/underline} {black-fg}[{white-fg}${
 			parameters.length
-		}{/white-fg}]{/black-fg}:{/cyan-fg}\n${parameters.join("\n")}`
+		}{/white-fg}]{/black-fg}:{/cyan-fg}\n${parameters.join('\n')}`,
 	);
 };
 
 Scripts.think = (window, frame, blessed) => {
 	let scripts = window.getInfinityConsole().getScripts();
-	let names = [...scripts].map((script) => script.name);
+	let names = [...scripts].map(script => script.name);
 
-	if (!window.getElement("form")) return;
-	if (!window.getElement("preview")) return;
+	if (!window.getElement('form')) return;
+	if (!window.getElement('preview')) return;
 
 	let script = scripts.filter(
-		(script) => script.name === names[window.getElement("form").selected]
+		script => script.name === names[window.getElement('form').selected],
 	)[0];
 
 	if (lastPreviewScript !== script) {
-		let preview = window.getElement("preview");
+		let preview = window.getElement('preview');
 		updatePreview(script, preview);
 		window.data.script = script;
 		preview.focus();
-	} else window.getElement("form").focus();
+	} else window.getElement('form').focus();
 };
 
 Scripts.initialize = async (window, frame, blessed) => {
 	let form = window.createElement(
-		"form",
+		'form',
 		{
-			label: " {bold}{white-fg}Scripts{/white-fg} (Enter/Double-Click to select){/bold}",
+			label:
+				' {bold}{white-fg}Scripts{/white-fg} (Enter/Double-Click to select){/bold}',
 			tags: true,
 			top: 4,
 			left: 0,
-			width: "50%",
-			height: "100%-" + (frame.bottom + frame.top + 8),
+			width: '50%',
+			height: '100%-' + (frame.bottom + frame.top + 8),
 			padding: 2,
 			keys: true,
 			vi: true,
 			mouse: true,
-			border: "line",
+			border: 'line',
 			scrollbar: {
-				ch: " ",
+				ch: ' ',
 				track: {
-					bg: "black",
+					bg: 'black',
 				},
 				style: {
 					inverse: true,
 				},
 			},
 			style: {
-				bg: "black",
-				fg: "white",
+				bg: 'black',
+				fg: 'white',
 				item: {
 					hover: {
-						bg: "green",
-						fg: "black",
+						bg: 'green',
+						fg: 'black',
 					},
 				},
 				selected: {
-					bg: "grey",
-					fg: "green",
+					bg: 'grey',
+					fg: 'green',
 					bold: true,
 				},
 			},
 		},
-		"list"
+		'list',
 	);
-	let preview = window.createElement("preview", {
-		width: "50%+4",
+	let preview = window.createElement('preview', {
+		width: '50%+4',
 		top: 4,
 		right: 0,
-		height: "100%-" + (frame.bottom + frame.top + 8),
+		height: '100%-' + (frame.bottom + frame.top + 8),
 		padding: 1,
 		tags: true,
 		scrollable: true,
 		mouse: true,
 		keyboard: true,
 		scrollbar: {
-			ch: " ",
+			ch: ' ',
 			track: {
-				bg: "black",
+				bg: 'black',
 			},
 			style: {
 				inverse: true,
 			},
 		},
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			bg: "grey",
-			fg: "white",
+			bg: 'grey',
+			fg: 'white',
 			item: {
 				hover: {
-					bg: "white",
+					bg: 'white',
 				},
 			},
 			selected: {
-				bg: "white",
+				bg: 'white',
 				bold: true,
 			},
 		},
 	});
 
-	let runButton = window.createElement("runButton", {
-		width: "shrink",
+	let runButton = window.createElement('runButton', {
+		width: 'shrink',
 		bottom: 0,
 		height: 5,
 		left: 0,
@@ -164,40 +163,40 @@ Scripts.initialize = async (window, frame, blessed) => {
 		vi: true,
 		mouse: true,
 		padding: 1,
-		content: "Execute Script",
+		content: 'Execute Script',
 		style: {
-			fg: "white",
-			bg: "green",
+			fg: 'white',
+			bg: 'green',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
-		border: "line",
+		border: 'line',
 	});
 	let runSelected = () => {
 		window.hide();
 		if (!window.data.script) {
-			warning("no data");
+			warning('no data');
 			return;
 		}
 		let scriptData = window.data.script as InfinityMintScript;
 		let script = window
 			.getInfinityConsole()
-			.getWindow("Script")
-			.clone("Script_" + scriptData.name.replace(/ /g, "_"));
+			.getWindow('Script')
+			.clone('Script_' + scriptData.name.replace(/ /g, '_'));
 		//data of the script
 		script.data.script = scriptData;
 		script.setHiddenFromMenu(false);
 		//show this script window, hiding this window
 		window.getInfinityConsole().setWindow(script);
 	};
-	runButton.on("click", runSelected);
+	runButton.on('click', runSelected);
 
-	let findScripts = window.createElement("findButton", {
-		width: "shrink",
+	let findScripts = window.createElement('findButton', {
+		width: 'shrink',
 		bottom: 0,
 		height: 5,
 		left: calculateWidth(runButton),
@@ -205,33 +204,31 @@ Scripts.initialize = async (window, frame, blessed) => {
 		vi: true,
 		mouse: true,
 		padding: 1,
-		content: "Find Scripts",
+		content: 'Find Scripts',
 		style: {
-			fg: "white",
-			bg: "black",
+			fg: 'white',
+			bg: 'black',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
-		border: "line",
+		border: 'line',
 	});
 
 	let scripts = window.getInfinityConsole().getScripts();
 	let names = [...scripts].map(
-		(script) =>
+		script =>
 			`${
 				script.javascript
-					? "{yellow-fg}js{/yellow-fg}"
-					: "{blue-fg}ts{/blue-fg}"
-			} {bold}${script.name}{/bold} {gray-fg}(${
-				script.fileName
-			}){/gray-fg}`
+					? '{yellow-fg}js{/yellow-fg}'
+					: '{blue-fg}ts{/blue-fg}'
+			} {bold}${script.name}{/bold} {gray-fg}(${script.fileName}){/gray-fg}`,
 	);
 	form.setItems(names);
-	form.on("select", runSelected);
+	form.on('select', runSelected);
 	form.focus();
 };
 export default Scripts;

@@ -850,7 +850,6 @@ export const requireWindow = (fileName: string, keepCache?: boolean) => {
 	debugLog('requiring => ' + fileName);
 	let result = require(fileName);
 	result = result.default || result;
-	result = result.clone(); //clone this window
 	result.setFileName(fileName);
 	result.log('required');
 	return result;
@@ -887,8 +886,7 @@ export const requireScript = async (
 
 	let result = await require(fullPath);
 	result = result.default || result;
-	if (hasReloaded && keepCache && infinityConsole.isTelnet())
-		result = Object.create(result); //clone this object if it has been reloaded, and keeping cache, and we are telnet
+	if (hasReloaded && keepCache && infinityConsole.isTelnet()) result = result; //clone this object if it has been reloaded, and keeping cache, and we are telnet
 
 	result.fileName = fullPath;
 

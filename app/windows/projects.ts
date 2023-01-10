@@ -87,9 +87,6 @@ Projects.initialize = async (window, frame, blessed) => {
 			width: '50%+2',
 			height: '100%-8',
 			padding: 2,
-			keys: true,
-			vi: true,
-			mouse: true,
 			border: 'line',
 			scrollbar: {
 				ch: ' ',
@@ -125,7 +122,6 @@ Projects.initialize = async (window, frame, blessed) => {
 		width: 'shrink',
 		height: 'shrink',
 		tags: true,
-		alwaysFront: true,
 		bold: true,
 		padding: 2,
 		style: {
@@ -154,37 +150,11 @@ Projects.initialize = async (window, frame, blessed) => {
 			}){gray-fg}`,
 	);
 
-	let projectButton = window.createElement('projectButton', {
-		width: 'shrink',
-		bottom: 0,
-		height: 5,
-		left: 0,
-		keys: true,
-		vi: true,
-		mouse: true,
-		padding: 1,
-		content: 'Set As Current Project',
-		style: {
-			fg: 'white',
-			bg: 'green',
-			border: {
-				fg: '#ffffff',
-			},
-			hover: {
-				bg: 'grey',
-			},
-		},
-		border: 'line',
-	});
-
 	let compile = window.createElement('scriptsButton', {
 		width: 'shrink',
 		bottom: 0,
 		height: 5,
 		right: 0,
-		keys: true,
-		vi: true,
-		mouse: true,
 		padding: 1,
 		content: 'Compile',
 		style: {
@@ -208,9 +178,6 @@ Projects.initialize = async (window, frame, blessed) => {
 		bottom: 0,
 		height: 5,
 		right: calculateWidth(compile),
-		keys: true,
-		vi: true,
-		mouse: true,
 		padding: 1,
 		content: 'Deploy',
 		style: {
@@ -234,9 +201,6 @@ Projects.initialize = async (window, frame, blessed) => {
 		bottom: 0,
 		height: 5,
 		right: calculateWidth(compile, deploy),
-		keys: true,
-		vi: true,
-		mouse: true,
 		padding: 1,
 		content: 'Export',
 		style: {
@@ -260,18 +224,39 @@ Projects.initialize = async (window, frame, blessed) => {
 		window.getInfinityConsole().gotoWindow('Scripts');
 	});
 
-	projectButton.on('click', () => {
+	let projectButton = window.createElement('projectButton', {
+		width: 'shrink',
+		bottom: 0,
+		height: 5,
+		left: 0,
+		padding: 1,
+		content: 'Set As Current Project',
+		style: {
+			fg: 'white',
+			bg: 'green',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+		border: 'line',
+	});
+	let onSelected = async () => {
 		let session = readSession();
 		session.environment.project = window.data.currentPath;
 		session.environment.defaultProject = window.data.currentProject;
 		saveSession(session);
 		projectButton.hide();
 		exportButton.show();
-		deploy.show();
-		compile.show();
-		window.updateFrameTitle();
-	});
-
+		exportButton.enableMouse();
+		deploy.enableMouse();
+		compile.enableMouse();
+		await window.updateFrameTitle();
+	};
+	projectButton.on('click', onSelected);
+	projectButton.focus();
 	projectButton.hide();
 
 	list.setItems(projects);
@@ -286,10 +271,16 @@ Projects.initialize = async (window, frame, blessed) => {
 		window.data.currentPath = path;
 		window.data.currentProject = project;
 		saveSession(session);
-		projectButton.show();
-		notice.hide();
 		buildProjectPreview(window, preview, project);
+		projectButton.show();
+		projectButton.enableMouse();
+		projectButton.focus();
+		notice.hide();
 	});
-	list.focus();
+
+	window.key('enter', () => {
+		if (!window.isVisible()) return;
+		if (window.data.currentPath) onSelected();
+	});
 };
 export default Projects;

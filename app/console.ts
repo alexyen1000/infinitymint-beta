@@ -409,7 +409,7 @@ export class InfinityConsole {
 				window.log('reloading');
 				window.destroy();
 
-				let newWindow = requireWindow(fileName, this.isTelnet());
+				let newWindow = requireWindow(fileName);
 				newWindow.setFileName(fileName);
 
 				this.windows[i] = newWindow;
@@ -683,6 +683,8 @@ export class InfinityConsole {
 		if (this.options.dontDraw) return;
 
 		this.windowManager.setBack();
+		this.windowManager.enableKeys();
+		this.windowManager.enableMouse();
 		try {
 			this.windowManager.setItems(
 				[...this.windows]
@@ -1243,9 +1245,9 @@ export class InfinityConsole {
 	 */
 	public async createCurrentWindow() {
 		if (this.currentWindow.hasInitialized()) {
-			warning('window already initialized');
 			return;
 		}
+
 		if (!this.currentWindow.hasContainer())
 			this.currentWindow.setContainer(this);
 
@@ -1300,7 +1302,7 @@ export class InfinityConsole {
 				let fileName = this.windows[i].getFileName();
 				this.windows[i].log('reimporting ' + fileName);
 				this.windows[i].destroy();
-				this.windows[i] = requireWindow(fileName, this.isTelnet());
+				this.windows[i] = requireWindow(fileName);
 				this.windows[i].setFileName(fileName);
 			}
 		}

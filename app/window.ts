@@ -563,6 +563,7 @@ export class InfinityMintWindow {
 				element.shouldUnhide = true;
 				element.hide();
 			}
+
 			try {
 				element.disableMouse();
 			} catch (error) {
@@ -578,6 +579,7 @@ export class InfinityMintWindow {
 				element.shouldUnhide = false;
 				element.show();
 			}
+
 			try {
 				element.enableMouse();
 			} catch (error) {
