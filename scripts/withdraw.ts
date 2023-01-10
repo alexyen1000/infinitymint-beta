@@ -1,4 +1,4 @@
-import {getCurrentProject, getDeployedProject} from '@app/projects';
+import {getDeployedProject, getProject} from '@app/projects';
 import type {
 	InfinityMintDeployedProject,
 	InfinityMintScript,
@@ -17,7 +17,7 @@ const Withdraw: InfinityMintScript = {
 		//get the deployed project
 		if (script.args.project) {
 			let projectName = script.args.project.value;
-			project = getDeployedProject(projectName);
+			project = getDeployedProject(getProject(projectName));
 		} else {
 			project = getDeployedProject(script.project);
 		}

@@ -83,10 +83,11 @@ Script.initialize = async (window, frame, blessed) => {
 
 	//when window.logs occur
 	let cb = (msg: string, pipe: string) => {
-		if (!window.data.processing) return;
-		//keep showing debug
 		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
-		if (pipe === 'default') window.elements['output'].pushLine(msg);
+
+		//keep showing debug
+		if (pipe === 'default' && window.data.processing)
+			window.elements['output'].pushLine(msg);
 	};
 
 	window.getInfinityConsole().getLogs().emitter.on('log', cb);

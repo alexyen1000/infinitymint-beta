@@ -246,6 +246,6 @@ export const createDefaultFactory = () => {
 	defaultFactory = new PipeFactory();
 };
 
-export const setDefaultFactory = (newDefault: any) => {
+export const setDefaultFactory = (newDefault: PipeFactory) => {
 	defaultFactory = newDefault;
 };

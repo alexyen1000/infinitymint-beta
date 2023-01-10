@@ -1,4 +1,4 @@
-import {calculateWidth} from '../helpers';
+import {calculateWidth, logDirect} from '../helpers';
 import {InfinityMintWindow} from '../window';
 
 let lastLogMessage: string;
@@ -203,6 +203,11 @@ Logs.initialize = async (window, frame, blessed) => {
 		window.data.log.options.pipe = keys[selected];
 		window.data.log.setScroll(0);
 		window.data.log.focus();
+		window.data.log.setLabel(
+			'{bold}{white-fg}Pipe: {/white-fg}' +
+				window.data.log.options.pipe +
+				'{/bold}',
+		);
 		updateContent(window);
 		form.hide();
 	});

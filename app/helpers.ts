@@ -435,7 +435,7 @@ export const overwriteConsoleMethods = () => {
 			msg.toString().substring(0, 4) === 'eth_' &&
 			defaultFactory.pipes['ganache']
 		) {
-			defaultFactory.getPipe('ganache').log(msg);
+			defaultFactory.log(msg, 'ganache');
 			return;
 		}
 
@@ -449,7 +449,7 @@ export const overwriteConsoleMethods = () => {
 			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
 			defaultFactory.pipes[defaultFactory.currentPipeKey]
 		)
-			defaultFactory.getPipe(defaultFactory.currentPipeKey).log(msg);
+			defaultFactory.log(msg, defaultFactory.currentPipeKey);
 
 		if (
 			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
@@ -961,6 +961,8 @@ export const loadInfinityMint = (
 	useInternalRequire?: boolean,
 ) => {
 	initializeGanacheMnemonic();
+	//create default pipes
+	createPipes(defaultFactory);
 
 	//try to automatically add module alias
 	try {

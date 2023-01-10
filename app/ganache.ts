@@ -24,7 +24,7 @@ export class GanacheServer {
 			return (await import('hardhat')).getProvider('ganache') as any;
 		}
 
-		return await this.createProvider(options);
+		return await this.createServer(options);
 	}
 
 	/**
@@ -32,39 +32,18 @@ export class GanacheServer {
 	 * @param options
 	 * @returns
 	 */
-	async createProvider(options: any): Promise<EthereumProvider> {
+	async createServer(options: any): Promise<EthereumProvider> {
 		await new Promise((resolve, reject) => {
 			this.server = ganache.server(options as any);
 			this.server.listen(this.port, async (err: any) => {
 				if (err) throw err;
-				//creates a new ethers provider with the logger piping to ganache
-				this.provider = ganache.provider({
-					logging: {
-						debug: true,
-						verbose: true,
-						logger: {
-							log: (msg: any, ...params) => {
-								log(
-									`${msg
-										.toString()
-										.replace(/>/g, '')
-										.replace(/\n/g, '')
-										.replace(/  /g, ' ')
-										.trim()}`,
-									'ganache',
-								);
-								if (params && Object.values(params).length !== 0)
-									log(JSON.stringify(params, null, 2), 'ganache');
-							},
-						},
-						quiet: true,
-					},
-				});
 				log(
 					'{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:' +
 						this.port,
 				);
-				resolve(this.provider);
+
+				//return the hardhat ganache provider
+				resolve((await import('hardhat')).getProvider('ganache'));
 			});
 		});
 		return this.provider;
