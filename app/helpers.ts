@@ -244,11 +244,10 @@ export const debugLog = (msg: string | object | number) => {
  * @param msg
  * @param pipe
  */
-export const warning = (msg: string | object | number) => {
-	log(
-		`{yellow-fg}{underline}⚠️{/underline} ${msg}{/yellow-fg}`,
-		isEnvTrue('PIPE_SEPERATE_WARNINGS') ? 'warning' : 'debug',
-	);
+export const warning = (msg: string | object | number, direct?: true) => {
+	msg = `{yellow-fg}{underline}⚠️{/underline} ${msg}{/yellow-fg}`;
+	if (direct) logDirect(msg);
+	else log(msg, isEnvTrue('PIPE_SEPERATE_WARNINGS') ? 'warning' : 'debug');
 };
 
 export const getElementPadding = (
@@ -329,15 +328,21 @@ export const stage = async (
 	infinityConsole?: InfinityConsole,
 ) => {
 	if (!project.stages) project.stages = {};
-	if (project?.stages[stage]) return true;
+
+	if (infinityConsole) infinityConsole.debugLog('executing stage => ' + stage);
+	else debugLog('executing stage => ' + stage);
+
+	if (project?.stages[stage]) {
+		if (infinityConsole)
+			infinityConsole.debugLog('\t{cyan-fg}Skipped{/cyan-fg}');
+		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
+
+		return true;
+	}
 
 	project.stages[stage] = false;
 
 	try {
-		if (infinityConsole)
-			infinityConsole.debugLog('executing stage => ' + stage);
-		else debugLog('executing stage => ' + stage);
-
 		await call();
 		project.stages[stage] = true;
 		saveTempCompiledProject(project);
@@ -351,7 +356,7 @@ export const stage = async (
 		project.stages[stage] = error;
 		saveTempCompiledProject(project);
 
-		if (infinityConsole) infinityConsole.debugLog('\t{red-fg}Failure{/red-fg');
+		if (infinityConsole) infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
 		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
 		return error;
 	}

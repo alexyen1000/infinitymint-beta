@@ -20,6 +20,7 @@ import {
 	requireWindow,
 	warning,
 } from './helpers';
+import hre from 'hardhat';
 import {
 	getTelnetOptions,
 	hasLoggedIn,
@@ -1044,12 +1045,12 @@ export class InfinityConsole {
 
 	public async refreshWeb3() {
 		try {
-			this.network = (await import('hardhat')).network;
+			this.network = hre.network;
 			this.chainId = (await ethers.provider.getNetwork()).chainId;
 			this.account = await getDefaultSigner();
 			this.balance = await this.account.getBalance();
 		} catch (error) {
-			logDirect('BAD WEB3: ' + error?.message);
+			warning('BAD WEB3: ' + error?.message);
 		}
 	}
 
