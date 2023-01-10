@@ -228,8 +228,7 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.hide();
 
-	//execute after a second
-	setTimeout(() => execute(window), 1000);
+	execute(window);
 };
 
 Script.setBackgroundThink(true);
