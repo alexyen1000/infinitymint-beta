@@ -68,6 +68,10 @@ export interface BlessedElementOptions extends KeyValue {
 	 */
 	alwaysFront?: boolean;
 	/**
+	 * will make sure the element is always focus
+	 */
+	alwayFocus?: boolean;
+	/**
 	 * will make sure the element is always at the back
 	 */
 	alwaysBack?: boolean;
@@ -640,7 +644,7 @@ export const prepareConfig = () => {
 	return config as InfinityMintConfig;
 };
 
-export const findWindows = async (roots?: PathLike[]) => {
+export const findWindows = async (roots?: PathLike[]): Promise<string[]> => {
 	let searchLocations = [...(roots || [])] as string[];
 
 	if (!isInfinityMint())
@@ -839,20 +843,29 @@ export const executeScript = async (
  * @param fileName
  * @returns
  */
-export const requireWindow = (fileName: string, keepCache?: boolean) => {
+export const requireWindow = (
+	fileName: string,
+	infinityConsole?: InfinityConsole,
+	keepCache?: boolean,
+) => {
 	if (!fs.existsSync(fileName))
 		throw new Error('cannot find script: ' + fileName);
 
 	if (!keepCache && require.cache[fileName]) {
-		debugLog('deleting old cache  => ' + fileName);
+		if (infinityConsole)
+			infinityConsole.debugLog('\tdeleting old cache  => ' + fileName);
+		else debugLog('\tdeleting old cache  => ' + fileName);
 		delete require.cache[fileName];
-	} else if (keepCache) debugLog('keeping old cache  => ' + fileName);
+	} else if (keepCache)
+		if (infinityConsole)
+			infinityConsole.debugLog('\tkeeping old cache  => ' + fileName);
+		else debugLog('\tkeeping old cache  => ' + fileName);
 
-	debugLog('requiring => ' + fileName);
+	if (infinityConsole) infinityConsole.debugLog('\trequiring => ' + fileName);
+	else debugLog('\trequiring  => ' + fileName);
 	let result = require(fileName);
 	result = result.default || result;
 	result.setFileName(fileName);
-	result.log('required');
 	return result;
 };
 
@@ -875,19 +888,20 @@ export const requireScript = async (
 
 	if (!keepCache && require.cache[fullPath]) {
 		infinityConsole
-			? infinityConsole.debugLog('deleting old script cache of ' + fullPath)
-			: debugLog('deleting old script cache of ' + fullPath);
+			? infinityConsole.debugLog('\tdeleting old script cache => ' + fullPath)
+			: debugLog('\tdeleting old script cache of ' + fullPath);
 		delete require.cache[fullPath];
 		hasReloaded = true;
 	} else if (keepCache) {
 		infinityConsole
-			? infinityConsole.debugLog('keeping old script cache of ' + fullPath)
-			: debugLog('keeping old script cache of ' + fullPath);
+			? infinityConsole.debugLog('\tkeeping old script cache => ' + fullPath)
+			: debugLog('\tkeeping old script cache => ' + fullPath);
 	}
 
 	let result = await require(fullPath);
 	result = result.default || result;
-	if (hasReloaded && keepCache && infinityConsole.isTelnet()) result = result; //clone this object if it has been reloaded, and keeping cache, and we are telnet
+	if (hasReloaded && keepCache && infinityConsole.isTelnet())
+		result = Object.create(result); //clone this object if it has been reloaded, and keeping cache, and we are telnet
 
 	result.fileName = fullPath;
 
@@ -900,8 +914,10 @@ export const requireScript = async (
 			}
 
 			infinityConsole
-				? infinityConsole.debugLog('new event <EventEmitter>(' + key + ')')
-				: debugLog('new event <EventEmitter>(' + key + ')');
+				? infinityConsole.debugLog(
+						'\tnew event registered<EventEmitter>(' + key + ')',
+				  )
+				: debugLog('\tnew event registered <EventEmitter>(' + key + ')');
 
 			infinityConsole.getEventEmitter().on(key, result.events[key]);
 		});
@@ -910,8 +926,8 @@ export const requireScript = async (
 	try {
 		if (result?.reloaded && hasReloaded) {
 			if (infinityConsole)
-				infinityConsole.debugLog('calling (reloaded) on ' + fullPath);
-			else debugLog('calling (reloaded) on ' + fullPath);
+				infinityConsole.debugLog('\tcalling (reloaded) => ' + fullPath);
+			else debugLog('\tcalling (reloaded) => ' + fullPath);
 			await (result as InfinityMintScript).reloaded({
 				log,
 				debugLog,
@@ -922,8 +938,8 @@ export const requireScript = async (
 
 		if (result?.loaded) {
 			if (infinityConsole)
-				infinityConsole.debugLog('calling (loaded) on ' + fullPath);
-			else debugLog('calling (loaded) on ' + fullPath);
+				infinityConsole.debugLog('\tcalling (loaded) => ' + fullPath);
+			else debugLog('\tcalling (loaded) => ' + fullPath);
 
 			await (result as InfinityMintScript).loaded({
 				log,

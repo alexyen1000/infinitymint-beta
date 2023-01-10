@@ -9,13 +9,11 @@ import {ethers} from 'hardhat';
 import {
 	BlessedElement,
 	createPipes,
-	debugLog,
 	findScripts,
 	findWindows,
 	getConfigFile,
 	getInfinityMintVersion,
 	isEnvTrue,
-	logDirect,
 	requireScript,
 	requireWindow,
 	warning,
@@ -407,9 +405,14 @@ export class InfinityConsole {
 				}
 				let fileName = window.getFileName();
 				window.log('reloading');
+				this.debugLog('{cyan-fg}Reimporting ' + window.name + '{/cyan-fg}');
+				let newWindow = requireWindow(fileName, this);
+				this.debugLog(
+					'{green-fg}Successfully Reimported ' +
+						newWindow.name +
+						`{/green-fg} <${newWindow.getId()}>`,
+				);
 				window.destroy();
-
-				let newWindow = requireWindow(fileName);
 				newWindow.setFileName(fileName);
 
 				this.windows[i] = newWindow;
@@ -895,7 +898,7 @@ export class InfinityConsole {
 			width: '80%',
 			mouse: true,
 			keyboard: true,
-			parent: this.windowManager,
+			parent: this.screen,
 			height: '80%',
 			scrollable: true,
 			scrollbar: {
@@ -1107,7 +1110,8 @@ export class InfinityConsole {
 		this.debugLog('found ' + scripts.length + ' deployment scripts');
 
 		this.scripts = [];
-		this.debugLog('requiring scripts and storing inside console instance...');
+
+		this.debugLog('{yellow-fg}{bold}Refreshing Scripts...{/}');
 		for (let i = 0; i < scripts.length; i++) {
 			let script = scripts[i];
 
@@ -1142,12 +1146,7 @@ export class InfinityConsole {
 							this.isTelnet(),
 						);
 						(process as any).exit = (process as any)._exit;
-					} else
-						this.debugLog(
-							`[${i}] script skipping require <${script.name}> => ${
-								script.dir + '/' + script.base
-							}`,
-						);
+					} else this.debugLog(`\tusing old cache <${script.name}>`);
 
 					this.scripts.push({
 						..._potentialSource,
@@ -1172,15 +1171,15 @@ export class InfinityConsole {
 					});
 				}
 
-				this.debugLog(`{green-fg}Success!{/green-fg}`);
+				this.debugLog(
+					`{green-fg}Script Required Successfully{/green-fg} <${script.name}>`,
+				);
 			} catch (error) {
 				if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
 
 				this.logs.getPipe(this.logs.currentPipeKey).error(error);
 				this.debugLog(
-					`{red-fg}Failure: ${
-						(error?.message || 'literally unknown').split('\n')[0]
-					}{/red-fg}`,
+					`{red-fg}Script Failure: {/red-fg} ${error.message} <${script.name}>`,
 				);
 			}
 		}
@@ -1300,10 +1299,17 @@ export class InfinityConsole {
 				}
 
 				let fileName = this.windows[i].getFileName();
-				this.windows[i].log('reimporting ' + fileName);
+				this.debugLog(
+					'{cyan-fg}Reimporting ' + this.windows[i].name + '{/cyan-fg}',
+				);
 				this.windows[i].destroy();
-				this.windows[i] = requireWindow(fileName);
+				this.windows[i] = requireWindow(fileName, this);
 				this.windows[i].setFileName(fileName);
+				this.debugLog(
+					'{green-fg}Successfully Reimported ' +
+						this.windows[i].name +
+						`{/green-fg} <${this.windows[i].getId()}>`,
+				);
 			}
 		}
 	}
@@ -1314,18 +1320,18 @@ export class InfinityConsole {
 	public async refreshWindows() {
 		let windows = await findWindows();
 
-		this.debugLog('requiring windows and storing inside console instance...');
+		this.debugLog('{yellow-fg}{bold}Refreshing Windows...{/}');
 		for (let i = 0; i < windows.length; i++) {
-			let window = requireWindow(windows[i], this.isTelnet());
-			if (!window.hasContainer(this)) window.setContainer(this);
+			this.debugLog('{cyan-fg}Importing{/cyan-fg} => ' + windows[i]);
+			let window = requireWindow(windows[i], this) as InfinityMintWindow;
+			if (!window.hasContainer()) window.setContainer(this);
 			else warning('window has container already');
-
 			window.setFileName(windows[i]);
-			this.windows.push(Object.create(window) as InfinityMintWindow);
+			this.windows.push(window);
 			this.debugLog(
-				`[${i}]` +
-					' {green-fg}successfully required{/green-fg} => ' +
-					windows[i],
+				`{green-fg}Succesfully Required ${window.name}{/green-fg} <` +
+					window.getId() +
+					'>',
 			);
 		}
 	}

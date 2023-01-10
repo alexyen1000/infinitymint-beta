@@ -108,7 +108,6 @@ Logs.initialize = async (window, frame, blessed) => {
 	let logs = [window.createElement('console0', consoleStyle)];
 	logs.forEach(log => {
 		log.enableInput();
-		log.enableDrag();
 	});
 	window.data.log = logs[0];
 	//load the options with default values
