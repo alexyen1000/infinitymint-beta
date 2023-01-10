@@ -13,11 +13,13 @@ const Withdraw: InfinityMintScript = {
 
 	async execute(script: InfinityMintScriptParameters) {
 		let project: InfinityMintDeployedProject;
+
+		//get the deployed project
 		if (script.args.project) {
 			let projectName = script.args.project.value;
 			project = getDeployedProject(projectName);
 		} else {
-			project = getDeployedProject(getCurrentProject().name);
+			project = getDeployedProject(script.project);
 		}
 
 		let currentSigner = await getDefaultSigner();

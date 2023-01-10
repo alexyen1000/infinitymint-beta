@@ -260,6 +260,8 @@ export interface InfinityMintTempProject
 	 * if this is project has completed the setup stage yet
 	 */
 	setup?: boolean;
+
+	source?: string;
 }
 
 /**

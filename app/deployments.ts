@@ -19,7 +19,7 @@ import {
 	readSession,
 	warning,
 } from './helpers';
-import {requireProject, getCompiledProject} from './projects';
+import {requireProject, getCompiledProject, getProject} from './projects';
 import {glob} from 'glob';
 import fs from 'fs';
 import path from 'path';
@@ -519,19 +519,19 @@ export const loadDeploymentClasses = async (
 
 /**
  * Returns a list of deployment classes relating to a project in order to deploy it ready to be steped through
- * @param project
+ * @param projectOrPath
  * @param loadedDeploymentClasses
  * @returns
  */
 export const getProjectDeploymentClasses = async (
-	project: string,
+	projectOrPath: string | InfinityMintCompiledProject,
 	console?: InfinityConsole,
 	loadedDeploymentClasses?: InfinityMintDeployment[],
 ) => {
 	let compiledProject: InfinityMintCompiledProject;
-	if (typeof project === 'string')
-		compiledProject = getCompiledProject(project);
-	else compiledProject = project;
+	if (typeof projectOrPath === 'string')
+		compiledProject = getCompiledProject(getProject(projectOrPath));
+	else compiledProject = projectOrPath;
 
 	loadedDeploymentClasses =
 		loadedDeploymentClasses ||
