@@ -17,7 +17,7 @@
     "test": "npx hardhat test",
     "build": "rm -R -f ./dist && npx tsc",
     "nix": "export NIXPKGS_ALLOW_UNFREE=1 && nix-shell",
-    "start": "npx ts-node index.ts",
+    "start": "npx tsc && npx ts-node index.ts",
     "doc": "npx typedoc --options ./typedoc.json",
     "postinstall": "npx hardhat compile && npx tsc"
   },

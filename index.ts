@@ -5,7 +5,14 @@ import {createDefaultFactory} from './app/pipes';
 createDefaultFactory();
 
 //import things we need
-import {isEnvTrue, getConfigFile, logDirect, readSession} from './app/helpers';
+import {
+	isEnvTrue,
+	getConfigFile,
+	logDirect,
+	readSession,
+	isInfinityMint,
+	warning,
+} from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
 import {
@@ -48,6 +55,22 @@ export const load = async (
 		...(options || {}),
 		...(typeof config?.console === 'object' ? config.console : {}),
 	} as InfinityMintConsoleOptions;
+
+	try {
+		if (isInfinityMint())
+			(await import(process.cwd() + '/dist/app/pipes')).setDefaultFactory(
+				defaultFactory as any,
+			);
+		else
+			(
+				await import(
+					process.cwd() + '/node_modules/infinitymint/dist/app/pipes'
+				)
+			).setDefaultFactory(defaultFactory as any);
+	} catch (error) {
+		warning('could not change default logger in node_modules: ' + error.stack);
+	}
+
 	//if we arenttelnet
 	if (!config.telnet) {
 		await initializeInfinityMint(

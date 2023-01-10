@@ -245,3 +245,7 @@ export const createDefaultFactory = () => {
 	console.log('🛸 Creating Default Logger');
 	defaultFactory = new PipeFactory();
 };
+
+export const setDefaultFactory = (newDefault: any) => {
+	defaultFactory = newDefault;
+};

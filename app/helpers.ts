@@ -326,7 +326,7 @@ export const stage = async (
 	stage: string,
 	project: InfinityMintTempProject,
 	call: () => Promise<void>,
-	console?: InfinityConsole,
+	infinityConsole?: InfinityConsole,
 ) => {
 	if (!project.stages) project.stages = {};
 	if (project?.stages[stage]) return true;
@@ -334,22 +334,25 @@ export const stage = async (
 	project.stages[stage] = false;
 
 	try {
-		if (console) console.debugLog('executing stage => ' + stage);
+		if (infinityConsole)
+			infinityConsole.debugLog('executing stage => ' + stage);
 		else debugLog('executing stage => ' + stage);
 
 		await call();
 		project.stages[stage] = true;
 		saveTempCompiledProject(project);
 
-		if (console) console.debugLog('\t{green-fg}Success{/green-fg}');
-		else debugLog('executing stage => ' + stage);
+		if (infinityConsole)
+			infinityConsole.debugLog('\t{green-fg}Success{/green-fg}');
+		else debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
 
 		return true;
 	} catch (error) {
 		project.stages[stage] = error;
 		saveTempCompiledProject(project);
 
-		if (console) console.debugLog('\t{red-fg}Failure{/red-fg');
+		if (infinityConsole) infinityConsole.debugLog('\t{red-fg}Failure{/red-fg');
+		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
 		return error;
 	}
 };

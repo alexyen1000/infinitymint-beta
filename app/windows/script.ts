@@ -1,6 +1,7 @@
-import {executeScript} from '../helpers';
+import {executeScript, isInfinityMint, warning} from '../helpers';
 import {InfinityMintWindow} from '../window';
 import {InfinityMintScript} from '../interfaces';
+import {defaultFactory} from '../pipes';
 
 const Script = new InfinityMintWindow(
 	'Script',
@@ -35,6 +36,8 @@ const execute = async window => {
 				(window.data.script as InfinityMintScript).fileName
 			}{/cyan-fg}{/bold}`,
 		);
+		//set the default logger in the dist and node modules
+
 		await executeScript(
 			window.data.script,
 			window.getInfinityConsole().getEventEmitter(),

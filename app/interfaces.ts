@@ -96,6 +96,7 @@ export interface InfinityMintProjectJavascript
 	approved: Dictionary<string>;
 	assetConfig: KeyValue;
 	names: Array<string>;
+	name: string;
 }
 
 /**
