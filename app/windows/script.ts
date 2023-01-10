@@ -157,6 +157,8 @@ Script.initialize = async (window, frame, blessed) => {
 		alwaysFront: true,
 		height: 'shrink',
 		padding: 1,
+		mouse: true,
+		keys: true,
 		content: 'Retry Script',
 		tags: true,
 		border: {
@@ -206,6 +208,8 @@ Script.initialize = async (window, frame, blessed) => {
 		width: 'shrink',
 		alwaysFront: true,
 		height: 'shrink',
+		mouse: true,
+		keys: true,
 		padding: 1,
 		content: 'Close Script',
 		tags: true,

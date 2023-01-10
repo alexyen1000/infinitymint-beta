@@ -469,6 +469,15 @@ Logs.postInitialize = async (window, frame, blessed) => {
 	});
 
 	if (window.data.log.options.alwaysScroll) window.data.log.setScrollPerc(100);
+
+	window.data.log.setScroll(0);
+	window.data.log.focus();
+	window.data.log.setLabel(
+		'{bold}{white-fg}Pipe: {/white-fg}' +
+			window.data.log.options.pipe +
+			'{/bold}',
+	);
+	updateContent(window);
 };
 
 export default Logs;

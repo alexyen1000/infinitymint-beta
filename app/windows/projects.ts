@@ -257,10 +257,12 @@ Projects.initialize = async (window, frame, blessed) => {
 		session.environment.defaultProject = window.data.currentProject;
 		saveSession(session);
 		projectButton.hide();
-		exportButton.show();
 		exportButton.enableMouse();
 		deploy.enableMouse();
 		compile.enableMouse();
+		exportButton.show();
+		deploy.show();
+		compile.show();
 		await window.updateFrameTitle();
 	};
 	projectButton.on('click', onSelected);
