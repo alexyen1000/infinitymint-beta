@@ -1,4 +1,8 @@
 import InfinityConsole from './app/console';
+import {createDefaultFactory} from './app/pipes';
+
+//create default pipe
+createDefaultFactory();
 
 //import things we need
 import {isEnvTrue, getConfigFile, logDirect, readSession} from './app/helpers';

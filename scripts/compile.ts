@@ -1,14 +1,7 @@
-import {
-	getProject,
-	getScriptProject,
-	getTempCompiledProject,
-	hasTempCompiledProject,
-	saveTempCompiledProject,
-} from '@app/projects';
+import {getScriptProject} from '@app/projects';
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
-	InfinityMintTempProject,
 } from '@app/interfaces';
 import {stage} from '@app/helpers';
 
@@ -21,9 +14,19 @@ const compile: InfinityMintScript = {
 		if (project.stages === undefined) project.stages = {};
 
 		script.log('{cyan-fg}{bold}Compiling Project{/}');
-		let result = await stage('compile', project, async () => {
-			await stage('pathSetup', project, async () => {});
-		});
+		let result = await stage(
+			'compile',
+			project,
+			async () => {
+				await stage(
+					'pathSetup',
+					project,
+					async () => {},
+					script.infinityConsole,
+				);
+			},
+			script.infinityConsole,
+		);
 
 		if (result !== true) throw result;
 	},

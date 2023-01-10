@@ -432,7 +432,9 @@ export class InfinityConsole {
 		//when the window is destroyed, rebuild the items list
 
 		this.debugLog(
-			'registering events for <' + window.name + `>[${window.getId()}]`,
+			'registering events window specific for <' +
+				window.name +
+				`>[${window.getId()}]`,
 		);
 		//so we only fire once
 		if (window.data.destroy) window.off('destroy', window.data.destroy);

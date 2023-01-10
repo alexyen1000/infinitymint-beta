@@ -12,9 +12,6 @@ import '@nomiclabs/hardhat-ethers';
 import 'hardhat-change-network'; //allows hre.changeNetwork to occur
 //then aliases
 import 'module-alias/register';
-import {createDefaultFactory} from './app/pipes';
-//create default pipe
-createDefaultFactory();
 import {debugLog, prepareConfig, loadInfinityMint} from './app/helpers';
 
 //require dotenv

@@ -199,6 +199,12 @@ export interface Rectangle {
 export const log = (msg: string | object | number, pipe?: string) => {
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
 
+	if (!defaultFactory?.log) {
+		if ((console as any)?._log) (console as any)?._log(msg);
+		else if (isEnvTrue('PIPE_IGNORE_CONSOLE')) console.log(msg);
+		return;
+	}
+
 	//if we aren't overwriting console methods and console is false
 	if (
 		!isAllowPiping ||
@@ -220,6 +226,13 @@ export const log = (msg: string | object | number, pipe?: string) => {
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
+	if (!defaultFactory?.pipes && (console as any)?._log) {
+		(console as any)?._log(msg + ' <debug>');
+		return;
+	} else if (!defaultFactory?.pipes) {
+		console.log(msg);
+		return;
+	}
 	//throw away debug msgs if no pipe for it
 	if (!defaultFactory.pipes['debug']) return;
 
@@ -316,7 +329,7 @@ export const stage = async (
 	console?: InfinityConsole,
 ) => {
 	if (!project.stages) project.stages = {};
-	if (!project?.stages[stage]) return true;
+	if (project?.stages[stage]) return true;
 
 	project.stages[stage] = false;
 
@@ -328,8 +341,8 @@ export const stage = async (
 		project.stages[stage] = true;
 		saveTempCompiledProject(project);
 
-		if (console) console.debugLog('\t{green-fg}Success{/green-fg');
-		else debugLog('\t{green-fg}Success{/green-fg');
+		if (console) console.debugLog('\t{green-fg}Success{/green-fg}');
+		else debugLog('executing stage => ' + stage);
 
 		return true;
 	} catch (error) {
@@ -337,7 +350,6 @@ export const stage = async (
 		saveTempCompiledProject(project);
 
 		if (console) console.debugLog('\t{red-fg}Failure{/red-fg');
-		else debugLog('\t{red-fg}Failure{/red-fg');
 		return error;
 	}
 };
@@ -1002,10 +1014,8 @@ export const preInitialize = (isJavascript?: boolean) => {
 			fs.copyFileSync(path, process.cwd() + '/.env');
 		}
 
-		debugLog('made .env from ' + path);
+		console.log('made .env from ' + path);
 	}
-
-	createPipes(defaultFactory);
 };
 
 export const createPipes = (factory: PipeFactory) => {
