@@ -26,16 +26,19 @@ const Script = new InfinityMintWindow(
 	},
 );
 
-const execute = async window => {
-	window.elements['retry'].hide();
+const execute = async (window: InfinityMintWindow) => {
 	//run in the background
 	window.data.processing = true;
+	window.elements['retry'].hide();
+
 	try {
-		window.log(
-			`{bold}{cyan-fg}executing ${
-				(window.data.script as InfinityMintScript).fileName
-			}{/cyan-fg}{/bold}`,
-		);
+		window
+			.getInfinityConsole()
+			.log(
+				`{bold}{blue-fg}{underline}executing ${
+					(window.data.script as InfinityMintScript).fileName
+				}{/}`,
+			);
 		//set the default logger in the dist and node modules
 
 		await executeScript(
@@ -45,9 +48,9 @@ const execute = async window => {
 			window.data.args || {},
 			window.getInfinityConsole(),
 		);
-		window.log(
-			'{bold}{green-fg}script executed successfully{/green-fg}{/bold}',
-		);
+		window
+			.getInfinityConsole()
+			.log('{bold}{green-fg}{underline}script executed successfully{/}');
 		window.setHideCloseButton(false);
 		window.elements['output'].setScrollPerc(100);
 		window.elements['outputDebug'].setScrollPerc(100);
@@ -60,7 +63,9 @@ const execute = async window => {
 			window.data.processing = false;
 		}, 1000);
 
-		window.log('{red-fg}{bold}script failed exectuion{/bold}{/red-fg}');
+		window
+			.getInfinityConsole()
+			.log('{red-fg}{bold}{underline}script failed exectuion{/}');
 		if (!window.getInfinityConsole().isTelnet()) console.error(error);
 		window.elements['retry'].show();
 		window.setHideCloseButton(false);
@@ -75,6 +80,20 @@ const execute = async window => {
 Script.initialize = async (window, frame, blessed) => {
 	if (!window.data.script)
 		throw new Error('must be instantated with script in data field');
+
+	//when window.logs occur
+	let cb = (msg: string, pipe: string) => {
+		if (!window.data.processing) return;
+		//keep showing debug
+		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
+		if (pipe === 'default') window.elements['output'].pushLine(msg);
+	};
+
+	window.getInfinityConsole().getLogs().emitter.on('log', cb);
+	//when this window is destroyed, destroy the output emitter
+	window.on('destroy', () => {
+		window.getInfinityConsole().getLogs().emitter.off('log', cb);
+	});
 
 	window.think = async (window, element) => {
 		if (window.data.processing === true) {
@@ -209,21 +228,8 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.hide();
 
-	//when window.logs occur
-	let cb = (msg: string, pipe: string) => {
-		if (!window.data.processing) return;
-		//keep showing debug
-		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
-		if (pipe === 'default') window.elements['output'].pushLine(msg);
-	};
-
-	window.getInfinityConsole().getLogs().emitter.on('log', cb);
-	//when this window is destroyed, destroy the output emitter
-	window.on('destroy', () => {
-		window.getInfinityConsole().getLogs().emitter.off('log', cb);
-	});
-
-	(() => execute(window))();
+	//execute after a second
+	setTimeout(() => execute(window), 1000);
 };
 
 Script.setBackgroundThink(true);

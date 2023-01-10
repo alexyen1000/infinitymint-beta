@@ -597,10 +597,9 @@ export class InfinityMintWindow {
 		if (!this.hasInfinityConsole())
 			log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 		else
-			this.getInfinityConsole().log(
-				string + ` => <${window.name}>[${window.getId()}]`,
-				'windows',
-			);
+			this.getInfinityConsole()
+				.getLogs()
+				.log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 	}
 
 	/**

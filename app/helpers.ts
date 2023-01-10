@@ -792,11 +792,22 @@ export const executeScript = async (
 	infinityConsole?: InfinityConsole,
 ) => {
 	let _exit = (process as any).exit;
+	let _log = console.log;
+	let _error = console.error;
 	(process as any).exit = code => {
 		if (infinityConsole) infinityConsole.log('halted exit code: ' + code);
 		else warning('halted exit code: ' + 0);
 	};
 	try {
+		if (infinityConsole)
+			console.log = (msg: string) => {
+				infinityConsole.getLogs().log(msg, 'default');
+			};
+		if (infinityConsole)
+			console.error = (error: any) => {
+				infinityConsole.errorHandler(error);
+			};
+
 		await script.execute({
 			script: script,
 			eventEmitter: eventEmitter,
@@ -812,8 +823,12 @@ export const executeScript = async (
 			project: getCurrentProject(true),
 		});
 		(process as any).exit = _exit;
+		console.log = _log;
+		console.error = _error;
 	} catch (error) {
 		(process as any).exit = _exit;
+		console.log = _log;
+		console.error = _error;
 		throw error;
 	}
 };
