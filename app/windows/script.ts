@@ -49,24 +49,23 @@ const execute = async window => {
 		window.elements['output'].setScrollPerc(100);
 		window.elements['outputDebug'].setScrollPerc(100);
 		window.elements['close'].show();
-		//stop window.logs after 1 second
 		setTimeout(() => {
 			window.data.processing = false;
 		}, 1000);
 	} catch (error) {
-		window.log('{red-fg}{bold}script failed exectuion{/bold}{/red-fg}');
-		window.elements['retry'].show();
-
-		//log normally to default console if we aren't telnet
-		if (!window.getInfinityConsole().isTelnet()) console.error(error);
-
-		window.getInfinityConsole().errorHandler(error);
-		window.setHideCloseButton(false);
-		window.elements['output'].setScrollPerc(100);
-		window.elements['outputDebug'].setScrollPerc(100);
 		setTimeout(() => {
 			window.data.processing = false;
 		}, 1000);
+
+		window.log('{red-fg}{bold}script failed exectuion{/bold}{/red-fg}');
+		if (!window.getInfinityConsole().isTelnet()) console.error(error);
+		window.elements['retry'].show();
+		window.setHideCloseButton(false);
+		window.elements['output'].setScrollPerc(100);
+		window.elements['outputDebug'].setScrollPerc(100);
+
+		window.getInfinityConsole().errorHandler(error);
+		//log normally to default console if we aren't telnet
 	}
 };
 
@@ -74,12 +73,13 @@ Script.initialize = async (window, frame, blessed) => {
 	if (!window.data.script)
 		throw new Error('must be instantated with script in data field');
 
-	let think = (window, element) => {
-		if (window.data.processing) {
+	window.think = async (window, element) => {
+		if (window.data.processing === true) {
 			output.setScrollPerc(100);
 			outputDebug.setScrollPerc(100);
 		}
 	};
+
 	let output = window.createElement('output', {
 		height: '100%-8',
 		width: '50%',
@@ -91,9 +91,7 @@ Script.initialize = async (window, frame, blessed) => {
 		scrollable: true,
 		vi: true,
 		instantlyAppend: true,
-		shouldFocus: true,
 		mouse: true,
-		alwaysScroll: true,
 		scrollbar: window.getScrollbar(),
 		border: 'line',
 		style: {
@@ -104,7 +102,6 @@ Script.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	output.think = think;
 	let outputDebug = window.createElement('outputDebug', {
 		height: '100%-8',
 		width: '50%+2',
@@ -117,9 +114,7 @@ Script.initialize = async (window, frame, blessed) => {
 		scrollable: true,
 		vi: true,
 		instantlyAppend: true,
-		shouldFocus: true,
 		mouse: true,
-		alwaysScroll: true,
 		scrollbar: window.getScrollbar(),
 		border: 'line',
 		style: {
@@ -130,7 +125,6 @@ Script.initialize = async (window, frame, blessed) => {
 			},
 		},
 	});
-	outputDebug.think = think;
 
 	let retry = window.createElement('retry', {
 		bottom: 0,
@@ -159,16 +153,26 @@ Script.initialize = async (window, frame, blessed) => {
 	retry.on('click', async () => {
 		await window.getInfinityConsole().refreshScripts();
 		//set the new script
+		outputDebug.setContent('');
+		outputDebug.setScrollPerc(0);
 		window.debugLog('{cyan-fg}retrying script{/cyan-fg}');
-		window.data.script =
-			window
-				.getInfinityConsole()
-				.getScripts()
-				.filter(script => script.fileName === window.data.script.fileName)[0] ||
-			window.data.script;
 
-		output.setContent('');
-		await execute(window);
+		//just for a bit of visual clarity
+		setTimeout(() => {
+			window.data.script =
+				window
+					.getInfinityConsole()
+					.getScripts()
+					.filter(
+						script => script.fileName === window.data.script.fileName,
+					)[0] || window.data.script;
+
+			output.setContent('');
+			output.setScrollPerc(0);
+			setTimeout(() => {
+				execute(window);
+			}, 500);
+		}, 500);
 	});
 	retry.hide();
 
@@ -204,6 +208,7 @@ Script.initialize = async (window, frame, blessed) => {
 
 	//when window.logs occur
 	let cb = (msg: string, pipe: string) => {
+		if (!window.data.processing) return;
 		//keep showing debug
 		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
 		if (pipe === 'default') window.elements['output'].pushLine(msg);
