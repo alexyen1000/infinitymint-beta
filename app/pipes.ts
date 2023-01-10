@@ -245,5 +245,3 @@ export const createDefaultFactory = () => {
 	console.log('🛸 Creating Default Logger');
 	defaultFactory = new PipeFactory();
 };
-//create default pipe
-createDefaultFactory();

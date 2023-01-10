@@ -12,6 +12,7 @@ import {
 	InfinityMintEventEmitter,
 	InfinityMintScriptArguments,
 	InfinityMintGemScript,
+	InfinityMintTempProject,
 } from './interfaces';
 import {generateMnemonic} from 'bip39';
 import {HardhatUserConfig} from 'hardhat/types';
@@ -22,7 +23,7 @@ import {
 } from './gasAndPrices';
 import {glob} from 'glob';
 import {InfinityConsole} from './console';
-import {getCurrentProject} from './projects';
+import {getCurrentProject, saveTempCompiledProject} from './projects';
 
 export interface Vector {
 	x: number;
@@ -301,6 +302,82 @@ export const logDirect = (msg: any) => {
 	console.log(msg);
 };
 
+/**
+ * used in InfinityMint scripts to segregate the execution of the script into stages that can be continued from if failed
+ * @param stage
+ * @param project
+ * @param call
+ * @returns
+ */
+export const stage = async (
+	stage: string,
+	project: InfinityMintTempProject,
+	call: () => Promise<void>,
+	console?: InfinityConsole,
+) => {
+	if (!project.stages) project.stages = {};
+	if (!project?.stages[stage]) return true;
+
+	project.stages[stage] = false;
+
+	try {
+		if (console) console.debugLog('executing stage => ' + stage);
+		else debugLog('executing stage => ' + stage);
+
+		await call();
+		project.stages[stage] = true;
+		saveTempCompiledProject(project);
+
+		if (console) console.debugLog('\t{green-fg}Success{/green-fg');
+		else debugLog('\t{green-fg}Success{/green-fg');
+
+		return true;
+	} catch (error) {
+		project.stages[stage] = error;
+		saveTempCompiledProject(project);
+
+		if (console) console.debugLog('\t{red-fg}Failure{/red-fg');
+		else debugLog('\t{red-fg}Failure{/red-fg');
+		return error;
+	}
+};
+
+const parseCache = {};
+export const parse = (
+	path: PathLike,
+	useCache?: boolean,
+	encoding?: string,
+) => {
+	if (parseCache[path.toString()] && useCache)
+		return parseCache[path.toString()];
+
+	let result = fs.readFileSync(
+		process.cwd() + (path[0] !== '/' ? '/' + path : path),
+		{
+			encoding: (encoding || 'utf-8') as any,
+		},
+	);
+
+	let parsedResult: string;
+	if (typeof result === typeof Buffer)
+		parsedResult = new TextDecoder().decode(result);
+	else parsedResult = (result as any).toString();
+
+	return JSON.parse(parsedResult);
+};
+
+/**
+ *
+ * @param path
+ * @param object
+ */
+export const write = (path: PathLike, object: any) => {
+	log('writing ' + path, 'fs');
+	fs.writeFileSync(
+		process.cwd() + (path[0] !== '/' ? '/' + path : path),
+		typeof object === 'object' ? JSON.stringify(object) : object,
+	);
+};
 /**
  * Overwrites default behaviour of console.log and console.error
  */
@@ -680,7 +757,9 @@ export const executeScript = async (
 		eventEmitter: eventEmitter,
 		gems: gems,
 		args: args,
-		log: console.getLogs().log,
+		log: (msg: string) => {
+			console.getLogs().log(msg, 'default');
+		},
 		debugLog: (msg: string) => {
 			console.getLogs().log(msg, 'debug');
 		},
@@ -1082,8 +1161,17 @@ export const error = (error: string | Error) => {
 	defaultFactory.error(error);
 };
 
+/**
+ * Since InfinityMintEnvironmentKeys is need as a type for both isEnvSet and isEnvTrue you can use this one to look any env up
+ * @param
+ * @returns
+ */
 export const envExists = (key: string) => {
-	return process.env[key] && process.env[key]?.trim().length !== 0;
+	return isEnvSet(key as any);
+};
+
+export const envTrue = (key: string) => {
+	return isEnvTrue(key as any);
 };
 
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {

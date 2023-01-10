@@ -218,7 +218,10 @@ export const getImportCache = async (
 		if (root.length > 2) root.slice(1).join('imports');
 		else root = root[1];
 
-		log(`[${i}] found file => ${normalImport.dir}`, 'imports');
+		log(
+			`[${i}] found file => ${normalImport.dir + '/' + normalImport.base}`,
+			'imports',
+		);
 		log(`\t -> perfoming checksum`, 'imports');
 
 		let checksum = createHash('md5')

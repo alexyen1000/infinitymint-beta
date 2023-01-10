@@ -1,138 +1,137 @@
-import { InfinityMintWindow } from "../window";
-import { BlessedElement } from "../helpers";
+import {InfinityMintWindow} from '../window';
+import {BlessedElement, readSession, saveSession} from '../helpers';
 import {
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
-} from "../interfaces";
-import { requireProject } from "../projects";
+} from '../interfaces';
+import {requireProject} from '../projects';
 
 const Projects = new InfinityMintWindow(
-	"Projects",
+	'Projects',
 	{
-		fg: "white",
-		bg: "grey",
+		fg: 'white',
+		bg: 'grey',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
-	}
+		type: 'line',
+	},
 );
 
 let buildProjectPreview = (
 	window: InfinityMintWindow,
 	preview: BlessedElement,
-	project: InfinityMintProject
+	project: InfinityMintProject,
 ) => {
 	preview.content = `{bold}{underline}{cyan-fg}${
-		project.name ||
-		(project as InfinityMintProjectJavascript).description?.name
+		project.name || (project as InfinityMintProjectJavascript).description?.name
 	}{/underline}{/cyan-fg}{/bold}`;
 };
 
 Projects.initialize = async (window, frame, blessed) => {
 	let list = window.createElement(
-		"form",
+		'form',
 		{
-			label: "{bold}(Enter/Double-Click to select){/bold}",
+			label: '{bold}(Enter/Double-Click to select){/bold}',
 			tags: true,
 			top: 4,
 			left: 0,
-			width: "50%",
-			height: "100%-8",
+			width: '50%',
+			height: '100%-8',
 			padding: 2,
 			keys: true,
 			vi: true,
 			mouse: true,
-			border: "line",
+			border: 'line',
 			scrollbar: {
-				ch: " ",
+				ch: ' ',
 				track: {
-					bg: "black",
+					bg: 'black',
 				},
 				style: {
 					inverse: true,
 				},
 			},
 			style: {
-				bg: "black",
-				fg: "white",
+				bg: 'black',
+				fg: 'white',
 				item: {
 					hover: {
-						bg: "green",
-						fg: "black",
+						bg: 'green',
+						fg: 'black',
 					},
 				},
 				selected: {
-					bg: "grey",
-					fg: "green",
+					bg: 'grey',
+					fg: 'green',
 					bold: true,
 				},
 			},
 		},
-		"list"
+		'list',
 	);
 
 	let preview = window.createElement(
-		"preview",
+		'preview',
 		{
 			tags: true,
 			top: 4,
 			right: 0,
-			width: "50%+2",
-			height: "100%-8",
+			width: '50%+2',
+			height: '100%-8',
 			padding: 2,
 			keys: true,
 			vi: true,
 			mouse: true,
-			border: "line",
+			border: 'line',
 			scrollbar: {
-				ch: " ",
+				ch: ' ',
 				track: {
-					bg: "black",
+					bg: 'black',
 				},
 				style: {
 					inverse: true,
 				},
 			},
 			style: {
-				bg: "black",
-				fg: "white",
+				bg: 'black',
+				fg: 'white',
 				item: {
 					hover: {
-						bg: "green",
-						fg: "black",
+						bg: 'green',
+						fg: 'black',
 					},
 				},
 				selected: {
-					bg: "grey",
-					fg: "green",
+					bg: 'grey',
+					fg: 'green',
 					bold: true,
 				},
 			},
 		},
-		"layout"
+		'layout',
 	);
 
-	let notice = window.createElement("noPreviewSelected", {
-		top: "center",
-		left: "75%-19",
-		width: "shrink",
-		height: "shrink",
+	let notice = window.createElement('noPreviewSelected', {
+		top: 'center',
+		left: '75%-19',
+		width: 'shrink',
+		height: 'shrink',
 		tags: true,
 		alwaysFront: true,
 		bold: true,
 		padding: 2,
 		style: {
-			fg: "black",
-			bg: "red",
+			fg: 'black',
+			bg: 'red',
 			border: {
-				fg: "red",
+				fg: 'red',
 			},
 		},
 		border: window.getBorder(),
-		content: "{bold}Welcome!{/bold}\nPlease Select A Project To Preview",
+		content: '{bold}Welcome!{/bold}\nPlease Select A Project To Preview',
 		mouse: true,
 	});
 
@@ -140,25 +139,29 @@ Projects.initialize = async (window, frame, blessed) => {
 
 	let scripts = Object.values(window.getInfinityConsole().getProjects());
 	let projects = scripts.map(
-		(project) =>
+		project =>
 			`${
-				project.ext === ".js"
-					? "{yellow-fg}js{/yellow-fg}"
-					: "{blue-fg}ts{/blue-fg}"
+				project.ext === '.js'
+					? '{yellow-fg}js{/yellow-fg}'
+					: '{blue-fg}ts{/blue-fg}'
 			} {underline}${project.name}{/underline} {gray-fg}(${
-				project.dir + "/" + project.base
-			}){gray-fg}`
+				project.dir + '/' + project.base
+			}){gray-fg}`,
 	);
 
 	list.setItems(projects);
-	list.on("select", (el: any, selected: any) => {
+	list.on('select', (el: any, selected: any) => {
 		let path = scripts[selected];
+		let session = readSession();
 		let project = requireProject(
-			path.dir + "/" + path.base,
-			path.ext === ".js"
+			path.dir + '/' + path.base,
+			path.ext === '.js',
 		);
 
 		window.data.currentProject = project;
+		session.environment.project = path;
+		session.environment.defaultProject = project;
+		saveSession(session);
 		notice.hide();
 		buildProjectPreview(window, preview, project);
 	});

@@ -173,7 +173,7 @@ export class InfinityMintWindow {
 	}
 	/**
 	 * Will hide the close button if true, can be called when ever but be aware screen must be re-rendered in some circumstances.
-	 * @param hideCloseButton
+	 * @param hideCxloseButton
 	 */
 	public setHideCloseButton(hideCloseButton: boolean) {
 		this.hideCloseButton = hideCloseButton;
@@ -292,7 +292,12 @@ export class InfinityMintWindow {
 	 * @param msg
 	 */
 	public debugLog(msg: string) {
-		if (!this.hasInfinityConsole()) debugLog(msg);
+		if (
+			!this.hasInfinityConsole() &&
+			this.hasInfinityConsole() &&
+			this.getInfinityConsole().isTelnet()
+		)
+			debugLog(msg);
 
 		this.getInfinityConsole().debugLog(msg);
 	}
@@ -451,6 +456,7 @@ export class InfinityMintWindow {
 
 	public setBorder(border: any) {
 		this.options.border = border;
+		this.data.border = border;
 	}
 
 	public getBorder() {
@@ -461,6 +467,8 @@ export class InfinityMintWindow {
 
 	public setWidth(num: number | string) {
 		this.elements['frame'].width = num;
+		if (this.options.style) this.options.style.width = num;
+		if (this.data.style) this.data.style.width = num;
 	}
 
 	public setPadding(num: number | string) {
@@ -484,23 +492,19 @@ export class InfinityMintWindow {
 	}
 
 	public setHeight(num: number | string) {
-		this.elements['frame'].num = num;
+		this.elements['frame'].height = num;
+		if (this.options.style) this.options.style.height = num;
+		if (this.data.style) this.data.style.height = num;
 	}
 
 	public getRectangle(): Rectangle {
 		return {
-			startX: this.getX(),
-			endX:
-				typeof this.getWidth() === 'number'
-					? parseInt(this.getX().toString()) + (this.getWidth() as number)
-					: this.getWidth(),
-			startY: this.getY(),
-			endY:
-				typeof this.getHeight() === 'number'
-					? parseInt(this.getY().toString()) + (this.getHeight() as number)
-					: this.getHeight(),
-			width: this.getWidth(),
-			height: this.getHeight(),
+			startX: this.getCalculatedX(),
+			endX: this.getCalculatedX() + this.getCalculatedWidth(),
+			startY: this.getCalculatedY(),
+			endY: this.getCalculatedY() + this.getCalculatedHeight(),
+			width: this.getCalculatedWidth(),
+			height: this.getCalculatedHeight(),
 			z: 1,
 		};
 	}
@@ -514,30 +518,39 @@ export class InfinityMintWindow {
 	public setStyle(style: any) {
 		this.elements['frame'].style = style;
 		this.options.style = style;
+		this.data.style = style;
 	}
 
 	public getWidth() {
-		return !this.elements['frame']
-			? this.options?.style?.width || this.data?.style?.width || '100%'
-			: this.elements['frame'].width;
+		return this.options?.style?.width || this.data?.style?.width || '100%';
 	}
 
-	public getX() {
-		return !this.elements['frame']
-			? this.options?.style?.left || 0
-			: this.elements['frame'].x;
+	public getCalculatedWidth() {
+		return this.elements['frame'].cols || 0;
 	}
 
-	public getY() {
-		return !this.elements['frame']
-			? this.options?.style?.top || 0
-			: this.elements['frame'].y;
+	public getCalculatedHeight() {
+		return this.elements['frame'].rows || 0;
 	}
 
 	public getHeight() {
-		return !this.elements['frame']
-			? this.options?.style?.height || this.data?.style?.height || '100%'
-			: this.elements['frame'].height;
+		return this.options?.style?.height || this.data?.style?.height || '100%';
+	}
+
+	public getCalculatedX() {
+		return this.elements['frame'].left || 0;
+	}
+
+	public getCalculatedY() {
+		return this.elements['frame'].top || 0;
+	}
+
+	public getX() {
+		return this.options?.style?.left || this.options?.data?.left || 0;
+	}
+
+	public getY() {
+		return this.options?.style?.top || this.options?.data?.top || 0;
 	}
 
 	public hide() {
@@ -571,8 +584,8 @@ export class InfinityMintWindow {
 	}
 
 	public setSize(width: number | string, height: number | string) {
-		this.elements['frame'].width = width;
-		this.elements['frame'].height = height;
+		this.setWidth(width);
+		this.setHeight(height);
 	}
 
 	public log(string?: string | string[], window?: any, returnString?: boolean) {
@@ -604,7 +617,6 @@ export class InfinityMintWindow {
 	) {
 		window = window || this;
 		if (typeof string === typeof Array) string = (string as string[]).join(' ');
-
 		if (returnString) return string + ` => <${window.name}>[${window.getId()}]`;
 
 		warning(string + ` => <${window.name}>[${window.getId()}]`);

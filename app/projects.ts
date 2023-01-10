@@ -1,4 +1,4 @@
-import {readSession, log, getConfigFile, findFiles} from './helpers';
+import {readSession, log, getConfigFile, findFiles, write} from './helpers';
 import {
 	InfinityMintProject,
 	InfinityMintDeployedProject,
@@ -6,6 +6,7 @@ import {
 	InfinityMintTempProject,
 	InfinityMintProjectJavascript,
 	KeyValue,
+	InfinityMintScriptParameters,
 } from './interfaces';
 import path from 'path';
 import {Dictionary} from 'form-data';
@@ -16,6 +17,9 @@ import fs, {PathLike} from 'fs';
  * @returns
  */
 export const getCurrentProject = (cleanCache?: boolean) => {
+	if (getCurrentProjectPath() === undefined)
+		throw new Error('no current project');
+
 	return requireProject(
 		getCurrentProjectPath().dir + '/' + getCurrentProjectPath().base,
 		getCurrentProjectPath().ext === '.js',
@@ -45,11 +49,10 @@ export const getCurrentDeployedProject = () => {
  * @param projectName
  * @throws
  */
-export const getCompiledProject = (projectName: string) => {
-	let res = require(process.cwd() +
-		'/projects/compiled/' +
-		projectName +
-		'.compiled.json');
+export const getCompiledProject = (projectName: string, version?: string) => {
+	version = version || '1.0.0';
+	let filename = `/projects/compiled/${projectName}@${version}.json`;
+	let res = require(process.cwd() + filename);
 	res = res.default || res;
 	//
 	if (!res.compiled)
@@ -58,32 +61,32 @@ export const getCompiledProject = (projectName: string) => {
 	return res as InfinityMintCompiledProject;
 };
 
-export const hasTempDeployedProject = (projectName: string) => {
-	return fs.existsSync(
-		process.cwd() + '/temp/projects/' + projectName + '.temp.json',
-	);
+export const hasTempDeployedProject = (
+	projectName: string,
+	version?: string,
+) => {
+	version = version || '1.0.0';
+	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
+	return fs.existsSync(process.cwd() + filename);
 };
 
-export const hasTempCompiledProject = (projectName: string) => {
-	return fs.existsSync(
-		process.cwd() + '/temp/projects/' + projectName + '.compiled.temp.json',
-	);
+export const hasTempCompiledProject = (
+	projectName: string,
+	version?: string,
+) => {
+	version = version || '1.0.0';
+	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
+	return fs.existsSync(process.cwd() + filename);
 };
 
-export const saveTempDeployedProject = (project: InfinityMintProject) => {
-	log('saving ' + project.name + '.temp.json', 'fs');
-	fs.writeFileSync(
-		process.cwd() + '/temp/projects/' + project.name + '.temp.json',
-		JSON.stringify(project),
-	);
+export const saveTempDeployedProject = (project: InfinityMintTempProject) => {
+	let filename = `/temp/projects/${project.name}@${project.version}.deployed.temp.json`;
+	write(filename, project);
 };
 
-export const saveTempCompiledProject = (project: InfinityMintProject) => {
-	log('saving ' + project.name + '.compiled.temp.json', 'fs');
-	fs.writeFileSync(
-		process.cwd() + '/temp/projects/' + project.name + '.compiled.temp.json',
-		JSON.stringify(project),
-	);
+export const saveTempCompiledProject = (project: InfinityMintTempProject) => {
+	let filename = `/temp/projects/${project.name}@${project.version}.compiled.temp.json`;
+	write(filename, project);
 };
 
 /**
@@ -130,14 +133,13 @@ export const getTempCompiledProject = (projectName: string) => {
  * @param projectName
  */
 export const getDeployedProject = (projectName: string, version?: any) => {
-	let res = require(process.cwd() +
-		'/projects/deployed/' +
-		projectName +
-		`@${version}.json`);
+	version = version || '1.0.0';
+	let filename = `/projects/deployed/${projectName}@${version}.json`;
+	let res = require(process.cwd() + filename);
 	res = res.default || res;
 	//
-	if (!res.deployed)
-		throw new Error(`project ${projectName} has not been deployed`);
+	if (!res.compiled)
+		throw new Error(`project ${projectName} has not been compiled`);
 
 	return res as InfinityMintDeployedProject;
 };
@@ -183,7 +185,7 @@ export const saveProjects = (projects: path.ParsedPath[]) => {
 			path.dir + '/' + path.base,
 			path.ext === '.js',
 		);
-		let name = (project.name || path.name) + '#' + path.dir;
+		let name = (project.name || path.name) + '@' + path.dir;
 		if (cache.database[name]) {
 			name =
 				name +
@@ -212,6 +214,16 @@ export const saveProjects = (projects: path.ParsedPath[]) => {
 		cache.keys[nss + '/' + path.name] = name;
 		cache.keys[nss + '/' + path.base] = name;
 		cache.keys[path.name] = name;
+		cache.keys[path.name + '@' + (project?.version?.version || '1.0.0')] = name;
+		cache.keys[
+			path.name +
+				'@' +
+				(project?.version?.version === '1.0.0' ||
+				project?.version?.tag === 'initial'
+					? 'initial'
+					: '')
+		] = name;
+		cache.keys[path.name + '@source'] = name;
 		cache.keys[path.base] = name;
 	});
 
@@ -259,6 +271,40 @@ export const findProjects = async (roots?: PathLike[]) => {
 	}
 
 	return projects.map(filePath => path.parse(filePath));
+};
+
+/**
+ *
+ * @param script
+ * @param type
+ * @returns
+ */
+export const getScriptProject = (
+	script: InfinityMintScriptParameters,
+	type?: 'deployed' | 'source',
+	version?: any,
+) => {
+	if (script.args.project) {
+		if (
+			!script.args.dontUseTemp.value &&
+			(!type || type === 'source'
+				? hasTempCompiledProject(script.args.project.value)
+				: hasTempCompiledProject(script.args.project.value))
+		) {
+			script.log('picking up previous attempt => ' + script.args.project.value);
+			return !type || type === 'source'
+				? getTempCompiledProject(script.args.project.value)
+				: getTempDeployedProject(script.args.project.value);
+		} else if (!type || type === 'source')
+			return getProject(script.args.project.value) as InfinityMintTempProject;
+		else
+			return getCompiledProject(
+				script.args.project.value,
+			) as InfinityMintTempProject;
+	} else if (!type || type === 'source')
+		return script.project as InfinityMintTempProject;
+	else
+		return getCompiledProject(script.project.name) as InfinityMintTempProject;
 };
 
 /**

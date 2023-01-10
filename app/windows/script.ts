@@ -25,6 +25,51 @@ const Script = new InfinityMintWindow(
 	},
 );
 
+const execute = async window => {
+	window.elements['retry'].hide();
+	//run in the background
+	window.data.processing = true;
+	try {
+		window.log(
+			`{bold}{cyan-fg}executing ${
+				(window.data.script as InfinityMintScript).fileName
+			}{/cyan-fg}{/bold}`,
+		);
+		await executeScript(
+			window.data.script,
+			window.getInfinityConsole().getEventEmitter(),
+			{},
+			window.data.args || {},
+			window.getInfinityConsole(),
+		);
+		window.log(
+			'{bold}{green-fg}script executed successfully{/green-fg}{/bold}',
+		);
+		window.setHideCloseButton(false);
+		window.elements['output'].setScrollPerc(100);
+		window.elements['outputDebug'].setScrollPerc(100);
+		window.elements['close'].show();
+		//stop window.logs after 1 second
+		setTimeout(() => {
+			window.data.processing = false;
+		}, 1000);
+	} catch (error) {
+		window.log('{red-fg}{bold}script failed exectuion{/bold}{/red-fg}');
+		window.elements['retry'].show();
+
+		//log normally to default console if we aren't telnet
+		if (!window.getInfinityConsole().isTelnet()) console.error(error);
+
+		window.getInfinityConsole().errorHandler(error);
+		window.setHideCloseButton(false);
+		window.elements['output'].setScrollPerc(100);
+		window.elements['outputDebug'].setScrollPerc(100);
+		setTimeout(() => {
+			window.data.processing = false;
+		}, 1000);
+	}
+};
+
 Script.initialize = async (window, frame, blessed) => {
 	if (!window.data.script)
 		throw new Error('must be instantated with script in data field');
@@ -123,7 +168,7 @@ Script.initialize = async (window, frame, blessed) => {
 			window.data.script;
 
 		output.setContent('');
-		execute();
+		await execute(window);
 	});
 	retry.hide();
 
@@ -157,67 +202,22 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.hide();
 
-	//executes the script
-	const execute = async () => {
-		retry.hide();
-		//run in the background
-		window.data.processing = true;
-		try {
-			window.log(
-				`{bold}{cyan-fg}executing ${
-					(window.data.script as InfinityMintScript).fileName
-				}{/cyan-fg}{/bold}`,
-			);
-			await executeScript(
-				window.data.script,
-				window.getInfinityConsole().getEventEmitter(),
-				{},
-				window.data.args || {},
-				window.getInfinityConsole(),
-			);
-			window.log(
-				'{bold}{green-fg}script executed successfully{/green-fg}{/bold}',
-			);
-			window.setHideCloseButton(false);
-			output.setScrollPerc(100);
-			outputDebug.setScrollPerc(100);
-			close.show();
-			//stop window.logs after 1 second
-			setTimeout(() => {
-				window.data.processing = false;
-			}, 1000);
-		} catch (error) {
-			window.log('{red-fg}{bold}script failed exectuion{/bold}{/red-fg}');
-			retry.show();
-
-			//log normally to default console if we aren't telnet
-			if (!window.getInfinityConsole().isTelnet()) console.error(error);
-
-			window.getInfinityConsole().errorHandler(error);
-			window.setHideCloseButton(false);
-			output.setScrollPerc(100);
-			outputDebug.setScrollPerc(100);
-			setTimeout(() => {
-				window.data.processing = false;
-			}, 1000);
-		}
-	};
-
 	//when window.logs occur
 	let cb = (msg: string, pipe: string) => {
 		//keep showing debug
-		if (pipe === 'debug') outputDebug.pushLine(msg);
-
-		if (!window.data.processing) return;
-		if (pipe === 'default') output.pushLine(msg);
+		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
+		if (pipe === 'default') window.elements['output'].pushLine(msg);
 	};
+
 	window.getInfinityConsole().getLogs().emitter.on('log', cb);
 	//when this window is destroyed, destroy the output emitter
 	window.on('destroy', () => {
 		window.getInfinityConsole().getLogs().emitter.off('log', cb);
 	});
-	(() => execute())();
+
+	(() => execute(window))();
 };
+
 Script.setBackgroundThink(true);
 Script.setHideRefreshButton(true);
 Script.setHideCloseButton(true);

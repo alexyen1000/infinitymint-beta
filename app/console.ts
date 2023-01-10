@@ -1170,7 +1170,7 @@ export class InfinityConsole {
 
 	public debugLog(msg: string) {
 		//throw away debug log
-		if (!this.logs['debug']) return;
+		if (!this.logs.pipes['debug']) return;
 
 		return this.logs.log(msg, 'debug');
 	}

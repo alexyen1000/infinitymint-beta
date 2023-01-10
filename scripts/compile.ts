@@ -1,30 +1,31 @@
 import {
-	getCompiledProject,
+	getProject,
+	getScriptProject,
 	getTempCompiledProject,
 	hasTempCompiledProject,
+	saveTempCompiledProject,
 } from '@app/projects';
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 	InfinityMintTempProject,
 } from '@app/interfaces';
+import {stage} from '@app/helpers';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
 	description:
 		'Compile an InfinityMint project ready for deployment. The compiled file will garuntee that all the assets used in the minter are uploaded to IPFS and accessible at all times.',
 	execute: async (script: InfinityMintScriptParameters) => {
-		let project: InfinityMintTempProject;
-		let isTemp = false;
+		let project = getScriptProject(script, 'source'); //gets a temporary project file if there is one for a compilation, if not will just return the source project aka the .ts file or .js file
+		if (project.stages === undefined) project.stages = {};
 
-		if (script.args.project) {
-			let projectName = script.args.project.value;
-			if (script.args.useTemp.value && hasTempCompiledProject(projectName)) {
-				isTemp = true;
-				project = getTempCompiledProject(projectName);
-			} else
-				project = getCompiledProject(projectName) as InfinityMintTempProject;
-		} else project = script.project as InfinityMintTempProject;
+		script.log('{cyan-fg}{bold}Compiling Project{/}');
+		let result = await stage('compile', project, async () => {
+			await stage('pathSetup', project, async () => {});
+		});
+
+		if (result !== true) throw result;
 	},
 	arguments: [
 		{
