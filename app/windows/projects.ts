@@ -1,5 +1,10 @@
 import {InfinityMintWindow} from '../window';
-import {BlessedElement, readSession, saveSession} from '../helpers';
+import {
+	BlessedElement,
+	calculateWidth,
+	readSession,
+	saveSession,
+} from '../helpers';
 import {
 	InfinityMintProject,
 	InfinityMintProjectJavascript,
@@ -149,6 +154,126 @@ Projects.initialize = async (window, frame, blessed) => {
 			}){gray-fg}`,
 	);
 
+	let projectButton = window.createElement('projectButton', {
+		width: 'shrink',
+		bottom: 0,
+		height: 5,
+		left: 0,
+		keys: true,
+		vi: true,
+		mouse: true,
+		padding: 1,
+		content: 'Set As Current Project',
+		style: {
+			fg: 'white',
+			bg: 'green',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+		border: 'line',
+	});
+
+	let compile = window.createElement('scriptsButton', {
+		width: 'shrink',
+		bottom: 0,
+		height: 5,
+		right: 0,
+		keys: true,
+		vi: true,
+		mouse: true,
+		padding: 1,
+		content: 'Compile',
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+		border: 'line',
+	});
+	compile.on('click', () => {
+		window.getInfinityConsole().gotoWindow('Scripts');
+	});
+
+	let deploy = window.createElement('deployButton', {
+		width: 'shrink',
+		bottom: 0,
+		height: 5,
+		right: calculateWidth(compile),
+		keys: true,
+		vi: true,
+		mouse: true,
+		padding: 1,
+		content: 'Deploy',
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+		border: 'line',
+	});
+	deploy.on('click', () => {
+		window.getInfinityConsole().gotoWindow('Scripts');
+	});
+
+	let exportButton = window.createElement('exportButton', {
+		width: 'shrink',
+		bottom: 0,
+		height: 5,
+		right: calculateWidth(compile, deploy),
+		keys: true,
+		vi: true,
+		mouse: true,
+		padding: 1,
+		content: 'Export',
+		style: {
+			fg: 'white',
+			bg: 'black',
+			border: {
+				fg: '#ffffff',
+			},
+			hover: {
+				bg: 'grey',
+			},
+		},
+		border: 'line',
+	});
+
+	exportButton.hide();
+	deploy.hide();
+	compile.hide();
+
+	exportButton.on('click', () => {
+		window.getInfinityConsole().gotoWindow('Scripts');
+	});
+
+	projectButton.on('click', () => {
+		let session = readSession();
+		session.environment.project = window.data.currentPath;
+		session.environment.defaultProject = window.data.currentProject;
+		saveSession(session);
+		projectButton.hide();
+		exportButton.show();
+		deploy.show();
+		compile.show();
+		window.updateFrameTitle();
+	});
+
+	projectButton.hide();
+
 	list.setItems(projects);
 	list.on('select', (el: any, selected: any) => {
 		let path = scripts[selected];
@@ -158,10 +283,10 @@ Projects.initialize = async (window, frame, blessed) => {
 			path.ext === '.js',
 		);
 
+		window.data.currentPath = path;
 		window.data.currentProject = project;
-		session.environment.project = path;
-		session.environment.defaultProject = project;
 		saveSession(session);
+		projectButton.show();
 		notice.hide();
 		buildProjectPreview(window, preview, project);
 	});

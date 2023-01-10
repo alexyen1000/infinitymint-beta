@@ -48,7 +48,7 @@ const compile: InfinityMintScript = {
 			`\t Version: ${project.version.version} (${project.version.tag})`,
 		);
 		script.log(
-			'{gray-fg}{bold}You can now go ahead and {cyan-fg}compile this project!{/}',
+			'{gray-fg}{bold}You can now go ahead and {cyan-fg}deploy this project!{/}',
 		);
 	},
 	arguments: [

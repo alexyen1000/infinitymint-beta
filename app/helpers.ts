@@ -782,29 +782,40 @@ export const findScripts = async (roots?: string[]) => {
  * @param eventEmitter
  * @param gems
  * @param args
- * @param console
+ * @param infinityConsole
  */
 export const executeScript = async (
 	script: InfinityMintScript,
 	eventEmitter: InfinityMintEventEmitter,
 	gems?: Dictionary<InfinityMintGemScript>,
 	args?: Dictionary<InfinityMintScriptArguments>,
-	console?: InfinityConsole,
+	infinityConsole?: InfinityConsole,
 ) => {
-	await script.execute({
-		script: script,
-		eventEmitter: eventEmitter,
-		gems: gems,
-		args: args,
-		log: (msg: string) => {
-			console.getLogs().log(msg, 'default');
-		},
-		debugLog: (msg: string) => {
-			console.getLogs().log(msg, 'debug');
-		},
-		infinityConsole: console,
-		project: getCurrentProject(true),
-	});
+	let _exit = (process as any).exit;
+	(process as any).exit = code => {
+		if (infinityConsole) infinityConsole.log('halted exit code: ' + code);
+		else warning('halted exit code: ' + 0);
+	};
+	try {
+		await script.execute({
+			script: script,
+			eventEmitter: eventEmitter,
+			gems: gems,
+			args: args,
+			log: (msg: string) => {
+				infinityConsole.getLogs().log(msg, 'default');
+			},
+			debugLog: (msg: string) => {
+				infinityConsole.getLogs().log(msg, 'debug');
+			},
+			infinityConsole: infinityConsole,
+			project: getCurrentProject(true),
+		});
+		(process as any).exit = _exit;
+	} catch (error) {
+		(process as any).exit = _exit;
+		throw error;
+	}
 };
 
 /**
