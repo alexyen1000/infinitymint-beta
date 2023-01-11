@@ -66,6 +66,7 @@ const execute = async (window: InfinityMintWindow) => {
 		window
 			.getInfinityConsole()
 			.log('{red-fg}{bold}{underline}script failed exectuion{/}');
+
 		if (!window.getInfinityConsole().isTelnet()) console.error(error);
 		window.elements['retry'].show();
 		window.setHideCloseButton(false);

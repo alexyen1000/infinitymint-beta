@@ -98,7 +98,7 @@ const deploy: InfinityMintScript = {
 		let deploy = await stage(
 			'deploy',
 			project,
-			async () => {
+			async isFirstTime => {
 				script.log(`{cyan-fg}{bold}Deploying Smart Contracts{/}`);
 				for (let i = 0; i < deployments.length; i++) {
 					let deployment = deployments[i];
@@ -157,6 +157,27 @@ const deploy: InfinityMintScript = {
 									...script,
 								} as InfinityMintEventEmit<InfinityMintDeploymentLive[]>);
 								return;
+							} else if (deployment.hasDeployed()) {
+								script.log(
+									`[${i}] already deployed but not redeploying so calling cleanup <` +
+										deployment.getKey() +
+										'>(' +
+										deployment.getContractName() +
+										')',
+								);
+
+								let contractNames = (await deployment.execute('cleanup', {
+									isFirstTime,
+									error: result as Error,
+								})) as string[];
+
+								contractNames = contractNames || [];
+								contractNames.forEach(contract => {
+									if (contracts[contract]) {
+										script.log(`\tRemoving ${contract}`);
+										delete contracts[contract];
+									}
+								});
 							}
 
 							script.log(
@@ -197,14 +218,6 @@ const deploy: InfinityMintScript = {
 
 							//if we are to instantly set up
 							if (deployment.getDeploymentScript().instantlySetup) {
-								script.log(
-									`[${i}] setting up <` +
-										deployment.getKey() +
-										'>(' +
-										deployment.getContractName() +
-										')',
-								);
-
 								script.infinityConsole.emit('preSetup', {
 									project: project,
 									deployments: deployments,
@@ -246,7 +259,29 @@ const deploy: InfinityMintScript = {
 					);
 
 					//throw error from stage
-					if (result !== true) throw result;
+					if (result !== true) {
+						script.log(
+							`[${i}] cleaning up <` +
+								deployment.getKey() +
+								'>(' +
+								deployment.getContractName() +
+								') after failed deployment',
+						);
+						let contractNames = (await deployment.execute('cleanup', {
+							isFirstTime,
+							error: result as Error,
+						})) as string[];
+
+						contractNames = contractNames || [];
+						contractNames.forEach(contract => {
+							if (contracts[contract]) {
+								script.log(`\tRemoving ${contract}`);
+								delete contracts[contract];
+							}
+						});
+
+						throw result;
+					}
 
 					script.log(
 						`{green-fg}successfully deployed{/green-fg} ${deployment.getFilePath()}(` +

@@ -1665,7 +1665,10 @@ export interface InfinityMintDeploymentScript {
 	 * @async
 	 * Only called when the project has been deployed. Called when a live InfinityMint switches from key to the other particuarlly in the modules. See {@link InfinityMintProjectModules}. For instance if the minter was to change from SimpleSVG to SimpleImage then this method would be called. An example use would be to relink the newly asset controller to the minter.
 	 */
-	switch?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	switch?: FuncSingle<
+		InfinityMintDeploymentParameters,
+		Promise<Contract | Contract[]>
+	>;
 	/**
 	 * @async
 	 * Sets up the smart contract post deployment.
@@ -1675,12 +1678,15 @@ export interface InfinityMintDeploymentScript {
 	 * @async
 	 * Called when a project has been deployed or has failed to deploy and is retrying. Defines how to clean up an active smart contract with the goal of running setup again to update changes.
 	 */
-	cleanup?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	cleanup?: FuncSingle<InfinityMintDeploymentParameters, Promise<string[]>>;
 	/**
 	 * @async
 	 * Only called when the project has been deployed. Define custom update logic depending on the situation. By default if an update method is not defined in the deployment script InfinityMint will execute clean up and then set up in the deployment script.
 	 */
-	update?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	update?: FuncSingle<
+		InfinityMintDeploymentParameters,
+		Promise<Promise<Contract | Contract[]>>
+	>;
 	/**
 	 * The list of addresses or refrences which will be given admin access to this contract. Can be addresses or keys.
 	 *

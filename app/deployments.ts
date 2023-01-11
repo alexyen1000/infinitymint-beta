@@ -8,6 +8,8 @@ import {
 	InfinityMintEventKeys,
 	InfinityMintCompiledProject,
 	InfinityMintDeployedProject,
+	InfinityMintEventEmitter,
+	KeyValue,
 } from './interfaces';
 import {
 	debugLog,
@@ -473,12 +475,16 @@ export class InfinityMintDeployment {
 	 * @param args
 	 * @returns
 	 */
-	async execute(method: 'setup' | 'deploy' | 'update' | 'switch', args: any) {
+	async execute(
+		method: 'setup' | 'deploy' | 'update' | 'switch' | 'cleanup',
+		args: KeyValue,
+		eventEmitter?: InfinityMintEventEmitter,
+	) {
 		let params = {
 			...args,
 			debugLog: debugLog,
 			log: log,
-			eventEmitter: this.emitter,
+			eventEmitter: eventEmitter || this.emitter,
 			deploy: this,
 		} as InfinityMintDeploymentParameters;
 
@@ -486,16 +492,23 @@ export class InfinityMintDeployment {
 
 		switch (method) {
 			case 'deploy':
-				let deployResult = await this.deploymentScript.deploy(params);
-				return deployResult;
+				if (this.deploymentScript.deploy)
+					return await this.deploymentScript.deploy(params);
 			case 'setup':
-				await this.deploymentScript.setup(params);
+				if (this.deploymentScript.setup)
+					await this.deploymentScript.setup(params);
 				return;
 			case 'update':
-				await this.deploymentScript.update(params);
+				if (this.deploymentScript.update)
+					await this.deploymentScript.update(params);
+				return;
+			case 'cleanup':
+				if (this.deploymentScript.cleanup)
+					return await this.deploymentScript.cleanup(params);
 				return;
 			case 'switch':
-				await this.deploymentScript.switch(params);
+				if (this.deploymentScript.switch)
+					await this.deploymentScript.switch(params);
 				return;
 			default:
 				throw new Error('unknown method:' + this.execute);

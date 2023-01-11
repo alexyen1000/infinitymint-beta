@@ -940,9 +940,9 @@ export class InfinityConsole {
 
 		this.screen.append(this.errorBox);
 		this.screen.render();
+
 		this.errorBox.setFront();
 		this.errorBox.focus();
-		this.screen.focus();
 	}
 
 	public registerKeys() {
@@ -1096,6 +1096,7 @@ export class InfinityConsole {
 	public async getDeploymentClasses(
 		projectName: string | InfinityMintTempProject | InfinityMintCompiledProject,
 		console: InfinityConsole,
+		gems?: boolean,
 	) {
 		return await getProjectDeploymentClasses(projectName, console);
 	}

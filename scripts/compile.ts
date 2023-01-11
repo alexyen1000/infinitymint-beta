@@ -55,9 +55,9 @@ const compile: InfinityMintScript = {
 		if (result !== true) throw result;
 
 		script.log('{green-fg}{bold}Compilation Successful{/}');
-		script.log(`\t Project: ${project.name}`);
+		script.log(`\tProject: ${project.name}`);
 		script.log(
-			`\t Version: ${project.version.version} (${project.version.tag})`,
+			`\tVersion: ${project.version.version} (${project.version.tag})`,
 		);
 		script.log(
 			'{gray-fg}{bold}You can now go ahead and {cyan-fg}deploy this project!{/}',

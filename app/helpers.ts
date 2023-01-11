@@ -329,16 +329,17 @@ export const logDirect = (msg: any) => {
  * @param call
  * @param type
  * @param infinityConsole
- * @param alwaysRun
+ * @param forceRun
  * @returns
  */
 export const stage = async (
 	stage: string,
 	project: InfinityMintTempProject,
-	call: () => Promise<void>,
+	call: (isFirstTime?: boolean) => Promise<void>,
 	type?: 'compile' | 'deploy',
 	infinityConsole?: InfinityConsole,
-	alwaysRun?: boolean,
+	forceRun?: boolean,
+	cleanup?: (isFirstTime?: boolean) => Promise<void>,
 ) => {
 	type = type || 'compile';
 	if (!project.stages) project.stages = {};
@@ -348,7 +349,7 @@ export const stage = async (
 
 	if (infinityConsole) infinityConsole.emitAny(eventName);
 
-	if (project?.stages[stage] === true && !alwaysRun) {
+	if (project?.stages[stage] === true && !forceRun) {
 		if (infinityConsole)
 			infinityConsole.debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
@@ -357,17 +358,20 @@ export const stage = async (
 		return true;
 	}
 
+	let isFirstTime = typeof project.stages[stage] !== 'object';
 	project.stages[stage] = false;
 
 	if (type === 'compile') saveTempCompiledProject(project);
 	else saveTempDeployedProject(project);
 
 	try {
-		if (infinityConsole) infinityConsole.emitAny(eventName + 'Pre');
-		await call();
+		if (infinityConsole)
+			infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
+		await call(isFirstTime);
 		project.stages[stage] = true;
 
-		if (infinityConsole) infinityConsole.emitAny(eventName + 'Post');
+		if (infinityConsole)
+			infinityConsole.emitAny(eventName + 'Post', isFirstTime);
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
@@ -384,7 +388,11 @@ export const stage = async (
 
 		if (infinityConsole) infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
 		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
-		if (infinityConsole) infinityConsole.emitAny(eventName + 'Failure');
+		if (infinityConsole)
+			infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
+
+		if (cleanup) await cleanup();
+
 		return error;
 	}
 };
