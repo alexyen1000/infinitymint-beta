@@ -1176,6 +1176,10 @@ export interface InfinityMintProjectPath {
 	 * true if the project the path contains has been compiled.
 	 */
 	compiled?: boolean;
+	/**
+	 * Checksum of the object inside of the path
+	 */
+	checksum?: string;
 }
 
 /**

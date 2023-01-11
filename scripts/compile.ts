@@ -8,7 +8,7 @@ import {
 	InfinityMintScriptParameters,
 } from '@app/interfaces';
 import {logDirect, stage} from '@app/helpers';
-import {ParsedPath} from 'path';
+import {createHash} from 'node:crypto';
 import {getImports} from '@app/imports';
 import fs from 'fs';
 import {InfinityMintSVGSettings} from '@app/content';
@@ -254,10 +254,8 @@ const compile: InfinityMintScript = {
 							path: InfinityMintProjectPath | InfinityMintProjectAsset,
 						) => {
 							script.log(`\tSetting Up => ${path.fileName}`);
-							let pathImport =
-								importCache.database[
-									importCache.keys[path.fileName.toString()]
-								];
+							let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
+							let pathImport = importCache.database[importCache.keys[fileName]];
 							path.source = pathImport;
 							//if its a string then grab that file and add it to pathImports
 							if (typeof path.settings === 'string') {
@@ -268,7 +266,7 @@ const compile: InfinityMintScript = {
 							}
 
 							//puts the settings for the import into the path
-							if (pathImport.settings !== undefined) {
+							if (pathImport?.settings !== undefined) {
 								pathImport.settings.map(setting => {
 									if (path.settings === undefined) path.settings = {};
 									else if (typeof path.settings === 'object')
@@ -304,7 +302,13 @@ const compile: InfinityMintScript = {
 										let newContent = {};
 										Object.keys(path.content).map(content => {
 											let newImport = (newContent[content] = {
-												fileName: content,
+												fileName:
+													typeof path.content[content] === 'string'
+														? path.content[content]
+														: path.content[content].fileName,
+												...(typeof path.content[content] !== 'string'
+													? path.content[content]
+													: {}),
 											} as InfinityMintProjectContent);
 											script.infinityConsole.emit(
 												'preCompileSetup',
@@ -317,20 +321,39 @@ const compile: InfinityMintScript = {
 												newImport,
 												typeof newImport,
 											);
+											path.content[content] = newImport;
 										});
-									}
+									} else
+										Object.keys(path.content).forEach(content => {
+											script.infinityConsole.emit(
+												'preCompileSetup',
+												path.content[content],
+												typeof path.content[content],
+											);
+											setupImport(path.content[content]);
+											script.infinityConsole.emit(
+												'postCompileSetup',
+												path.content[content],
+												typeof path.content[content],
+											);
+										});
 								}
-
-								//create basic exports object to fill in later
-								path.export = {
-									key: `${project.name}@${path.source.dir}/${path.source.base}`,
-									checksum: path.source.checksum,
-									project: project.name,
-									version: project.version,
-									stats: fs.statSync(`${path.source.dir}/${path.source.base}`),
-									exported: Date.now(),
-								};
 							}
+
+							//create basic exports object to fill in later
+							path.export = {
+								key: `${project.name}@${fileName}`,
+								checksum: path.source.checksum,
+								project: project.name,
+								version: project.version,
+								stats: fs.statSync(`${path.source.dir}/${path.source.base}`),
+								exported: Date.now(),
+							};
+
+							path.checksum = createHash('md5')
+								.update(JSON.stringify(JSON.stringify(path)))
+								.digest('hex');
+							script.log(`\tObject checksum => ${path.checksum}`);
 						};
 						//here we need to loop through paths and see if we find settings
 						for (let i = 0; i < project.paths.length; i++) {
