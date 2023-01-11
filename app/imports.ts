@@ -255,6 +255,18 @@ export const getImportCache = async (
 			name;
 		imports.keys[process.cwd() + '/imports' + root + '/' + normalImport.base] =
 			name;
+		imports.keys[
+			'imports/' + normalImport.name + normalImport.ext.toLowerCase()
+		] = name;
+		imports.keys[
+			'/imports/' + normalImport.name + normalImport.ext.toLowerCase()
+		] = name;
+		imports.keys[
+			'imports/' + normalImport.name + normalImport.ext.toUpperCase()
+		] = name;
+		imports.keys[
+			'/imports/' + normalImport.name + normalImport.ext.toUpperCase()
+		] = name;
 		imports.keys['imports/' + normalImport.name] = name;
 		imports.keys['/imports/' + normalImport.name] = name;
 		imports.keys['imports/' + normalImport.base] = name;
@@ -265,11 +277,23 @@ export const getImportCache = async (
 		imports.keys['/imports' + root + '/' + normalImport.base] = name;
 		imports.keys[root + '/' + normalImport.name] = name;
 		imports.keys[root + '/' + normalImport.name] = name;
+		imports.keys[
+			root + '/' + normalImport.name + normalImport.ext.toLowerCase()
+		] = name;
+		imports.keys[
+			root + '/' + normalImport.name + normalImport.ext.toUpperCase()
+		] = name;
 		imports.keys[root + '/' + normalImport.base] = name;
 		imports.keys[root + '/' + normalImport.base] = name;
 
 		let nss = root[0] === '/' ? (root as string).substring(1) : root;
 		imports.keys[nss + '/' + normalImport.name] = name;
+		imports.keys[
+			nss + '/' + normalImport.name + normalImport.ext.toLowerCase()
+		] = name;
+		imports.keys[
+			nss + '/' + normalImport.name + normalImport.ext.toUpperCase()
+		] = name;
 		imports.keys[nss + '/' + normalImport.name] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
