@@ -635,6 +635,52 @@ export interface InfinityMintEvents {
 		Promise<void>
 	>;
 	/**
+	 * Will be called when setup is about to take place. Can return false to abort setup silently.
+	 * @event
+	 */
+	preVerify?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
+	 * @event
+	 */
+	postVerify?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
+	 * Will be called when setup is about to take place. Can return false to abort setup silently.
+	 * @event
+	 */
+	preCompileSetup?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
+	 * @event
+	 */
+	postCompileSetup?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
 	 * Will be called when deploy complete.
 	 * @event
 	 */
@@ -679,6 +725,20 @@ export interface InfinityMintEvents {
 		>,
 		Promise<void | boolean>
 	>;
+	/**
+	 * @event
+	 */
+	stageCompile?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageCompilePre?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageCompilePost?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSetup?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSetupPre?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSetupPost?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageVerify?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageVerifyPre?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageVerifyPost?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSuccess?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageFailure?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
 	/**
 	 * @event
 	 */
@@ -1075,6 +1135,8 @@ export interface InfinityMintProjectPathExport {
 export interface InfinityMintProjectPath {
 	name: string;
 	fileName: PathLike;
+	pathId?: number;
+	valid?: boolean;
 	/**
 	 * is the mint data, this is copied to each token internally. Can be a path to a file
 	 */
@@ -1117,17 +1179,6 @@ export interface InfinityMintProjectPath {
 }
 
 /**
- * is the same as {@link InfinityMintProjectPath} but is for JavaScript project files (classic InfinityMint).
- */
-export interface InfinityMintProjectJavascriptPath
-	extends InfinityMintProjectPath {
-	/**
-	 * For Javascript infinitymint paths this is where exported data is put. This is only used when the project is a javascript file as it does call it 'exports'. See {@link InfinityMintProjectPath}
-	 */
-	paths?: InfinityMintProjectPathExport;
-}
-
-/**
  *
  */
 export interface InfinityMintProjectContent extends InfinityMintProjectPath {
@@ -1141,6 +1192,7 @@ export interface InfinityMintProjectContent extends InfinityMintProjectPath {
 export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
 	pathId?: number;
 	section?: string;
+	assetId?: number;
 }
 
 /**

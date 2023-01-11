@@ -184,9 +184,16 @@ const compile: InfinityMintScript = {
 								...(basePath.content || {}),
 								...(path.content || {}),
 							};
+							path.valid = false;
+							script.infinityConsole.emit('preVerify', path, typeof path);
 							verifyImport(path, i);
-							if (hasErrors) script.log(`{red-fg}[Path ${i}] ERROR OCCURED{/}`);
-							else script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
+							if (hasErrors) {
+								script.log(`{red-fg}[Path ${i}] ERROR OCCURED{/}`);
+							} else {
+								path.valid = true;
+								script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
+							}
+							script.infinityConsole.emit('postVerify', path, typeof path);
 							hasErrors = false;
 							tempPaths[i] = path as InfinityMintProjectPath;
 						}
@@ -202,11 +209,16 @@ const compile: InfinityMintScript = {
 								...(baseAsset.content || {}),
 								...(asset.content || {}),
 							};
+							asset.valid = false;
+							script.infinityConsole.emit('preVerify', asset, typeof asset);
 							verifyImport(asset, i, 'asset');
-
-							if (hasErrors)
+							if (hasErrors) {
 								script.log(`{red-fg}[Asset ${i}] ERROR OCCURED{/}`);
-							else script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
+							} else {
+								asset.valid = true;
+								script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
+							}
+							script.infinityConsole.emit('postVerify', asset, typeof asset);
 							hasErrors = false;
 							tempAssets[i] = asset as InfinityMintProjectAsset;
 						}
@@ -294,7 +306,17 @@ const compile: InfinityMintScript = {
 											let newImport = (newContent[content] = {
 												fileName: content,
 											} as InfinityMintProjectContent);
+											script.infinityConsole.emit(
+												'preCompileSetup',
+												newImport,
+												typeof newImport,
+											);
 											setupImport(newImport);
+											script.infinityConsole.emit(
+												'postCompileSetup',
+												newImport,
+												typeof newImport,
+											);
 										});
 									}
 								}
@@ -312,15 +334,37 @@ const compile: InfinityMintScript = {
 						};
 						//here we need to loop through paths and see if we find settings
 						for (let i = 0; i < project.paths.length; i++) {
+							script.infinityConsole.emit(
+								'preCompileSetup',
+								project.paths[i],
+								typeof project.paths[i],
+							);
 							script.log(`[Path ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
 							setupImport(project.paths[i]);
+							project.paths[i].pathId = i;
+							script.infinityConsole.emit(
+								'postCompileSetup',
+								project.paths[i],
+								typeof project.paths[i],
+							);
 						}
 
 						//here we need to loop through assets as well
 						if (project.assets)
 							for (let i = 0; i < project.assets.length; i++) {
+								script.infinityConsole.emit(
+									'preCompileSetup',
+									project.assets[i],
+									typeof project.assets[i],
+								);
 								script.log(`[Assets ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
 								setupImport(project.assets[i]);
+								project.assets[i].assetId = i;
+								script.infinityConsole.emit(
+									'postCompileSetup',
+									project.paths[i],
+									typeof project.paths[i],
+								);
 							}
 					},
 					'compile',
