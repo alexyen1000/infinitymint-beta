@@ -61,7 +61,7 @@ const execute = async (window: InfinityMintWindow) => {
 	} catch (error) {
 		setTimeout(() => {
 			window.data.processing = false;
-		}, 10000);
+		}, 1000);
 
 		window
 			.getInfinityConsole()

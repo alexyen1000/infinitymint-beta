@@ -40,7 +40,7 @@ const compile: InfinityMintScript = {
 					project,
 					async () => {
 						let errors = [];
-						let files = [];
+						let files: string[] = [];
 						let hasErrors = false;
 						let tempPaths = (project as InfinityMintProject).javascript
 							? (project as any)?.paths?.indexes || []
@@ -75,28 +75,26 @@ const compile: InfinityMintScript = {
 							type?: 'asset' | 'path' | 'content',
 						) => {
 							type = type || 'path';
-							script.debugLog('checking import => ' + path.fileName);
-							script.log('{green-fg}Verifying ' + path.fileName + '{/}');
+							let fileName = path.fileName.toString().toLowerCase();
+							script.debugLog('checking import => ' + fileName);
+							script.log('{green-fg}Verifying ' + fileName + '{/}');
 							//now lets check if the path exists in the import database
 
-							if (!importCache.keys[path.fileName.toString()]) {
+							if (!importCache.keys[fileName]) {
 								errors.push(
-									`${type} (${i}) error: File not found => ` + path.fileName,
+									`${type} (${i}) error: File not found => ` + fileName,
 								);
 								hasErrors = true;
 								return;
 							}
 
-							let file =
-								importCache.database[
-									importCache.keys[path.fileName.toString()]
-								];
+							let file = importCache.database[importCache.keys[fileName]];
 
 							if (file.checksum === undefined || file.checksum.length === 0) {
 								hasErrors = true;
 								errors.push(
 									`${type} (${i}) content error: Checksum not found => ` +
-										path.fileName,
+										fileName,
 								);
 								return;
 							}
@@ -106,19 +104,21 @@ const compile: InfinityMintScript = {
 								hasErrors = true;
 								errors.push(
 									`${type} (${i}) content error: File size is zero (means file is empty) => ` +
-										path.fileName,
+										fileName,
 								);
 								return;
 							}
 
-							files.push(path.fileName);
+							files.push(fileName);
 
 							if (path.content)
 								Object.values(path.content).forEach(content => {
-									let fileName =
+									let fileName = (
 										typeof content === 'string'
 											? content
-											: content.fileName.toString();
+											: content.fileName.toString()
+									).toLowerCase();
+
 									if (!importCache.keys[fileName]) {
 										hasErrors = true;
 										errors.push(
@@ -130,9 +130,11 @@ const compile: InfinityMintScript = {
 									files.push(fileName);
 								});
 
-							//now lets check the imports database
-							files.forEach(file => {
-								let _import = importCache.database[importCache.keys[file]];
+							//now lets check the imports database for settings files
+							files.forEach((file: string) => {
+								let _import =
+									importCache.database[importCache.keys[file.toLowerCase()]];
+
 								if (
 									_import.settings !== undefined &&
 									_import.settings.length !== 0
@@ -165,9 +167,9 @@ const compile: InfinityMintScript = {
 							verifyImport(path, i);
 							if (hasErrors) script.log(`{red-fg}[Path ${i}] ERROR OCCURED{/}`);
 							else script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
+							hasErrors = false;
 						}
 
-						hasErrors = false;
 						for (let i = 0; i < tempAssets.length; i++) {
 							let asset = tempAssets[i];
 							asset = {
@@ -184,6 +186,7 @@ const compile: InfinityMintScript = {
 							if (hasErrors)
 								script.log(`{red-fg}[Asset ${i}] ERROR OCCURED{/}`);
 							else script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
+							hasErrors = false;
 						}
 
 						//if errors are not length of zero then throw them!

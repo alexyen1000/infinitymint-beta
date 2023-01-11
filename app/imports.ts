@@ -271,10 +271,17 @@ export const getImportCache = async (
 		imports.keys['/imports/' + normalImport.name] = name;
 		imports.keys['imports/' + normalImport.base] = name;
 		imports.keys['/imports/' + normalImport.base] = name;
+		imports.keys[('/imports/' + normalImport.name).toLowerCase()] = name;
+		imports.keys[('imports/' + normalImport.base).toLowerCase()] = name;
+		imports.keys[('imports/' + normalImport.name).toLowerCase()] = name;
 		imports.keys['imports' + root + '/' + normalImport.name] = name;
 		imports.keys['/imports' + root + '/' + normalImport.name] = name;
 		imports.keys['imports' + root + '/' + normalImport.base] = name;
 		imports.keys['/imports' + root + '/' + normalImport.base] = name;
+		imports.keys[('/imports' + root + '/' + normalImport.name).toLowerCase()] =
+			name;
+		imports.keys[('imports' + root + '/' + normalImport.base).toLowerCase()] =
+			name;
 		imports.keys[root + '/' + normalImport.name] = name;
 		imports.keys[root + '/' + normalImport.name] = name;
 		imports.keys[
@@ -283,6 +290,8 @@ export const getImportCache = async (
 		imports.keys[
 			root + '/' + normalImport.name + normalImport.ext.toUpperCase()
 		] = name;
+		imports.keys[(root + '/' + normalImport.name).toLowerCase()] = name;
+		imports.keys[(root + '/' + normalImport.base).toLowerCase()] = name;
 		imports.keys[root + '/' + normalImport.base] = name;
 		imports.keys[root + '/' + normalImport.base] = name;
 
@@ -294,6 +303,8 @@ export const getImportCache = async (
 		imports.keys[
 			nss + '/' + normalImport.name + normalImport.ext.toUpperCase()
 		] = name;
+		imports.keys[(nss + '/' + normalImport.base).toLowerCase()] = name;
+		imports.keys[(nss + '/' + normalImport.name).toLowerCase()] = name;
 		imports.keys[nss + '/' + normalImport.name] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;

@@ -835,7 +835,7 @@ export const executeScript = async (
 				else infinityConsole.getLogs().log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
-				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
+				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
 				else infinityConsole.getLogs().log(msg, 'debug');
 			},
 			infinityConsole: infinityConsole,
