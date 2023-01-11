@@ -29,6 +29,9 @@ const deploy: InfinityMintScript = {
 			'compiled',
 		);
 
+		if (!project.compiled)
+			throw new Error('please compile this project before deploying it');
+
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = 'deploy_' + project.name;
@@ -55,8 +58,8 @@ const deploy: InfinityMintScript = {
 			};
 
 		let deployments: InfinityMintDeployment[];
-		let setupStage = await stage(
-			'setup',
+		let verify = await stage(
+			'verify',
 			project,
 			async () => {
 				deployments = await script.infinityConsole.getDeploymentClasses(
@@ -91,7 +94,7 @@ const deploy: InfinityMintScript = {
 			true,
 		);
 
-		if (setupStage !== true) throw setupStage;
+		if (verify !== true) throw verify;
 
 		let contracts = {...project.deployments};
 		//deploy stage

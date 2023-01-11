@@ -261,7 +261,7 @@ export class InfinityConsole {
 	public error(error: Error) {
 		if (this.isTelnet())
 			this.logs.log(
-				'{red-fg}' + error.message + ' ' + error.stack + '{/red-fg}',
+				'{red-fg}' + error.message + '\n' + error.stack + '{/red-fg}',
 			);
 
 		this.logs.error(error);

@@ -78,7 +78,7 @@ export const initializeInfinityMint = async (
 			let provider = await GanacheServer.start(config.ganache || {});
 			startNetworkPipe(provider, 'ganache');
 		} catch (error) {
-			warning('could not start ganache: ' + error.stack);
+			warning('could not start ganache:\n' + error.stack);
 		}
 	} else {
 		warning('no ganache network found');
