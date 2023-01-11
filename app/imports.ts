@@ -186,7 +186,9 @@ export const getImportCache = async (
 			supportedExtensions.forEach(ext => {
 				if (ext[0] === '.') ext = ext.substring(1);
 				finalLocations.push(location + '.' + ext);
+				finalLocations.push(location + '.' + ext.toUpperCase());
 				finalLocations.push(location + '.' + ext + '.settings.*');
+				finalLocations.push(location + '.' + ext.toUpperCase() + '.settings.*');
 			});
 		});
 

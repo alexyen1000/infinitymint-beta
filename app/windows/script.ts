@@ -57,11 +57,11 @@ const execute = async (window: InfinityMintWindow) => {
 		window.elements['close'].show();
 		setTimeout(() => {
 			window.data.processing = false;
-		}, 4000);
+		}, 1000);
 	} catch (error) {
 		setTimeout(() => {
 			window.data.processing = false;
-		}, 4000);
+		}, 10000);
 
 		window
 			.getInfinityConsole()
