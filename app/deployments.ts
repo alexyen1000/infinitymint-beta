@@ -19,7 +19,16 @@ import {
 	readSession,
 	warning,
 } from './helpers';
-import {requireProject, getCompiledProject, getProject} from './projects';
+import {
+	requireProject,
+	getCompiledProject,
+	getProject,
+	hasCompiledProject,
+	hasTempCompiledProject,
+	getTempCompiledProject,
+	hasTempDeployedProject,
+	getTempDeployedProject,
+} from './projects';
 import {glob} from 'glob';
 import fs from 'fs';
 import path from 'path';
@@ -88,13 +97,12 @@ export class InfinityMintDeployment {
 		console?: InfinityConsole,
 	) {
 		this.emitter = console?.getEventEmitter() || new events.EventEmitter();
-
-		if (fs.existsSync(process.cwd() + '/deploy/' + deploymentScriptLocation))
-			this.reloadScript();
-		else debugLog(`deploy script for [${this.key}]<${this.project}> not found`);
-
 		this.deploymentScriptLocation = deploymentScriptLocation;
 		this.key = key;
+
+		if (fs.existsSync(this.deploymentScriptLocation)) this.reloadScript();
+		else
+			debugLog(`\tdeploy script for [${this.key}]<${this.project}> not found`);
 
 		if (this.deploymentScript.key !== this.key)
 			throw new Error(
@@ -125,16 +133,18 @@ export class InfinityMintDeployment {
 	/**
 	 * reloads the source file script
 	 */
-	async reloadScript() {
-		let location = process.cwd() + this.deploymentScriptLocation;
+	reloadScript() {
+		let location = this.deploymentScriptLocation;
 		if (require.cache[location]) {
-			debugLog('deleting old cache of ' + location);
+			debugLog('\tdeleting old cache of ' + location);
 			delete require.cache[location];
-			debugLog(`reloading <${location}>`);
-		} else debugLog(`loading <${location}>`);
+			debugLog(`\treloading <${location}>`);
+		} else debugLog(`\tloading <${location}>`);
 
 		let requirement = require(location);
 		this.deploymentScript = requirement.default || requirement;
+		if (this.deploymentScript.key === undefined)
+			this.deploymentScript.key = this.key;
 	}
 
 	/**
@@ -529,15 +539,25 @@ export const getProjectDeploymentClasses = async (
 	loadedDeploymentClasses?: InfinityMintDeployment[],
 ) => {
 	let compiledProject: InfinityMintCompiledProject;
-	if (typeof projectOrPath === 'string')
-		compiledProject = getCompiledProject(getProject(projectOrPath));
-	else compiledProject = projectOrPath;
+	if (typeof projectOrPath === 'string') {
+		let project = getProject(projectOrPath);
+
+		if (hasTempDeployedProject(project))
+			compiledProject = getTempDeployedProject(project);
+		else if (hasCompiledProject(project))
+			compiledProject = getCompiledProject(project);
+		else
+			throw new Error(
+				'no valid project found to get deployment classes for: ' +
+					projectOrPath,
+			);
+	} else compiledProject = projectOrPath;
 
 	loadedDeploymentClasses =
 		loadedDeploymentClasses ||
 		(await loadDeploymentClasses(compiledProject, console));
 
-	let setings = getNetworkSettings(hre.network.name);
+	let setings = getNetworkSettings(compiledProject.network.name);
 
 	if (!compiledProject.compiled)
 		throw new Error(
@@ -695,6 +715,7 @@ export const getDeploymentClasses = async (
 ): Promise<InfinityMintDeployment[]> => {
 	network = network || project.network?.name;
 
+	let session = readSession();
 	if (!network) throw new Error('unable to automatically determain network');
 
 	let searchLocations = [...(roots || [])];
@@ -711,10 +732,23 @@ export const getDeploymentClasses = async (
 		let files = await findFiles(searchLocations[i]);
 		files.map((file, index) => {
 			let key = path.parse(file).name;
-			debugLog(`[${index}] => ${key}:(${file})`);
-			deployments.push(
-				new InfinityMintDeployment(file, key, network, project, console),
+			debugLog(`[${index}] => ${key}`);
+			let result = new InfinityMintDeployment(
+				file,
+				key,
+				network,
+				project,
+				console,
 			);
+
+			if (
+				result.getDeploymentScript()?.solidityFolder !==
+				session.environment.solidityFolder
+			)
+				debugLog(
+					'\tskipping (since wrong solidity folder) => ' + searchLocations[i],
+				);
+			else deployments.push(result);
 		});
 	}
 

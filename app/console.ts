@@ -1,9 +1,12 @@
 import {
+	InfinityMintCompiledProject,
 	InfinityMintConfigEventKeys,
 	InfinityMintConsoleOptions,
 	InfinityMintEventEmit,
 	InfinityMintEventKeys,
+	InfinityMintProject,
 	InfinityMintScript,
+	InfinityMintTempProject,
 } from './interfaces';
 import {ethers} from 'hardhat';
 import fs from 'fs';
@@ -1049,6 +1052,14 @@ export class InfinityConsole {
 		});
 	}
 
+	public getTokenSymbol() {
+		return 'eth';
+	}
+
+	public getCurrentNetwork() {
+		return this.network;
+	}
+
 	public async refreshWeb3() {
 		if (!fs.existsSync('./artifacts')) await hre.run('compile');
 
@@ -1083,7 +1094,7 @@ export class InfinityConsole {
 	 * @returns
 	 */
 	public async getDeploymentClasses(
-		projectName: string,
+		projectName: string | InfinityMintTempProject | InfinityMintCompiledProject,
 		console: InfinityConsole,
 	) {
 		return await getProjectDeploymentClasses(projectName, console);

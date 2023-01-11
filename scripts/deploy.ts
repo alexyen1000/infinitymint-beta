@@ -8,12 +8,11 @@ import {
 } from '@app/interfaces';
 import {InfinityMintDeployment} from '@app/deployments';
 import {
-	getCompiledProject,
-	getScriptProject,
-	getTempDeployedProject,
-	hasTempDeployedProject,
+	getScriptTemporaryProject,
+	saveTempCompiledProject,
+	saveTempDeployedProject,
 } from '@app/projects';
-import {stage} from '@app/helpers';
+import {getConfigFile, stage} from '@app/helpers';
 
 const deploy: InfinityMintScript = {
 	name: 'Deploy Project',
@@ -24,7 +23,11 @@ const deploy: InfinityMintScript = {
 	 * @param script
 	 */
 	execute: async (script: InfinityMintScriptParameters) => {
-		let project: InfinityMintTempProject = getScriptProject(script, 'deployed');
+		let config = getConfigFile();
+		let project: InfinityMintTempProject = getScriptTemporaryProject(
+			script,
+			'compiled',
+		);
 
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
@@ -41,33 +44,56 @@ const deploy: InfinityMintScript = {
 		//make sure stages are created
 		project.stages = project.stages || {};
 
-		let deployments = await script.infinityConsole.getDeploymentClasses(
-			project.name,
+		if (project.network === undefined)
+			project.network = {
+				chainId: script.infinityConsole.getCurrentChainId(),
+				name: script.infinityConsole.getCurrentNetwork().name,
+				url: config.settings.networks?.[
+					script.infinityConsole.getCurrentNetwork().name
+				]?.rpc,
+				tokenSymbol: script.infinityConsole.getTokenSymbol(),
+			};
+
+		let deployments: InfinityMintDeployment[];
+		let setupStage = await stage(
+			'setup',
+			project,
+			async () => {
+				deployments = await script.infinityConsole.getDeploymentClasses(
+					project,
+					script.infinityConsole,
+				);
+				let notUniqueAndImportant = deployments
+					.filter(
+						deployment => deployment.isUnique() && deployment.isImportant(),
+					)
+					.filter(
+						deployment =>
+							deployments.filter(
+								thatDeployment =>
+									thatDeployment.getKey() === deployment.getKey(),
+							).length > 1,
+					);
+
+				if (notUniqueAndImportant.length !== 0)
+					throw new Error(
+						'1 or more conflicting unique and important deploy scripts: check ' +
+							notUniqueAndImportant
+								.map(
+									deployment =>
+										deployment.getKey() + ':' + deployment.getFilePath(),
+								)
+								.join(','),
+					);
+			},
+			'deploy',
 			script.infinityConsole,
+			true,
 		);
 
-		let notUniqueAndImportant = deployments
-			.filter(deployment => deployment.isUnique() && deployment.isImportant())
-			.filter(
-				deployment =>
-					deployments.filter(
-						thatDeployment => thatDeployment.getKey() === deployment.getKey(),
-					).length > 1,
-			);
-
-		if (notUniqueAndImportant.length !== 0)
-			throw new Error(
-				'1 or more conflicting unique and important deploy scripts: check ' +
-					notUniqueAndImportant
-						.map(
-							deployment =>
-								deployment.getKey() + ':' + deployment.getFilePath(),
-						)
-						.join(','),
-			);
+		if (setupStage !== true) throw setupStage;
 
 		let contracts = {...project.deployments};
-
 		//deploy stage
 		let deploy = await stage(
 			'deploy',

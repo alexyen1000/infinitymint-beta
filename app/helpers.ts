@@ -323,10 +323,13 @@ export const logDirect = (msg: any) => {
 };
 
 /**
- * used in InfinityMint scripts to segregate the execution of the script into stages that can be continued from if failed
+ *
  * @param stage
  * @param project
  * @param call
+ * @param type
+ * @param infinityConsole
+ * @param alwaysRun
  * @returns
  */
 export const stage = async (
@@ -335,6 +338,7 @@ export const stage = async (
 	call: () => Promise<void>,
 	type?: 'compile' | 'deploy',
 	infinityConsole?: InfinityConsole,
+	alwaysRun?: boolean,
 ) => {
 	type = type || 'compile';
 	if (!project.stages) project.stages = {};
@@ -344,7 +348,7 @@ export const stage = async (
 
 	if (infinityConsole) infinityConsole.emitAny(eventName);
 
-	if (project?.stages[stage]) {
+	if (project?.stages[stage] === true && !alwaysRun) {
 		if (infinityConsole)
 			infinityConsole.debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);

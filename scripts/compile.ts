@@ -1,4 +1,4 @@
-import {getScriptProject} from '@app/projects';
+import {getScriptTemporaryProject} from '@app/projects';
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
@@ -10,7 +10,7 @@ const compile: InfinityMintScript = {
 	description:
 		'Compile an InfinityMint project ready for deployment. The compiled file will garuntee that all the assets used in the minter are uploaded to IPFS and accessible at all times.',
 	execute: async (script: InfinityMintScriptParameters) => {
-		let project = getScriptProject(script, 'source'); //gets a temporary project file if there is one for a compilation, if not will just return the source project aka the .ts file or .js file
+		let project = getScriptTemporaryProject(script, 'compiled'); //gets a temporary project file if there is one for a compilation, if not will just return the source project aka the .ts file or .js file
 		if (project.version === undefined)
 			project.version = {
 				version: '1.0.0',
