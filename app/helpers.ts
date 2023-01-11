@@ -831,10 +831,12 @@ export const executeScript = async (
 			gems: gems,
 			args: args,
 			log: (msg: string) => {
-				infinityConsole.getLogs().log(msg, 'default');
+				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
+				else infinityConsole.getLogs().log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
-				infinityConsole.getLogs().log(msg, 'debug');
+				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
+				else infinityConsole.getLogs().log(msg, 'debug');
 			},
 			infinityConsole: infinityConsole,
 			project: getCurrentProject(true),

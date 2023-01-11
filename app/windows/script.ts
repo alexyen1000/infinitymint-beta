@@ -57,17 +57,17 @@ const execute = async (window: InfinityMintWindow) => {
 		window.elements['close'].show();
 		setTimeout(() => {
 			window.data.processing = false;
-		}, 1000);
+		}, 4000);
 	} catch (error) {
 		setTimeout(() => {
 			window.data.processing = false;
-		}, 1000);
+		}, 4000);
 
 		window
 			.getInfinityConsole()
 			.log('{red-fg}{bold}{underline}script failed exectuion{/}');
-
 		if (!window.getInfinityConsole().isTelnet()) console.error(error);
+
 		window.elements['retry'].show();
 		window.setHideCloseButton(false);
 		window.elements['output'].setScrollPerc(100);

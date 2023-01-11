@@ -141,6 +141,7 @@ export const getImportCache = async (
 			'.jpg',
 			'.jpeg',
 			'.gif',
+			'.glb',
 			'.mp3',
 			'.obj',
 			'.wav',

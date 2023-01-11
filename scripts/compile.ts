@@ -2,11 +2,12 @@ import {getScriptTemporaryProject} from '@app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
+	InfinityMintProjectJavascript,
 	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '@app/interfaces';
-import {stage} from '@app/helpers';
+import {logDirect, stage} from '@app/helpers';
 import {getImports} from '@app/imports';
 import fs from 'fs';
 
@@ -41,11 +42,29 @@ const compile: InfinityMintScript = {
 						let errors = [];
 						let files = [];
 						let hasErrors = false;
-						let tempPaths = project.paths;
-						let tempAssets = project.assets || [];
-						let basePath =
-							(script.project as InfinityMintProject)?.basePath ||
-							({} as InfinityMintProjectPath);
+						let tempPaths = (project as InfinityMintProject).javascript
+							? (project as any)?.paths?.indexes || []
+							: project.paths;
+						let basePath = (project as InfinityMintProject).javascript
+							? (project as any)?.paths?.default || {}
+							: (script.project as InfinityMintProject)?.basePath ||
+							  ({} as InfinityMintProjectPath);
+
+						let tempAssets: InfinityMintProjectAsset[] = [];
+
+						//unpack the assets array adding the section key
+						if (project.assets instanceof Array) {
+							tempAssets = project.assets || [];
+						} else {
+							Object.keys(project.assets || {}).forEach(section => {
+								Object.values(project.assets[section]).forEach(
+									(asset: InfinityMintProjectAsset) => {
+										tempAssets.push({...asset, section: section});
+									},
+								);
+							});
+						}
+
 						let baseAsset =
 							(script.project as InfinityMintProject)?.baseAsset ||
 							({} as InfinityMintProjectAsset);
@@ -53,14 +72,16 @@ const compile: InfinityMintScript = {
 						let verifyImport = (
 							path: InfinityMintProjectPath | InfinityMintProjectAsset,
 							i: number,
+							type?: 'asset' | 'path' | 'content',
 						) => {
-							script.infinityConsole.debugLog(
-								'checking import => ' + path.fileName,
-							);
+							type = type || 'path';
+							script.debugLog('checking import => ' + path.fileName);
+							script.log('{green-fg}Verifying ' + path.fileName + '{/}');
 							//now lets check if the path exists in the import database
+
 							if (!importCache.keys[path.fileName.toString()]) {
 								errors.push(
-									`Path/Asset (${i}) error: File not found => ` + path.fileName,
+									`${type} (${i}) error: File not found => ` + path.fileName,
 								);
 								hasErrors = true;
 								return;
@@ -72,8 +93,9 @@ const compile: InfinityMintScript = {
 								];
 
 							if (file.checksum === undefined || file.checksum.length === 0) {
+								hasErrors = true;
 								errors.push(
-									`Path/Asset (${i}) content error: Checksum not found => ` +
+									`${type} (${i}) content error: Checksum not found => ` +
 										path.fileName,
 								);
 								return;
@@ -81,8 +103,9 @@ const compile: InfinityMintScript = {
 							let stats = fs.statSync(file.dir + '/' + file.base);
 
 							if (stats.size === 0) {
+								hasErrors = true;
 								errors.push(
-									`Path/Asset (${i}) content error: File size is zero (means file is empty) => ` +
+									`${type} (${i}) content error: File size is zero (means file is empty) => ` +
 										path.fileName,
 								);
 								return;
@@ -92,15 +115,19 @@ const compile: InfinityMintScript = {
 
 							if (path.content)
 								Object.values(path.content).forEach(content => {
-									if (!importCache.keys[content.fileName.toString()]) {
+									let fileName =
+										typeof content === 'string'
+											? content
+											: content.fileName.toString();
+									if (!importCache.keys[fileName]) {
 										hasErrors = true;
 										errors.push(
-											`Path/Asset (${i}) content error: File not found => ` +
-												content.fileName,
+											`${type} (${i}) content error: File not found => ` +
+												fileName,
 										);
 										return;
 									}
-									files.push(content.fileName.toString());
+									files.push(fileName);
 								});
 
 							//now lets check the imports database
@@ -115,7 +142,7 @@ const compile: InfinityMintScript = {
 										if (!fs.existsSync(settingLocation)) {
 											hasErrors = true;
 											errors.push(
-												`Path/Asset (${i}) settings error: Settings file not found => ` +
+												`${type} (${i}) settings error: Settings file not found => ` +
 													settingLocation,
 											);
 										}
@@ -136,7 +163,8 @@ const compile: InfinityMintScript = {
 								...(path.content || {}),
 							};
 							verifyImport(path, i);
-							if (hasErrors) script.log(`{red-fg}[Path ${i}] ERROR OCCURED`);
+							if (hasErrors) script.log(`{red-fg}[Path ${i}] ERROR OCCURED{/}`);
+							else script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
 						}
 
 						hasErrors = false;
@@ -151,18 +179,25 @@ const compile: InfinityMintScript = {
 								...(baseAsset.content || {}),
 								...(asset.content || {}),
 							};
-							verifyImport(asset, i);
-							if (hasErrors) script.log(`{red-fg}[Asset ${i}] ERROR OCCURED`);
+							verifyImport(asset, i, 'asset');
+
+							if (hasErrors)
+								script.log(`{red-fg}[Asset ${i}] ERROR OCCURED{/}`);
+							else script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
 						}
 
 						//if errors are not length of zero then throw them!
 						if (errors.length !== 0) throw errors;
+
+						project.paths = tempPaths;
+						project.assets = tempAssets;
 					},
 					'compile',
 					script.infinityConsole,
 				);
 
 				if (verify !== true) {
+					if (verify instanceof Array !== true) throw verify as Error;
 					(verify as Error[]).forEach(error => {
 						script.infinityConsole.log(`{red-fg}${error}{/red-fg}`);
 					});
