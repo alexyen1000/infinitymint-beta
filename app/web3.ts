@@ -97,7 +97,7 @@ export const initializeInfinityMint = async (
 
 	//start a network pipe if we aren't ganache as we do something different if we are
 	if (!startGanache) startNetworkPipe();
-	if (!fs.existsSync('./artifacts')) await hre.run('compile');
+
 	//initialize console
 	return config;
 };

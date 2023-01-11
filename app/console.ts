@@ -6,6 +6,7 @@ import {
 	InfinityMintScript,
 } from './interfaces';
 import {ethers} from 'hardhat';
+import fs from 'fs';
 import {
 	BlessedElement,
 	createPipes,
@@ -29,7 +30,7 @@ import {InfinityMintEventEmitter} from './interfaces';
 import {InfinityMintWindow} from './window';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
-import {changeNetwork, getDefaultSigner} from './web3';
+import {changeNetwork, getDefaultAccountIndex, getDefaultSigner} from './web3';
 import {defaultFactory, PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
@@ -1049,13 +1050,16 @@ export class InfinityConsole {
 	}
 
 	public async refreshWeb3() {
+		if (!fs.existsSync('./artifacts')) await hre.run('compile');
+
 		try {
 			this.network = hre.network;
 			this.chainId = (await ethers.provider.getNetwork()).chainId;
-			this.account = await getDefaultSigner();
+			this.signers = await ethers.getSigners();
+			this.account = this.signers[getDefaultAccountIndex()];
 			this.balance = await this.account.getBalance();
 		} catch (error) {
-			warning('BAD WEB3: ' + error?.message);
+			this.errorHandler(error);
 		}
 	}
 
