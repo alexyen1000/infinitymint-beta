@@ -183,6 +183,8 @@ export const hasDeployedProject = (
 	return fs.existsSync(process.cwd() + filename);
 };
 
+export const cleanTemporaryProject = () => {};
+
 /**
  * Returns a deployed InfinityMintProject, see {@link app/interfaces.InfinityMintProject}.
  * @param projectName

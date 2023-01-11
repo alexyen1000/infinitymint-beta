@@ -1,4 +1,5 @@
 import {PathLike} from 'fs';
+import {ParsedPath} from 'path';
 
 export interface InfinityMintSVGSettings {
 	viewbox?: string;
@@ -66,4 +67,5 @@ export interface InfinityMintSVGSettings {
 		 */
 		unique?: boolean;
 	};
+	source?: ParsedPath;
 }

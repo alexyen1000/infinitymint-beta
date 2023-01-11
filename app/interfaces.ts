@@ -1077,7 +1077,11 @@ export interface InfinityMintProjectPath {
 	/**
 	 * can either contain an object of settings for the path or a link to the settings file or simply `true` to look for a settings file that matches the fileName import. See {@link app/content.InfinityMintSVGSettings}
 	 */
-	settings?: KeyValue | PathLike | boolean | InfinityMintSVGSettings;
+	settings?:
+		| boolean
+		| InfinityMintSVGSettings
+		| KeyValue
+		| Dictionary<InfinityMintSVGSettings>;
 	description?: string;
 	/**
 	 * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.

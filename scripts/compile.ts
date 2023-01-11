@@ -2,14 +2,15 @@ import {getScriptTemporaryProject} from '@app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
-	InfinityMintProjectJavascript,
 	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '@app/interfaces';
 import {logDirect, stage} from '@app/helpers';
+import {ParsedPath} from 'path';
 import {getImports} from '@app/imports';
 import fs from 'fs';
+import {InfinityMintSVGSettings} from '@app/content';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -34,7 +35,6 @@ const compile: InfinityMintScript = {
 			'compile',
 			project,
 			async () => {
-				let paths = [];
 				let verify = await stage(
 					'verify',
 					project,
@@ -126,20 +126,34 @@ const compile: InfinityMintScript = {
 												fileName,
 										);
 										return;
-									}
+									} else
+										script.log(
+											'\t{cyan-fg}Verified Content: ' + fileName + '{/}',
+										);
 									files.push(fileName);
 								});
 
+							if (
+								typeof path.settings === 'string' &&
+								!importCache.database[importCache.keys[path.settings]]
+							) {
+								hasErrors = true;
+								errors.push(
+									`${type} (${i}) settings reference error: Settings file not found => ` +
+										path.settings,
+								);
+							}
+
 							//now lets check the imports database for settings files
 							files.forEach((file: string) => {
-								let _import =
+								let thatImport =
 									importCache.database[importCache.keys[file.toLowerCase()]];
 
 								if (
-									_import.settings !== undefined &&
-									_import.settings.length !== 0
+									thatImport.settings !== undefined &&
+									thatImport.settings.length !== 0
 								) {
-									_import.settings.forEach(setting => {
+									thatImport.settings.forEach(setting => {
 										let settingLocation = setting.dir + '/' + setting.base;
 										if (!fs.existsSync(settingLocation)) {
 											hasErrors = true;
@@ -147,7 +161,12 @@ const compile: InfinityMintScript = {
 												`${type} (${i}) settings error: Settings file not found => ` +
 													settingLocation,
 											);
-										}
+										} else
+											script.log(
+												'\t{cyan-fg}Verified Settings: ' +
+													settingLocation +
+													'{/}',
+											);
 									});
 								}
 							});
@@ -168,6 +187,7 @@ const compile: InfinityMintScript = {
 							if (hasErrors) script.log(`{red-fg}[Path ${i}] ERROR OCCURED{/}`);
 							else script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
 							hasErrors = false;
+							tempPaths[i] = path as InfinityMintProjectPath;
 						}
 
 						for (let i = 0; i < tempAssets.length; i++) {
@@ -187,16 +207,19 @@ const compile: InfinityMintScript = {
 								script.log(`{red-fg}[Asset ${i}] ERROR OCCURED{/}`);
 							else script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
 							hasErrors = false;
+							tempAssets[i] = asset as InfinityMintProjectAsset;
 						}
 
 						//if errors are not length of zero then throw them!
 						if (errors.length !== 0) throw errors;
 
+						//set it
 						project.paths = tempPaths;
 						project.assets = tempAssets;
 					},
 					'compile',
 					script.infinityConsole,
+					true,
 				);
 
 				if (verify !== true) {
@@ -213,7 +236,52 @@ const compile: InfinityMintScript = {
 				let pathSetup = await stage(
 					'pathSetup',
 					project,
-					async () => {},
+					async () => {
+						//here we need to loop through paths and see if we find settings
+						for (let i = 0; i < project.paths.length; i++) {
+							let path = project.paths[i];
+							let pathImport =
+								importCache.database[
+									importCache.keys[path.fileName.toString()]
+								];
+
+							//if its a string then grab that file and add it to pathImports
+							if (typeof path.settings === 'string') {
+								let settings =
+									importCache.database[importCache.keys[path.settings]];
+								pathImport.settings = [...pathImport.settings, settings as any];
+								path.settings = {};
+							}
+
+							//puts the settings for the import into the file
+							if (pathImport.settings !== undefined) {
+								pathImport.settings.map(setting => {
+									if (path.settings === undefined) path.settings = {};
+									else if (typeof path.settings === 'object')
+										path.settings = {
+											'@project': path.settings,
+										};
+									else path.settings = {};
+
+									if (setting.ext === 'json') {
+										path.settings[setting.dir + '/' + setting.base] = {
+											...JSON.parse(
+												fs.readFileSync(setting.dir + '/' + setting.base, {
+													encoding: 'utf-8',
+												}),
+											),
+											source: setting,
+										} as InfinityMintSVGSettings;
+									} else if (setting.ext === 'js' || setting.ext === 'ts') {
+										let result = require(setting.dir + '/' + setting.base);
+										path.settings[setting.dir + '/' + setting.base] = {
+											...result.default,
+										};
+									}
+								});
+							}
+						}
+					},
 					'compile',
 					script.infinityConsole,
 				);
