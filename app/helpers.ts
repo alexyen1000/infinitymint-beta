@@ -340,7 +340,7 @@ export const stage = async (
 	infinityConsole?: InfinityConsole,
 	forceRun?: boolean,
 	cleanup?: (isFirstTime?: boolean) => Promise<void>,
-) => {
+): Promise<Error | Error[] | boolean> => {
 	type = type || 'compile';
 	if (!project.stages) project.stages = {};
 	let eventName = 'stage' + (stage[0].toUpperCase() + stage.substring(1));

@@ -29,7 +29,7 @@ let updateContent = (window: InfinityMintWindow) => {
 let lineNumber = (indexCount: number | string, gray?: boolean) => {
 	return `${gray ? '{white-bg}' : '{white-bg}'}{black-fg}${indexCount
 		.toString()
-		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'}`;
+		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'} `;
 };
 
 let alwaysScrollUpdate = (window: InfinityMintWindow, alwaysScroll) => {

@@ -1,9 +1,14 @@
 import {getScriptTemporaryProject} from '@app/projects';
 import {
+	InfinityMintProject,
+	InfinityMintProjectAsset,
+	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '@app/interfaces';
 import {stage} from '@app/helpers';
+import {getImports} from '@app/imports';
+import fs from 'fs';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -22,21 +27,128 @@ const compile: InfinityMintScript = {
 		script.log(
 			`{cyan-fg}{bold}Compiling Project ${project.name}@${project.version.version}{/}`,
 		);
+
+		let importCache = await getImports();
 		let result = await stage(
 			'compile',
 			project,
 			async () => {
+				let paths = [];
 				let verify = await stage(
 					'verify',
 					project,
 					async () => {
-						let paths = project.paths;
+						let errors = [];
+						let files = [];
+						let hasErrors = false;
+						let tempPaths = project.paths;
+						let tempAssets = project.assets || [];
+						let basePath =
+							(script.project as InfinityMintProject)?.basePath ||
+							({} as InfinityMintProjectPath);
+						let baseAsset =
+							(script.project as InfinityMintProject)?.baseAsset ||
+							({} as InfinityMintProjectAsset);
+
+						let verifyImport = (
+							path: InfinityMintProjectPath | InfinityMintProjectAsset,
+							i: number,
+						) => {
+							script.infinityConsole.debugLog(
+								'checking import => ' + path.fileName,
+							);
+							//now lets check if the path exists in the import database
+							if (!importCache.keys[path.fileName.toString()]) {
+								errors.push(
+									`Path/Asset (${i}) error: File not found => ` + path.fileName,
+								);
+								hasErrors = true;
+								return;
+							}
+
+							files.push(path.fileName);
+
+							if (path.content)
+								Object.values(path.content).forEach(content => {
+									if (!importCache.keys[content.fileName.toString()]) {
+										hasErrors = true;
+										errors.push(
+											`Path/Asset (${i}) content error: File not found => ` +
+												content.fileName,
+										);
+										return;
+									}
+									files.push(content.fileName.toString());
+								});
+
+							//now lets check the imports database
+							files.forEach(file => {
+								let _import = importCache.database[importCache.keys[file]];
+								if (
+									_import.settings !== undefined &&
+									_import.settings.length !== 0
+								) {
+									_import.settings.forEach(setting => {
+										let settingLocation = setting.dir + '/' + setting.base;
+										if (!fs.existsSync(settingLocation)) {
+											hasErrors = true;
+											errors.push(
+												`Path/Asset (${i}) settings error: Settings file not found => ` +
+													settingLocation,
+											);
+										}
+									});
+								}
+							});
+						};
+
+						for (let i = 0; i < tempPaths.length; i++) {
+							let path = tempPaths[i];
+
+							path = {
+								...basePath,
+								...path,
+							};
+							path.content = {
+								...(basePath.content || {}),
+								...(path.content || {}),
+							};
+							verifyImport(path, i);
+							if (hasErrors) script.log(`{red-fg}[Path ${i}] ERROR OCCURED`);
+						}
+
+						hasErrors = false;
+						for (let i = 0; i < tempAssets.length; i++) {
+							let asset = tempAssets[i];
+							asset = {
+								...baseAsset,
+								...asset,
+							};
+
+							asset.content = {
+								...(baseAsset.content || {}),
+								...(asset.content || {}),
+							};
+							verifyImport(asset, i);
+							if (hasErrors) script.log(`{red-fg}[Asset ${i}] ERROR OCCURED`);
+						}
+
+						//if errors are not length of zero then throw them!
+						if (errors.length !== 0) throw errors;
 					},
 					'compile',
 					script.infinityConsole,
 				);
 
-				if (verify !== true) throw verify;
+				if (verify !== true) {
+					(verify as Error[]).forEach(error => {
+						script.infinityConsole.log(`{red-fg}${error.message}{/red-fg}`);
+					});
+
+					throw new Error(
+						'failed verification of assets/paths. please check errors above.',
+					);
+				}
 
 				let pathSetup = await stage(
 					'pathSetup',
