@@ -83,7 +83,7 @@ Script.initialize = async (window, frame, blessed) => {
 		throw new Error('must be instantated with script in data field');
 
 	//when window.logs occur
-	let cb = (msg: string, pipe: string) => {
+	let cb = async (msg: string, pipe: string) => {
 		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
 
 		//keep showing debug
@@ -234,7 +234,10 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.hide();
 
-	execute(window);
+	output.setContent(`{cyan-fg}Awaiting Execution...{/cyan-fg}`);
+	setTimeout(async () => {
+		await execute(window);
+	}, 1000);
 };
 
 Script.setBackgroundThink(true);
