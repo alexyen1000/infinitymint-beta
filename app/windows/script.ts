@@ -106,7 +106,7 @@ Script.initialize = async (window, frame, blessed) => {
 
 	let output = window.createElement('output', {
 		height: '100%-8',
-		width: '50%',
+		width: '60%',
 		padding: 1,
 		top: 4,
 		label: `{bold}{white-fg}Output: {/white-fg}{/bold}`,
@@ -128,7 +128,7 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	let outputDebug = window.createElement('outputDebug', {
 		height: '100%-8',
-		width: '50%+2',
+		width: '40%+2',
 		padding: 1,
 		right: 0,
 		top: 4,

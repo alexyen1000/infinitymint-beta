@@ -66,6 +66,28 @@ const compile: InfinityMintScript = {
 								return;
 							}
 
+							let file =
+								importCache.database[
+									importCache.keys[path.fileName.toString()]
+								];
+
+							if (file.checksum === undefined || file.checksum.length === 0) {
+								errors.push(
+									`Path/Asset (${i}) content error: Checksum not found => ` +
+										path.fileName,
+								);
+								return;
+							}
+							let stats = fs.statSync(file.dir + '/' + file.base);
+
+							if (stats.size === 0) {
+								errors.push(
+									`Path/Asset (${i}) content error: File size is zero (means file is empty) => ` +
+										path.fileName,
+								);
+								return;
+							}
+
 							files.push(path.fileName);
 
 							if (path.content)
@@ -142,7 +164,7 @@ const compile: InfinityMintScript = {
 
 				if (verify !== true) {
 					(verify as Error[]).forEach(error => {
-						script.infinityConsole.log(`{red-fg}${error.message}{/red-fg}`);
+						script.infinityConsole.log(`{red-fg}${error}{/red-fg}`);
 					});
 
 					throw new Error(
