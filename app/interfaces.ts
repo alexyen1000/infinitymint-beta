@@ -7,10 +7,11 @@ import {EventEmitter} from 'events';
 import {Contract} from '@ethersproject/contracts';
 import InfinityConsole from './console';
 import {InfinityMintDeployment} from './deployments';
-import {PathLike} from 'fs';
+import {PathLike, Stats} from 'fs';
 import {InfinityMintSVGSettings} from './content';
 import {GasPriceFunction, TokenPriceFunction} from './gasAndPrices';
-import {Options} from 'ipfs-core';
+import {ParsedPath} from 'path';
+import {ImportCache, ImportType} from './imports';
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -1059,9 +1060,13 @@ export type InfinityMintProjetModulesKeys = keyof InfinityMintProjectModules;
 export interface InfinityMintProjectPathExport {
 	key: string;
 	checksum: string;
-	settingsFile?: string;
-	settingsFileKey?: string;
-	settings: KeyValue | InfinityMintSVGSettings;
+	exported: number;
+	stats: Stats;
+	project: string;
+	version: {
+		tag: string;
+		version: string;
+	};
 }
 
 /**
@@ -1101,6 +1106,10 @@ export interface InfinityMintProjectPath {
 	 * When the path has been compiled this is filled.
 	 */
 	export?: InfinityMintProjectPathExport;
+	/**
+	 * Where this path is located on the compilers hard drive
+	 */
+	source?: ImportType;
 	/**
 	 * true if the project the path contains has been compiled.
 	 */

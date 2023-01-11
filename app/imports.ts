@@ -37,16 +37,17 @@ export interface CompiledImportInterface extends ImportInterface {
 	};
 }
 
+export interface ImportType {
+	extension: string;
+	name: string;
+	base: string;
+	checksum: string;
+	dir: string;
+	settings: Array<path.ParsedPath>;
+}
 export interface ImportCache {
 	updated: number;
-	database: Dictionary<{
-		extension: string;
-		name: string;
-		base: string;
-		checksum: string;
-		dir: string;
-		settings: Array<path.ParsedPath>;
-	}>;
+	database: Dictionary<ImportType>;
 	keys: Dictionary<string>;
 }
 

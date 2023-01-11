@@ -2,6 +2,7 @@ import {getScriptTemporaryProject} from '@app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
+	InfinityMintProjectContent,
 	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
@@ -77,7 +78,7 @@ const compile: InfinityMintScript = {
 							type = type || 'path';
 							let fileName = path.fileName.toString().toLowerCase();
 							script.debugLog('checking import => ' + fileName);
-							script.log('{green-fg}Verifying ' + fileName + '{/}');
+							script.log('\t{cyan-fg}Verifying ' + fileName + '{/}');
 							//now lets check if the path exists in the import database
 
 							if (!importCache.keys[fileName]) {
@@ -233,18 +234,19 @@ const compile: InfinityMintScript = {
 					);
 				}
 
-				let pathSetup = await stage(
-					'pathSetup',
+				let setup = await stage(
+					'setup',
 					project,
 					async () => {
-						//here we need to loop through paths and see if we find settings
-						for (let i = 0; i < project.paths.length; i++) {
-							let path = project.paths[i];
+						let setupImport = (
+							path: InfinityMintProjectPath | InfinityMintProjectAsset,
+						) => {
+							script.log(`\tSetting Up => ${path.fileName}`);
 							let pathImport =
 								importCache.database[
 									importCache.keys[path.fileName.toString()]
 								];
-
+							path.source = pathImport;
 							//if its a string then grab that file and add it to pathImports
 							if (typeof path.settings === 'string') {
 								let settings =
@@ -253,7 +255,7 @@ const compile: InfinityMintScript = {
 								path.settings = {};
 							}
 
-							//puts the settings for the import into the file
+							//puts the settings for the import into the path
 							if (pathImport.settings !== undefined) {
 								pathImport.settings.map(setting => {
 									if (path.settings === undefined) path.settings = {};
@@ -262,7 +264,9 @@ const compile: InfinityMintScript = {
 											'@project': path.settings,
 										};
 									else path.settings = {};
-
+									script.log(
+										`\tFound Settings => ${setting.dir + '/' + setting.base}`,
+									);
 									if (setting.ext === 'json') {
 										path.settings[setting.dir + '/' + setting.base] = {
 											...JSON.parse(
@@ -274,19 +278,56 @@ const compile: InfinityMintScript = {
 										} as InfinityMintSVGSettings;
 									} else if (setting.ext === 'js' || setting.ext === 'ts') {
 										let result = require(setting.dir + '/' + setting.base);
+										result = result.default;
+
 										path.settings[setting.dir + '/' + setting.base] = {
-											...result.default,
-										};
+											...(typeof result === 'function' ? result() : result),
+											source: setting,
+										} as InfinityMintSVGSettings;
 									}
 								});
+
+								if (path.content) {
+									if ((project as InfinityMintProject).javascript) {
+										let newContent = {};
+										Object.keys(path.content).map(content => {
+											let newImport = (newContent[content] = {
+												fileName: content,
+											} as InfinityMintProjectContent);
+											setupImport(newImport);
+										});
+									}
+								}
+
+								//create basic exports object to fill in later
+								path.export = {
+									key: `${project.name}@${path.source.dir}/${path.source.base}`,
+									checksum: path.source.checksum,
+									project: project.name,
+									version: project.version,
+									stats: fs.statSync(`${path.source.dir}/${path.source.base}`),
+									exported: Date.now(),
+								};
 							}
+						};
+						//here we need to loop through paths and see if we find settings
+						for (let i = 0; i < project.paths.length; i++) {
+							script.log(`[Path ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
+							setupImport(project.paths[i]);
 						}
+
+						//here we need to loop through assets as well
+						if (project.assets)
+							for (let i = 0; i < project.assets.length; i++) {
+								script.log(`[Assets ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
+								setupImport(project.assets[i]);
+							}
 					},
 					'compile',
 					script.infinityConsole,
 				);
 
-				if (pathSetup !== true) throw pathSetup;
+				if (setup !== true) throw setup;
 			},
 			'compile',
 			script.infinityConsole,
