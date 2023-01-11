@@ -26,6 +26,18 @@ const compile: InfinityMintScript = {
 			'compile',
 			project,
 			async () => {
+				let verify = await stage(
+					'verify',
+					project,
+					async () => {
+						let paths = project.paths;
+					},
+					'compile',
+					script.infinityConsole,
+				);
+
+				if (verify !== true) throw verify;
+
 				let pathSetup = await stage(
 					'pathSetup',
 					project,
