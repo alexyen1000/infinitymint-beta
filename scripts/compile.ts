@@ -254,7 +254,7 @@ const compile: InfinityMintScript = {
 						let setupImport = (
 							path: InfinityMintProjectPath | InfinityMintProjectAsset,
 						) => {
-							script.log(`\tSetting Up => ${path.fileName}`);
+							script.log(`\t{cyan-fg}Setting Up{/} => ${path.fileName}`);
 							let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
 							let pathImport = importCache.database[importCache.keys[fileName]];
 							path.source = pathImport;
@@ -276,9 +276,9 @@ const compile: InfinityMintScript = {
 										};
 									else path.settings = {};
 									script.log(
-										`\tFound Settings => ${setting.dir + '/' + setting.base} (${
-											setting.ext
-										})`,
+										`\t{cyan-fg}Found Settings{/} => ${
+											setting.dir + '/' + setting.base
+										} (${setting.ext})`,
 									);
 									if (setting.ext === '.json') {
 										path.settings[setting.dir + '/' + setting.base] = {
@@ -320,7 +320,7 @@ const compile: InfinityMintScript = {
 													);
 												else
 													script.log(
-														`\t{cyan-fg}Verified loose CSS reference; ${style}`,
+														`\t{cyan-fg}Verified loose CSS reference{/} => ${style}`,
 													);
 											});
 										else if (!importCache.keys[svgSetting.style.css as string])
@@ -331,7 +331,7 @@ const compile: InfinityMintScript = {
 											);
 										else
 											script.log(
-												`\t{cyan-fg}Verified loose CSS reference; ${svgSetting.style.css}`,
+												`\t{cyan-fg}Verified loose CSS reference{/} => ${svgSetting.style.css}`,
 											);
 									},
 								);
