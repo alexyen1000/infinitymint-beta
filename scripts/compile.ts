@@ -12,6 +12,7 @@ import {createHash} from 'node:crypto';
 import {getImports} from '@app/imports';
 import fs from 'fs';
 import {InfinityMintSVGSettings} from '@app/content';
+import settings from '../imports/example.svg.settings';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -275,9 +276,11 @@ const compile: InfinityMintScript = {
 										};
 									else path.settings = {};
 									script.log(
-										`\tFound Settings => ${setting.dir + '/' + setting.base}`,
+										`\tFound Settings => ${setting.dir + '/' + setting.base} (${
+											setting.ext
+										})`,
 									);
-									if (setting.ext === 'json') {
+									if (setting.ext === '.json') {
 										path.settings[setting.dir + '/' + setting.base] = {
 											...JSON.parse(
 												fs.readFileSync(setting.dir + '/' + setting.base, {
@@ -286,7 +289,7 @@ const compile: InfinityMintScript = {
 											),
 											source: setting,
 										} as InfinityMintSVGSettings;
-									} else if (setting.ext === 'js' || setting.ext === 'ts') {
+									} else if (setting.ext === '.js' || setting.ext === '.ts') {
 										let result = require(setting.dir + '/' + setting.base);
 										result = result.default;
 
@@ -294,8 +297,44 @@ const compile: InfinityMintScript = {
 											...(typeof result === 'function' ? result() : result),
 											source: setting,
 										} as InfinityMintSVGSettings;
+									} else {
+										throw new Error(
+											'unknown settings file extension: ' +
+												setting.dir +
+												'/' +
+												setting.base,
+										);
 									}
 								});
+
+								Object.values(path.settings || {}).forEach(
+									(svgSetting: InfinityMintSVGSettings) => {
+										if (!svgSetting.style?.css) return;
+										if (svgSetting.style.css instanceof Array)
+											svgSetting.style.css.forEach(style => {
+												if (!importCache.keys[style.toString()])
+													throw new Error(
+														`${
+															settings.source.dir + '/' + settings.source.base
+														} bad css reference: ${style}`,
+													);
+												else
+													script.log(
+														`\t{cyan-fg}Verified loose CSS reference; ${style}`,
+													);
+											});
+										else if (!importCache.keys[svgSetting.style.css as string])
+											throw new Error(
+												`${
+													settings.source.dir + '/' + settings.source.base
+												} bad css reference: ${svgSetting.style.css}`,
+											);
+										else
+											script.log(
+												`\t{cyan-fg}Verified loose CSS reference; ${svgSetting.style.css}`,
+											);
+									},
+								);
 
 								if (path.content) {
 									if ((project as InfinityMintProject).javascript) {
@@ -389,6 +428,16 @@ const compile: InfinityMintScript = {
 									typeof project.paths[i],
 								);
 							}
+					},
+					'compile',
+					script.infinityConsole,
+				);
+
+				let buildImports = await stage(
+					'buildImports',
+					project,
+					async () => {
+						//this is where we need to go over every file reference in the project and include all of them
 					},
 					'compile',
 					script.infinityConsole,
