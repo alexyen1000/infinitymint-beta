@@ -5,14 +5,14 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 	InfinityMintTempProject,
-} from '@app/interfaces';
-import {InfinityMintDeployment} from '@app/deployments';
+} from 'infinitymint/dist/app/interfaces';
+import {InfinityMintDeployment} from 'infinitymint/dist/app/deployments';
 import {
 	getScriptTemporaryProject,
 	saveTempCompiledProject,
 	saveTempDeployedProject,
-} from '@app/projects';
-import {getConfigFile, stage} from '@app/helpers';
+} from 'infinitymint/dist/app/projects';
+import {getConfigFile, stage} from 'infinitymint/dist/app/helpers';
 
 const deploy: InfinityMintScript = {
 	name: 'Deploy Project',

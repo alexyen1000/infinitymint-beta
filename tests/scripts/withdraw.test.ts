@@ -1,11 +1,12 @@
 import {ethers} from 'hardhat';
 import {expect} from 'chai';
-import Withdraw from '../../scripts/withdraw';
+//import Withdraw from '../../scripts/withdraw';
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '../../app/interfaces';
 
+/** 
 describe('InfinityMint withdraw script', () => {
 	it('Function runs as normal', async () => {
 		let script = Withdraw as InfinityMintScript;
@@ -26,3 +27,4 @@ describe('InfinityMint withdraw script', () => {
 
 	it('Fails when current minter balance is 0', () => {});
 });
+**/

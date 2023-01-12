@@ -1,4 +1,4 @@
-import {InfinityMintScript} from '@app/interfaces';
+import {InfinityMintScript} from 'infinitymint/dist/app/interfaces';
 
 const update: InfinityMintScript = {
 	name: 'Update Project',

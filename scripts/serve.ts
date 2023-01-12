@@ -1,4 +1,4 @@
-import {InfinityMintScript} from '@app/interfaces';
+import {InfinityMintScript} from 'infinitymint/dist/app/interfaces';
 
 const serve: InfinityMintScript = {
 	name: 'Serve Project',

@@ -30,7 +30,6 @@
 		"./app",
 		"./tests",
 		"./gems",
-		"./scripts",
 		"./deploy",
 		"./imports",
 		"./examples",
