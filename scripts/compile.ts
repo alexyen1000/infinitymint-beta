@@ -309,7 +309,7 @@ const compile: InfinityMintScript = {
 
 								Object.values(path.settings || {}).forEach(
 									(svgSetting: InfinityMintSVGSettings) => {
-										if (!svgSetting.style?.css) return;
+										if (!svgSetting.style.css) return;
 										if (svgSetting.style.css instanceof Array)
 											svgSetting.style.css.forEach(style => {
 												if (!importCache.keys[style.toString()])
