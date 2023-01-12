@@ -186,6 +186,7 @@ const compile: InfinityMintScript = {
 								...(path.content || {}),
 							};
 							path.valid = false;
+							script.log(`{cyan-fg}[Path ${i}] Verifying...{/}`);
 							script.infinityConsole.emit('preVerify', path, typeof path);
 							verifyImport(path, i);
 							if (hasErrors) {
@@ -211,6 +212,7 @@ const compile: InfinityMintScript = {
 								...(asset.content || {}),
 							};
 							asset.valid = false;
+							script.log(`{cyan-fg}[Asset ${i}] Verifying...{/}`);
 							script.infinityConsole.emit('preVerify', asset, typeof asset);
 							verifyImport(asset, i, 'asset');
 							if (hasErrors) {
@@ -254,7 +256,7 @@ const compile: InfinityMintScript = {
 						let setupImport = (
 							path: InfinityMintProjectPath | InfinityMintProjectAsset,
 						) => {
-							script.log(`\t{yellow-fg}Setting Up{/} => ${path.fileName}`);
+							script.log(`\t{cyan-fg}Setting Up{/} => ${path.fileName}`);
 							let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
 							let pathImport = importCache.database[importCache.keys[fileName]];
 							path.source = pathImport;
@@ -392,7 +394,9 @@ const compile: InfinityMintScript = {
 							path.checksum = createHash('md5')
 								.update(JSON.stringify(JSON.stringify(path)))
 								.digest('hex');
-							script.log(`\t{cyan-fg}Object checksum{/} => ${path.checksum}`);
+							script.log(
+								`\t{cyan-fg}Object checksum{/cyan-fg} => ${path.checksum}`,
+							);
 						};
 						//here we need to loop through paths and see if we find settings
 						for (let i = 0; i < project.paths.length; i++) {
@@ -403,6 +407,7 @@ const compile: InfinityMintScript = {
 							);
 							script.log(`[Path ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
 							setupImport(project.paths[i]);
+							script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
 							project.paths[i].pathId = i;
 							script.infinityConsole.emit(
 								'postCompileSetup',
@@ -419,9 +424,10 @@ const compile: InfinityMintScript = {
 									project.assets[i],
 									typeof project.assets[i],
 								);
-								script.log(`[Assets ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
+								script.log(`[Asset ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
 								setupImport(project.assets[i]);
-								project.assets[i].assetId = i;
+								script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
+								project.assets[i].assetId = i + 1; //asset ids start counting from 1 as asset id 0 is null asset
 								script.infinityConsole.emit(
 									'postCompileSetup',
 									project.paths[i],
