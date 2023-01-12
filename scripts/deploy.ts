@@ -5,14 +5,10 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 	InfinityMintTempProject,
-} from 'infinitymint/dist/app/interfaces';
-import {InfinityMintDeployment} from 'infinitymint/dist/app/deployments';
-import {
-	getScriptTemporaryProject,
-	saveTempCompiledProject,
-	saveTempDeployedProject,
-} from 'infinitymint/dist/app/projects';
-import {getConfigFile, stage} from 'infinitymint/dist/app/helpers';
+} from '../dist/app/interfaces';
+import {InfinityMintDeployment} from '../dist/app/deployments';
+import {getScriptTemporaryProject} from '../dist/app/projects';
+import {getConfigFile, stage} from '../dist/app/helpers';
 
 const deploy: InfinityMintScript = {
 	name: 'Deploy Project',
@@ -51,13 +47,13 @@ const deploy: InfinityMintScript = {
 			project.network = {
 				chainId: script.infinityConsole.getCurrentChainId(),
 				name: script.infinityConsole.getCurrentNetwork().name,
-				url: config.settings.networks?.[
+				url: config.settings?.networks?.[
 					script.infinityConsole.getCurrentNetwork().name
 				]?.rpc,
 				tokenSymbol: script.infinityConsole.getTokenSymbol(),
 			};
 
-		let deployments: InfinityMintDeployment[];
+		let deployments: InfinityMintDeployment[] = [];
 		let verify = await stage(
 			'verify',
 			project,
@@ -90,7 +86,7 @@ const deploy: InfinityMintScript = {
 					);
 			},
 			'deploy',
-			script.infinityConsole,
+			script,
 			true,
 		);
 
@@ -145,9 +141,11 @@ const deploy: InfinityMintScript = {
 									script.log(
 										`[${i}] => (${index}) {yellow-fg}already deployed ${contract.name}{/yellow-fg} => <${contract.address}>`,
 									);
-									contracts[contract.name] = contract;
+									contracts[contract.name as string] = contract;
 									contracts[
-										index === 0 ? contract.key : contract.key + ':' + index
+										index === 0
+											? (contract.key as string)
+											: contract.key + ':' + index
 									] = contract;
 								});
 
@@ -205,9 +203,11 @@ const deploy: InfinityMintScript = {
 								script.log(
 									`[${i}] => (${index}_ deployed ${contract.name} => <${contract.address}>`,
 								);
-								contracts[contract.name] = contract;
+								contracts[contract.name as string] = contract;
 								contracts[
-									index === 0 ? contract.key : contract.key + ':' + index
+									index === 0
+										? (contract.key as string)
+										: contract.key + ':' + index
 								] = contract;
 							});
 
@@ -258,7 +258,7 @@ const deploy: InfinityMintScript = {
 							}
 						},
 						'deploy',
-						script.infinityConsole,
+						script,
 					);
 
 					//throw error from stage
@@ -295,7 +295,7 @@ const deploy: InfinityMintScript = {
 				script.log(`{green-fg}{bold}Deployment Successful{/}`);
 			},
 			'deploy',
-			script.infinityConsole,
+			script,
 		);
 
 		script.log('{green-fg}deploying project{/green-fg} (' + project.name + ')');
@@ -363,7 +363,7 @@ const deploy: InfinityMintScript = {
 							} as InfinityMintEventEmit<InfinityMintDeployment>);
 						},
 						'deploy',
-						script.infinityConsole,
+						script,
 					);
 
 					if (result !== true) throw result;
@@ -379,7 +379,7 @@ const deploy: InfinityMintScript = {
 				);
 			},
 			'deploy',
-			script.infinityConsole,
+			script,
 		);
 
 		if (setup !== true) throw setup;

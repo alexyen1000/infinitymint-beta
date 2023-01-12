@@ -363,7 +363,10 @@ export const logTransaction = async (
  */
 export const get = (contractName: string, network?: string, provider?: any) => {
 	provider = provider || ethers.provider;
-	return getContract(getLocalDeployment(contractName, network), provider);
+	return getContract(
+		getLocalDeployment(contractName, network) as any,
+		provider,
+	);
 };
 
 /**
@@ -373,7 +376,9 @@ export const get = (contractName: string, network?: string, provider?: any) => {
  * @returns
  */
 export const getDeployment = (contractName: string, network?: string) => {
-	return create(getLocalDeployment(contractName, network || hre.network.name));
+	return create(
+		getLocalDeployment(contractName, network || hre.network.name) as any,
+	);
 };
 
 export const getNetworkSettings = (network: string) => {

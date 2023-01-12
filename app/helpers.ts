@@ -13,6 +13,7 @@ import {
 	InfinityMintScriptArguments,
 	InfinityMintGemScript,
 	InfinityMintTempProject,
+	InfinityMintScriptParameters,
 } from './interfaces';
 import {generateMnemonic} from 'bip39';
 import {HardhatUserConfig} from 'hardhat/types';
@@ -337,24 +338,28 @@ export const stage = async (
 	project: InfinityMintTempProject,
 	call: (isFirstTime?: boolean) => Promise<void>,
 	type?: 'compile' | 'deploy',
-	infinityConsole?: InfinityConsole,
+	script?: InfinityMintScriptParameters,
 	forceRun?: boolean,
 	cleanup?: (isFirstTime?: boolean) => Promise<void>,
 ): Promise<Error | Error[] | boolean> => {
 	type = type || 'compile';
 	if (!project.stages) project.stages = {};
 	let eventName = 'stage' + (stage[0].toUpperCase() + stage.substring(1));
-	if (infinityConsole) infinityConsole.debugLog('executing stage => ' + stage);
+	if (script.infinityConsole)
+		script.infinityConsole.debugLog('executing stage => ' + stage);
 	else debugLog('executing stage => ' + stage);
 
-	if (infinityConsole) infinityConsole.emitAny(eventName);
+	if (script.infinityConsole) script.infinityConsole.emitAny(eventName);
 
 	if (project?.stages[stage] === true && !forceRun) {
-		if (infinityConsole)
-			infinityConsole.debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
+		if (script.infinityConsole)
+			script.infinityConsole.debugLog(
+				'\t{cyan-fg}Skipped{/cyan-fg} => ' + stage,
+			);
 		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 
-		if (infinityConsole) infinityConsole.emitAny(eventName + 'Skipped');
+		if (script.infinityConsole)
+			script.infinityConsole.emitAny(eventName + 'Skipped');
 		return true;
 	}
 
@@ -365,20 +370,23 @@ export const stage = async (
 	else saveTempDeployedProject(project);
 
 	try {
-		if (infinityConsole)
-			infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
+		if (script.infinityConsole)
+			script.infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
 		await call(isFirstTime);
 		project.stages[stage] = true;
 
-		if (infinityConsole)
-			infinityConsole.emitAny(eventName + 'Post', isFirstTime);
+		if (script.infinityConsole)
+			script.infinityConsole.emitAny(eventName + 'Post', isFirstTime);
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
-		if (infinityConsole)
-			infinityConsole.debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
+		if (script.infinityConsole)
+			script.infinityConsole.debugLog(
+				'\t{green-fg}Success{/green-fg} => ' + stage,
+			);
 		else debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
-		if (infinityConsole) infinityConsole.emitAny(eventName + 'Success');
+		if (script.infinityConsole)
+			script.infinityConsole.emitAny(eventName + 'Success');
 		return true;
 	} catch (error) {
 		project.stages[stage] = error;
@@ -386,10 +394,11 @@ export const stage = async (
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
-		if (infinityConsole) infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
+		if (script.infinityConsole)
+			script.infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
 		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
-		if (infinityConsole)
-			infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
+		if (script.infinityConsole)
+			script.infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
 
 		if (cleanup) await cleanup();
 
@@ -752,10 +761,20 @@ export const findScripts = async (roots?: string[]) => {
 	let config = getConfigFile();
 	roots = roots || [];
 
-	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS'))
+	if (
+		!isInfinityMint() &&
+		!isTypescript() &&
+		isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS')
+	)
 		roots.push(
 			process.cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js',
 		);
+	if (
+		!isInfinityMint() &&
+		isTypescript() &&
+		isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS')
+	)
+		roots.push(process.cwd() + '/node_modules/infinitymint/scripts/**/*.ts');
 
 	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
 	roots.push(process.cwd() + '/scripts/**/*.js');

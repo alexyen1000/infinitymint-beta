@@ -327,7 +327,8 @@ export class InfinityMintDeployment {
 	public updateLiveDeployments(
 		liveDeployments: InfinityMintDeploymentLive | InfinityMintDeploymentLive[],
 	) {
-		if (liveDeployments instanceof Array) liveDeployments = [liveDeployments];
+		if (liveDeployments instanceof Array)
+			(liveDeployments as InfinityMintDeploymentLive[]) = [...liveDeployments];
 
 		let mismatchNetworkAndProject = liveDeployments.filter(
 			(deployment: InfinityMintDeploymentLive) =>
@@ -439,8 +440,9 @@ export class InfinityMintDeployment {
 			name: hre.network.name,
 			chainId: hre.network.config.chainId,
 		};
+		deployment.name = deployment.contractName;
 		deployment.deploymentScript = this.deploymentScriptLocation;
-		return deployment;
+		return deployment as any;
 	}
 
 	async setPermissions(addresses: string[], log: boolean) {
@@ -484,6 +486,7 @@ export class InfinityMintDeployment {
 			...args,
 			debugLog: debugLog,
 			log: log,
+			infinityConsole: null,
 			eventEmitter: eventEmitter || this.emitter,
 			deploy: this,
 		} as InfinityMintDeploymentParameters;

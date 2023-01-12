@@ -1,7 +1,7 @@
 import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
-} from 'infinitymint/dist/app/interfaces';
+} from '../dist/app/interfaces';
 
 const exportInfinityMint: InfinityMintScript = {
 	name: 'Export Project',

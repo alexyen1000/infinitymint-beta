@@ -1,4 +1,4 @@
-import {getScriptTemporaryProject} from 'infinitymint/dist/app/projects';
+import {getScriptTemporaryProject} from '../dist/app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
@@ -6,12 +6,12 @@ import {
 	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
-} from 'infinitymint/app/interfaces';
-import {logDirect, stage} from 'infinitymint/dist/app/helpers';
+} from '../dist/app/interfaces';
+import {stage} from '../dist/app/helpers';
 import {createHash} from 'node:crypto';
-import {getImports} from 'infinitymint/dist/app/imports';
+import {getImports} from '../dist/app/imports';
 import fs from 'fs';
-import {InfinityMintSVGSettings} from 'infinitymint/dist/app/content';
+import {InfinityMintSVGSettings} from '../dist/app/content';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -40,7 +40,7 @@ const compile: InfinityMintScript = {
 					'verify',
 					project,
 					async () => {
-						let errors = [];
+						let errors: string[] = [];
 						let files: string[] = [];
 						let hasErrors = false;
 						let tempPaths = (project as InfinityMintProject).javascript
@@ -58,11 +58,13 @@ const compile: InfinityMintScript = {
 							tempAssets = project.assets || [];
 						} else {
 							Object.keys(project.assets || {}).forEach(section => {
-								Object.values(project.assets[section]).forEach(
-									(asset: InfinityMintProjectAsset) => {
-										tempAssets.push({...asset, section: section});
-									},
-								);
+								Object.values(
+									project.assets !== undefined
+										? (project.assets[section] as InfinityMintProjectAsset[])
+										: {},
+								).forEach((asset: InfinityMintProjectAsset) => {
+									tempAssets.push({...asset, section: section});
+								});
 							});
 						}
 
@@ -233,7 +235,7 @@ const compile: InfinityMintScript = {
 						project.assets = tempAssets;
 					},
 					'compile',
-					script.infinityConsole,
+					script,
 					true,
 				);
 
@@ -310,13 +312,16 @@ const compile: InfinityMintScript = {
 
 								Object.values(path.settings || {}).forEach(
 									(svgSetting: InfinityMintSVGSettings) => {
-										if (!svgSetting.style.css) return;
-										if (svgSetting.style.css instanceof Array)
-											svgSetting.style.css.forEach(style => {
+										if (!svgSetting!.style!.css) return;
+
+										if (svgSetting!.style!.css instanceof Array)
+											svgSetting!.style!.css.forEach(style => {
 												if (!importCache.keys[style.toString()])
 													throw new Error(
 														`${
-															settings.source.dir + '/' + settings.source.base
+															svgSetting!.source!.dir +
+															'/' +
+															svgSetting!.source!.base
 														} bad css reference: ${style}`,
 													);
 												else
@@ -324,30 +329,37 @@ const compile: InfinityMintScript = {
 														`\t{cyan-fg}Verified loose CSS reference{/} => ${style}`,
 													);
 											});
-										else if (!importCache.keys[svgSetting.style.css as string])
+										else if (
+											!importCache.keys[svgSetting!.style!.css as string]
+										)
 											throw new Error(
 												`${
-													settings.source.dir + '/' + settings.source.base
-												} bad css reference: ${svgSetting.style.css}`,
+													svgSetting!.source!.dir +
+													'/' +
+													svgSetting!.source!.base
+												} bad css reference: ${svgSetting!.style!.css}`,
 											);
 										else
 											script.log(
-												`\t{cyan-fg}Verified loose CSS reference{/} => ${svgSetting.style.css}`,
+												`\t{cyan-fg}Verified loose CSS reference{/} => ${
+													svgSetting!.style!.css
+												}`,
 											);
 									},
 								);
 
 								if (path.content) {
+									//if this path has content
 									if ((project as InfinityMintProject).javascript) {
 										let newContent = {};
 										Object.keys(path.content).map(content => {
 											let newImport = (newContent[content] = {
 												fileName:
-													typeof path.content[content] === 'string'
-														? path.content[content]
-														: path.content[content].fileName,
-												...(typeof path.content[content] !== 'string'
-													? path.content[content]
+													typeof path.content![content] === 'string'
+														? path.content![content]
+														: path.content![content].fileName,
+												...(typeof path.content![content] !== 'string'
+													? path.content![content]
 													: {}),
 											} as InfinityMintProjectContent);
 											script.infinityConsole.emit(
@@ -361,20 +373,20 @@ const compile: InfinityMintScript = {
 												newImport,
 												typeof newImport,
 											);
-											path.content[content] = newImport;
+											path.content![content] = newImport;
 										});
 									} else
 										Object.keys(path.content).forEach(content => {
 											script.infinityConsole.emit(
 												'preCompileSetup',
-												path.content[content],
-												typeof path.content[content],
+												path.content![content],
+												typeof path.content![content],
 											);
-											setupImport(path.content[content]);
+											setupImport(path.content![content]);
 											script.infinityConsole.emit(
 												'postCompileSetup',
-												path.content[content],
-												typeof path.content[content],
+												path.content![content],
+												typeof path.content![content],
 											);
 										});
 								}
@@ -385,7 +397,10 @@ const compile: InfinityMintScript = {
 								key: `${project.name}@${fileName}`,
 								checksum: path.source.checksum,
 								project: project.name,
-								version: project.version,
+								version: project.version || {
+									version: '1.0.0',
+									tag: 'initial',
+								},
 								stats: fs.statSync(`${path.source.dir}/${path.source.base}`),
 								exported: Date.now(),
 							};
@@ -435,7 +450,6 @@ const compile: InfinityMintScript = {
 							}
 					},
 					'compile',
-					script.infinityConsole,
 				);
 
 				let buildImports = await stage(
@@ -445,13 +459,12 @@ const compile: InfinityMintScript = {
 						//this is where we need to go over every file reference in the project and include all of them
 					},
 					'compile',
-					script.infinityConsole,
 				);
 
 				if (setup !== true) throw setup;
 			},
 			'compile',
-			script.infinityConsole,
+			script,
 		);
 
 		if (result !== true) throw result;

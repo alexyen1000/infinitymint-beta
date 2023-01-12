@@ -1609,7 +1609,7 @@ export interface InfinityMintDeploymentParameters extends KeyValue {
 	/**
 	 * the current infinity console this is running from
 	 */
-	infinityConsole?: InfinityConsole;
+	infinityConsole: InfinityConsole;
 	/**
 	 * the event emitter for you to emit events from, usually provided by the InfinityConsole. See {@link app/console.InfinityConsole}.
 	 *
@@ -1671,7 +1671,7 @@ export interface InfinityMintDeploymentLive extends KeyValue {
 	/**
 	 * The name of the current deployment, same as the .sol filename.
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * The address of this deployment on the blockchain.
 	 */
