@@ -254,7 +254,7 @@ const compile: InfinityMintScript = {
 						let setupImport = (
 							path: InfinityMintProjectPath | InfinityMintProjectAsset,
 						) => {
-							script.log(`\t{cyan-fg}Setting Up{/} => ${path.fileName}`);
+							script.log(`\t{yellow-fg}Setting Up{/} => ${path.fileName}`);
 							let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
 							let pathImport = importCache.database[importCache.keys[fileName]];
 							path.source = pathImport;
@@ -392,7 +392,7 @@ const compile: InfinityMintScript = {
 							path.checksum = createHash('md5')
 								.update(JSON.stringify(JSON.stringify(path)))
 								.digest('hex');
-							script.log(`\tObject checksum => ${path.checksum}`);
+							script.log(`\t{cyan-fg}Object checksum{/} => ${path.checksum}`);
 						};
 						//here we need to loop through paths and see if we find settings
 						for (let i = 0; i < project.paths.length; i++) {
