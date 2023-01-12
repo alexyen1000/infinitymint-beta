@@ -391,7 +391,7 @@ export const getNetworkSettings = (network: string) => {
 
 export const getDefaultAccountIndex = () => {
 	let config = getConfigFile();
-	return config?.settings?.networks[hre.network.name]?.defaultAccount || 0;
+	return config?.settings?.networks?.[hre.network.name]?.defaultAccount || 0;
 };
 
 export const registerNetworkLogs = () => {
@@ -399,7 +399,7 @@ export const registerNetworkLogs = () => {
 	let config = getConfigFile();
 
 	networks.forEach(network => {
-		let settings = config?.settings?.networks[network] || {};
+		let settings = config?.settings?.networks?.[network] || {};
 		if (settings.useDefaultPipe) return;
 		debugLog('registered pipe for ' + network);
 		defaultFactory.registerSimplePipe(network);
