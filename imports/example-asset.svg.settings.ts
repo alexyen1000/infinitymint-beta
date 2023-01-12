@@ -1,4 +1,4 @@
-import { InfinityMintSVGSettings } from "@app/content";
+import {InfinityMintSVGSettings} from '@app/content';
 
 const settings: InfinityMintSVGSettings = {
 	transform: {
@@ -6,10 +6,10 @@ const settings: InfinityMintSVGSettings = {
 	},
 	style: {
 		filter: {
-			type: "sepia",
+			type: 'sepia',
 			unique: true,
 		},
-		css: ["/imports/css/example.asset.css"],
+		css: ['/imports/css/example.asset.css'],
 		unique: true,
 	},
 };

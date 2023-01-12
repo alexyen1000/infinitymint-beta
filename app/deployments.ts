@@ -1,4 +1,4 @@
-import events, { EventEmitter } from "events";
+import events, {EventEmitter} from 'events';
 import {
 	InfinityMintDeploymentScript,
 	InfinityMintDeploymentParameters,
@@ -8,7 +8,9 @@ import {
 	InfinityMintEventKeys,
 	InfinityMintCompiledProject,
 	InfinityMintDeployedProject,
-} from "./interfaces";
+	InfinityMintEventEmitter,
+	KeyValue,
+} from './interfaces';
 import {
 	debugLog,
 	findFiles,
@@ -18,21 +20,30 @@ import {
 	log,
 	readSession,
 	warning,
-} from "./helpers";
-import { requireProject, getCompiledProject } from "./projects";
-import { glob } from "glob";
-import fs from "fs";
-import path from "path";
+} from './helpers';
+import {
+	requireProject,
+	getCompiledProject,
+	getProject,
+	hasCompiledProject,
+	hasTempCompiledProject,
+	getTempCompiledProject,
+	hasTempDeployedProject,
+	getTempDeployedProject,
+} from './projects';
+import {glob} from 'glob';
+import fs from 'fs';
+import path from 'path';
 import {
 	getContract,
 	getDefaultSigner,
 	getNetworkSettings,
 	logTransaction,
-} from "./web3";
-import { Contract } from "@ethersproject/contracts";
-import hre from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import InfinityConsole from "./console";
+} from './web3';
+import {Contract} from '@ethersproject/contracts';
+import hre from 'hardhat';
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
+import InfinityConsole from './console';
 
 /**
  * Deployment class for InfinityMint deployments
@@ -85,30 +96,24 @@ export class InfinityMintDeployment {
 		key: string,
 		network: string,
 		project: InfinityMintProject,
-		console?: InfinityConsole
+		console?: InfinityConsole,
 	) {
 		this.emitter = console?.getEventEmitter() || new events.EventEmitter();
-
-		if (
-			fs.existsSync(process.cwd() + "/deploy/" + deploymentScriptLocation)
-		)
-			this.reloadScript();
-		else
-			debugLog(
-				`deploy script for [${this.key}]<${this.project}> not found`
-			);
-
 		this.deploymentScriptLocation = deploymentScriptLocation;
 		this.key = key;
 
+		if (fs.existsSync(this.deploymentScriptLocation)) this.reloadScript();
+		else
+			debugLog(`\tdeploy script for [${this.key}]<${this.project}> not found`);
+
 		if (this.deploymentScript.key !== this.key)
 			throw new Error(
-				"key mismatch: " +
+				'key mismatch: ' +
 					this.deploymentScript.key +
-					" in " +
+					' in ' +
 					deploymentScriptLocation +
-					"should equal " +
-					this.key
+					'should equal ' +
+					this.key,
 			);
 
 		this.network = network;
@@ -120,28 +125,28 @@ export class InfinityMintDeployment {
 			this.liveDeployments = this.getDeployments();
 			this.hasDeployedAll = this.liveDeployments.length !== 0;
 			this.hasSetupDeployments =
-				this.liveDeployments.filter((deployment) => deployment.setup)
-					.length === 0;
+				this.liveDeployments.filter(deployment => deployment.setup).length ===
+				0;
 
-			debugLog(
-				`previous deployment for [${this.key}]<${this.project}> exists`
-			);
+			debugLog(`previous deployment for [${this.key}]<${this.project}> exists`);
 		}
 	}
 
 	/**
 	 * reloads the source file script
 	 */
-	async reloadScript() {
-		let location = process.cwd() + this.deploymentScriptLocation;
+	reloadScript() {
+		let location = this.deploymentScriptLocation;
 		if (require.cache[location]) {
-			debugLog("deleting old cache of " + location);
+			debugLog('\tdeleting old cache of ' + location);
 			delete require.cache[location];
-			debugLog(`reloading <${location}>`);
-		} else debugLog(`loading <${location}>`);
+			debugLog(`\treloading <${location}>`);
+		} else debugLog(`\tloading <${location}>`);
 
 		let requirement = require(location);
 		this.deploymentScript = requirement.default || requirement;
+		if (this.deploymentScript.key === undefined)
+			this.deploymentScript.key = this.key;
 	}
 
 	/**
@@ -171,7 +176,7 @@ export class InfinityMintDeployment {
 	}
 
 	getsolidityFolder() {
-		return this.deploymentScript.solidityFolder || "alpha";
+		return this.deploymentScript.solidityFolder || 'alpha';
 	}
 
 	getKey() {
@@ -196,7 +201,7 @@ export class InfinityMintDeployment {
 		return (
 			process.cwd() +
 			`/temp/deployments/${this.project.name}@${
-				this.project.version?.version || "1.0.0"
+				this.project.version?.version || '1.0.0'
 			}/${this.key}_${this.network}.json`
 		);
 	}
@@ -208,8 +213,8 @@ export class InfinityMintDeployment {
 			};
 		let result = JSON.parse(
 			fs.readFileSync(this.getFilePath(), {
-				encoding: "utf-8",
-			})
+				encoding: 'utf-8',
+			}),
 		);
 
 		if (
@@ -217,18 +222,14 @@ export class InfinityMintDeployment {
 			(result.network && result.network !== this.network)
 		)
 			throw new Error(
-				"bad file: " +
-					this.getFilePath() +
-					" is from another network/project"
+				'bad file: ' + this.getFilePath() + ' is from another network/project',
 			);
 
 		return result;
 	}
 
 	getDeploymentByArtifactName(name: string) {
-		return this.liveDeployments.filter(
-			(deployment) => (deployment.name = name)
-		);
+		return this.liveDeployments.filter(deployment => (deployment.name = name));
 	}
 
 	getDeployer(index?: number) {
@@ -285,15 +286,15 @@ export class InfinityMintDeployment {
 			!fs.existsSync(
 				process.cwd() +
 					`/temp/deployments/${this.project.name}@${
-						this.project.version?.version || "1.0.0"
-					}/`
+						this.project.version?.version || '1.0.0'
+					}/`,
 			)
 		)
 			fs.mkdirSync(
 				process.cwd() +
 					`/temp/deployments/${this.project.name}@${
-						this.project.version?.version || "1.0.0"
-					}/`
+						this.project.version?.version || '1.0.0'
+					}/`,
 			);
 
 		fs.writeFileSync(this.getFilePath(), JSON.stringify(deployments));
@@ -324,27 +325,24 @@ export class InfinityMintDeployment {
 	 * @param liveDeployments
 	 */
 	public updateLiveDeployments(
-		liveDeployments:
-			| InfinityMintDeploymentLive
-			| InfinityMintDeploymentLive[]
+		liveDeployments: InfinityMintDeploymentLive | InfinityMintDeploymentLive[],
 	) {
 		if (liveDeployments instanceof Array)
-			liveDeployments = [liveDeployments];
+			(liveDeployments as InfinityMintDeploymentLive[]) = [...liveDeployments];
 
 		let mismatchNetworkAndProject = liveDeployments.filter(
 			(deployment: InfinityMintDeploymentLive) =>
 				deployment.network.name !== this.network ||
-				deployment.project !== this.project.name
+				deployment.project !== this.project.name,
 		) as InfinityMintDeploymentLive[];
 
 		//throw error if we found any
 		if (mismatchNetworkAndProject.length !== 0)
 			throw new Error(
-				"one or more deployments are from a different network or project, check: " +
+				'one or more deployments are from a different network or project, check: ' +
 					mismatchNetworkAndProject.map(
-						(deployment) =>
-							`<${deployment.key}>(${deployment.name}), `
-					)
+						deployment => `<${deployment.key}>(${deployment.name}), `,
+					),
 			);
 
 		this.liveDeployments = liveDeployments as InfinityMintDeploymentLive[];
@@ -360,11 +358,11 @@ export class InfinityMintDeployment {
 		let deployment = this.liveDeployments[index || 0];
 		let path =
 			process.cwd() +
-			"/deployments/" +
+			'/deployments/' +
 			this.network +
-			"/" +
+			'/' +
 			deployment.name +
-			".json";
+			'.json';
 
 		return fs.existsSync(path);
 	}
@@ -378,19 +376,19 @@ export class InfinityMintDeployment {
 		let deployment = this.liveDeployments[index || 0];
 		let path =
 			process.cwd() +
-			"/deployments/" +
+			'/deployments/' +
 			this.network +
-			"/" +
+			'/' +
 			deployment.name +
-			".json";
+			'.json';
 
 		if (!fs.existsSync(path))
-			throw new Error("local deployment not found: " + path);
+			throw new Error('local deployment not found: ' + path);
 
 		return JSON.parse(
 			fs.readFileSync(path, {
-				encoding: "utf-8",
-			})
+				encoding: 'utf-8',
+			}),
 		) as InfinityMintDeploymentLocal;
 	}
 
@@ -409,7 +407,7 @@ export class InfinityMintDeployment {
 	 */
 	async deploy(...args: any) {
 		this.reloadScript();
-		let result = await this.execute("deploy", args);
+		let result = await this.execute('deploy', args);
 
 		let contracts: Contract[];
 		if (!(result instanceof Array)) contracts = [result] as Contract[];
@@ -417,12 +415,10 @@ export class InfinityMintDeployment {
 
 		let session = readSession();
 
-		contracts.forEach((contract) => {
+		contracts.forEach(contract => {
 			if (!session.environment?.deployments[contract.address])
 				throw new Error(
-					"contract " +
-						contract.address +
-						" is not in the .session file"
+					'contract ' + contract.address + ' is not in the .session file',
 				);
 
 			let deployment = session.environment?.deployments[
@@ -444,8 +440,9 @@ export class InfinityMintDeployment {
 			name: hre.network.name,
 			chainId: hre.network.config.chainId,
 		};
+		deployment.name = deployment.contractName;
 		deployment.deploymentScript = this.deploymentScriptLocation;
-		return deployment;
+		return deployment as any;
 	}
 
 	async setPermissions(addresses: string[], log: boolean) {
@@ -453,7 +450,7 @@ export class InfinityMintDeployment {
 		let authenticator = contract;
 
 		if (!authenticator?.multiApprove) {
-			if (isEnvTrue("THROW_ALL_ERRORS"))
+			if (isEnvTrue('THROW_ALL_ERRORS'))
 				throw new Error(`${this.key} does not have an approve method`);
 			else warning(`${this.key} does not have an approve method`);
 
@@ -464,13 +461,13 @@ export class InfinityMintDeployment {
 		if (logTransaction)
 			await logTransaction(
 				tx,
-				`setting ${addresses} permissions inside of ${this.key}`
+				`setting ${addresses} permissions inside of ${this.key}`,
 			);
 	}
 
 	async setup(...args: any) {
 		this.reloadScript();
-		await this.execute("setup", args);
+		await this.execute('setup', args);
 		this.hasSetupDeployments = true;
 	}
 
@@ -480,32 +477,44 @@ export class InfinityMintDeployment {
 	 * @param args
 	 * @returns
 	 */
-	async execute(method: "setup" | "deploy" | "update" | "switch", args: any) {
+	async execute(
+		method: 'setup' | 'deploy' | 'update' | 'switch' | 'cleanup',
+		args: KeyValue,
+		eventEmitter?: InfinityMintEventEmitter,
+	) {
 		let params = {
 			...args,
 			debugLog: debugLog,
 			log: log,
-			eventEmitter: this.emitter,
+			infinityConsole: null,
+			eventEmitter: eventEmitter || this.emitter,
 			deploy: this,
 		} as InfinityMintDeploymentParameters;
 
-		debugLog("executing method " + method + " on " + this.key);
+		debugLog('executing method ' + method + ' on ' + this.key);
 
 		switch (method) {
-			case "deploy":
-				let deployResult = await this.deploymentScript.deploy(params);
-				return deployResult;
-			case "setup":
-				await this.deploymentScript.setup(params);
+			case 'deploy':
+				if (this.deploymentScript.deploy)
+					return await this.deploymentScript.deploy(params);
+			case 'setup':
+				if (this.deploymentScript.setup)
+					await this.deploymentScript.setup(params);
 				return;
-			case "update":
-				await this.deploymentScript.update(params);
+			case 'update':
+				if (this.deploymentScript.update)
+					await this.deploymentScript.update(params);
 				return;
-			case "switch":
-				await this.deploymentScript.switch(params);
+			case 'cleanup':
+				if (this.deploymentScript.cleanup)
+					return await this.deploymentScript.cleanup(params);
+				return;
+			case 'switch':
+				if (this.deploymentScript.switch)
+					await this.deploymentScript.switch(params);
 				return;
 			default:
-				throw new Error("unknown method:" + this.execute);
+				throw new Error('unknown method:' + this.execute);
 		}
 	}
 }
@@ -517,17 +526,17 @@ export class InfinityMintDeployment {
  */
 export const loadDeploymentClasses = async (
 	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
-	console?: InfinityConsole
+	console?: InfinityConsole,
 ) => {
 	let deployments = [...(await getDeploymentClasses(project, console))];
 
-	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_DEPLOY"))
+	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_DEPLOY'))
 		deployments = [
 			...deployments,
 			...(await getDeploymentClasses(
 				project,
 				console,
-				process.cwd() + "/node_modules/infinitymint/"
+				process.cwd() + '/node_modules/infinitymint/',
 			)),
 		];
 
@@ -536,56 +545,64 @@ export const loadDeploymentClasses = async (
 
 /**
  * Returns a list of deployment classes relating to a project in order to deploy it ready to be steped through
- * @param project
+ * @param projectOrPath
  * @param loadedDeploymentClasses
  * @returns
  */
 export const getProjectDeploymentClasses = async (
-	project: string,
+	projectOrPath: string | InfinityMintCompiledProject,
 	console?: InfinityConsole,
-	loadedDeploymentClasses?: InfinityMintDeployment[]
+	loadedDeploymentClasses?: InfinityMintDeployment[],
 ) => {
 	let compiledProject: InfinityMintCompiledProject;
-	if (typeof project === "string")
-		compiledProject = getCompiledProject(project);
-	else compiledProject = project;
+	if (typeof projectOrPath === 'string') {
+		let project = getProject(projectOrPath);
+
+		if (hasTempDeployedProject(project))
+			compiledProject = getTempDeployedProject(project);
+		else if (hasCompiledProject(project))
+			compiledProject = getCompiledProject(project);
+		else
+			throw new Error(
+				'no valid project found to get deployment classes for: ' +
+					projectOrPath,
+			);
+	} else compiledProject = projectOrPath;
 
 	loadedDeploymentClasses =
 		loadedDeploymentClasses ||
 		(await loadDeploymentClasses(compiledProject, console));
 
-	let setings = getNetworkSettings(hre.network.name);
+	let setings = getNetworkSettings(compiledProject.network.name);
 
 	if (!compiledProject.compiled)
 		throw new Error(
-			"please compile " + compiledProject.name + " before launching it"
+			'please compile ' + compiledProject.name + ' before launching it',
 		);
 
 	let moduleDeployments = loadedDeploymentClasses.filter(
-		(deployment) =>
+		deployment =>
 			Object.keys(compiledProject.modules).filter(
-				(key) =>
+				key =>
 					key === deployment.getModule() &&
-					compiledProject.modules[key] ===
-						deployment.getContractName()
-			).length !== 0
+					compiledProject.modules[key] === deployment.getContractName(),
+			).length !== 0,
 	);
 
 	let otherDeployments = loadedDeploymentClasses.filter(
-		(deployment) =>
+		deployment =>
 			moduleDeployments.filter(
-				(thatDeployment) =>
-					deployment.getContractName() ===
-					thatDeployment.getContractName()
+				thatDeployment =>
+					deployment.getContractName() === thatDeployment.getContractName(),
 			).length !== 0 &&
 			[
 				...(setings?.disabledContracts || []),
 				...(compiledProject.settings?.disabledContracts || ([] as any)),
 			].filter(
-				(value) =>
+				value =>
 					value === deployment.getContractName() ||
-					value === deployment.getKey()
-			).length === 0
+					value === deployment.getKey(),
+			).length === 0,
 	);
 
 	let deployments = [...moduleDeployments, ...otherDeployments];
@@ -594,7 +611,7 @@ export const getProjectDeploymentClasses = async (
 	deployments = deployments.sort((a, b) =>
 		a.isLibrary() || a.isImportant()
 			? deployments.length
-			: a.getIndex() - b.getIndex()
+			: a.getIndex() - b.getIndex(),
 	);
 
 	return deployments;
@@ -614,16 +631,11 @@ export const getLocalDeployment = (contractName: string, network: string) => {
  */
 export const readLocalDeployment = (contractName: string, network: string) => {
 	let path =
-		process.cwd() +
-		"/deployments/" +
-		network +
-		"/" +
-		contractName +
-		".json";
+		process.cwd() + '/deployments/' + network + '/' + contractName + '.json';
 
 	if (!fs.existsSync(path)) throw new Error(`${path} not found`);
 	return JSON.parse(
-		fs.readFileSync(path, { encoding: "utf-8" })
+		fs.readFileSync(path, {encoding: 'utf-8'}),
 	) as InfinityMintDeploymentLocal;
 };
 
@@ -637,16 +649,16 @@ export const readLocalDeployment = (contractName: string, network: string) => {
 export const hasDeploymentManifest = (
 	contractName: string,
 	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
-	network?: string
+	network?: string,
 ) => {
 	network = network || project?.network?.name;
 
-	if (!network) throw new Error("unable to automatically determain network");
+	if (!network) throw new Error('unable to automatically determain network');
 
 	let path =
 		process.cwd() +
 		`/temp/deployments/${project.name}@${
-			project.version?.version || "1.0.0"
+			project.version?.version || '1.0.0'
 		}/${contractName}_${network}.json`;
 	return fs.existsSync(path);
 };
@@ -654,11 +666,11 @@ export const hasDeploymentManifest = (
 export const getDeploymentClass = (
 	contractName: string,
 	project: InfinityMintDeployedProject,
-	network?: string
+	network?: string,
 ) => {
 	network = network || project?.network?.name;
 
-	if (!network) throw new Error("unable to automatically determin network");
+	if (!network) throw new Error('unable to automatically determin network');
 
 	let liveDeployments = getLiveDeployments(contractName, project, network);
 	return create(liveDeployments[0]);
@@ -667,21 +679,21 @@ export const getDeploymentClass = (
 export const getLiveDeployments = (
 	contractName: string,
 	project: InfinityMintCompiledProject | InfinityMintDeployedProject,
-	network: string
+	network: string,
 ) => {
 	let path =
 		process.cwd() +
 		`/temp/deployments/${project.name}@${
-			project.version?.version || "1.0.0"
+			project.version?.version || '1.0.0'
 		}/${contractName}_${network}.json`;
 
 	if (!hasDeploymentManifest(contractName, project, network))
-		throw new Error("missing deployment manifest: " + path);
+		throw new Error('missing deployment manifest: ' + path);
 
 	let result = JSON.parse(
 		fs.readFileSync(path, {
-			encoding: "utf-8",
-		})
+			encoding: 'utf-8',
+		}),
 	);
 	return (result.liveDeployments || []) as InfinityMintDeploymentLive[];
 };
@@ -693,17 +705,17 @@ export const getLiveDeployments = (
  */
 export const create = (
 	liveDeployment: InfinityMintDeploymentLive,
-	deploymentScript?: string
+	deploymentScript?: string,
 ) => {
 	let project = requireProject(
 		liveDeployment.project,
-		liveDeployment.javascript
+		liveDeployment.javascript,
 	);
 	return new InfinityMintDeployment(
 		deploymentScript || liveDeployment.deploymentScript,
 		liveDeployment.key,
 		liveDeployment.network.name,
-		project
+		project,
 	);
 };
 
@@ -715,30 +727,44 @@ export const getDeploymentClasses = async (
 	project: InfinityMintDeployedProject | InfinityMintCompiledProject,
 	console?: InfinityConsole,
 	network?: string,
-	roots?: string[]
+	roots?: string[],
 ): Promise<InfinityMintDeployment[]> => {
 	network = network || project.network?.name;
 
-	if (!network) throw new Error("unable to automatically determain network");
+	let session = readSession();
+	if (!network) throw new Error('unable to automatically determain network');
 
 	let searchLocations = [...(roots || [])];
-	searchLocations.push(process.cwd() + "/deploy/**/*.js");
-	if (isTypescript()) searchLocations.push(process.cwd() + "/deploy/**/*.ts");
-	if (!isInfinityMint() && isEnvTrue("INFINITYMINT_INCLUDE_DEPLOY"))
+	searchLocations.push(process.cwd() + '/deploy/**/*.js');
+	if (isTypescript()) searchLocations.push(process.cwd() + '/deploy/**/*.ts');
+	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_DEPLOY'))
 		searchLocations.push(
-			process.cwd() + "/node_modules/infinitymint/dist/deploy/**/*.js"
+			process.cwd() + '/node_modules/infinitymint/dist/deploy/**/*.js',
 		);
 
 	let deployments = [];
 	for (let i = 0; i < searchLocations.length; i++) {
-		debugLog("scanning for deployment scripts in => " + searchLocations[i]);
+		debugLog('scanning for deployment scripts in => ' + searchLocations[i]);
 		let files = await findFiles(searchLocations[i]);
 		files.map((file, index) => {
 			let key = path.parse(file).name;
-			debugLog(`[${index}] => ${key}:(${file})`);
-			deployments.push(
-				new InfinityMintDeployment(file, key, network, project, console)
+			debugLog(`[${index}] => ${key}`);
+			let result = new InfinityMintDeployment(
+				file,
+				key,
+				network,
+				project,
+				console,
 			);
+
+			if (
+				result.getDeploymentScript()?.solidityFolder !==
+				session.environment.solidityFolder
+			)
+				debugLog(
+					'\tskipping (since wrong solidity folder) => ' + searchLocations[i],
+				);
+			else deployments.push(result);
 		});
 	}
 

@@ -1,44 +1,112 @@
-import Pipes from "../pipes";
-import { debugLog, executeScript, log } from "../helpers";
-import { InfinityMintWindow } from "../window";
-import { InfinityMintScript } from "../interfaces";
+import {executeScript, isInfinityMint, warning} from '../helpers';
+import {InfinityMintWindow} from '../window';
+import {InfinityMintScript} from '../interfaces';
+import {defaultFactory} from '../pipes';
 
 const Script = new InfinityMintWindow(
-	"Script",
+	'Script',
 	{
-		fg: "white",
-		bg: "black",
+		fg: 'white',
+		bg: 'black',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
+		type: 'line',
 	},
 	{
-		ch: " ",
+		ch: ' ',
 		track: {
-			bg: "black",
+			bg: 'black',
 		},
 		style: {
 			inverse: true,
 		},
-	}
+	},
 );
+
+const execute = async (window: InfinityMintWindow) => {
+	//run in the background
+	window.data.processing = true;
+	window.elements['retry'].hide();
+
+	try {
+		window
+			.getInfinityConsole()
+			.log(
+				`{bold}{blue-fg}{underline}executing ${
+					(window.data.script as InfinityMintScript).fileName
+				}{/}`,
+			);
+		//set the default logger in the dist and node modules
+
+		await executeScript(
+			window.data.script,
+			window.getInfinityConsole().getEventEmitter(),
+			{},
+			window.data.args || {},
+			window.getInfinityConsole(),
+		);
+		window
+			.getInfinityConsole()
+			.log('{bold}{green-fg}{underline}script executed successfully{/}');
+		window.setHideCloseButton(false);
+		window.elements['output'].setScrollPerc(100);
+		window.elements['outputDebug'].setScrollPerc(100);
+		window.elements['close'].show();
+		setTimeout(() => {
+			window.data.processing = false;
+		}, 1000);
+	} catch (error) {
+		setTimeout(() => {
+			window.data.processing = false;
+		}, 1000);
+
+		window
+			.getInfinityConsole()
+			.log('{red-fg}{bold}{underline}script failed exectuion{/}');
+		if (!window.getInfinityConsole().isTelnet()) console.error(error);
+
+		window.elements['retry'].show();
+		window.setHideCloseButton(false);
+		window.elements['output'].setScrollPerc(100);
+		window.elements['outputDebug'].setScrollPerc(100);
+
+		window.getInfinityConsole().errorHandler(error);
+		//log normally to default console if we aren't telnet
+	}
+};
 
 Script.initialize = async (window, frame, blessed) => {
 	if (!window.data.script)
-		throw new Error("must be instantated with script in data field");
+		throw new Error('must be instantated with script in data field');
 
-	let think = (window, element) => {
-		if (window.data.processing) {
+	//when window.logs occur
+	let cb = async (msg: string, pipe: string) => {
+		if (pipe === 'debug') window.elements['outputDebug'].pushLine(msg);
+
+		//keep showing debug
+		if (pipe === 'default' && window.data.processing)
+			window.elements['output'].pushLine(msg);
+	};
+
+	window.getInfinityConsole().getLogs().emitter.on('log', cb);
+	//when this window is destroyed, destroy the output emitter
+	window.on('destroy', () => {
+		window.getInfinityConsole().getLogs().emitter.off('log', cb);
+	});
+
+	window.think = async (window, element) => {
+		if (window.data.processing === true) {
 			output.setScrollPerc(100);
 			outputDebug.setScrollPerc(100);
 		}
 	};
-	let output = window.createElement("output", {
-		height: "100%-8",
-		width: "50%",
+
+	let output = window.createElement('output', {
+		height: '100%-8',
+		width: '60%',
 		padding: 1,
 		top: 4,
 		label: `{bold}{white-fg}Output: {/white-fg}{/bold}`,
@@ -47,23 +115,20 @@ Script.initialize = async (window, frame, blessed) => {
 		scrollable: true,
 		vi: true,
 		instantlyAppend: true,
-		shouldFocus: true,
 		mouse: true,
-		alwaysScroll: true,
 		scrollbar: window.getScrollbar(),
-		border: "line",
+		border: 'line',
 		style: {
-			fg: "white",
-			bg: "transparent",
+			fg: 'white',
+			bg: 'transparent',
 			border: {
-				fg: "#f0f0f0",
+				fg: '#f0f0f0',
 			},
 		},
 	});
-	output.think = think;
-	let outputDebug = window.createElement("outputDebug", {
-		height: "100%-8",
-		width: "50%+2",
+	let outputDebug = window.createElement('outputDebug', {
+		height: '100%-8',
+		width: '40%+2',
 		padding: 1,
 		right: 0,
 		top: 4,
@@ -73,149 +138,108 @@ Script.initialize = async (window, frame, blessed) => {
 		scrollable: true,
 		vi: true,
 		instantlyAppend: true,
-		shouldFocus: true,
 		mouse: true,
-		alwaysScroll: true,
 		scrollbar: window.getScrollbar(),
-		border: "line",
+		border: 'line',
 		style: {
-			fg: "white",
-			bg: "transparent",
+			fg: 'white',
+			bg: 'transparent',
 			border: {
-				fg: "#f0f0f0",
+				fg: '#f0f0f0',
 			},
 		},
 	});
-	outputDebug.think = think;
 
-	let retry = window.createElement("retry", {
+	let retry = window.createElement('retry', {
 		bottom: 0,
 		left: 0,
 		shrink: true,
-		width: "shrink",
+		width: 'shrink',
 		alwaysFront: true,
-		height: "shrink",
+		height: 'shrink',
 		padding: 1,
-		content: "Retry Script",
+		mouse: true,
+		keys: true,
+		content: 'Retry Script',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: "red",
+			fg: 'white',
+			bg: 'red',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
-	retry.on("click", async () => {
+	retry.on('click', async () => {
 		await window.getInfinityConsole().refreshScripts();
 		//set the new script
-		debugLog("{cyan-fg}retrying script{/cyan-fg}");
-		window.data.script =
-			window
-				.getInfinityConsole()
-				.getScripts()
-				.filter(
-					(script) => script.fileName === window.data.script.fileName
-				)[0] || window.data.script;
+		outputDebug.setContent('');
+		outputDebug.setScrollPerc(0);
+		window.debugLog('{cyan-fg}retrying script{/cyan-fg}');
 
-		output.setContent("");
-		execute();
+		//just for a bit of visual clarity
+		setTimeout(() => {
+			window.data.script =
+				window
+					.getInfinityConsole()
+					.getScripts()
+					.filter(
+						script => script.fileName === window.data.script.fileName,
+					)[0] || window.data.script;
+
+			output.setContent('');
+			output.setScrollPerc(0);
+			setTimeout(() => {
+				execute(window);
+			}, 500);
+		}, 500);
 	});
 	retry.hide();
 
-	let close = window.createElement("close", {
+	let close = window.createElement('close', {
 		bottom: 0,
 		left: 0,
 		shrink: true,
-		width: "shrink",
+		width: 'shrink',
 		alwaysFront: true,
-		height: "shrink",
+		height: 'shrink',
+		mouse: true,
+		keys: true,
 		padding: 1,
-		content: "Close Script",
+		content: 'Close Script',
 		tags: true,
 		border: {
-			type: "line",
+			type: 'line',
 		},
 		style: {
-			fg: "white",
-			bg: "green",
+			fg: 'white',
+			bg: 'green',
 			border: {
-				fg: "#ffffff",
+				fg: '#ffffff',
 			},
 			hover: {
-				bg: "grey",
+				bg: 'grey',
 			},
 		},
 	});
-	close.on("click", () => {
-		window.openWindow("Scripts");
+	close.on('click', () => {
+		window.openWindow('Scripts');
 		window.getInfinityConsole().destroyWindow(window);
 	});
 	close.hide();
 
-	//executes the script
-	const execute = async () => {
-		retry.hide();
-		//run in the background
-		window.data.processing = true;
-		try {
-			log(
-				`{bold}{cyan-fg}executing ${
-					(window.data.script as InfinityMintScript).fileName
-				}{/cyan-fg}{/bold}`
-			);
-			await executeScript(
-				window.data.script,
-				window.getInfinityConsole().getEventEmitter(),
-				{},
-				window.data.args || {},
-				window.getInfinityConsole()
-			);
-			log(
-				"{bold}{green-fg}script executed successfully{/green-fg}{/bold}"
-			);
-			window.setHideCloseButton(false);
-			output.setScrollPerc(100);
-			outputDebug.setScrollPerc(100);
-			close.show();
-			//stop logs after 1 second
-			setTimeout(() => {
-				window.data.processing = false;
-			}, 1000);
-		} catch (error) {
-			log("{red-fg}{bold}script failed exectuion{/bold}{/red-fg}");
-			window.getInfinityConsole().errorHandler(error);
-			window.setHideCloseButton(false);
-			output.setScrollPerc(100);
-			outputDebug.setScrollPerc(100);
-			setTimeout(() => {
-				window.data.processing = false;
-			}, 1000);
-			retry.show();
-		}
-	};
-
-	//when logs occur
-	let cb = (msg: string, pipe: string) => {
-		//keep showing debug
-		if (pipe === "debug") outputDebug.pushLine(msg);
-
-		if (!window.data.processing) return;
-		if (pipe === "default") output.pushLine(msg);
-	};
-	Pipes.emitter.on("log", cb);
-	//when this window is destroyed, destroy the output emitter
-	window.on("destroy", () => {
-		Pipes.emitter.off("log", cb);
-	});
-	(() => execute())();
+	output.setContent(`{cyan-fg}Awaiting Execution...{/cyan-fg}`);
+	setTimeout(async () => {
+		await execute(window);
+	}, 1000);
 };
+
 Script.setBackgroundThink(true);
 Script.setHideRefreshButton(true);
 Script.setHideCloseButton(true);

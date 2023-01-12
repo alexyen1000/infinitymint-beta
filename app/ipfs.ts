@@ -1,7 +1,7 @@
-import { Web3Storage, getFilesFromPath } from "web3.storage";
-import { getConfigFile, log } from "./helpers";
-import { InfinityMintIPFSOptions } from "./interfaces";
-const { tcpPingPort } = require("tcp-ping-port");
+import {Web3Storage, getFilesFromPath} from 'web3.storage';
+import {getConfigFile, log} from './helpers';
+import {InfinityMintIPFSOptions} from './interfaces';
+const {tcpPingPort} = require('tcp-ping-port');
 
 class IPFS {
 	private kuboAvailable: boolean;
@@ -13,7 +13,7 @@ class IPFS {
 	public async start() {
 		let config = getConfigFile();
 		if (this.isKuboAvailable()) {
-			log("local IPFS resolver found", "ipfs");
+			log('local IPFS resolver found', 'ipfs');
 			this.kuboAvailable = true;
 		}
 
@@ -24,13 +24,11 @@ class IPFS {
 			this.favourWeb3Storage = true;
 
 		if (
-			(config.ipfs as InfinityMintIPFSOptions).web3Storage?.token !==
-			undefined
+			(config.ipfs as InfinityMintIPFSOptions).web3Storage?.token !== undefined
 		) {
-			log("creating web3.storage controller", "ipfs");
+			log('creating web3.storage controller', 'ipfs');
 			this.web3Storage = new Web3Storage({
-				token: (config.ipfs as InfinityMintIPFSOptions).web3Storage
-					?.token,
+				token: (config.ipfs as InfinityMintIPFSOptions).web3Storage?.token,
 			});
 		}
 	}
@@ -52,6 +50,6 @@ class IPFS {
 	}
 
 	public async isKuboAvailable() {
-		return (await tcpPingPort("localhost", 5001)).online === true;
+		return (await tcpPingPort('localhost', 5001)).online === true;
 	}
 }

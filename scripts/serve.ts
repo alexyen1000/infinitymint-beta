@@ -1,14 +1,14 @@
-import { InfinityMintScript } from "@app/interfaces";
+import {InfinityMintScript} from '../dist/app/interfaces';
 
 const serve: InfinityMintScript = {
-	name: "Serve Project",
+	name: 'Serve Project',
 	description:
-		"Serve your project to a remote IPFS destination or repository to make your InfinityMint accessible in a web2 or web3 browser.",
+		'Serve your project to a remote IPFS destination or repository to make your InfinityMint accessible in a web2 or web3 browser.',
 	execute: async () => {},
 	arguments: [
 		{
-			name: "project",
-			type: "string",
+			name: 'project',
+			type: 'string',
 			optional: true,
 		},
 	],

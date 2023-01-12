@@ -1,4 +1,5 @@
-import { PathLike } from "fs";
+import {PathLike} from 'fs';
+import {ParsedPath} from 'path';
 
 export interface InfinityMintSVGSettings {
 	viewbox?: string;
@@ -12,7 +13,7 @@ export interface InfinityMintSVGSettings {
 	};
 	style?: {
 		filter?: {
-			type: "blur" | "hue-rotate" | "sepia";
+			type: 'blur' | 'hue-rotate' | 'sepia';
 			/**
 			 * will uniquely set a filter value based on the mint
 			 *
@@ -54,11 +55,11 @@ export interface InfinityMintSVGSettings {
 		/**
 		 * @default "center"
 		 */
-		imagePosition?: "center" | "top" | "bottom" | "left" | "right";
+		imagePosition?: 'center' | 'top' | 'bottom' | 'left' | 'right';
 		/**
 		 * @default "contain"
 		 */
-		imageSize?: "contain" | "cover";
+		imageSize?: 'contain' | 'cover';
 		/**
 		 * If multiple images are defined in the image member then will pick a background image based on the mint
 		 *
@@ -66,4 +67,5 @@ export interface InfinityMintSVGSettings {
 		 */
 		unique?: boolean;
 	};
+	source?: ParsedPath;
 }

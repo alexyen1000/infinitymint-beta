@@ -20,21 +20,24 @@
 	},
 	"exclude": [
 		"dist",
+		"dist/tests",
 		"node_modules",
+		"./scripts",
 		"gems/__",
 		"gems/__cache",
-		"gems/@",
-		"projects"
+		"gems/@"
 	],
 	"include": [
 		"./app",
+		"./tests",
 		"./gems",
-		"./scripts",
 		"./deploy",
+		"./scripts",
 		"./imports",
 		"./examples",
 		"./typechain-types",
-		"./index.ts"
+		"./index.ts",
+		"./tests"
 	],
 	"files": ["./hardhat.config.ts", "./index.ts", "./examples/example.env.ts"]
 }

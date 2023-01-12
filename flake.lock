@@ -17,33 +17,51 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1670841420,
-        "narHash": "sha256-mSEia1FzrsHbfqjorMyYiX8NXdDVeR1Pw1k55jMJlJY=",
-        "owner": "NixOS",
+        "lastModified": 1672953546,
+        "narHash": "sha256-oz757DnJ1ITvwyTovuwG3l9cX6j9j6/DH9eH+cXFJmc=",
+        "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "33e0d99cbedf2acfd7340d2150837fbb28039a64",
+        "rev": "a518c77148585023ff56022f09c4b2c418a51ef5",
         "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
+        "owner": "nixos",
         "ref": "nixos-unstable",
-        "type": "indirect"
+        "repo": "nixpkgs",
+        "type": "github"
       }
     },
     "npmlock2nix": {
       "flake": false,
       "locked": {
-        "lastModified": 1670666882,
-        "narHash": "sha256-hoCm6Z6fXuYML+gh+HISsRVPMXDmyknAWlaentg9zcc=",
-        "owner": "nix-community",
+        "lastModified": 1633729941,
+        "narHash": "sha256-v2YPcEWI1Wz8ErivorubgLcDT06H6YzFT7uhp1ymqnE=",
+        "owner": "winston0410",
         "repo": "npmlock2nix",
-        "rev": "cc11d791fdc3afb2ae7c2f11e10abf7c33b40763",
+        "rev": "6ade47a330b6919defb45c0eb984a64234aa8468",
+        "type": "github"
+      },
+      "original": {
+        "owner": "winston0410",
+        "ref": "issue113",
+        "repo": "npmlock2nix",
+        "type": "github"
+      }
+    },
+    "pnpm2nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1594396611,
+        "narHash": "sha256-UXOUQ+2A89/zaxYhTHiRrRBU5exbUWrg+FoJYMcNwuI=",
+        "owner": "nix-community",
+        "repo": "pnpm2nix",
+        "rev": "f67be0925a91b92f54d99dbdead7a06920b979ac",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
         "ref": "master",
-        "repo": "npmlock2nix",
+        "repo": "pnpm2nix",
         "type": "github"
       }
     },
@@ -51,7 +69,8 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
-        "npmlock2nix": "npmlock2nix"
+        "npmlock2nix": "npmlock2nix",
+        "pnpm2nix": "pnpm2nix"
       }
     }
   },

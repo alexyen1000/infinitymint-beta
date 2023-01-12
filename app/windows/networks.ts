@@ -1,54 +1,54 @@
-import { InfinityMintWindow } from "../window";
-import hre from "hardhat";
-import { readSession, saveSession } from "../helpers";
-import { changeNetwork } from "../web3";
+import {InfinityMintWindow} from '../window';
+import hre from 'hardhat';
+import {readSession, saveSession} from '../helpers';
 
-const Networks = new InfinityMintWindow("Networks");
+const Networks = new InfinityMintWindow('Networks');
 
 Networks.initialize = async (window, frame, blessed) => {
 	let form = window.registerElement(
-		"form",
+		'form',
 		blessed.list({
-			label: " {bold}{white-fg}Select Network{/white-fg} (Enter/Double-Click to select){/bold}",
+			label:
+				' {bold}{white-fg}Select Network{/white-fg} (Enter/Double-Click to select){/bold}',
 			tags: true,
-			top: "center",
-			left: "center",
-			width: "95%",
-			height: "60%",
+			top: 'center',
+			left: 'center',
+			width: '95%',
+			height: '60%',
 			padding: 2,
 			keys: true,
 			vi: true,
 			mouse: true,
-			border: "line",
+			border: 'line',
 			scrollbar: {
-				ch: " ",
+				ch: ' ',
 				track: {
-					bg: "black",
+					bg: 'black',
 				},
 				style: {
 					inverse: true,
 				},
 			},
 			style: {
-				bg: "black",
-				fg: "white",
+				bg: 'black',
+				fg: 'white',
 				item: {
 					hover: {
-						bg: "green",
-						fg: "black",
+						bg: 'green',
+						fg: 'black',
 					},
 				},
 				selected: {
-					bg: "grey",
-					fg: "green",
+					bg: 'grey',
+					fg: 'green',
 					bold: true,
 				},
 			},
-		})
+		}),
 	);
 	let keys = Object.keys(hre.config.networks);
 	form.setItems(keys);
-	form.on("select", async (el: any, selected: any) => {
+	form.on('select', async (el: any, selected: any) => {
 		let session = readSession();
 		await window.getInfinityConsole().changeNetwork(keys[selected]);
 		session.environment.defaultNetwork = keys[selected];

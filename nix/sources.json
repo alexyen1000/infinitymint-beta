@@ -1,4 +1,16 @@
 {
+    "nix2container": {
+        "branch": "master",
+        "description": "An archive-less dockerTools.buildImage implementation ",
+        "homepage": "",
+        "owner": "nlewo",
+        "repo": "nix2container",
+        "rev": "6800fff45afecc7e47c334d14cf2b2f4f25601a0",
+        "sha256": "153z99w696220g2h625qzgvhxgi7qqs5x7xhh6dqzn8w3rg94799",
+        "type": "tarball",
+        "url": "https://github.com/nlewo/nix2container/archive/6800fff45afecc7e47c334d14cf2b2f4f25601a0.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "nixpkgs": {
         "branch": "release-21.05",
         "description": "Nix Packages collection",
@@ -9,18 +21,6 @@
         "sha256": "1xlgynfw9svy7nvh9nkxsxdzncv9hg99gbvbwv3gmrhmzc3sar75",
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs/archive/5f244caea76105b63d826911b2a1563d33ff1cdc.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "npmlock2nix": {
-        "branch": "master",
-        "description": "nixify npm based packages [maintainer=@andir] ",
-        "homepage": "",
-        "owner": "nix-community",
-        "repo": "npmlock2nix",
-        "rev": "cc11d791fdc3afb2ae7c2f11e10abf7c33b40763",
-        "sha256": "1iyd7pc9x7jnbb04kjp6f0qly5di29rgh8g85w6fcplzkvlsd046",
-        "type": "tarball",
-        "url": "https://github.com/nix-community/npmlock2nix/archive/cc11d791fdc3afb2ae7c2f11e10abf7c33b40763.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }

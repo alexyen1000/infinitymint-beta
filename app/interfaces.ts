@@ -1,16 +1,17 @@
-import { BigNumber } from "ethers";
-import { Dictionary } from "form-data";
-import { HardhatUserConfig } from "hardhat/types";
-import { debugLog, FuncDouble, FuncSingle, log } from "./helpers";
-import { ServerOptions } from "ganache";
-import { EventEmitter } from "events";
-import { Contract } from "@ethersproject/contracts";
-import InfinityConsole from "./console";
-import { InfinityMintDeployment } from "./deployments";
-import { PathLike } from "fs";
-import { InfinityMintSVGSettings } from "./content";
-import { GasPriceFunction, TokenPriceFunction } from "./gasAndPrices";
-import { Options } from "ipfs-core";
+import {BigNumber} from 'ethers';
+import {Dictionary} from 'form-data';
+import {HardhatUserConfig} from 'hardhat/types';
+import {debugLog, FuncDouble, FuncSingle, log} from './helpers';
+import {ServerOptions} from 'ganache';
+import {EventEmitter} from 'events';
+import {Contract} from '@ethersproject/contracts';
+import InfinityConsole from './console';
+import {InfinityMintDeployment} from './deployments';
+import {PathLike, Stats} from 'fs';
+import {InfinityMintSVGSettings} from './content';
+import {GasPriceFunction, TokenPriceFunction} from './gasAndPrices';
+import {ParsedPath} from 'path';
+import {ImportCache, ImportType} from './imports';
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -96,6 +97,7 @@ export interface InfinityMintProjectJavascript
 	approved: Dictionary<string>;
 	assetConfig: KeyValue;
 	names: Array<string>;
+	name: string;
 }
 
 /**
@@ -259,6 +261,8 @@ export interface InfinityMintTempProject
 	 * if this is project has completed the setup stage yet
 	 */
 	setup?: boolean;
+
+	source?: string;
 }
 
 /**
@@ -476,6 +480,7 @@ export interface InfinityMintProject {
 		 */
 		version: string;
 	};
+	source?: string;
 	/**
 	 * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
 	 * @private
@@ -587,6 +592,20 @@ export interface InfinityMintEvents {
 		Promise<void | boolean>
 	>;
 	/**
+	 * Fired when the InfinityConsole is initialized
+	 * @event
+	 */
+	connected?: FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>;
+	/**
+	 * Fired when the InfinityConsole is initialized
+	 * @event
+	 */
+	disconnected?: FuncSingle<
+		InfinityMintEventEmit<any>,
+		Promise<void | boolean>
+	>;
+
+	/**
 	 * Fired when the InfinityConsole is reinitialized
 	 * @event
 	 */
@@ -594,10 +613,7 @@ export interface InfinityMintEvents {
 	/**
 	 * @event
 	 */
-	preCompile?: FuncSingle<
-		InfinityMintEventEmit<void>,
-		Promise<void | boolean>
-	>;
+	preCompile?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
 	/**
 	 * Will be called when project is compiled
 	 * @event
@@ -616,6 +632,52 @@ export interface InfinityMintEvents {
 	 */
 	postSetup?: FuncSingle<
 		InfinityMintEventEmit<InfinityMintDeployment>,
+		Promise<void>
+	>;
+	/**
+	 * Will be called when setup is about to take place. Can return false to abort setup silently.
+	 * @event
+	 */
+	preVerify?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
+	 * @event
+	 */
+	postVerify?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
+	 * Will be called when setup is about to take place. Can return false to abort setup silently.
+	 * @event
+	 */
+	preCompileSetup?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
+		Promise<void>
+	>;
+	/**
+	 * @event
+	 */
+	postCompileSetup?: FuncSingle<
+		InfinityMintEventEmit<
+			| InfinityMintProjectPath
+			| InfinityMintProjectAsset
+			| InfinityMintProjectContent
+		>,
 		Promise<void>
 	>;
 	/**
@@ -666,6 +728,20 @@ export interface InfinityMintEvents {
 	/**
 	 * @event
 	 */
+	stageCompile?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageCompilePre?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageCompilePost?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSetup?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSetupPre?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSetupPost?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageVerify?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageVerifyPre?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageVerifyPost?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageSuccess?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	stageFailure?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
+	/**
+	 * @event
+	 */
 	postGems?: FuncSingle<InfinityMintEventEmit<void>, Promise<void>>;
 	/**
 	 * @event
@@ -708,10 +784,7 @@ export interface InfinityMintEvents {
 	/**
 	 * @event
 	 */
-	preScript?: FuncSingle<
-		InfinityMintEventEmit<void>,
-		Promise<void | boolean>
-	>;
+	preScript?: FuncSingle<InfinityMintEventEmit<void>, Promise<void | boolean>>;
 	/**
 	 * @event
 	 */
@@ -916,6 +989,7 @@ export interface InfinityMintEnvironmentVariables {
 	PIPE_LOG_ERRORS_TO_DEBUG?: boolean;
 	PIPE_SILENCE_UNDEFINED_PIPE?: boolean;
 	PIPE_SILENCE?: boolean;
+	PIPE_SILENCE_DEBUG?: boolean;
 	PIPE_IGNORE_CONSOLE?: boolean;
 	INFINITYMINT_INCLUDE_DEPLOY?: boolean;
 	INFINITYMINT_TELNET?: boolean;
@@ -1046,9 +1120,13 @@ export type InfinityMintProjetModulesKeys = keyof InfinityMintProjectModules;
 export interface InfinityMintProjectPathExport {
 	key: string;
 	checksum: string;
-	settingsFile?: string;
-	settingsFileKey?: string;
-	settings: KeyValue | InfinityMintSVGSettings;
+	exported: number;
+	stats: Stats;
+	project: string;
+	version: {
+		tag: string;
+		version: string;
+	};
 }
 
 /**
@@ -1057,6 +1135,8 @@ export interface InfinityMintProjectPathExport {
 export interface InfinityMintProjectPath {
 	name: string;
 	fileName: PathLike;
+	pathId?: number;
+	valid?: boolean;
 	/**
 	 * is the mint data, this is copied to each token internally. Can be a path to a file
 	 */
@@ -1064,7 +1144,11 @@ export interface InfinityMintProjectPath {
 	/**
 	 * can either contain an object of settings for the path or a link to the settings file or simply `true` to look for a settings file that matches the fileName import. See {@link app/content.InfinityMintSVGSettings}
 	 */
-	settings?: KeyValue | PathLike | boolean | InfinityMintSVGSettings;
+	settings?:
+		| boolean
+		| InfinityMintSVGSettings
+		| KeyValue
+		| Dictionary<InfinityMintSVGSettings>;
 	description?: string;
 	/**
 	 * Unlike assets, content are not used in the rendering process but can be any type of media which is included with the mint of this path. For instance music, more images or 3D files could be put here.
@@ -1085,20 +1169,17 @@ export interface InfinityMintProjectPath {
 	 */
 	export?: InfinityMintProjectPathExport;
 	/**
+	 * Where this path is located on the compilers hard drive
+	 */
+	source?: ImportType;
+	/**
 	 * true if the project the path contains has been compiled.
 	 */
 	compiled?: boolean;
-}
-
-/**
- * is the same as {@link InfinityMintProjectPath} but is for JavaScript project files (classic InfinityMint).
- */
-export interface InfinityMintProjectJavascriptPath
-	extends InfinityMintProjectPath {
 	/**
-	 * For Javascript infinitymint paths this is where exported data is put. This is only used when the project is a javascript file as it does call it 'exports'. See {@link InfinityMintProjectPath}
+	 * Checksum of the object inside of the path
 	 */
-	paths?: InfinityMintProjectPathExport;
+	checksum?: string;
 }
 
 /**
@@ -1115,6 +1196,7 @@ export interface InfinityMintProjectContent extends InfinityMintProjectPath {
 export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
 	pathId?: number;
 	section?: string;
+	assetId?: number;
 }
 
 /**
@@ -1207,13 +1289,17 @@ export interface InfinityMintConfig {
 	settings?: InfinityMintConfigSettings;
 }
 
+/**
+ * Configure IPFS capabilities inside infinity mint
+ */
 export interface InfinityMintIPFSOptions {
-	web3Storage: {
+	web3Storage?: {
 		token?: string;
 		useAlways?: boolean;
 	};
-	endpoints: string[] | string;
-	kubo: {
+	resolvers: string[];
+	endpoint?: string[] | string;
+	kubo?: {
 		useAlways?: boolean;
 	};
 }
@@ -1373,7 +1459,7 @@ export interface InfinityMintScriptArguments {
 	optional?: boolean;
 	validator?: Function;
 	//defines which type of UI element to render for this element, also takes over as a basic validator if no validor function is defined
-	type?: "boolean" | "string" | "number";
+	type?: 'boolean' | 'string' | 'number';
 	value?: any;
 }
 
@@ -1407,6 +1493,31 @@ export interface InfinityMintTelnetOptions {
 	 * port to run telnet on
 	 */
 	port?: number;
+	events?: InfinityMintEvents;
+	/**
+	 * the title to present on the login screen
+	 */
+	title?: string;
+	/**
+	 * the message of the day
+	 */
+	motd?: string;
+	/**
+	 * if only admins can log in
+	 */
+	adminsOnly?: boolean;
+	/**
+	 * only allow these username or ips to enter
+	 */
+	whitelist?: string[];
+	/**
+	 * do not require login/registration
+	 */
+	anonymous?: boolean;
+	/**
+	 * default group people are signed up witg
+	 */
+	defaultGroup?: string;
 }
 
 /**
@@ -1498,7 +1609,7 @@ export interface InfinityMintDeploymentParameters extends KeyValue {
 	/**
 	 * the current infinity console this is running from
 	 */
-	infinityConsole?: InfinityConsole;
+	infinityConsole: InfinityConsole;
 	/**
 	 * the event emitter for you to emit events from, usually provided by the InfinityConsole. See {@link app/console.InfinityConsole}.
 	 *
@@ -1560,7 +1671,7 @@ export interface InfinityMintDeploymentLive extends KeyValue {
 	/**
 	 * The name of the current deployment, same as the .sol filename.
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * The address of this deployment on the blockchain.
 	 */
@@ -1623,7 +1734,10 @@ export interface InfinityMintDeploymentScript {
 	 * @async
 	 * Only called when the project has been deployed. Called when a live InfinityMint switches from key to the other particuarlly in the modules. See {@link InfinityMintProjectModules}. For instance if the minter was to change from SimpleSVG to SimpleImage then this method would be called. An example use would be to relink the newly asset controller to the minter.
 	 */
-	switch?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	switch?: FuncSingle<
+		InfinityMintDeploymentParameters,
+		Promise<Contract | Contract[]>
+	>;
 	/**
 	 * @async
 	 * Sets up the smart contract post deployment.
@@ -1633,12 +1747,15 @@ export interface InfinityMintDeploymentScript {
 	 * @async
 	 * Called when a project has been deployed or has failed to deploy and is retrying. Defines how to clean up an active smart contract with the goal of running setup again to update changes.
 	 */
-	cleanup?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	cleanup?: FuncSingle<InfinityMintDeploymentParameters, Promise<string[]>>;
 	/**
 	 * @async
 	 * Only called when the project has been deployed. Define custom update logic depending on the situation. By default if an update method is not defined in the deployment script InfinityMint will execute clean up and then set up in the deployment script.
 	 */
-	update?: FuncSingle<InfinityMintDeploymentParameters, Promise<void>>;
+	update?: FuncSingle<
+		InfinityMintDeploymentParameters,
+		Promise<Promise<Contract | Contract[]>>
+	>;
 	/**
 	 * The list of addresses or refrences which will be given admin access to this contract. Can be addresses or keys.
 	 *

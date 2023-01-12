@@ -1,8 +1,8 @@
-import { ChildProcess } from "child_process";
-import { Dictionary } from "form-data";
-import { debugLog, getConfigFile, isEnvTrue, warning } from "./helpers";
-import fs from "fs";
-import { EventEmitter } from "events";
+import {ChildProcess} from 'child_process';
+import {Dictionary} from 'form-data';
+import {debugLog, getConfigFile, isEnvTrue, warning} from './helpers';
+import fs from 'fs';
+import {EventEmitter} from 'events';
 
 /**
  * The log pipe class
@@ -39,13 +39,13 @@ export class Pipe {
 		this.logHandler = (str: string) => {
 			if (
 				this.listen &&
-				(!isEnvTrue("PIPE_IGNORE_CONSOLE") || getConfigFile().console)
+				(!isEnvTrue('PIPE_IGNORE_CONSOLE') || getConfigFile().console)
 			)
-				console.log("<#DONT_LOG_ME$>" + str);
+				console.log('<#DONT_LOG_ME$>' + str);
 
 			this.logs.push({
 				message: str,
-				pure: str.replace(/[^{\}]+(?=})/g, "").replace(/\{\}/g, ""),
+				pure: str.replace(/[^{\}]+(?=})/g, '').replace(/\{\}/g, ''),
 				index: this.logs.length,
 				time: Date.now(),
 			});
@@ -53,12 +53,12 @@ export class Pipe {
 		this.errorHandler = (err: Error) => {
 			if (
 				this.listen &&
-				!isEnvTrue("PIPE_IGNORE_CONSOLE") &&
+				!isEnvTrue('PIPE_IGNORE_CONSOLE') &&
 				getConfigFile().console
 			)
 				console.error(err, false);
 
-			if (isEnvTrue("PIPE_IGNORE_CONSOLE") && !getConfigFile().console)
+			if (isEnvTrue('PIPE_IGNORE_CONSOLE') && !getConfigFile().console)
 				console.error(err);
 
 			this.errors.push(err);
@@ -97,20 +97,20 @@ export interface PipeOptions {
 /**
  * Logging factory class
  */
-export class Pipes {
+export class PipeFactory {
 	public pipes: Dictionary<Pipe>;
 	public emitter: EventEmitter;
 	public currentPipeKey: string;
 	constructor() {
 		this.pipes = {};
-		this.currentPipeKey = "default";
+		this.currentPipeKey = 'default';
 		//registers the default pipe
-		this.registerSimplePipe("default");
+		this.registerSimplePipe('default');
 		this.emitter = new EventEmitter();
 	}
 
 	public setCurrentPipe(key: string) {
-		if (!this.pipes[key]) throw new Error("undefined pipe key: " + key);
+		if (!this.pipes[key]) throw new Error('undefined pipe key: ' + key);
 
 		this.currentPipeKey = key;
 	}
@@ -118,37 +118,37 @@ export class Pipes {
 	public error(error: any) {
 		//go back to the default pipe
 		if (!this.currentPipeKey || !this.pipes[this.currentPipeKey])
-			this.currentPipeKey = "default";
+			this.currentPipeKey = 'default';
 		this.emitter.emit(
-			"error",
+			'error',
 			error,
 			this.currentPipeKey,
-			this.pipes[this.currentPipeKey].errors.length
+			this.pipes[this.currentPipeKey].errors.length,
 		);
 		this.pipes[this.currentPipeKey].error(error);
 	}
 
 	public log(msg: string, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipeKey;
-		if (!this.pipes[actualPipe] && !this.pipes["default"])
-			throw new Error("bad pipe: " + actualPipe);
-		else if (!this.pipes[actualPipe]) return this.log(msg, "default");
+		if (!this.pipes[actualPipe] && !this.pipes['default'])
+			throw new Error('bad pipe: ' + actualPipe);
+		else if (!this.pipes[actualPipe]) return this.log(msg, 'default');
 
 		if (!dontHighlight)
 			msg = msg
-				.replace(/\[/g, "{yellow-fg}[")
-				.replace(/\]/g, "]{/yellow-fg}")
-				.replace(/\</g, "{cyan-fg}<")
-				.replace(/\>/g, ">{/cyan-fg}")
-				.replace(/\(/g, "{cyan-fg}(")
-				.replace(/\)/g, "){/cyan-fg}")
-				.replace(/=>/g, "{magenta-fg}=>{/magenta-fg}");
+				.replace(/\[/g, '{yellow-fg}[')
+				.replace(/\]/g, ']{/yellow-fg}')
+				.replace(/\</g, '{cyan-fg}<')
+				.replace(/\>/g, '>{/cyan-fg}')
+				.replace(/\(/g, '{cyan-fg}(')
+				.replace(/\)/g, '){/cyan-fg}')
+				.replace(/=>/g, '{magenta-fg}=>{/magenta-fg}');
 
 		this.emitter.emit(
-			"log",
+			'log',
 			msg,
 			actualPipe,
-			this.pipes[actualPipe].logs.length
+			this.pipes[actualPipe].logs.length,
 		);
 		this.pipes[actualPipe].log(msg);
 	}
@@ -158,74 +158,69 @@ export class Pipes {
 	}
 
 	public registerSimplePipe(key: string, options?: PipeOptions): Pipe {
-		if (this.pipes["debug"])
-			this.log("creating simple pipe => (" + key + ")", "debug");
+		if (this.pipes['debug'])
+			this.log('creating simple pipe => (' + key + ')', 'debug');
 
 		let pipe = this.createPipe(key, options);
 		return pipe;
 	}
 
 	public deletePipe(pipe: string | Pipe) {
-		if (this.pipes["debug"])
-			this.log("deleting pipe => (" + pipe.toString() + ")", "debug");
+		if (this.pipes['debug'])
+			this.log('deleting pipe => (' + pipe.toString() + ')', 'debug');
 
 		delete this.pipes[pipe.toString()];
 	}
 
 	public savePipe(pipe: string | Pipe) {
 		if (!this.pipes[pipe.toString()]) {
-			if (isEnvTrue("THROW_ALL_ERRORS"))
-				throw new Error("invalid pipe cannot save");
+			if (isEnvTrue('THROW_ALL_ERRORS'))
+				throw new Error('invalid pipe cannot save');
 
-			if (this.pipes["debug"])
-				warning("failed to delete pipe => (" + pipe.toString() + ")");
+			if (this.pipes['debug'])
+				warning('failed to delete pipe => (' + pipe.toString() + ')');
 
 			return;
 		}
 
-		if (this.pipes["debug"])
-			debugLog("saving pipe => (" + pipe.toString() + ")");
+		if (this.pipes['debug'])
+			debugLog('saving pipe => (' + pipe.toString() + ')');
 
 		fs.writeFileSync(
-			process.cwd() +
-				"/temp/pipes/" +
-				pipe.toString() +
-				`.${Date.now()}.json`,
+			process.cwd() + '/temp/pipes/' + pipe.toString() + `.${Date.now()}.json`,
 			JSON.stringify({
 				name: pipe.toString(),
 				logs: this.pipes[pipe.toString()].logs,
 				errors: this.pipes[pipe.toString()].errors,
-			})
+			}),
 		);
 	}
 
 	public registerPipe(
 		key: string,
 		process: ChildProcess,
-		options?: PipeOptions
+		options?: PipeOptions,
 	): Pipe {
 		let pipe = this.createPipe(key, options);
 
-		if (this.pipes["debug"])
+		if (this.pipes['debug'])
 			this.log(
-				`creating pipe to process ${process.pid}=> (` +
-					pipe.toString() +
-					")",
-				"debug"
+				`creating pipe to process ${process.pid}=> (` + pipe.toString() + ')',
+				'debug',
 			);
 
-		process.stdout?.on("data", (str: string) => {
+		process.stdout?.on('data', (str: string) => {
 			pipe.log(str);
 		});
 
-		process.stderr?.on("data", (str: string) => {
+		process.stderr?.on('data', (str: string) => {
 			pipe.error(str);
 		});
 
-		process.stdout?.on("end", (code: number) => {
-			if (code === 1) pipe.error("exited with code 1 probably error");
+		process.stdout?.on('end', (code: number) => {
+			if (code === 1) pipe.error('exited with code 1 probably error');
 
-			pipe.log("execited with code: " + code);
+			pipe.log('execited with code: ' + code);
 			if (options?.cleanup) this.deletePipe(pipe);
 		});
 
@@ -238,10 +233,19 @@ export class Pipes {
 		this.pipes[key].listen = options?.listen || false;
 		this.pipes[key].appendDate = options?.appendDate || true;
 
-		if (this.currentPipeKey === "" || options?.setAsCurrentPipe)
+		if (this.currentPipeKey === '' || options?.setAsCurrentPipe)
 			this.currentPipeKey = key;
 
 		return this.pipes[key];
 	}
 }
-export default new Pipes();
+
+export let defaultFactory: PipeFactory;
+export const createDefaultFactory = () => {
+	console.log('🛸 Creating Default Logger');
+	defaultFactory = new PipeFactory();
+};
+
+export const setDefaultFactory = (newDefault: PipeFactory) => {
+	defaultFactory = newDefault;
+};

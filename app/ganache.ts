@@ -1,42 +1,30 @@
-import {
-	Web3Provider,
-	JsonRpcProvider,
-	ExternalProvider,
-} from "@ethersproject/providers";
-import ganache, { Server, ServerOptions } from "ganache";
-import hre, { ethers } from "hardhat";
-import { debugLog, log, logDirect, readSession, warning } from "./helpers";
-import Pipes from "./pipes";
-const { tcpPingPort } = require("tcp-ping-port");
+import ganache, {Server, ServerOptions} from 'ganache';
+import {EthereumProvider} from 'ganache';
+import {log} from './helpers';
 
+const {tcpPingPort} = require('tcp-ping-port');
 export class GanacheServer {
 	public server?: Server;
 	public options?: ServerOptions;
 	public port?: number;
-	public provider?: Web3Provider | any;
+	public provider: EthereumProvider;
 
 	async start(
 		options: ServerOptions,
-		port?: number
-	): Promise<Web3Provider | JsonRpcProvider> {
+		port?: number,
+	): Promise<EthereumProvider> {
 		this.options = options;
-		this.port = parseInt(
-			(port || process.env.GANACHE_PORT || 8545).toString()
-		);
+		this.port = parseInt((port || process.env.GANACHE_PORT || 8545).toString());
 
-		if ((await tcpPingPort("localhost", this.port)).online === true) {
+		if ((await tcpPingPort('localhost', this.port)).online === true) {
 			log(
-				"previous ganache server alive at => http://localhost:" +
-					this.port
+				'{cyan-fg}{bold}Previous Ganache Server{/bold}{/cyan-fg} => http://localhost:' +
+					this.port,
 			);
-
-			this.provider = ethers.providers.getDefaultProvider(
-				"http://localhost:" + this.port
-			);
-			return this.provider;
+			return (await import('hardhat')).getProvider('ganache') as any;
 		}
 
-		return await this.createProvider(options);
+		return await this.createServer(options);
 	}
 
 	/**
@@ -44,57 +32,25 @@ export class GanacheServer {
 	 * @param options
 	 * @returns
 	 */
-	async createProvider(options: any): Promise<Web3Provider> {
+	async createServer(options: any): Promise<EthereumProvider> {
 		await new Promise((resolve, reject) => {
 			this.server = ganache.server(options as any);
 			this.server.listen(this.port, async (err: any) => {
 				if (err) throw err;
-				//creates a new ethers provider with the logger piping to ganache
-				let provider = new ethers.providers.Web3Provider(
-					ganache.provider({
-						logging: {
-							debug: true,
-							verbose: true,
-							logger: {
-								log: (msg: any, ...params) => {
-									Pipes.log(
-										`${msg
-											.toString()
-											.replace(/>/g, "")
-											.replace(/\n/g, "")
-											.replace(/  /g, " ")
-											.trim()}`,
-										"ganache"
-									);
-									if (
-										params &&
-										Object.values(params).length !== 0
-									)
-										Pipes.log(
-											JSON.stringify(params, null, 2),
-											"ganache"
-										);
-								},
-							},
-						},
-						...options,
-					}) as any
-				);
-				this.provider = provider as Web3Provider;
 				log(
-					"{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:" +
-						this.port
+					'{green-fg}{bold}Ganache Online{/bold}{/green-fg} => http://localhost:' +
+						this.port,
 				);
-				resolve(this.provider as Web3Provider);
+
+				//return the hardhat ganache provider
+				resolve((await import('hardhat')).getProvider('ganache'));
 			});
 		});
 		return this.provider;
 	}
 
 	getProvider() {
-		if (this.provider == undefined)
-			throw new Error("invalid ethers provider");
-
+		if (this.provider == undefined) throw new Error('invalid ethers provider');
 		return this.provider;
 	}
 }

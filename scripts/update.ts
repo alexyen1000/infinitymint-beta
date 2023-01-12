@@ -1,13 +1,13 @@
-import { InfinityMintScript } from "@app/interfaces";
+import {InfinityMintScript} from '../dist/app/interfaces';
 
 const update: InfinityMintScript = {
-	name: "Update Project",
+	name: 'Update Project',
 	description:
-		"Updates a project by reading any changes which have occured and then setting them on chain",
+		'Updates a project by reading any changes which have occured and then setting them on chain',
 	execute: async () => {},
 	arguments: [
 		{
-			name: "project",
+			name: 'project',
 			optional: true,
 		},
 	],

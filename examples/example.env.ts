@@ -1,4 +1,4 @@
-import { InfinityMintEnvironmentVariables } from "@app/interfaces";
+import {InfinityMintEnvironmentVariables} from '@app/interfaces';
 
 /**
  * this file is what is used in creating the default .env variables for infinity mint, not all of the environment variables are listed here. Its interface is defined in the interfaces file, see {@link app/interfaces.InfinityMintEnvironment}.
@@ -15,6 +15,7 @@ const envs: InfinityMintEnvironmentVariables = {
 	PIPE_LOG_ERRORS_TO_DEBUG: false,
 	PIPE_SILENCE_UNDEFINED_PIPE: false,
 	PIPE_SILENCE: false,
+	PIPE_SILENCE_DEBUG: false,
 	PIPE_SEPERATE_WARNINGS: false,
 	PIPE_IGNORE_CONSOLE: false,
 	INFINITYMINT_TELNET: false,
@@ -22,7 +23,7 @@ const envs: InfinityMintEnvironmentVariables = {
 	THROW_ALL_ERRORS: false,
 	INFINITYMINT_CONSOLE: false,
 	INFINITYMINT_INCLUDE_DEPLOY: true,
-	DEFAULT_SOLIDITY_FOLDER: "alpha",
+	DEFAULT_SOLIDITY_FOLDER: 'alpha',
 	GANACHE_EXTERNAL: false,
 	INFINITYMINT_INCLUDE_SCRIPTS: true,
 	SOLIDITY_CLEAN_NAMESPACE: false,
