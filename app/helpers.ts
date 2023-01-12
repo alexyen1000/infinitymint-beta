@@ -739,7 +739,6 @@ export const findFiles = (globPattern: string) => {
 
 export const isTypescript = () => {
 	let session = readSession();
-
 	return !session.environment?.javascript;
 };
 
@@ -761,15 +760,6 @@ export const findScripts = async (roots?: string[]) => {
 	let config = getConfigFile();
 	roots = roots || [];
 
-	if (
-		!isInfinityMint() &&
-		!isTypescript() &&
-		isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS')
-	)
-		roots.push(
-			process.cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js',
-		);
-
 	//try and include TS scripts
 	if (
 		!isInfinityMint() &&
@@ -780,6 +770,7 @@ export const findScripts = async (roots?: string[]) => {
 
 	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
 	roots.push(process.cwd() + '/scripts/**/*.js');
+
 	roots = [
 		...roots,
 		...(config.roots || []).map(

@@ -1149,7 +1149,7 @@ export class InfinityConsole {
 				} else {
 					let _potentialSource: any = {};
 					if (
-						config.settings.scripts.disableJavascriptRequire.filter(
+						config?.settings?.scripts?.disableJavascriptRequire.filter(
 							(value: string) => script.dir.indexOf(value) !== -1,
 						).length === 0
 					) {
