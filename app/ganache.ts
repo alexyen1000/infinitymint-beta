@@ -14,6 +14,7 @@ export class GanacheServer {
 		port?: number,
 	): Promise<EthereumProvider> {
 		this.options = options;
+
 		this.port = parseInt((port || process.env.GANACHE_PORT || 8545).toString());
 
 		if ((await tcpPingPort('localhost', this.port)).online === true) {
@@ -32,9 +33,25 @@ export class GanacheServer {
 	 * @param options
 	 * @returns
 	 */
-	async createServer(options: any): Promise<EthereumProvider> {
+	async createServer(
+		options: ServerOptions<'ethereum'>,
+	): Promise<EthereumProvider> {
 		await new Promise((resolve, reject) => {
-			this.server = ganache.server(options as any);
+			//make sure to set
+			if (!(options as any).wallet)
+				(options as any).wallet = {
+					totalAccounts: 20,
+					defaultBalance: 69420,
+				};
+
+			//make sure to set default balance
+			if (
+				!(options as any)?.wallet.defaultBalance ||
+				(options as any)?.wallet.defaultBalance <= 0
+			)
+				(options as any).wallet.defaultBalance = 69420;
+
+			this.server = ganache.server(options);
 			this.server.listen(this.port, async (err: any) => {
 				if (err) throw err;
 				log(

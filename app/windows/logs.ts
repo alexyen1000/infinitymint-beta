@@ -6,9 +6,7 @@ let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.enableInput();
 	window.data.log.focus();
 	if (
-		window.getInfinityConsole()?.getLogs()?.pipes[
-			window.data.log.options.pipe
-		] !== undefined
+		window.getInfinityConsole()?.getLogs()?.pipes[window.data.log.options.pipe]
 	)
 		window.data.log.setContent(
 			window
@@ -121,7 +119,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	if (window.data.log?.options?.pipe === undefined)
+	if (!window?.data.log?.options?.pipe)
 		window.data.log.options.pipe = 'default';
 
 	//create buttons

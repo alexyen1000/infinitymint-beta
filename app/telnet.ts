@@ -356,7 +356,7 @@ export const getUsernames = (useFresh?: boolean) => {
  * @returns
  */
 export const hasLoggedIn = (client: any, sessionId: any) => {
-	return getSession(client, sessionId) !== undefined;
+	return getSession(client, sessionId);
 };
 
 /**

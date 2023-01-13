@@ -17,8 +17,8 @@ import {
 	debugLog,
 	prepareConfig,
 	loadInfinityMint,
-} from 'infinitymint/app/helpers';
-import {createDefaultFactory} from '@app/pipes';
+} from 'infinitymint/dist/app/helpers';
+import {createDefaultFactory} from 'infinitymint/dist/app/pipes';
 
 //create default pipe
 createDefaultFactory();

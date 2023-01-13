@@ -43,7 +43,7 @@ const deploy: InfinityMintScript = {
 		//make sure stages are created
 		project.stages = project.stages || {};
 
-		if (project.network === undefined)
+		if (!project.network)
 			project.network = {
 				chainId: script.infinityConsole.getCurrentChainId(),
 				name: script.infinityConsole.getCurrentNetwork().name,

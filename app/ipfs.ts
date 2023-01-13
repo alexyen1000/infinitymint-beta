@@ -23,9 +23,7 @@ class IPFS {
 		if ((config.ipfs as InfinityMintIPFSOptions).web3Storage.useAlways)
 			this.favourWeb3Storage = true;
 
-		if (
-			(config.ipfs as InfinityMintIPFSOptions).web3Storage?.token !== undefined
-		) {
+		if ((config.ipfs as InfinityMintIPFSOptions).web3Storage?.token) {
 			log('creating web3.storage controller', 'ipfs');
 			this.web3Storage = new Web3Storage({
 				token: (config.ipfs as InfinityMintIPFSOptions).web3Storage?.token,

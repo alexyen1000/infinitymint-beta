@@ -24,8 +24,7 @@ import fs, {PathLike} from 'fs';
  * @returns
  */
 export const getCurrentProject = (cleanCache?: boolean) => {
-	if (getCurrentProjectPath() === undefined)
-		throw new Error('no current project');
+	if (!getCurrentProjectPath()) throw new Error('no current project');
 
 	return requireProject(
 		getCurrentProjectPath().dir + '/' + getCurrentProjectPath().base,

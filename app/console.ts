@@ -309,7 +309,7 @@ export class InfinityConsole {
 					}
 
 					this.updateWindowsList();
-					if (this.windowManager?.hidden === false) this.currentWindow?.show();
+					if (!this.windowManager?.hidden) this.currentWindow?.show();
 				},
 			],
 			//hides the current window

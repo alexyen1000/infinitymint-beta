@@ -877,7 +877,7 @@ export class InfinityMintWindow {
 	) {
 		type = type || 'box';
 
-		if (options.parent === undefined) options.parent = this.screen;
+		if (!options.parent) options.parent = this.screen;
 
 		if (!blessed[type] || typeof blessed[type] !== 'function')
 			throw new Error('bad blessed element: ' + type);

@@ -19,13 +19,13 @@ const compile: InfinityMintScript = {
 		'Compile an InfinityMint project ready for deployment. The compiled file will garuntee that all the assets used in the minter are uploaded to IPFS and accessible at all times.',
 	execute: async (script: InfinityMintScriptParameters) => {
 		let project = getScriptTemporaryProject(script, 'compiled'); //gets a temporary project file if there is one for a compilation, if not will just return the source project aka the .ts file or .js file
-		if (project.version === undefined)
+		if (!project.version)
 			project.version = {
 				version: '1.0.0',
 				tag: 'initial',
 			};
 
-		if (project.stages === undefined) project.stages = {};
+		if (!project.stages) project.stages = {};
 
 		script.log(
 			`{cyan-fg}{bold}Compiling Project ${project.name}@${project.version.version}{/}`,
@@ -59,7 +59,7 @@ const compile: InfinityMintScript = {
 						} else {
 							Object.keys(project.assets || {}).forEach(section => {
 								Object.values(
-									project.assets !== undefined
+									project.assets
 										? (project.assets[section] as InfinityMintProjectAsset[])
 										: {},
 								).forEach((asset: InfinityMintProjectAsset) => {
@@ -93,7 +93,7 @@ const compile: InfinityMintScript = {
 
 							let file = importCache.database[importCache.keys[fileName]];
 
-							if (file.checksum === undefined || file.checksum.length === 0) {
+							if (!file.checksum || file.checksum.length === 0) {
 								hasErrors = true;
 								errors.push(
 									`${type} (${i}) content error: Checksum not found => ` +
@@ -152,10 +152,7 @@ const compile: InfinityMintScript = {
 								let thatImport =
 									importCache.database[importCache.keys[file.toLowerCase()]];
 
-								if (
-									thatImport.settings !== undefined &&
-									thatImport.settings.length !== 0
-								) {
+								if (thatImport.settings && thatImport.settings.length !== 0) {
 									thatImport.settings.forEach(setting => {
 										let settingLocation = setting.dir + '/' + setting.base;
 										if (!fs.existsSync(settingLocation)) {
@@ -270,9 +267,9 @@ const compile: InfinityMintScript = {
 							}
 
 							//puts the settings for the import into the path
-							if (pathImport?.settings !== undefined) {
+							if (pathImport?.settings) {
 								pathImport.settings.map(setting => {
-									if (path.settings === undefined) path.settings = {};
+									if (!path.settings) path.settings = {};
 									else if (typeof path.settings === 'object')
 										path.settings = {
 											'@project': path.settings,

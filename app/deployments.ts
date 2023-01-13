@@ -145,8 +145,7 @@ export class InfinityMintDeployment {
 
 		let requirement = require(location);
 		this.deploymentScript = requirement.default || requirement;
-		if (this.deploymentScript.key === undefined)
-			this.deploymentScript.key = this.key;
+		if (!this.deploymentScript.key!) this.deploymentScript.key = this.key;
 	}
 
 	/**
