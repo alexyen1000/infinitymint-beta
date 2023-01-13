@@ -85,8 +85,7 @@ export const load = async (
 					...(options || {}),
 					dontDraw:
 						config.startup ||
-						!config.console ||
-						!isEnvTrue('INFINITYMINT_CONSOLE'),
+						(!config.console && !isEnvTrue('INFINITYMINT_CONSOLE')),
 				},
 				defaultFactory,
 			);

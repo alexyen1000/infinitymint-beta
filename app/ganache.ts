@@ -1,5 +1,4 @@
-import ganache, {Server, ServerOptions} from 'ganache';
-import {EthereumProvider} from 'ganache';
+import ganache, {Server, ServerOptions, EthereumProvider} from 'ganache';
 import {log} from './helpers';
 
 const {tcpPingPort} = require('tcp-ping-port');
@@ -59,8 +58,7 @@ export class GanacheServer {
 						this.port,
 				);
 
-				//return the hardhat ganache provider
-				resolve((await import('hardhat')).getProvider('ganache'));
+				resolve(this.server.provider);
 			});
 		});
 		return this.provider;
