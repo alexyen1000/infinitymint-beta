@@ -1526,6 +1526,8 @@ export class InfinityConsole {
 				)
 					window.update();
 			});
+
+			if (this.hasInitialized) this.screen.render();
 		};
 
 		this.think = setInterval(() => {
