@@ -904,6 +904,7 @@ export class InfinityConsole {
 			parent: this.screen,
 			height: '80%',
 			scrollable: true,
+			draggable: true,
 			scrollbar: {
 				ch: ' ',
 				track: {
@@ -914,11 +915,13 @@ export class InfinityConsole {
 				},
 			},
 			padding: 1,
-			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION\n${
+			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION{/white-bg} {underline}(control-c/cmd-c to close this box){/underline}\n\n{black-bg}{white-fg}${
 				error.message
-			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
+			}{/black-bg}{/white-fg}\n\n{white-bg}{black-fg}thrown on ${new Date(
+				Date.now(),
+			).toString()}{/black-fg}{/white-bg}\n{white-bg}{black-fg}infinitymint-beta ${getInfinityMintVersion()}{/black-fg}{/white-bg}\n\n${
 				error.stack
-			} \n\n {white-bg}{black-fg}infinitymint-beta ${getInfinityMintVersion()}{/black-fg}{/white-bg}`,
+			}`,
 			tags: true,
 			border: {
 				type: 'line',
@@ -931,11 +934,6 @@ export class InfinityConsole {
 				},
 			},
 		}) as BlessedElement;
-
-		this.errorBox.on('click', () => {
-			if (onClick) onClick(this.errorBox);
-			else this.errorBox.destroy();
-		});
 
 		this.screen.append(this.errorBox);
 		this.screen.render();

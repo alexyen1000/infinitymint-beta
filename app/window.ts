@@ -575,6 +575,12 @@ export class InfinityMintWindow {
 				element.show();
 			}
 		});
+
+		try {
+			this.updateFrameTitle();
+		} catch (error) {
+			warning('ciuld not update frame title:' + error.message);
+		}
 	}
 
 	public setSize(width: number | string, height: number | string) {

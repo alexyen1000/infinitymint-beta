@@ -1202,9 +1202,11 @@ export const createPipes = (factory: PipeFactory) => {
 
 export const initializeGanacheMnemonic = () => {
 	let session = readSession();
-	session.environment.ganacheMnemonic = getGanacheMnemonic();
+
+	if (!isEnvTrue('GANACHE_EXTERNAL'))
+		session.environment.ganacheMnemonic = getGanacheMnemonic();
+	else delete session.environment.ganacheMnemonic;
 	saveSession(session);
-	return session.environment?.ganacheMnemonic;
 };
 
 export const createInfinityMintConfig = (
