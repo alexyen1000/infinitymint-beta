@@ -7,6 +7,12 @@ const {
 } = require('infinitymint/dist/app/helpers');
 //create the default pipe
 const {createDefaultFactory} = require('infinitymint/dist/app/pipes');
+
+//set as javascript session
+let session = readSession();
+session.environment.javascript = true;
+saveSession(session);
+
 createDefaultFactory();
 
 //require dotenv
