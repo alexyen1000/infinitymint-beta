@@ -1583,8 +1583,7 @@ export class InfinityConsole {
 		} else
 			warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
 
-		this.log(`successfully initialized blessed ui<${this.sessionId}>`);
-		this.log(`successfully initialized InfinityConsole<${this.sessionId}>`);
+		this.log(`🎨 Initialized UI<${this.sessionId}>`);
 		this.stopLoading();
 		this.hasInitialized = true;
 		this.emit('initialized');
