@@ -5,6 +5,7 @@ import {Dictionary} from 'form-data';
 import path from 'path';
 import fs, {promises} from 'fs';
 import {createHash} from 'node:crypto';
+import InfinityConsole from './console';
 
 export interface ImportInterface {
 	name?: string;
@@ -116,12 +117,15 @@ export const readImportCache = (): ImportCache => {
 };
 
 let importCache: ImportCache;
-export const getImports = async (useFresh?: boolean) => {
+export const getImports = async (
+	useFresh?: boolean,
+	infinityConsole?: InfinityConsole,
+) => {
 	if (
 		useFresh ||
 		(!importCache && !fs.existsSync(process.cwd() + '/temp/import_cache.json'))
 	) {
-		importCache = await getImportCache();
+		importCache = await getImportCache([], infinityConsole);
 		saveImportCache(importCache);
 	} else importCache = readImportCache();
 	return importCache;
@@ -129,6 +133,7 @@ export const getImports = async (useFresh?: boolean) => {
 
 export const getImportCache = async (
 	supportedExtensions?: string[],
+	infinityConsole?: InfinityConsole,
 ): Promise<ImportCache> => {
 	supportedExtensions = supportedExtensions || [];
 
@@ -196,7 +201,11 @@ export const getImportCache = async (
 	let results = [];
 	for (let i = 0; i < finalLocations.length; i++) {
 		let files = await findFiles(finalLocations[i]);
-		files.forEach(result => results.push(result));
+		files.forEach(result => {
+			if (infinityConsole)
+				infinityConsole.loadingBox.setContent('Loading => ' + result);
+			results.push(result);
+		});
 	}
 
 	let parsedFiles = results.map(filePath => path.parse(filePath));
@@ -222,15 +231,15 @@ export const getImportCache = async (
 		if (root.length > 2) root.slice(1).join('imports');
 		else root = root[1];
 
-		log(
-			`[${i}] found file => ${normalImport.dir + '/' + normalImport.base}`,
-			'imports',
-		);
-		log(`\t -> perfoming checksum`, 'imports');
+		log(`[${i}] found file => ${name}`, 'imports');
+		log(`\t -> calculating checksum`, 'imports');
+
+		if (infinityConsole)
+			infinityConsole.loadingBox.setContent('Calculating Checksum => ' + name);
 
 		let checksum = createHash('md5')
 			.update(
-				await promises.readFile(normalImport.dir + '/' + normalImport.base, {
+				await promises.readFile(name, {
 					encoding: 'utf-8',
 				}),
 			)
@@ -309,6 +318,9 @@ export const getImportCache = async (
 		imports.keys[nss + '/' + normalImport.name] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
+
+		if (infinityConsole)
+			infinityConsole.loadingBox.setContent('Imported => ' + name);
 	}
 
 	return imports as ImportCache;

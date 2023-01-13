@@ -53,7 +53,7 @@ const {v4: uuidv4} = require('uuid');
  */
 export class InfinityConsole {
 	public think?: any;
-
+	public loadingBox?: BlessedElement;
 	protected currentWindow?: InfinityMintWindow;
 	protected windows: InfinityMintWindow[];
 	protected allowExit: boolean;
@@ -63,7 +63,6 @@ export class InfinityConsole {
 	private network?: HardhatRuntimeEnvironment['network'];
 	private signers?: SignerWithAddress[];
 	private windowManager?: BlessedElement;
-	private loadingBox?: BlessedElement;
 	private errorBox?: BlessedElement;
 	private inputKeys: Dictionary<Array<Function>>;
 	private chainId: number;
@@ -525,18 +524,18 @@ export class InfinityConsole {
 	public async reload() {
 		this.hasInitialized = false;
 		try {
+			this.log(`📦 Reinitializing UI<${this.sessionId}>`);
 			this.emit('reloaded');
-			this.setLoading('Reloading InfinityConsole', 10);
 			this.cleanup();
 			//render
 			this.screen.render();
 
-			this.setLoading('Initializing', 90);
+			this.setLoading('Reinitializing', 20);
+			this.stopLoading();
 			await this.initialize();
 
 			//render
 			this.screen.render();
-			this.stopLoading();
 
 			await this.refreshImports(true);
 			await this.reloadWindow(this.currentWindow);
@@ -1361,7 +1360,7 @@ export class InfinityConsole {
 	 */
 	public async refreshImports(useFresh?: boolean) {
 		this.setLoading('Refreshing Imports');
-		this.imports = await getImports(useFresh);
+		this.imports = await getImports(useFresh, this);
 		this.stopLoading();
 	}
 
