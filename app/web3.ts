@@ -10,6 +10,7 @@ import {
 	saveSession,
 	getSolidityFolder,
 	warning,
+	registerNetworkLogs,
 } from './helpers';
 import {BaseContract} from 'ethers';
 import fs from 'fs';
@@ -42,6 +43,7 @@ export const initializeInfinityMint = async (
 	startGanache?: boolean,
 ) => {
 	config = config || getConfigFile();
+	registerNetworkLogs(hre.config.networks);
 	//allow piping
 	allowPiping();
 	//
@@ -237,6 +239,7 @@ export const deployBytecode = async (
 
 export const changeNetwork = (network: string) => {
 	stopNetworkPipe(ethers.provider, hre.network.name);
+
 	hre.changeNetwork(network);
 	if (network !== 'ganache') startNetworkPipe(ethers.provider, network);
 };
@@ -377,6 +380,10 @@ export const startNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any,
 ) => {
+	if (defaultFactory.pipes[network] === undefined) {
+		warning('undefined network pipe: ' + network);
+		return;
+	}
 	if (!network) network = hre.network.name;
 	let settings = getNetworkSettings(network);
 

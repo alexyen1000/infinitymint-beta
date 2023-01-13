@@ -10,6 +10,7 @@ import {
 	BlessedElementOptions,
 	getConfigFile,
 	log,
+	logDirect,
 } from './helpers';
 import {getCurrentProjectPath} from './projects';
 import {BlessedElement, Blessed} from './helpers';
@@ -781,7 +782,7 @@ export class InfinityMintWindow {
 	}
 
 	public isAlive() {
-		return this.destroyed === false && this.initialized;
+		return this.initialized && !this.destroyed;
 	}
 
 	public hasInitialized() {
@@ -911,13 +912,13 @@ export class InfinityMintWindow {
 			this.id = this.generateId();
 			this.debugLog(`old id <${this.name}>[${oldId}] destroyed`);
 		}
+		this.destroyed = false;
 		this.creation = Date.now();
 		this.log('calling initialize');
 		try {
 			//update the title and frame
 			this.elements['frame'].setFront();
 			await this.initialize(this, this.elements['frame'], blessed);
-			this.destroyed = false;
 			this.initialized = true;
 		} catch (error) {
 			this.getInfinityConsole().errorHandler(error);

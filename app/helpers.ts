@@ -406,9 +406,9 @@ export const stage = async (
 	}
 };
 
-export const registerNetworkLogs = () => {
+export const registerNetworkLogs = (_networks?: any) => {
 	let config = getConfigFile();
-	let networks = Object.keys(config.hardhat.networks);
+	let networks = Object.keys(_networks || config.hardhat.networks);
 	networks.forEach(network => {
 		let settings = config?.settings?.networks?.[network] || {};
 		if (settings.useDefaultPipe) return;

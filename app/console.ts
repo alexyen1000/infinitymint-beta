@@ -18,6 +18,7 @@ import {
 	getConfigFile,
 	getInfinityMintVersion,
 	isEnvTrue,
+	logDirect,
 	requireScript,
 	requireWindow,
 	warning,
@@ -33,7 +34,7 @@ import {InfinityMintEventEmitter} from './interfaces';
 import {InfinityMintWindow} from './window';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
-import {changeNetwork, getDefaultAccountIndex, getDefaultSigner} from './web3';
+import {changeNetwork, getDefaultAccountIndex} from './web3';
 import {defaultFactory, PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
@@ -97,7 +98,6 @@ export class InfinityConsole {
 		this.windows = [];
 		this.allowExit = true;
 		this.options = options;
-		this.windows = [];
 		this.tick = 0;
 		this.registerDefaultKeys();
 		this.server = telnetServer;
@@ -507,8 +507,9 @@ export class InfinityConsole {
 		this.windows?.forEach(window => window?.destroy());
 		this.windows = [];
 		this.network = undefined;
-		this.windowManager = undefined;
 		this.windowManager?.destroy();
+		this.windowManager = undefined;
+
 		this?.registerDefaultKeys();
 	}
 
@@ -521,23 +522,25 @@ export class InfinityConsole {
 	}
 
 	public async reload() {
-		this.emit('reloaded');
-		this.setLoading('Reloading InfinityConsole', 10);
-		this.cleanup();
-		//render
-		this.screen.render();
+		this.hasInitialized = false;
+		try {
+			this.emit('reloaded');
+			this.setLoading('Reloading InfinityConsole', 10);
+			this.cleanup();
+			//render
+			this.screen.render();
 
-		this.stopLoading();
-		//do a hard refresh of imports (TODO: Maybe remove)
-		await this.refreshImports(true);
-		this.setLoading('Initializing', 90);
-		await this.initialize();
-		this.stopLoading();
+			this.setLoading('Initializing', 90);
+			await this.initialize();
+			//render
+			this.screen.render();
+			this.stopLoading();
 
-		this.updateWindowsList();
-
-		if (this.client && !hasLoggedIn(this.client, this.getSessionId()))
-			this.gotoWindow('Login');
+			//do a hard refresh of imports (TODO: Maybe remove)
+			//await this.refreshImports(true);
+		} catch (error) {
+			this.errorHandler(error);
+		}
 	}
 
 	public getWindows() {
@@ -695,7 +698,7 @@ export class InfinityConsole {
 		this.windowManager.enableMouse();
 		try {
 			this.windowManager.setItems(
-				[...this.windows]
+				this.windows
 					.filter(window => !window.isHiddenFromMenu())
 					.map(
 						(window, index) =>
@@ -720,9 +723,11 @@ export class InfinityConsole {
 	}
 
 	public setLoading(msg: string, filled?: number) {
+		this.stopLoading();
+
 		if (this.options.dontDraw) return;
 
-		if (this.loadingBox.hidden) this.loadingBox.show();
+		this.loadingBox.show();
 		this.loadingBox.setFront();
 		this.loadingBox.load(msg);
 
@@ -832,8 +837,6 @@ export class InfinityConsole {
 			}
 		});
 		this.windowManager.setBack();
-		//update the list
-		this.updateWindowsList();
 		//append window manager to the screen
 		this.screen.append(this.windowManager);
 	}
@@ -991,7 +994,6 @@ export class InfinityConsole {
 	public async changeNetwork(string: string) {
 		changeNetwork(string);
 		await this.reload();
-
 		return ethers.provider;
 	}
 
@@ -1332,6 +1334,7 @@ export class InfinityConsole {
 	public async refreshWindows() {
 		let windows = await findWindows();
 
+		this.windows = [];
 		this.debugLog('{yellow-fg}{bold}Refreshing Windows...{/}');
 		for (let i = 0; i < windows.length; i++) {
 			this.debugLog('{cyan-fg}Importing{/cyan-fg} => ' + windows[i]);
@@ -1346,6 +1349,8 @@ export class InfinityConsole {
 					'>',
 			);
 		}
+
+		this.updateWindowsList();
 	}
 
 	/**
@@ -1382,8 +1387,6 @@ export class InfinityConsole {
 		try {
 			//register core key events
 			this.registerKeys();
-			//create the window manager
-			this.createWindowManager();
 			//set the current window from the
 
 			if (!this.options?.initialWindow)
@@ -1505,80 +1508,84 @@ export class InfinityConsole {
 			await hre.run('compile');
 			this.stopLoading();
 		}
-
-		this.log(`initializing windows and scripts<${this.sessionId}>`);
+		//create the window manager
+		this.createWindowManager();
+		this.setLoading('Loading Projects', 20);
+		await this.reloadProjects();
+		this.stopLoading();
+		this.debugLog(`initializing  web3<${this.sessionId}>`);
+		await this.refreshWeb3();
+		this.debugLog(`initializing windows and scripts<${this.sessionId}>`);
 		await this.refreshWindows();
 		await this.refreshScripts();
-		this.log(`initializing windows and web3<${this.sessionId}>`);
-		await this.refreshWeb3();
-
-		this.log(`updating imports<${this.sessionId}>`);
+		this.debugLog(`updating imports<${this.sessionId}>`);
 		await this.refreshImports();
 
-		this.log(`loading InfinityConsole<${this.sessionId}>`);
-		//the think method for this console
-		let int = () => {
-			this.windows.forEach(window => {
-				if (
-					window.isAlive() &&
-					(window.shouldBackgroundThink() ||
-						(!window.shouldBackgroundThink() && window.isVisible()))
-				)
-					window.update();
-			});
-
-			if (this.hasInitialized) this.screen.render();
-		};
+		this.debugLog(`loading InfinityConsole<${this.sessionId}>`);
 
 		//dont draw
-		if (!this.options.dontDraw) await this.create();
-		else warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
+		if (!this.options.dontDraw) {
+			await this.create();
+			//the think method for this console
+			let int = () => {
+				if (!this.hasInitialized) return;
 
-		this.think = setInterval(() => {
-			if (!this.hasInitialized) return;
-			(this.options?.think || int)();
-			this.tick++;
+				this.windows.forEach(window => {
+					if (
+						window.isAlive() &&
+						(window.shouldBackgroundThink() ||
+							(!window.shouldBackgroundThink() && window.isVisible()))
+					)
+						window.update();
+				});
 
-			//bit of a hacky solution but keeps these buttons forward
-			if (this.currentWindow) {
-				Object.values(this.currentWindow.elements)
-					.filter(element => !element.hidden)
-					.forEach(element => {
-						if (!this.options.dontDraw && element.alwaysBack) element.setBack();
-						if (!this.options.dontDraw && element.alwaysFront)
-							element.setFront();
-						if (!this.options.dontDraw && element.alwaysFocus) element.focus();
-						if (
-							!this.options.dontDraw &&
-							(element.options.mouse || element.options.keys)
-						)
-							element.enableInput();
+				this.screen.render();
+			};
 
-						if (
-							element.think &&
-							typeof element.think === 'function' &&
-							(!element.hidden || element.alwaysUpdate)
-						)
-							element.think(this.currentWindow, element, blessed);
-					});
-			}
+			this.think = setInterval(() => {
+				if (!this.hasInitialized) return;
+				(this.options?.think || int)();
+				this.tick++;
 
-			this.windowManager.setBack();
-			this.loadingBox.setFront();
+				//bit of a hacky solution but keeps these buttons forward
+				if (this.currentWindow) {
+					Object.values(this.currentWindow.elements)
+						.filter(element => !element.hidden)
+						.forEach(element => {
+							if (!this.options.dontDraw && element.alwaysBack)
+								element.setBack();
+							if (!this.options.dontDraw && element.alwaysFront)
+								element.setFront();
+							if (!this.options.dontDraw && element.alwaysFocus)
+								element.focus();
+							if (
+								!this.options.dontDraw &&
+								(element.options.mouse || element.options.keys)
+							)
+								element.enableInput();
 
-			if (this.errorBox && !this.errorBox.hidden) this.errorBox.setFront();
-		}, this.options?.tickRate || 66);
+							if (
+								element.think &&
+								typeof element.think === 'function' &&
+								(!element.hidden || element.alwaysUpdate)
+							)
+								element.think(this.currentWindow, element, blessed);
+						});
+				}
+
+				this.windowManager.setBack();
+				this.loadingBox.setFront();
+
+				if (this.errorBox && !this.errorBox.hidden) this.errorBox.setFront();
+			}, this.options?.tickRate || 66);
+		} else
+			warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
 
 		this.log(`successfully initialized blessed ui<${this.sessionId}>`);
 		this.log(`successfully initialized InfinityConsole<${this.sessionId}>`);
-
-		this.setLoading('Loading Projects', 50);
-		await this.reloadProjects();
-
 		this.stopLoading();
 		this.hasInitialized = true;
 		this.emit('initialized');
-		this.updateWindowsList();
 	}
 }
 export default InfinityConsole;
