@@ -1061,14 +1061,27 @@ export class InfinityConsole {
 
 	public async refreshWeb3() {
 		try {
+			this.setLoading('Refreshing Web3', 10);
 			this.network = hre.network;
 			this.chainId = (await ethers.provider.getNetwork()).chainId;
 			this.signers = await ethers.getSigners();
 			this.account = this.signers[getDefaultAccountIndex()];
 			this.balance = await this.account.getBalance();
 		} catch (error) {
-			this.errorHandler(error);
+			this.stopLoading();
+
+			if (!this.isTelnet()) {
+				logDirect(error);
+			}
+
+			try {
+				this.errorHandler(error);
+			} catch (error) {
+				warning('error in error handler');
+			}
 		}
+
+		this.stopLoading();
 	}
 
 	/**

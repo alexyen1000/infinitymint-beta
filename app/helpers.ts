@@ -320,7 +320,9 @@ export const logDirect = (msg: any) => {
 	if ((console as any)._log && isAllowPiping)
 		(console as any)._log(_blessed.cleanTags(msg));
 
-	console.log(msg);
+	try {
+		console.log(msg);
+	} catch (error) {}
 };
 
 /**
