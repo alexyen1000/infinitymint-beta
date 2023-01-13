@@ -318,11 +318,19 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 const _blessed = require('blessed');
 export const logDirect = (msg: any) => {
 	if ((console as any)._log && isAllowPiping)
-		(console as any)._log(_blessed.cleanTags(msg));
+		(console as any)._log(
+			_blessed.cleanTags(
+				msg instanceof Error
+					? msg.message
+					: typeof msg === 'string'
+					? msg
+						? !isNaN(parseInt(msg))
+						: parseInt(msg.toString())
+					: msg,
+			),
+		);
 
-	try {
-		console.log(msg);
-	} catch (error) {}
+	console.log(msg);
 };
 
 /**
@@ -461,8 +469,9 @@ export const write = (path: PathLike, object: any) => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let _log = console.log;
-	console.log = (msg: string) => {
-		msg = msg.toString();
+	console.log = (msg: any) => {
+		msg = msg instanceof Error ? msg.message : msg.toString();
+
 		if (!isAllowPiping) {
 			_log(_blessed.cleanTags(msg));
 			return;
@@ -519,7 +528,7 @@ export const overwriteConsoleMethods = () => {
 				.split('\n')
 				.forEach((line: string) =>
 					log(
-						`{red-fg}${line}{red-fg}`,
+						`{red-fg}${line}{/red-fg}`,
 						isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
 					),
 				);

@@ -16,7 +16,12 @@ createDefaultFactory();
 
 //then aliases
 import 'module-alias/register';
-import {debugLog, prepareConfig, loadInfinityMint} from './app/helpers';
+import {
+	debugLog,
+	prepareConfig,
+	loadInfinityMint,
+	logDirect,
+} from './app/helpers';
 
 //require dotenv
 require('dotenv').config({

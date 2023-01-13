@@ -263,6 +263,7 @@ export class InfinityConsole {
 			this.logs.log(
 				'{red-fg}' + error.message + '\n' + error.stack + '{/red-fg}',
 			);
+		else console.error(error);
 
 		this.logs.error(error);
 	}
@@ -389,7 +390,6 @@ export class InfinityConsole {
 
 	public async reloadWindow(thatWindow: string | InfinityMintWindow) {
 		this.setLoading('Reloading ' + thatWindow.toString());
-		await this.refreshWeb3();
 		for (let i = 0; i < this.windows.length; i++) {
 			let window = this.windows[i];
 
@@ -1061,26 +1061,16 @@ export class InfinityConsole {
 
 	public async refreshWeb3() {
 		try {
-			this.setLoading('Refreshing Web3', 10);
 			this.network = hre.network;
+			this.setLoading('Refreshing ' + hre.network.name, 10);
 			this.chainId = (await ethers.provider.getNetwork()).chainId;
 			this.signers = await ethers.getSigners();
 			this.account = this.signers[getDefaultAccountIndex()];
 			this.balance = await this.account.getBalance();
 		} catch (error) {
 			this.stopLoading();
-
-			if (!this.isTelnet()) {
-				logDirect(error);
-			}
-
-			try {
-				this.errorHandler(error);
-			} catch (error) {
-				warning('error in error handler');
-			}
+			this.errorHandler(error);
 		}
-
 		this.stopLoading();
 	}
 
@@ -1524,14 +1514,13 @@ export class InfinityConsole {
 		this.setLoading('Loading Projects', 20);
 		await this.reloadProjects();
 		this.stopLoading();
-		this.debugLog(`initializing  web3<${this.sessionId}>`);
-		await this.refreshWeb3();
 		this.debugLog(`initializing windows and scripts<${this.sessionId}>`);
 		await this.refreshWindows();
 		await this.refreshScripts();
 		this.debugLog(`updating imports<${this.sessionId}>`);
 		await this.refreshImports();
-
+		this.debugLog(`initializing  web3<${this.sessionId}>`);
+		await this.refreshWeb3();
 		this.debugLog(`loading InfinityConsole<${this.sessionId}>`);
 
 		//dont draw
@@ -1541,6 +1530,8 @@ export class InfinityConsole {
 			let int = () => {
 				if (!this.hasInitialized) return;
 				this.loadingBox.setFront();
+				if (this.errorBox !== undefined) this.errorBox.setFront();
+
 				this.windows.forEach(window => {
 					if (
 						window.isAlive() &&

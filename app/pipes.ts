@@ -120,7 +120,7 @@ export class PipeFactory {
 		if (!this.currentPipeKey || !this.pipes[this.currentPipeKey])
 			this.currentPipeKey = 'default';
 		this.emitter.emit(
-			'error',
+			this.currentPipeKey + 'Error',
 			error,
 			this.currentPipeKey,
 			this.pipes[this.currentPipeKey].errors.length,
