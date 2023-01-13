@@ -1062,7 +1062,7 @@ export class InfinityConsole {
 	public async refreshWeb3() {
 		try {
 			this.network = hre.network;
-			this.setLoading('Refreshing ' + hre.network.name, 10);
+			this.setLoading('Refreshing "' + hre.network.name + '"', 10);
 			this.chainId = (await ethers.provider.getNetwork()).chainId;
 			this.signers = await ethers.getSigners();
 			this.account = this.signers[getDefaultAccountIndex()];
@@ -1103,7 +1103,7 @@ export class InfinityConsole {
 
 	public async refreshScripts() {
 		let config = getConfigFile();
-
+		this.setLoading('Refreshing Scripts', 10);
 		try {
 			//call reloads
 			if (this.scripts && this.scripts.length !== 0) {
@@ -1199,6 +1199,7 @@ export class InfinityConsole {
 				);
 			}
 		}
+		this.stopLoading();
 	}
 
 	public debugLog(msg: string) {
