@@ -9,6 +9,7 @@
 //import our hardhat plugins
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomiclabs/hardhat-ethers';
+import 'hardhat-deploy';
 import 'hardhat-change-network'; //allows hre.changeNetwork to occur
 import {createDefaultFactory} from './app/pipes';
 //create default pipe

@@ -1,7 +1,7 @@
 import {BigNumber} from 'ethers';
 import {Dictionary} from 'form-data';
 import {HardhatUserConfig} from 'hardhat/types';
-import {debugLog, FuncDouble, FuncSingle, log} from './helpers';
+import {debugLog, FuncSingle, log} from './helpers';
 import {ServerOptions} from 'ganache';
 import {EventEmitter} from 'events';
 import {Contract} from '@ethersproject/contracts';
@@ -10,8 +10,8 @@ import {InfinityMintDeployment} from './deployments';
 import {PathLike, Stats} from 'fs';
 import {InfinityMintSVGSettings} from './content';
 import {GasPriceFunction, TokenPriceFunction} from './gasAndPrices';
-import {ParsedPath} from 'path';
-import {ImportCache, ImportType} from './imports';
+import {ImportType} from './imports';
+import {DeployResult} from 'hardhat-deploy/dist/types';
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -1587,18 +1587,10 @@ export interface InfinityMintDeploymentParametersDeployments
 	InfinityMintProject: InfinityMintDeploymentLive;
 }
 
-export interface InfinityMintDeploymentLocal extends KeyValue {
-	abi?: any[];
-	name?: string;
-	address?: string;
-	args?: any[];
-	transactionHash?: string;
-	receipt?: KeyValue;
-	input?: KeyValue;
-	output?: KeyValue;
-	sourceName?: string;
-	contractName?: string;
-	deployer?: string;
+export interface InfinityMintDeploymentLocal extends DeployResult {
+	contractName: string;
+	project: InfinityMintCompiledProject;
+	deployer: string;
 }
 
 /**
