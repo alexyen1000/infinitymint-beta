@@ -1526,8 +1526,6 @@ export class InfinityConsole {
 				)
 					window.update();
 			});
-
-			this.screen.render();
 		};
 
 		this.think = setInterval(() => {
@@ -1574,9 +1572,11 @@ export class InfinityConsole {
 
 		this.setLoading('Loading Projects', 50);
 		await this.reloadProjects();
+
 		this.stopLoading();
 		this.hasInitialized = true;
 		this.emit('initialized');
+		this.updateWindowsList();
 	}
 }
 export default InfinityConsole;
