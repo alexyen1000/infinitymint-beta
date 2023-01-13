@@ -784,14 +784,13 @@ export const findScripts = async (roots?: string[]) => {
 
 	roots = [
 		...roots,
-		...(config.roots || []).map((root: string) =>
-			process.cwd() +
-			'/' +
-			root +
-			(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
-			isTypescript()
-				? '**/*.ts'
-				: '**/*.js',
+		...(config.roots || []).map(
+			(root: string) =>
+				process.cwd() +
+				'/' +
+				root +
+				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
+				(isTypescript() ? '**/*.ts' : '**/*.js'),
 		),
 		...(config.roots || []).map(
 			(root: string) =>

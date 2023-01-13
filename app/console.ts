@@ -124,7 +124,7 @@ export class InfinityConsole {
 				top: 'center',
 				left: 'center',
 				width: '90%',
-				height: 20,
+				height: '75%',
 				horizonal: true,
 				parent: this.screen,
 				pch: '-',
@@ -389,6 +389,7 @@ export class InfinityConsole {
 
 	public async reloadWindow(thatWindow: string | InfinityMintWindow) {
 		this.setLoading('Reloading ' + thatWindow.toString());
+		await this.refreshWeb3();
 		for (let i = 0; i < this.windows.length; i++) {
 			let window = this.windows[i];
 
@@ -530,16 +531,15 @@ export class InfinityConsole {
 			//render
 			this.screen.render();
 
-			await this.refreshImports();
-
 			this.setLoading('Initializing', 90);
 			await this.initialize();
+
 			//render
 			this.screen.render();
 			this.stopLoading();
 
-			//do a hard refresh of imports (TODO: Maybe remove)
-			//await this.refreshImports(true);
+			await this.refreshImports(true);
+			await this.reloadWindow(this.currentWindow);
 		} catch (error) {
 			this.errorHandler(error);
 		}
@@ -725,23 +725,20 @@ export class InfinityConsole {
 	}
 
 	public setLoading(msg: string, filled?: number) {
-		this.stopLoading();
-
 		if (this.options.dontDraw) return;
 
-		this.loadingBox.show();
 		this.loadingBox.setFront();
 		this.loadingBox.load(msg);
-
 		this.loadingBox.filled = this.loadingBox.filled || filled || 100;
+		this.screen.render();
 	}
 
 	public stopLoading() {
 		if (this.options.dontDraw) return;
 
 		this.loadingBox.stop();
-		this.loadingBox.setFront();
-		this.loadingBox.hide();
+		this.loadingBox.setBack();
+		this.screen.render();
 	}
 
 	/**
@@ -1530,7 +1527,7 @@ export class InfinityConsole {
 			//the think method for this console
 			let int = () => {
 				if (!this.hasInitialized) return;
-
+				this.loadingBox.setFront();
 				this.windows.forEach(window => {
 					if (
 						window.isAlive() &&
