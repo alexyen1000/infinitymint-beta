@@ -521,7 +521,7 @@ export class InfinityConsole {
 		this.projects = saveProjects(projects);
 	}
 
-	public async reload() {
+	public async reload(dontRefreshImports?: boolean) {
 		this.hasInitialized = false;
 		try {
 			this.log(`📦 Reinitializing UI<${this.sessionId}>`);
@@ -537,7 +537,7 @@ export class InfinityConsole {
 			//render
 			this.screen.render();
 
-			await this.refreshImports(true);
+			await this.refreshImports(!dontRefreshImports);
 			await this.reloadWindow(this.currentWindow);
 		} catch (error) {
 			this.errorHandler(error);
@@ -914,7 +914,7 @@ export class InfinityConsole {
 				},
 			},
 			padding: 1,
-			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION: ${
+			content: `{white-bg}{black-fg}CRITICAL ERROR - SYSTEM MALFUCTION\n${
 				error.message
 			} at ${Date.now()}{/black-fg}{/white-bg}\n\n ${
 				error.stack
@@ -942,6 +942,7 @@ export class InfinityConsole {
 
 		this.errorBox.setFront();
 		this.errorBox.focus();
+		this.errorBox.enableInput();
 	}
 
 	public registerKeys() {
@@ -991,7 +992,7 @@ export class InfinityConsole {
 	 */
 	public async changeNetwork(string: string) {
 		changeNetwork(string);
-		await this.reload();
+		await this.reload(true);
 		return ethers.provider;
 	}
 
