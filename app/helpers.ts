@@ -1205,7 +1205,20 @@ export const initializeGanacheMnemonic = () => {
 
 	if (!isEnvTrue('GANACHE_EXTERNAL'))
 		session.environment.ganacheMnemonic = getGanacheMnemonic();
-	else delete session.environment.ganacheMnemonic;
+	else {
+		if (session.environment.ganacheMnemonic)
+			delete session.environment.ganacheMnemonic;
+
+		if (fs.existsSync(process.cwd() + '/.mnemonics'))
+			session.environment.ganacheMnemonic = readJson(
+				process.cwd() + '/.mnemonics',
+			).ganache.mnemonic;
+		else
+			warning(
+				'no ganache mnemonic found, please create a .mnemonics file by running npm run ganache',
+			);
+	}
+
 	saveSession(session);
 };
 

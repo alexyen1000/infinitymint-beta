@@ -9,6 +9,8 @@ coverage.json
 cache/
 artifacts/
 
+.mnemonics
+
 # Deployments
 /deployments/hardhat/
 /deployments/ganache/
