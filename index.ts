@@ -5,7 +5,6 @@ import {
 	isEnvTrue,
 	getConfigFile,
 	logDirect,
-	readSession,
 	isInfinityMint,
 	warning,
 } from './app/helpers';
