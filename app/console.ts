@@ -1372,12 +1372,9 @@ export class InfinityConsole {
 		if (!this.imports || !hasImportCache()) await this.refreshImports();
 
 		await this.refreshWeb3();
-
 		await this.refreshScripts();
-
 		//create the window manager
 		await this.refreshWindows();
-
 		await this.reloadProjects();
 	}
 
