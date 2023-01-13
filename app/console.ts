@@ -530,6 +530,8 @@ export class InfinityConsole {
 			//render
 			this.screen.render();
 
+			await this.refreshImports();
+
 			this.setLoading('Initializing', 90);
 			await this.initialize();
 			//render
@@ -1348,9 +1350,8 @@ export class InfinityConsole {
 					window.getId() +
 					'>',
 			);
+			this.updateWindowsList();
 		}
-
-		this.updateWindowsList();
 	}
 
 	/**

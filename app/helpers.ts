@@ -352,13 +352,13 @@ export const stage = async (
 	if (script?.infinityConsole) script.infinityConsole.emitAny(eventName);
 
 	if (project?.stages[stage] === true && !forceRun) {
-		if (script.infinityConsole)
+		if (script?.infinityConsole)
 			script.infinityConsole.debugLog(
 				'\t{cyan-fg}Skipped{/cyan-fg} => ' + stage,
 			);
 		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 
-		if (script.infinityConsole)
+		if (script?.infinityConsole)
 			script.infinityConsole.emitAny(eventName + 'Skipped');
 		return true;
 	}
@@ -375,7 +375,7 @@ export const stage = async (
 		await call(isFirstTime);
 		project.stages[stage] = true;
 
-		if (script.infinityConsole)
+		if (script?.infinityConsole)
 			script.infinityConsole.emitAny(eventName + 'Post', isFirstTime);
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
