@@ -1530,6 +1530,10 @@ export class InfinityConsole {
 			if (this.hasInitialized) this.screen.render();
 		};
 
+		//dont draw
+		if (!this.options.dontDraw) await this.create();
+		else warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
+
 		this.think = setInterval(() => {
 			if (!this.hasInitialized) return;
 			(this.options?.think || int)();
@@ -1563,11 +1567,7 @@ export class InfinityConsole {
 			this.loadingBox.setFront();
 
 			if (this.errorBox && !this.errorBox.hidden) this.errorBox.setFront();
-		}, this.options?.tickRate || 33);
-
-		//dont draw
-		if (!this.options.dontDraw) await this.create();
-		else warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
+		}, this.options?.tickRate || 66);
 
 		this.log(`successfully initialized blessed ui<${this.sessionId}>`);
 		this.log(`successfully initialized InfinityConsole<${this.sessionId}>`);
