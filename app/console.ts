@@ -527,13 +527,14 @@ export class InfinityConsole {
 		//render
 		this.screen.render();
 
+		this.stopLoading();
 		//do a hard refresh of imports (TODO: Maybe remove)
 		await this.refreshImports(true);
 		this.setLoading('Initializing', 90);
 		await this.initialize();
+		this.stopLoading();
 
 		this.updateWindowsList();
-		this.stopLoading();
 
 		if (this.client && !hasLoggedIn(this.client, this.getSessionId()))
 			this.gotoWindow('Login');
@@ -721,7 +722,7 @@ export class InfinityConsole {
 	public setLoading(msg: string, filled?: number) {
 		if (this.options.dontDraw) return;
 
-		this.loadingBox.show();
+		if (this.loadingBox.hidden) this.loadingBox.show();
 		this.loadingBox.setFront();
 		this.loadingBox.load(msg);
 
@@ -731,12 +732,9 @@ export class InfinityConsole {
 	public stopLoading() {
 		if (this.options.dontDraw) return;
 
-		//so you can see wtf IM is doing, it so fast...
-		setTimeout(() => {
-			this.loadingBox.stop();
-			this.loadingBox.setFront();
-			this.loadingBox.hide();
-		}, 350);
+		this.loadingBox.stop();
+		this.loadingBox.setFront();
+		this.loadingBox.hide();
 	}
 
 	/**
@@ -1061,8 +1059,6 @@ export class InfinityConsole {
 	}
 
 	public async refreshWeb3() {
-		if (!fs.existsSync('./artifacts')) await hre.run('compile');
-
 		try {
 			this.network = hre.network;
 			this.chainId = (await ethers.provider.getNetwork()).chainId;
@@ -1084,7 +1080,7 @@ export class InfinityConsole {
 	}
 
 	public getScripts() {
-		return this.scripts;
+		return this.scripts || [];
 	}
 
 	/**
@@ -1357,7 +1353,9 @@ export class InfinityConsole {
 	 * @param useFresh
 	 */
 	public async refreshImports(useFresh?: boolean) {
+		this.setLoading('Refreshing Imports');
 		this.imports = await getImports(useFresh);
+		this.stopLoading();
 	}
 
 	/**
@@ -1368,30 +1366,157 @@ export class InfinityConsole {
 		return this.projects.database;
 	}
 
-	public async initialize() {
-		//if the network member has been defined then we have already initialized
-		if (this.network) throw new Error('console already initialized');
+	public async load() {
 		this.setLoading('Loading Imports', 10);
 		//refresh imports
 		if (!this.imports || !hasImportCache()) await this.refreshImports();
 
-		this.setLoading('Loading Web3', 10);
 		await this.refreshWeb3();
 
-		this.setLoading('Loading Scripts', 25);
 		await this.refreshScripts();
 
 		//create the window manager
-		this.setLoading('Loading Windows', 35);
 		await this.refreshWindows();
 
-		this.setLoading('Loading Projects', 45);
 		await this.reloadProjects();
+	}
+
+	public async create() {
+		try {
+			//register core key events
+			this.registerKeys();
+			//create the window manager
+			this.createWindowManager();
+			//set the current window from the
+
+			if (!this.options?.initialWindow)
+				this.currentWindow =
+					this.getWindowsByName('Menu')[0] || this.windows[0];
+			else if (
+				typeof this.options.initialWindow === typeof InfinityMintWindow
+			) {
+				let potentialWindow = this.options.initialWindow as unknown;
+				this.currentWindow = potentialWindow as InfinityMintWindow;
+			} else {
+				this.currentWindow = this.getWindowsByName(
+					this.options.initialWindow as string,
+				)[0];
+			}
+			//instantly instante windows which seek such a thing
+			let instantInstantiate = this.windows.filter(thatWindow =>
+				thatWindow.shouldInstantiate(),
+			);
+
+			this.debugLog(`initializing ${instantInstantiate.length} windows`);
+			for (let i = 0; i < instantInstantiate.length; i++) {
+				this.setLoading('Loading Window ' + instantInstantiate[i].name, 50);
+				try {
+					this.debugLog(
+						`[${i}] initializing <` +
+							instantInstantiate[i].name +
+							`>[${instantInstantiate[i].getId()}]`,
+					);
+
+					if (!instantInstantiate[i].hasContainer())
+						instantInstantiate[i].setContainer(this);
+
+					instantInstantiate[i].setScreen(this.screen);
+					instantInstantiate[i].createFrame();
+					await instantInstantiate[i].create();
+					instantInstantiate[i].hide();
+					//register events
+					this.registerEvents(instantInstantiate[i]);
+				} catch (error) {
+					warning(
+						`[${i}] error initializing <` +
+							instantInstantiate[i].name +
+							`>[${instantInstantiate[i].getId()}]: ` +
+							error.message,
+					);
+					//simply try and hide
+					try {
+						instantInstantiate[i].hide();
+					} catch (error) {}
+					this.errorHandler(error);
+				}
+				this.stopLoading();
+			}
+
+			this.debugLog(
+				`finished initializing ${instantInstantiate.length} windows`,
+			);
+
+			this.setLoading('Loading Current Window', 70);
+			await this.createCurrentWindow(); //create the current window
+			this.stopLoading();
+			//render
+			this.screen.render();
+			//set window manager to the back
+			this.windowManager.setBack();
+			//show the current window
+			this.currentWindow.show();
+		} catch (error: Error | any) {
+			console.error(error);
+
+			if (isEnvTrue('THROW_ALL_ERRORS') || this.options?.throwErrors) {
+				this.stopLoading();
+				throw error;
+			}
+
+			this.screen.destroy();
+
+			this.screen = blessed.screen(
+				this.options?.blessed || {
+					smartCRS: true,
+					dockBorders: true,
+					fullUnicore: true,
+					cursor: {
+						artificial: true,
+						shape: {
+							bg: 'red',
+							fg: 'white',
+							bold: true,
+							ch: '#',
+						},
+						blink: true,
+					},
+				},
+			);
+
+			this.displayError(error);
+
+			//register escape key
+			this.screen.key(['escape', 'C-c'], (ch: string, key: string) => {
+				this.currentAudio?.kill();
+				process.exit(0);
+			});
+		}
+	}
+
+	public async initialize() {
+		//if the network member has been defined then we have already initialized
+		if (this.network) throw new Error('console already initialized');
 
 		if (this.options.dontDraw) {
+			await this.load();
 			this.hasInitialized = true;
 			return;
 		}
+
+		if (!fs.existsSync('./artifacts')) {
+			this.setLoading('Compiling Contracts', 10);
+			await hre.run('compile');
+			this.stopLoading();
+		}
+
+		this.log(`initializing windows and scripts<${this.sessionId}>`);
+		await this.refreshWindows();
+		await this.refreshScripts();
+		this.log(`initializing windows and web3<${this.sessionId}>`);
+		await this.refreshWeb3();
+
+		this.log(`updating imports<${this.sessionId}>`);
+		await this.refreshImports();
 
 		this.log(`loading InfinityConsole<${this.sessionId}>`);
 		//the think method for this console
@@ -1443,121 +1568,15 @@ export class InfinityConsole {
 			if (this.errorBox && !this.errorBox.hidden) this.errorBox.setFront();
 		}, this.options?.tickRate || 33);
 
-		this.setLoading('Loading InfinityMint', 50);
-
 		//dont draw
-		if (!this.options.dontDraw)
-			try {
-				//register core key events
-				this.registerKeys();
-				//create the window manager
-				this.createWindowManager();
-				//set the current window from the
-
-				if (!this.options?.initialWindow)
-					this.currentWindow =
-						this.getWindowsByName('Menu')[0] || this.windows[0];
-				else if (
-					typeof this.options.initialWindow === typeof InfinityMintWindow
-				) {
-					let potentialWindow = this.options.initialWindow as unknown;
-					this.currentWindow = potentialWindow as InfinityMintWindow;
-				} else {
-					this.currentWindow = this.getWindowsByName(
-						this.options.initialWindow as string,
-					)[0];
-				}
-				//instantly instante windows which seek such a thing
-				let instantInstantiate = this.windows.filter(thatWindow =>
-					thatWindow.shouldInstantiate(),
-				);
-
-				this.debugLog(`initializing ${instantInstantiate.length} windows`);
-				for (let i = 0; i < instantInstantiate.length; i++) {
-					this.setLoading('Loading Window ' + instantInstantiate[i].name, 50);
-					try {
-						this.debugLog(
-							`[${i}] initializing <` +
-								instantInstantiate[i].name +
-								`>[${instantInstantiate[i].getId()}]`,
-						);
-
-						if (!instantInstantiate[i].hasContainer())
-							instantInstantiate[i].setContainer(this);
-
-						instantInstantiate[i].setScreen(this.screen);
-						instantInstantiate[i].createFrame();
-						await instantInstantiate[i].create();
-						instantInstantiate[i].hide();
-						//register events
-						this.registerEvents(instantInstantiate[i]);
-					} catch (error) {
-						warning(
-							`[${i}] error initializing <` +
-								instantInstantiate[i].name +
-								`>[${instantInstantiate[i].getId()}]: ` +
-								error.message,
-						);
-						//simply try and hide
-						try {
-							instantInstantiate[i].hide();
-						} catch (error) {}
-						this.errorHandler(error);
-					}
-				}
-
-				this.debugLog(
-					`finished initializing ${instantInstantiate.length} windows`,
-				);
-
-				this.setLoading('Loading Current Window', 70);
-				await this.createCurrentWindow(); //create the current window
-				//render
-				this.screen.render();
-				//set window manager to the back
-				this.windowManager.setBack();
-				//show the current window
-				this.currentWindow.show();
-			} catch (error: Error | any) {
-				console.error(error);
-
-				if (isEnvTrue('THROW_ALL_ERRORS') || this.options?.throwErrors) {
-					this.stopLoading();
-					throw error;
-				}
-
-				this.screen.destroy();
-
-				this.screen = blessed.screen(
-					this.options?.blessed || {
-						smartCRS: true,
-						dockBorders: true,
-						fullUnicore: true,
-						cursor: {
-							artificial: true,
-							shape: {
-								bg: 'red',
-								fg: 'white',
-								bold: true,
-								ch: '#',
-							},
-							blink: true,
-						},
-					},
-				);
-
-				this.displayError(error);
-
-				//register escape key
-				this.screen.key(['escape', 'C-c'], (ch: string, key: string) => {
-					this.currentAudio?.kill();
-					process.exit(0);
-				});
-			}
+		if (!this.options.dontDraw) await this.create();
 		else warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
 
+		this.log(`successfully initialized blessed ui<${this.sessionId}>`);
 		this.log(`successfully initialized InfinityConsole<${this.sessionId}>`);
-		//stop loading
+
+		this.setLoading('Loading Projects', 50);
+		await this.reloadProjects();
 		this.stopLoading();
 		this.hasInitialized = true;
 		this.emit('initialized');
