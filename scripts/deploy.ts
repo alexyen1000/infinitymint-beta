@@ -5,10 +5,10 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 	InfinityMintTempProject,
-} from '../dist/app/interfaces';
-import {InfinityMintDeployment} from '../dist/app/deployments';
-import {getScriptTemporaryProject} from '../dist/app/projects';
-import {getConfigFile, stage} from '../dist/app/helpers';
+} from '../app/interfaces';
+import {InfinityMintDeployment} from '../app/deployments';
+import {getScriptTemporaryProject} from '../app/projects';
+import {getConfigFile, stage} from '../app/helpers';
 
 const deploy: InfinityMintScript = {
 	name: 'Deploy Project',

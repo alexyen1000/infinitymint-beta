@@ -772,12 +772,8 @@ export const findScripts = async (roots?: string[]) => {
 	roots = roots || [];
 
 	//try and include TS scripts
-	if (
-		!isInfinityMint() &&
-		isTypescript() &&
-		isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS')
-	)
-		roots.push(process.cwd() + '/node_modules/infinitymint/scripts/**/*.ts');
+	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS'))
+		roots.push(process.cwd() + '/node_modules/infinitymint/dist/**/*.js');
 
 	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
 	roots.push(process.cwd() + '/scripts/**/*.js');

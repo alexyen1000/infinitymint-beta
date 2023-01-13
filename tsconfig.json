@@ -31,6 +31,7 @@
 		"./tests",
 		"./gems",
 		"./deploy",
+		"./scripts",
 		"./imports",
 		"./examples",
 		"./typechain-types",

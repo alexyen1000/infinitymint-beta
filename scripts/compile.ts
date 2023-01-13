@@ -1,4 +1,4 @@
-import {getScriptTemporaryProject} from '../dist/app/projects';
+import {getScriptTemporaryProject} from '../app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
@@ -6,12 +6,12 @@ import {
 	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
-} from '../dist/app/interfaces';
-import {stage} from '../dist/app/helpers';
+} from '../app/interfaces';
+import {stage} from '../app/helpers';
 import {createHash} from 'node:crypto';
-import {getImports} from '../dist/app/imports';
+import {getImports} from '../app/imports';
 import fs from 'fs';
-import {InfinityMintSVGSettings} from '../dist/app/content';
+import {InfinityMintSVGSettings} from '../app/content';
 import {InfinityMintCompiledProject} from '../app/interfaces';
 
 const compile: InfinityMintScript = {
