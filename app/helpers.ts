@@ -771,22 +771,27 @@ export const findScripts = async (roots?: string[]) => {
 	let config = getConfigFile();
 	roots = roots || [];
 
-	//try and include TS scripts
+	//try and include everything in the scripts folder of the module
 	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS'))
-		roots.push(process.cwd() + '/node_modules/infinitymint/dist/**/*.js');
+		roots.push(
+			process.cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js',
+		);
 
+	//if we are typescript require ts files
 	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
+	//require JS files always
 	roots.push(process.cwd() + '/scripts/**/*.js');
 
 	roots = [
 		...roots,
-		...(config.roots || []).map(
-			(root: string) =>
-				process.cwd() +
-				'/' +
-				root +
-				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
-				'**/*.ts',
+		...(config.roots || []).map((root: string) =>
+			process.cwd() +
+			'/' +
+			root +
+			(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
+			isTypescript()
+				? '**/*.ts'
+				: '**/*.js',
 		),
 		...(config.roots || []).map(
 			(root: string) =>
