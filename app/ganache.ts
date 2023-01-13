@@ -1,5 +1,14 @@
 import ganache, {Server, ServerOptions, EthereumProvider} from 'ganache';
-import {log} from './helpers';
+import {ethers} from 'hardhat';
+import {
+	debugLog,
+	getConfigFile,
+	log,
+	readSession,
+	saveSession,
+	warning,
+} from './helpers';
+import {startNetworkPipe} from './web3';
 
 const {tcpPingPort} = require('tcp-ping-port');
 export class GanacheServer {
@@ -58,7 +67,9 @@ export class GanacheServer {
 						this.port,
 				);
 
-				resolve(this.server.provider);
+				setTimeout(() => {
+					resolve(this.server.provider);
+				}, 1000);
 			});
 		});
 		return this.provider;
@@ -70,4 +81,53 @@ export class GanacheServer {
 	}
 }
 
-export default new GanacheServer();
+export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
+	let keys = [];
+	walletLength = walletLength || 20;
+	for (let i = 0; i < walletLength; i++) {
+		keys.push(
+			ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/` + i).privateKey,
+		);
+	}
+	return keys;
+};
+
+const GanacheServerInstance = new GanacheServer();
+
+export const startGanache = async () => {
+	try {
+		let session = readSession();
+		let config = getConfigFile();
+		//ask if they want to start ganache
+		//start ganache here
+		let obj = {...config.ganache} as any;
+		if (!obj.wallet) obj.wallet = {};
+		if (!session.environment.ganacheMnemonic)
+			throw new Error('no ganache mnemonic');
+
+		obj.wallet.mnemonic = session.environment.ganacheMnemonic;
+		saveSession(session);
+		debugLog('starting ganache with menomic of: ' + obj.wallet.mnemonic);
+
+		//get private keys and save them to file
+		let keys = getPrivateKeys(session.environment.ganacheMnemonic);
+		debugLog(
+			'found ' +
+				keys.length +
+				' private keys for mnemonic: ' +
+				session.environment.ganacheMnemonic,
+		);
+		keys.forEach((key, index) => {
+			debugLog(`[${index}] => ${key}`);
+		});
+		session.environment.ganachePrivateKeys = keys;
+		saveSession(session);
+
+		let provider = await GanacheServerInstance.start(config.ganache || {});
+		startNetworkPipe(provider, 'ganache');
+	} catch (error) {
+		warning('could not start ganache:\n' + error.stack);
+	}
+};
+
+export default GanacheServerInstance;

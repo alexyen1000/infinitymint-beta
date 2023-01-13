@@ -345,11 +345,11 @@ export const stage = async (
 	type = type || 'compile';
 	if (!project.stages) project.stages = {};
 	let eventName = 'stage' + (stage[0].toUpperCase() + stage.substring(1));
-	if (script.infinityConsole)
-		script.infinityConsole.debugLog('executing stage => ' + stage);
+	if (script?.infinityConsole)
+		script?.infinityConsole.debugLog('executing stage => ' + stage);
 	else debugLog('executing stage => ' + stage);
 
-	if (script.infinityConsole) script.infinityConsole.emitAny(eventName);
+	if (script?.infinityConsole) script.infinityConsole.emitAny(eventName);
 
 	if (project?.stages[stage] === true && !forceRun) {
 		if (script.infinityConsole)
@@ -370,8 +370,8 @@ export const stage = async (
 	else saveTempDeployedProject(project);
 
 	try {
-		if (script.infinityConsole)
-			script.infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
+		if (script?.infinityConsole)
+			script?.infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
 		await call(isFirstTime);
 		project.stages[stage] = true;
 
@@ -380,13 +380,13 @@ export const stage = async (
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
-		if (script.infinityConsole)
-			script.infinityConsole.debugLog(
+		if (script?.infinityConsole)
+			script?.infinityConsole.debugLog(
 				'\t{green-fg}Success{/green-fg} => ' + stage,
 			);
 		else debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
-		if (script.infinityConsole)
-			script.infinityConsole.emitAny(eventName + 'Success');
+		if (script?.infinityConsole)
+			script?.infinityConsole.emitAny(eventName + 'Success');
 		return true;
 	} catch (error) {
 		project.stages[stage] = error;
@@ -394,16 +394,27 @@ export const stage = async (
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
-		if (script.infinityConsole)
-			script.infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
+		if (script?.infinityConsole)
+			script?.infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
 		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
-		if (script.infinityConsole)
-			script.infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
+		if (script?.infinityConsole)
+			script?.infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
 
 		if (cleanup) await cleanup();
 
 		return error;
 	}
+};
+
+export const registerNetworkLogs = () => {
+	let config = getConfigFile();
+	let networks = Object.keys(config.hardhat.networks);
+	networks.forEach(network => {
+		let settings = config?.settings?.networks?.[network] || {};
+		if (settings.useDefaultPipe) return;
+		debugLog('registered pipe for ' + network);
+		defaultFactory.registerSimplePipe(network);
+	});
 };
 
 const parseCache = {};
@@ -1026,6 +1037,7 @@ export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
 export const loadInfinityMint = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean,
+	_startGanache?: boolean,
 ) => {
 	initializeGanacheMnemonic();
 	//create default pipes

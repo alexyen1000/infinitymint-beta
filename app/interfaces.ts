@@ -189,6 +189,11 @@ export interface InfinityMintCompiledProject {
 	/**
 	 *
 	 */
+	imports?: Dictionary<string>;
+
+	/**
+	 *
+	 */
 	bundles?: Dictionary<{
 		version?: string;
 		paths?: {

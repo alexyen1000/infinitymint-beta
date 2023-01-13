@@ -20,7 +20,6 @@ import {
 	TransactionReceipt,
 	Provider,
 } from '@ethersproject/providers';
-import GanacheServer from './ganache';
 import {ContractFactory, ContractTransaction} from '@ethersproject/contracts';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {getLocalDeployment, create} from './deployments';
@@ -43,47 +42,6 @@ export const initializeInfinityMint = async (
 	startGanache?: boolean,
 ) => {
 	config = config || getConfigFile();
-	let session = readSession();
-	//register current network pipes
-	registerNetworkLogs();
-
-	//start ganache
-	if (startGanache) {
-		try {
-			//ask if they want to start ganache
-			//start ganache here
-			let obj = {...config.ganache} as any;
-			if (!obj.wallet) obj.wallet = {};
-			if (!session.environment.ganacheMnemonic)
-				throw new Error('no ganache mnemonic');
-
-			obj.wallet.mnemonic = session.environment.ganacheMnemonic;
-			saveSession(session);
-			debugLog('starting ganache with menomic of: ' + obj.wallet.mnemonic);
-
-			//get private keys and save them to file
-			let keys = getPrivateKeys(session.environment.ganacheMnemonic);
-			debugLog(
-				'found ' +
-					keys.length +
-					' private keys for mnemonic: ' +
-					session.environment.ganacheMnemonic,
-			);
-			keys.forEach((key, index) => {
-				debugLog(`[${index}] => ${key}`);
-			});
-			session.environment.ganachePrivateKeys = keys;
-			saveSession(session);
-
-			let provider = await GanacheServer.start(config.ganache || {});
-			startNetworkPipe(provider, 'ganache');
-		} catch (error) {
-			warning('could not start ganache:\n' + error.stack);
-		}
-	} else {
-		warning('no ganache network found');
-	}
-
 	//allow piping
 	allowPiping();
 	//
@@ -392,29 +350,6 @@ export const getNetworkSettings = (network: string) => {
 export const getDefaultAccountIndex = () => {
 	let config = getConfigFile();
 	return config?.settings?.networks?.[hre.network.name]?.defaultAccount || 0;
-};
-
-export const registerNetworkLogs = () => {
-	let networks = Object.keys(hre.config.networks);
-	let config = getConfigFile();
-
-	networks.forEach(network => {
-		let settings = config?.settings?.networks?.[network] || {};
-		if (settings.useDefaultPipe) return;
-		debugLog('registered pipe for ' + network);
-		defaultFactory.registerSimplePipe(network);
-	});
-};
-
-export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
-	let keys = [];
-	walletLength = walletLength || 20;
-	for (let i = 0; i < walletLength; i++) {
-		keys.push(
-			ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/` + i).privateKey,
-		);
-	}
-	return keys;
 };
 
 export const stopNetworkPipe = (

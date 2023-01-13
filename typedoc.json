@@ -5,7 +5,6 @@
 	"entryPoints": [
 		"app/*",
 		"app/*/windows",
-		"scripts/*",
 		"deploy/*/*",
 		"gems/example/*/*",
 		"typechain-types/*",

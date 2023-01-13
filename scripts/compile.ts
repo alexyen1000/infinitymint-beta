@@ -12,6 +12,7 @@ import {createHash} from 'node:crypto';
 import {getImports} from '../dist/app/imports';
 import fs from 'fs';
 import {InfinityMintSVGSettings} from '../dist/app/content';
+import {InfinityMintCompiledProject} from '../app/interfaces';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -251,6 +252,14 @@ const compile: InfinityMintScript = {
 					'setup',
 					project,
 					async () => {
+						(project as InfinityMintCompiledProject).imports =
+							{
+								...((project as InfinityMintCompiledProject).imports || {}),
+							} || {};
+
+						let imports =
+							(project as InfinityMintCompiledProject).imports || {};
+
 						let setupImport = (
 							path: InfinityMintProjectPath | InfinityMintProjectAsset,
 						) => {
@@ -258,6 +267,7 @@ const compile: InfinityMintScript = {
 							let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
 							let pathImport = importCache.database[importCache.keys[fileName]];
 							path.source = pathImport;
+
 							//if its a string then grab that file and add it to pathImports
 							if (typeof path.settings === 'string') {
 								let settings =
@@ -305,6 +315,9 @@ const compile: InfinityMintScript = {
 												setting.base,
 										);
 									}
+
+									imports[setting.dir + '/' + setting.base] =
+										setting.dir + '/' + setting.base;
 								});
 
 								Object.values(path.settings || {}).forEach(
@@ -321,10 +334,13 @@ const compile: InfinityMintScript = {
 															svgSetting!.source!.base
 														} bad css reference: ${style}`,
 													);
-												else
+												else {
 													script.log(
 														`\t{cyan-fg}Verified loose CSS reference{/} => ${style}`,
 													);
+													let path: string = svgSetting!.style!.css as string;
+													imports[path] = path;
+												}
 											});
 										else if (
 											!importCache.keys[svgSetting!.style!.css as string]
@@ -336,12 +352,15 @@ const compile: InfinityMintScript = {
 													svgSetting!.source!.base
 												} bad css reference: ${svgSetting!.style!.css}`,
 											);
-										else
+										else {
 											script.log(
 												`\t{cyan-fg}Verified loose CSS reference{/} => ${
 													svgSetting!.style!.css
 												}`,
 											);
+											let path: string = svgSetting!.style!.css as string;
+											imports[path] = path;
+										}
 									},
 								);
 
@@ -402,6 +421,9 @@ const compile: InfinityMintScript = {
 								exported: Date.now(),
 							};
 
+							imports[path.export.key] =
+								path.source.dir + '/' + path.source.base;
+
 							path.checksum = createHash('md5')
 								.update(JSON.stringify(JSON.stringify(path)))
 								.digest('hex');
@@ -409,6 +431,7 @@ const compile: InfinityMintScript = {
 								`\t{cyan-fg}Object checksum{/cyan-fg} => ${path.checksum}`,
 							);
 						};
+
 						//here we need to loop through paths and see if we find settings
 						for (let i = 0; i < project.paths.length; i++) {
 							script.infinityConsole.emit(
@@ -453,9 +476,17 @@ const compile: InfinityMintScript = {
 					'buildImports',
 					project,
 					async () => {
+						let imports =
+							(project as InfinityMintCompiledProject).imports || {};
+
+						let keys = Object.keys(imports);
+
+						if (keys.length === 0)
+							throw new Error('project has no imports this is weird!');
 						//this is where we need to go over every file reference in the project and include all of them
 					},
 					'compile',
+					script,
 				);
 
 				if (setup !== true) throw setup;
