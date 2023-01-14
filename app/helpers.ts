@@ -382,7 +382,14 @@ export const stage = async (
 	try {
 		if (script?.infinityConsole)
 			script?.infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
-		await call(isFirstTime);
+
+		await new Promise((resolve, reject) => {
+			setTimeout(async () => {
+				await call(isFirstTime).catch(reject);
+				resolve(true);
+			}, 100);
+		});
+
 		project.stages[stage] = true;
 
 		if (script?.infinityConsole)

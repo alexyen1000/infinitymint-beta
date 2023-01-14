@@ -89,6 +89,8 @@ Script.initialize = async (window, frame, blessed) => {
 		//keep showing debug
 		if (pipe === 'default' && window.data.processing)
 			window.elements['output'].pushLine(msg);
+
+		window.getScreen().render();
 	};
 
 	window.getInfinityConsole().getLogs().emitter.on('log', cb);
@@ -234,10 +236,10 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.hide();
 
-	(() => {
-		output.setContent(`{cyan-fg}Awaiting Execution...{/cyan-fg}`);
-		execute(window);
-	})();
+	output.setContent(`{cyan-fg}Awaiting Execution...{/cyan-fg}`);
+	setTimeout(async () => {
+		await execute(window);
+	}, 1000);
 };
 
 Script.setBackgroundThink(true);
