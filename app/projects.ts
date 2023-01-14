@@ -409,6 +409,27 @@ export const getScriptTemporaryProject = (
 };
 
 /**
+ *
+ * @param projectOrPathName
+ * @returns
+ */
+export const getProjectSource = (
+	projectOrPathName:
+		| string
+		| InfinityMintProject
+		| InfinityMintTempProject
+		| InfinityMintCompiledProject
+		| InfinityMintDeployedProject,
+) => {
+	let key =
+		typeof projectOrPathName === 'string'
+			? projectOrPathName
+			: getProjectName(projectOrPathName);
+	let projects = getProjects();
+	return projects.database[projects.keys[key]];
+};
+
+/**
  * Gets a project
  * @param projectNameOrPath
  * @returns

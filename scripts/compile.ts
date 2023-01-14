@@ -1,4 +1,4 @@
-import {getScriptTemporaryProject} from '../app/projects';
+import {getProjectSource, getScriptTemporaryProject} from '../app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
@@ -37,6 +37,9 @@ const compile: InfinityMintScript = {
 			'compile',
 			project,
 			async () => {
+				//sets where this project is stored locally
+				project.source = getProjectSource(project);
+
 				let verify = await stage(
 					'verify',
 					project,
