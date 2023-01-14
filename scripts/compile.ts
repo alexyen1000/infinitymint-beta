@@ -373,9 +373,16 @@ const compile: InfinityMintScript = {
 											script.log(
 												`\t{cyan-fg}Included CSS reference{/} => ${style}`,
 											);
-											imports[style] = style;
-											imports[project.name + '@' + style] = style;
-											imports[getProjectFullName(project) + style] = style;
+											let truePath =
+												svgSetting.source.dir.split('imports/')[0] + style;
+											imports[style] = truePath;
+											imports[project.name + '@' + style] = truePath;
+											imports[getProjectFullName(project) + style] = truePath;
+											imports[process.cwd() + style] = truePath;
+											imports[
+												(svgSetting.source.dir + style).replace(/\/\//g, '/')
+											] = truePath;
+											imports[truePath] = truePath;
 										}
 									});
 								else if (!importCache.keys[path])
@@ -386,9 +393,14 @@ const compile: InfinityMintScript = {
 									);
 								else {
 									script.log(`\t{cyan-fg}Included CSS reference{/} => ${path}`);
-									imports[path] = path;
-									imports[project.name + '@' + path] = path;
-									imports[getProjectFullName(project) + path] = path;
+									let truePath =
+										svgSetting.source.dir.split('imports/')[0] + path;
+									imports[path] = truePath;
+									imports[svgSetting.source.dir + path] = truePath;
+									imports[process.cwd() + path] = truePath;
+									imports[project.name + '@' + path] = truePath;
+									imports[getProjectFullName(project) + path] = truePath;
+									imports[truePath] = truePath;
 								}
 							},
 						);
@@ -448,11 +460,17 @@ const compile: InfinityMintScript = {
 
 					imports[project.name + '@' + fileName] =
 						path.source.dir + '/' + path.source.base;
+
+					let fileNameWithSlash = (fileName[0] === '/' ? '' : '/') + fileName;
+
 					imports[fileName] = path.source.dir + '/' + path.source.base;
-					imports[
-						getProjectFullName(project) +
-							((fileName[0] === '/' ? '' : '/') + fileName)
-					] = path.source.dir + '/' + path.source.base;
+					imports[fileNameWithSlash] = path.source.dir + '/' + path.source.base;
+					imports['imports/' + fileNameWithSlash] =
+						path.source.dir + '/' + path.source.base;
+					imports['/imports/' + fileNameWithSlash] =
+						path.source.dir + '/' + path.source.base;
+					imports[getProjectFullName(project) + fileNameWithSlash] =
+						path.source.dir + '/' + path.source.base;
 
 					path.checksum = createHash('md5')
 						.update(JSON.stringify(JSON.stringify(path)))
@@ -499,6 +517,11 @@ const compile: InfinityMintScript = {
 						);
 					}
 
+				//replace double slashes with single slashes in each member of imports
+				Object.keys(imports).forEach(key => {
+					imports[key] = imports[key].replace(/\/\//g, '/');
+				});
+
 				project.imports = imports;
 			});
 
@@ -537,13 +560,13 @@ const compile: InfinityMintScript = {
 						let path = importCache.database[location];
 						if (path === undefined || path.dir === undefined) return;
 
-						project.bundles.imports[file] = path;
+						project.bundles.imports[location] = path;
 						rawBundle[location] = await fs.promises.readFile(
 							path.dir + '/' + path.base,
 						);
 						let size = fs.statSync(path.dir + '/' + path.base).size / 1024;
 						totalSize += size;
-						project.bundles.imports[file].raw = location;
+						project.bundles.imports[location].raw = location;
 						script.log(
 							`\t\t{green-fg}Packed ${path.base} => ${
 								size.toFixed(2) + 'kb'
@@ -561,16 +584,20 @@ const compile: InfinityMintScript = {
 					`${process.cwd()}/projects/bundles/${getProjectFullName(
 						project,
 					)}.raw.bundle`,
-					JSON.stringify(rawBundle),
+					Object.keys(rawBundle).map(key => {
+						let base64 = Buffer.from(rawBundle[key]).toString('base64');
+						let charm = `[${key}]<${base64.length}>:`;
+						return Buffer.from(`${charm + base64}`).toString('hex');
+					}),
 					{
-						encoding: 'utf8',
+						encoding: 'ascii',
 					},
 				);
 
 				script.log(
-					`{cyan-fg}Succesfully wrote bundle total size => ${totalSize.toFixed(
-						2,
-					)}kb {/}`,
+					`{cyan-fg}Succesfully wrote bundle total size => ${(
+						totalSize / 1024
+					).toFixed(2)}mb {/}`,
 				);
 			});
 
