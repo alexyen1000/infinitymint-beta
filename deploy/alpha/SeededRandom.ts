@@ -1,10 +1,12 @@
 import {InfinityMintDeploymentScript} from '@app/interfaces';
 
-const SelectiveMinter: InfinityMintDeploymentScript = {
+const SeededRandom: InfinityMintDeploymentScript = {
 	//going to give
-	module: 'minter',
-	index: 4, //should be after values
+	unique: true,
+	module: 'random',
+	index: 4,
 	solidityFolder: 'alpha',
 	permissions: ['approved', 'erc721', 'assets'],
 };
-export default SelectiveMinter;
+
+export default SeededRandom;

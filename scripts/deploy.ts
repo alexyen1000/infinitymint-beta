@@ -8,7 +8,14 @@ import {
 } from '../app/interfaces';
 import {InfinityMintDeployment} from '../app/deployments';
 import {getScriptTemporaryProject} from '../app/projects';
-import {action, always, getConfigFile, prepare, stage} from '../app/helpers';
+import {
+	action,
+	always,
+	getConfigFile,
+	logDirect,
+	prepare,
+	stage,
+} from '../app/helpers';
 
 const deploy: InfinityMintScript = {
 	name: 'Deploy Project',
@@ -62,8 +69,9 @@ const deploy: InfinityMintScript = {
 				project,
 				script.infinityConsole,
 			);
+
 		let notUniqueAndImportant = deployments
-			.filter(deployment => deployment.isUnique() && deployment.isImportant())
+			.filter(deployment => !deployment.isUnique() && !deployment.isImportant())
 			.filter(
 				deployment =>
 					deployments.filter(
@@ -79,8 +87,26 @@ const deploy: InfinityMintScript = {
 							deployment =>
 								deployment.getKey() + ':' + deployment.getTemporaryFilePath(),
 						)
-						.join(','),
+						.join('\n'),
 			);
+
+		let libraies = deployments.filter(deployment => deployment.isLibrary());
+		let important = deployments.filter(deployment => deployment.isImportant());
+
+		deployments = libraies
+			.concat(important)
+			.concat(
+				deployments
+					.filter(
+						deployment => !deployment.isLibrary() && !deployment.isImportant(),
+					)
+					.reverse(),
+			);
+
+		script.log(`{cyan-fg}{bold}deploying ${deployments.length} contracts{/}`);
+		deployments.forEach(deployment => {
+			script.log(`{cyan-fg}{bold} - ${deployment.getKey()}{/}`);
+		});
 
 		let contracts = {...project.deployments};
 		//deploy stage

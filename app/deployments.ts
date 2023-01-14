@@ -213,7 +213,7 @@ export class InfinityMintDeployment {
 	getContractName(index?: 0) {
 		return this.liveDeployments.length !== 0
 			? this.liveDeployments[index].name
-			: this.deploymentScript.contract;
+			: this.deploymentScript.contract || this.key;
 	}
 
 	/**
@@ -704,30 +704,36 @@ export const getProjectDeploymentClasses = async (
 			).length !== 0,
 	);
 
-	let otherDeployments = loadedDeploymentClasses.filter(
-		deployment =>
-			moduleDeployments.filter(
-				thatDeployment =>
-					deployment.getContractName() === thatDeployment.getContractName(),
-			).length !== 0 &&
-			[
-				...(setings?.disabledContracts || []),
-				...(compiledProject.settings?.disabledContracts || ([] as any)),
-			].filter(
-				value =>
-					value === deployment.getContractName() ||
-					value === deployment.getKey(),
-			).length === 0,
-	);
+	let otherDeployments = loadedDeploymentClasses
+		.filter(
+			deployment =>
+				moduleDeployments.filter(
+					thatDeployment =>
+						deployment.getContractName() === thatDeployment.getContractName() &&
+						deployment.getModuleKey() === thatDeployment.getModuleKey(),
+				).length === 0 &&
+				[
+					...(setings?.disabledContracts || []),
+					...(compiledProject.settings?.disabledContracts || ([] as any)),
+				].filter(
+					value =>
+						value === deployment.getContractName() ||
+						value === deployment.getKey(),
+				).length === 0,
+		)
+		.filter(
+			deployment =>
+				compiledProject.modules[deployment.getModuleKey()] === undefined,
+		);
 
 	let deployments = [...moduleDeployments, ...otherDeployments];
 
-	//now we need to sort the deployments ranked on their index, then put libraries first, then put important first
-	deployments = deployments.sort((a, b) =>
-		a.isLibrary() || a.isImportant()
-			? deployments.length
-			: a.getIndex() - b.getIndex(),
-	);
+	//sort the deployments based on getIndex
+	deployments.sort((a, b) => {
+		if (a.getIndex() > b.getIndex()) return 1;
+		if (a.getIndex() < b.getIndex()) return -1;
+		return 0;
+	});
 
 	return deployments;
 };

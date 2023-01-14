@@ -421,6 +421,7 @@ const compile: InfinityMintScript = {
 									typeof newImport,
 								);
 								setupImport(newImport);
+								newImport.compiled = true;
 								script.infinityConsole.emit(
 									'postCompileSetup',
 									newImport,
@@ -487,6 +488,7 @@ const compile: InfinityMintScript = {
 					setupImport(project.paths[i]);
 					script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
 					project.paths[i].pathId = i;
+					project.paths[i].compiled = true;
 					script.infinityConsole.emit(
 						'postCompileSetup',
 						project.paths[i],
@@ -506,6 +508,7 @@ const compile: InfinityMintScript = {
 						setupImport(project.assets[i]);
 						script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
 						project.assets[i].assetId = i + 1; //asset ids start counting from 1 as asset id 0 is null asset
+						project.assets[i].compiled = true; //asset ids start counting from 1 as asset id 0 is null asset
 						script.infinityConsole.emit(
 							'postCompileSetup',
 							project.paths[i],
@@ -599,7 +602,7 @@ const compile: InfinityMintScript = {
 
 		script.log('{cyan-fg}Copying Project...{/}');
 
-		//copy the project from the temp projects folder to the projects folder
+		//copy the project from the temp projects folder to the projects folder, will always run regardless of it calling action and not always
 		let copy = await action('copyProject', async () => {
 			let projectLocation = `${process.cwd()}/projects/compiled/${getProjectFullName(
 				project,
@@ -610,6 +613,7 @@ const compile: InfinityMintScript = {
 			fs.copyFileSync(tempLocation, projectLocation);
 		});
 
+		//everything changed in the project past the copy action will not be saved to disk
 		if (copy !== true) throw copy;
 
 		script.log('{green-fg}{bold}Compilation Successful{/}');

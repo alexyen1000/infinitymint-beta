@@ -1959,7 +1959,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
 	 */
-	module?: InfinityMintProjetModulesKeys[] | string;
+	module?: InfinityMintProjetModulesKeys | string;
 	/**
 	 * Will be the filename of the deploy script by default.
 	 */

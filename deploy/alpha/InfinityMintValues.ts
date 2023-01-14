@@ -1,6 +1,6 @@
-import { InfinityMintDeploymentScript } from "@app/interfaces";
-import { logTransaction } from "@app/web3";
-import { InfinityMintValues } from "../../typechain-types";
+import {InfinityMintDeploymentScript} from '@app/interfaces';
+import {logTransaction} from '@app/web3';
+import {InfinityMintValues} from '../../typechain-types';
 
 const DefaultValues = {
 	maxSupply: 10,
@@ -9,7 +9,7 @@ const DefaultValues = {
 };
 
 const Values: InfinityMintDeploymentScript = {
-	setup: async ({ project, debugLog, deployment }) => {
+	setup: async ({project, debugLog, deployment}) => {
 		let variables = {
 			...DefaultValues,
 			...(project.settings?.assets || {}),
@@ -22,59 +22,59 @@ const Values: InfinityMintDeploymentScript = {
 		let values = Object.values(variables);
 		let keys = Object.keys(variables);
 		let singleLevelObjects = keys.filter(
-			(key) => typeof values[key] === "object"
+			key => typeof values[key] === 'object',
 		);
 		//only select numbers or booleans to be added
-		keys.filter(
-			(key) =>
-				typeof values[key] === "number" ||
-				typeof values[key] === "boolean"
-		).forEach((key) => (cleanedVariables[key] = values[key]));
+		keys
+			.filter(
+				key =>
+					typeof values[key] === 'number' || typeof values[key] === 'boolean',
+			)
+			.forEach(key => (cleanedVariables[key] = values[key]));
 
 		//add values from objects into the variables list
 		singleLevelObjects
-			.map((object) => {
-				return { keys: Object.keys(values[object]), value: object };
+			.map(object => {
+				return {keys: Object.keys(values[object]), value: object};
 			})
-			.forEach((object) => {
+			.forEach(object => {
 				object.keys
 					.filter(
-						(key) =>
-							typeof values[object.value][key] === "number" ||
-							typeof values[object.value][key] === "boolean"
+						key =>
+							typeof values[object.value][key] === 'number' ||
+							typeof values[object.value][key] === 'boolean',
 					)
-					.forEach((key) => {
+					.forEach(key => {
 						cleanedVariables[key] = values[object.value][key];
 					});
 			});
 
 		debugLog(
-			"found " +
+			'found ' +
 				Object.values(cleanedVariables).length +
-				" values to set on chain"
+				' values to set on chain',
 		);
 		Object.values(cleanedVariables).forEach((value, index) =>
-			debugLog(`[${index}] => {${value}}`)
+			debugLog(`[${index}] => {${value}}`),
 		);
 
 		let booleans = Object.keys(cleanedVariables).filter(
-			(key) => typeof cleanedVariables[key] === "boolean"
+			key => typeof cleanedVariables[key] === 'boolean',
 		);
 
 		let numbers = Object.keys(cleanedVariables).filter(
-			(key) => typeof cleanedVariables[key] === "number"
+			key => typeof cleanedVariables[key] === 'number',
 		);
-		let contract =
-			(await deployment.getSignedContract()) as InfinityMintValues;
+		let contract = (await deployment.getSignedContract()) as InfinityMintValues;
 
 		await logTransaction(
 			contract.setupValues(
 				Object.values(numbers),
-				Object.values(numbers).map((key) => cleanedVariables[key]),
+				Object.values(numbers).map(key => cleanedVariables[key]),
 				Object.values(booleans),
-				Object.values(booleans).map((key) => cleanedVariables[key])
+				Object.values(booleans).map(key => cleanedVariables[key]),
 			),
-			"setting values on chain"
+			'setting values on chain',
 		);
 	},
 	static: true,
@@ -82,9 +82,9 @@ const Values: InfinityMintDeploymentScript = {
 	instantlySetup: true, //will run the set up for this contract instantly and not after everything else has deployed
 	unique: true,
 	important: true,
-	module: "values",
-	index: 0, //nothing should be before values
-	solidityFolder: "alpha",
-	permissions: ["approved"],
+	module: 'values',
+	index: 1, //nothing should be before values
+	solidityFolder: 'alpha',
+	permissions: ['approved'],
 };
 export default Values;
