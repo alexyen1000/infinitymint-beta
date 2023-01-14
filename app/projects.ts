@@ -1,6 +1,7 @@
 import {
 	readSession,
 	log,
+	readJson,
 	getConfigFile,
 	findFiles,
 	write,
@@ -24,8 +25,7 @@ import fs, {PathLike} from 'fs';
  * @returns
  */
 export const getCurrentProject = (cleanCache?: boolean) => {
-	if (getCurrentProjectPath() === undefined)
-		throw new Error('no current project');
+	if (!getCurrentProjectPath()) throw new Error('no current project');
 
 	return requireProject(
 		getCurrentProjectPath().dir + '/' + getCurrentProjectPath().base,
@@ -72,9 +72,8 @@ export const getCompiledProject = (
 	version = version || '1.0.0';
 	let projectName = getProjectName(project);
 	let filename = `/projects/compiled/${projectName}@${version}.json`;
-	let res = require(process.cwd() + filename);
-	res = res.default || res;
-	//
+	let res = readJson(process.cwd() + filename);
+
 	if (!res.compiled)
 		throw new Error(`project ${projectName} has not been compiled`);
 
@@ -88,8 +87,13 @@ export const hasTempDeployedProject = (
 	let projectName = getProjectName(project);
 	version = version || '1.0.0';
 	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
-	logDirect(filename);
 	return fs.existsSync(process.cwd() + filename);
+};
+
+export const getProjectFullName = (
+	project: InfinityMintProject | InfinityMintTempProject,
+) => {
+	return getProjectName(project) + '@' + project.version.version;
 };
 
 export const getProjectName = (
@@ -98,7 +102,7 @@ export const getProjectName = (
 	return (
 		project.name ||
 		(project as any)?.description?.name ||
-		path.parse(project?.source).name
+		(project.source as path.ParsedPath).name
 	);
 };
 
@@ -137,8 +141,7 @@ export const getTempDeployedProject = (
 	let projectName = getProjectName(project);
 	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
 	try {
-		let res = require(process.cwd() + filename);
-		res = res.default || res;
+		let res = readJson(process.cwd() + filename);
 		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error('could not load temp deployed project: ' + error.message);
@@ -159,8 +162,7 @@ export const getTempCompiledProject = (
 	let projectName = getProjectName(project);
 	let filename = `/temp/projects/${projectName}@${version}.compiled.temp.json`;
 	try {
-		let res = require(process.cwd() + filename);
-		res = res.default || res;
+		let res = readJson(process.cwd() + filename);
 		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error('could not load temp compiled project: ' + error.message);
@@ -197,8 +199,7 @@ export const getDeployedProject = (
 
 	let projectName = getProjectName(project);
 	let filename = `/projects/deployed/${projectName}@${version}.json`;
-	let res = require(process.cwd() + filename);
-	res = res.default || res;
+	let res = readJson(process.cwd() + filename);
 	//
 	if (!res.compiled)
 		throw new Error(`project ${projectName} has not been compiled`);
@@ -372,7 +373,7 @@ export const getScriptTemporaryProject = (
 		script.infinityConsole.log(
 			'{yellow-fg}found previous compiled project attempting to retry{/yellow-fg}',
 		);
-		return getTempCompiledProject(project, version);
+		return getTempCompiledProject(project as InfinityMintProject, version);
 	} else if (
 		!script.args?.dontUseTemp?.value &&
 		type === 'compiled' &&
@@ -383,26 +384,51 @@ export const getScriptTemporaryProject = (
 	if (
 		!script.args?.dontUseTemp?.value &&
 		type === 'deployed' &&
-		hasTempDeployedProject(project, version)
+		hasTempDeployedProject(project as InfinityMintProject, version)
 	) {
 		script.infinityConsole.log(
 			'{yellow-fg}found previous deployed project attempting to retry{/yellow-fg}',
 		);
-		return getTempDeployedProject(project, version);
+		return getTempDeployedProject(project as InfinityMintProject, version);
 	} else if (
 		!script.args?.dontUseTemp?.value &&
 		type === 'deployed' &&
-		!hasDeployedProject(project, version)
+		!hasDeployedProject(project as InfinityMintProject, version)
 	)
 		return project as InfinityMintTempProject;
 
 	if (type === 'compiled' || !type)
-		return getCompiledProject(project) as InfinityMintTempProject;
+		return getCompiledProject(
+			project as InfinityMintProject,
+		) as InfinityMintTempProject;
 
 	if (type === 'deployed')
-		return getDeployedProject(project) as InfinityMintTempProject;
+		return getDeployedProject(
+			project as InfinityMintProject,
+		) as InfinityMintTempProject;
 
 	return project as InfinityMintTempProject;
+};
+
+/**
+ *
+ * @param projectOrPathName
+ * @returns
+ */
+export const getProjectSource = (
+	projectOrPathName:
+		| string
+		| InfinityMintProject
+		| InfinityMintTempProject
+		| InfinityMintCompiledProject
+		| InfinityMintDeployedProject,
+) => {
+	let key =
+		typeof projectOrPathName === 'string'
+			? projectOrPathName
+			: getProjectName(projectOrPathName);
+	let projects = getProjects();
+	return projects.database[projects.keys[key]];
 };
 
 /**

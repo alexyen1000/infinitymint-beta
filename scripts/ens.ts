@@ -1,4 +1,4 @@
-import {InfinityMintScript} from '../dist/app/interfaces';
+import {InfinityMintScript} from '../app/interfaces';
 
 const ens: InfinityMintScript = {
 	name: 'Set ENS Content Record',

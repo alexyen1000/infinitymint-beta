@@ -10,6 +10,7 @@ import {
 	BlessedElementOptions,
 	getConfigFile,
 	log,
+	logDirect,
 } from './helpers';
 import {getCurrentProjectPath} from './projects';
 import {BlessedElement, Blessed} from './helpers';
@@ -25,20 +26,35 @@ const blessed = require('blessed') as Blessed;
  * @experimental
  */
 export class InfinityMintWindow {
+	/**
+	 * a function which is called when the window is initialized
+	 */
 	public initialize: FuncTripple<
 		InfinityMintWindow,
 		BlessedElement,
 		Blessed,
 		Promise<void>
 	>;
+	/**
+	 * a function which is called after the window is initialized
+	 */
 	public postInitialize: FuncTripple<
 		InfinityMintWindow,
 		BlessedElement,
 		Blessed,
 		Promise<void>
 	>;
+	/**
+	 * a function which is called every console tick
+	 */
 	public think: FuncTripple<InfinityMintWindow, BlessedElement, Blessed, void>;
+	/**
+	 * the name of the window
+	 */
 	public name: string;
+	/**
+	 * a dictionary of all elements. the elements inside of the dictionary are of type BlessedElement.
+	 */
 	public elements: Dictionary<BlessedElement>;
 	/**
 	 * data which is saved to session file
@@ -49,27 +65,94 @@ export class InfinityMintWindow {
 	 */
 	public data: KeyValue;
 
+	/**
+	 * if the close button should be hidden
+	 */
 	protected hideCloseButton: boolean;
+	/**
+	 * if the minimize button should be hidden
+	 */
 	protected hideMinimizeButton: boolean;
+	/**
+	 * if the refresh button should be hidden
+	 */
 	protected hideRefreshButton: boolean;
+	/**
+	 * if the window should be hidden from the menu
+	 */
 	protected hideFromMenu: boolean;
+	/**
+	 * is this window can be refreshed
+	 */
 	protected _canRefresh: boolean;
+	/**
+	 * the screen this window is on
+	 */
 	protected screen: BlessedElement;
+	/**
+	 * the InfinityConsole this window is on
+	 */
 	protected container?: InfinityConsole;
+	/**
+	 * the key bindings for this window
+	 */
 	protected inputKeys?: Dictionary<Array<Function>>;
+	/**
+	 * the telnet permissions for this window
+	 */
 	protected permissions: Array<string>;
 
+	/**
+	 * the guid of the window
+	 */
 	private id: any;
+	/**
+	 * if the window is destroyed
+	 */
 	private destroyed: boolean;
+	/**
+	 * if the window should think in the background
+	 */
 	private backgroundThink: boolean;
+	/**
+	 * if this window should destroy the id when it is destroyed
+	 */
 	private destroyId: boolean;
+	/**
+	 * if this window is forced open
+	 */
 	private forcedOpen: boolean;
+	/**
+	 * if this window is initialized
+	 */
 	private initialized: boolean;
+	/**
+	 * the time this window was created
+	 */
 	private creation: any;
+	/**
+	 * the time this window was last refreshed
+	 */
 	private initialCreation: any;
+	/**
+	 * if this window should be instantiated
+	 */
 	private _shouldInstantiate: boolean;
+	/**
+	 * the file name of the window, the filename is in reference to the file which contains the window
+	 */
 	private fileName: string;
 
+	/**
+	 * the constructor for the window.
+	 * @param name
+	 * @param style
+	 * @param border
+	 * @param scrollbar
+	 * @param padding
+	 * @param options
+	 * @param data
+	 */
 	constructor(
 		name?: string,
 		style?: KeyValue,
@@ -104,10 +187,19 @@ export class InfinityMintWindow {
 		};
 	}
 
+	/**
+	 * sets the telnet permissions for this window
+	 * @param permissions
+	 */
 	public setPermissions(permissions: string[]) {
 		this.permissions = permissions;
 	}
 
+	/**
+	 * returns true if the telnet user can access this window
+	 * @param user
+	 * @returns
+	 */
 	public canAccess(user: UserEntry) {
 		return (
 			this.permissions.filter(
@@ -118,6 +210,9 @@ export class InfinityMintWindow {
 		);
 	}
 
+	/**
+	 * creates the UI frame for the window
+	 */
 	public createFrame() {
 		if (this.elements['frame']) {
 			this.elements['frame'].free();
@@ -148,32 +243,56 @@ export class InfinityMintWindow {
 		this.elements['frame'].setBack();
 	}
 
+	/**
+	 * sets the file name of the window
+	 * @param fileName
+	 */
 	public setFileName(fileName?: string) {
 		this.fileName = fileName || __filename;
 	}
 
+	/**
+	 * gets the file name of the window
+	 * @returns
+	 */
 	public getFileName() {
 		return this.fileName;
 	}
 
+	/**
+	 * sets if this window should be hidden from the menu
+	 * @param hidden
+	 */
 	public setHiddenFromMenu(hidden: boolean) {
 		this.hideFromMenu = hidden;
 	}
 
+	/**
+	 * returns true if this window is hidden from the menu
+	 * @returns
+	 */
 	public isHiddenFromMenu() {
 		return this.hideFromMenu;
 	}
 
+	/**
+	 * sets if to force this window open
+	 * @param forcedOpen
+	 */
 	public setForcedOpen(forcedOpen: boolean) {
 		this.forcedOpen = forcedOpen;
 	}
 
+	/**
+	 * returns true if this window is forced open
+	 * @returns
+	 */
 	public isForcedOpen() {
 		return this.forcedOpen;
 	}
 	/**
 	 * Will hide the close button if true, can be called when ever but be aware screen must be re-rendered in some circumstances.
-	 * @param hideCxloseButton
+	 * @param hideCloseButton
 	 */
 	public setHideCloseButton(hideCloseButton: boolean) {
 		this.hideCloseButton = hideCloseButton;
@@ -200,36 +319,59 @@ export class InfinityMintWindow {
 		if (!this.elements['hideButton']) return;
 	}
 
+	/**
+	 * generates a unique id for the window
+	 * @returns
+	 */
 	private generateId() {
 		return uuidv4();
 	}
 
-	public setScreen(screen: any) {
+	/**
+	 * sets screen this window is on
+	 * @param screen
+	 */
+	public setScreen(screen: BlessedElement) {
 		if (this.screen)
 			this.warning(`setting screen with out window object first`);
 
 		this.screen = screen;
 	}
 
+	/**
+	 * sets scrollbars for the window
+	 * @param scrollbar
+	 */
 	public setScrollbar(scrollbar: any) {
 		this.data.scrollbar = scrollbar;
 	}
 
+	/**
+	 * sets if the window should background think
+	 * @param backgroundThink
+	 */
 	public setBackgroundThink(backgroundThink: boolean) {
 		this.backgroundThink = backgroundThink;
 	}
 
+	/**
+	 * sets if the window should instantiate instantly
+	 * @param instantiateInstantly
+	 */
 	public setShouldInstantiate(instantiateInstantly: boolean) {
 		this._shouldInstantiate = instantiateInstantly;
 	}
 
-	///TODO: needs to be stricter
+	/**
+	 * returns true if the window has a container
+	 * @returns
+	 */
 	public hasContainer() {
 		return !!this.container;
 	}
 
 	/**
-	 *
+	 * returns true if the window should instantiate instantly
 	 * @returns
 	 */
 	public shouldInstantiate(): boolean {
@@ -237,7 +379,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * returns true if the window should background think
 	 * @returns
 	 */
 	public shouldBackgroundThink(): boolean {
@@ -272,7 +414,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * gets the creation time of the window
 	 * @returns
 	 */
 	public getCreation() {
@@ -280,7 +422,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * gets the initial creation time of the window
 	 * @returns
 	 */
 	public getInitialCreation() {
@@ -348,7 +490,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * saves the options to the session file
 	 */
 	public saveOptions() {
 		let session = readSession();
@@ -384,7 +526,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * gets the current padding of the window from the data or the frame
 	 * @returns
 	 */
 	public getPadding() {
@@ -454,49 +596,90 @@ export class InfinityMintWindow {
 		return this.container;
 	}
 
+	/**
+	 * sets the border of the window
+	 * @param border
+	 */
 	public setBorder(border: any) {
 		this.options.border = border;
 		this.data.border = border;
 	}
 
+	/**
+	 * gets the border of the window
+	 * @returns
+	 */
 	public getBorder() {
 		return (
 			this.data?.border || this.options?.border || this.elements['frame'].border
 		);
 	}
 
+	/**
+	 * sets the width of the window. Can be a number or a number with a px or % at the end.
+	 * @param num
+	 */
 	public setWidth(num: number | string) {
 		this.elements['frame'].width = num;
 		if (this.options.style) this.options.style.width = num;
 		if (this.data.style) this.data.style.width = num;
 	}
 
+	/**
+	 * set the padding of the window. Can be a number or a number with a px or % at the end.
+	 * @param num
+	 */
 	public setPadding(num: number | string) {
 		this.elements['frame'].padding = num;
 	}
 
+	/**
+	 * gets the guuid of the window
+	 * @returns
+	 */
 	public getId() {
 		return this.id;
 	}
 
+	/**
+	 * is equal to another window, checks the guuid.
+	 * @param thatWindow
+	 * @returns
+	 */
 	public isEqual(thatWindow: InfinityMintWindow) {
 		return this.id === thatWindow.id;
 	}
 
+	/**
+	 * returns the windows guuid
+	 * @returns
+	 */
 	public toString() {
 		return this.id;
 	}
 
+	/**
+	 * returns the frame of the window
+	 * @returns
+	 */
 	public getFrame() {
 		return this.elements['frame'];
 	}
 
+	/**
+	 * sets the height of the window. Can be a number or a number with a px or % at the end.
+	 * @param num
+	 */
 	public setHeight(num: number | string) {
 		this.elements['frame'].height = num;
 		if (this.options.style) this.options.style.height = num;
 		if (this.data.style) this.data.style.height = num;
 	}
 
+	/**
+	 * gets a bounding box of the window to be used for collision detection.
+	 * @returns
+	 */
 	public getRectangle(): Rectangle {
 		return {
 			startX: this.getCalculatedX(),
@@ -509,6 +692,10 @@ export class InfinityMintWindow {
 		};
 	}
 
+	/**
+	 * gets the style of the window
+	 * @returns
+	 */
 	public getStyle(): object {
 		return (
 			this.options?.style ||
@@ -518,44 +705,83 @@ export class InfinityMintWindow {
 		);
 	}
 
+	/**
+	 * sets the style of the window
+	 * @param style
+	 */
 	public setStyle(style: any) {
 		this.elements['frame'].style = style;
 		this.options.style = style;
 		this.data.style = style;
 	}
 
+	/**
+	 * gets the width of the window. Might be a number or a number with a px or % at the end.
+	 * @returns
+	 */
 	public getWidth() {
 		return this.options?.style?.width || this.data?.style?.width || '100%';
 	}
 
+	/**
+	 * gets the calculated width of a window. Unlike getWidth will always return a number.
+	 * @returns
+	 */
 	public getCalculatedWidth() {
 		return this.elements['frame'].cols || 0;
 	}
 
+	/**
+	 * gets the calculated height of a window. Unlike getHeight will always return a number.
+	 * @returns
+	 */
 	public getCalculatedHeight() {
 		return this.elements['frame'].rows || 0;
 	}
 
+	/**
+	 * gets the height of the window. Might be a number or a number with a px or % at the end.
+	 * @returns
+	 */
 	public getHeight() {
 		return this.options?.style?.height || this.data?.style?.height || '100%';
 	}
 
+	/**
+	 * gets the calculated x (left) position of the window. Unlike getX will always return a number.
+	 * @returns
+	 */
 	public getCalculatedX() {
 		return this.elements['frame'].left || 0;
 	}
 
+	/**
+	 * gets the calculated y (top) position of the window. Unlike getY will always return a number.
+	 * @returns
+	 */
 	public getCalculatedY() {
 		return this.elements['frame'].top || 0;
 	}
 
+	/**
+	 * returns the x (left) position of the window. Might be a number or a number with a px or % at the end.
+	 * @returns
+	 */
 	public getX() {
 		return this.options?.style?.left || this.options?.data?.left || 0;
 	}
 
+	/**
+	 * returns the y (top) position of the window. Might be a number or a number with a px or % at the end.
+	 * @returns
+	 */
 	public getY() {
 		return this.options?.style?.top || this.options?.data?.top || 0;
 	}
 
+	/**
+	 * hides the window. Will also hide all child elements.
+	 */
 	public hide() {
 		this.log('hiding');
 		Object.values(this.elements).forEach(element => {
@@ -566,6 +792,9 @@ export class InfinityMintWindow {
 		});
 	}
 
+	/**
+	 * shows the window. Will also show all child elements that were not hidden before the hide() function was called. Also updates the frame title.
+	 */
 	public show() {
 		this.log(`showing`);
 		Object.values(this.elements).forEach(element => {
@@ -574,13 +803,31 @@ export class InfinityMintWindow {
 				element.show();
 			}
 		});
+
+		try {
+			this.updateFrameTitle();
+		} catch (error) {
+			warning('ciuld not update frame title:' + error.message);
+		}
 	}
 
+	/**
+	 * sets both the width and height of the window. Can be a number or a number with a px or % at the end.
+	 * @param width
+	 * @param height
+	 */
 	public setSize(width: number | string, height: number | string) {
 		this.setWidth(width);
 		this.setHeight(height);
 	}
 
+	/**
+	 * logs a message to the window pipe. If the window has no pipe, it will log to the default pipe.
+	 * @param string
+	 * @param window
+	 * @param returnString
+	 * @returns
+	 */
 	public log(string?: string | string[], window?: any, returnString?: boolean) {
 		window = window || this;
 		if (typeof string === typeof Array) string = (string as string[]).join(' ');
@@ -591,12 +838,12 @@ export class InfinityMintWindow {
 			log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 		else
 			this.getInfinityConsole()
-				.getLogs()
+				.getPipeFactory()
 				.log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 	}
 
 	/**
-	 * Warnings are logged to the default pipe
+	 * logs a warning to the default pipe and not the window pipe.
 	 * @param string
 	 * @param window
 	 * @param returnString
@@ -615,9 +862,10 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 * Registers a new blessed element with the window.
+	 * registers a new blessed element to the window. Do not use this function directly. Use the createElement function instead. Unless you know what you are doing.
 	 * @param key
 	 * @param element
+	 * @param dontRegister
 	 * @returns
 	 */
 	public registerElement(
@@ -673,28 +921,43 @@ export class InfinityMintWindow {
 		return this.elements[key];
 	}
 
+	/**
+	 * returns the element with the given key
+	 * @param key
+	 * @returns
+	 */
 	public getElement(key: string): BlessedElement {
 		return this.elements[key];
 	}
 
 	/**
-	 *
+	 * returns the scrollbar option or the current scrollbar settings of the window.
 	 * @returns
 	 */
 	public getScrollbar() {
 		return this.data.scrollbar || this.options.scrollbar || true;
 	}
 
+	/**
+	 * called every console tick. if there is a think function, it will call it.
+	 */
 	public update() {
 		if (this.think) {
 			this.think(this, this.getElement('frame'), blessed);
 		}
 	}
 
+	/**
+	 * returns the screen of the window
+	 * @returns
+	 */
 	public getScreen() {
 		return this.screen;
 	}
 
+	/**
+	 * destroys the window and all its elements
+	 */
 	public destroy() {
 		this.log('destroying');
 		this.destroyed = true;
@@ -780,14 +1043,28 @@ export class InfinityMintWindow {
 		}
 	}
 
+	/**
+	 * returns true if the window has been initialized and not destroyed
+	 * @returns
+	 */
 	public isAlive() {
-		return this.destroyed === false && this.initialized;
+		return this.initialized && !this.destroyed;
 	}
 
+	/**
+	 * returns true if the window has been initialized. Unlike isAlive, this will return true even if the window has been destroyed.
+	 * @returns
+	 */
 	public hasInitialized() {
 		return this.initialized;
 	}
 
+	/**
+	 * will register a listener on the window frame. See the blessed documentation for more info on the possible events.
+	 * @param event
+	 * @param listener
+	 * @returns
+	 */
 	public on(event: string, listener: Function): Function {
 		if (!this.getElement('frame'))
 			throw new Error('frame has not been created');
@@ -795,15 +1072,29 @@ export class InfinityMintWindow {
 		return this.getElement('frame').on(event, listener);
 	}
 
+	/**
+	 * will remove a listener from the window frame. See the blessed documentation for more info on the possible events.
+	 * @param event
+	 * @param listener
+	 * @returns
+	 */
 	public off(event: string, listener?: Function) {
 		if (!this.getElement('frame')) return;
 		this.getElement('frame').off(event, listener);
 	}
 
+	/**
+	 * returns true if the window is visible. Is the same as checking if the frame is hidden or not.
+	 * @returns
+	 */
 	public isVisible() {
 		return this.getElement('frame')?.hidden === false;
 	}
 
+	/**
+	 * updates the title of the window to show the current network, account, and balance of the user.
+	 * @returns
+	 */
 	public async updateFrameTitle() {
 		if (!this.hasInfinityConsole()) return;
 		let account = this.getInfinityConsole().getAccount();
@@ -841,7 +1132,7 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * sets if to hide the refresh button or not. Will show or hide the button as well as set the hideRefreshButton property.
 	 * @param hideRefreshButton
 	 */
 	public setHideRefreshButton(hideRefreshButton?: boolean) {
@@ -857,10 +1148,10 @@ export class InfinityMintWindow {
 	}
 
 	/**
-	 *
+	 * Creates a new blessed element and registers it to the window. If the element already exists, it will be overwritten. All elements are created with the parent set to the screen unless otherwise specified.
 	 * @param key
 	 * @param options
-	 * @param type - default of `box`
+	 * @param type
 	 * @returns
 	 */
 	public createElement(
@@ -877,7 +1168,7 @@ export class InfinityMintWindow {
 	) {
 		type = type || 'box';
 
-		if (options.parent === undefined) options.parent = this.screen;
+		if (!options.parent) options.parent = this.screen;
 
 		if (!blessed[type] || typeof blessed[type] !== 'function')
 			throw new Error('bad blessed element: ' + type);
@@ -901,6 +1192,9 @@ export class InfinityMintWindow {
 		return element;
 	}
 
+	/**
+	 * creates the window and all of its elements.
+	 */
 	public async create() {
 		if (this.initialized && this.destroyed === false)
 			throw new Error('already initialized');
@@ -911,13 +1205,13 @@ export class InfinityMintWindow {
 			this.id = this.generateId();
 			this.debugLog(`old id <${this.name}>[${oldId}] destroyed`);
 		}
+		this.destroyed = false;
 		this.creation = Date.now();
 		this.log('calling initialize');
 		try {
 			//update the title and frame
 			this.elements['frame'].setFront();
 			await this.initialize(this, this.elements['frame'], blessed);
-			this.destroyed = false;
 			this.initialized = true;
 		} catch (error) {
 			this.getInfinityConsole().errorHandler(error);

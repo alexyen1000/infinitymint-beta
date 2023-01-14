@@ -89,12 +89,14 @@ Script.initialize = async (window, frame, blessed) => {
 		//keep showing debug
 		if (pipe === 'default' && window.data.processing)
 			window.elements['output'].pushLine(msg);
+
+		window.getScreen().render();
 	};
 
-	window.getInfinityConsole().getLogs().emitter.on('log', cb);
+	window.getInfinityConsole().getPipeFactory().emitter.on('log', cb);
 	//when this window is destroyed, destroy the output emitter
 	window.on('destroy', () => {
-		window.getInfinityConsole().getLogs().emitter.off('log', cb);
+		window.getInfinityConsole().getPipeFactory().emitter.off('log', cb);
 	});
 
 	window.think = async (window, element) => {
@@ -106,7 +108,7 @@ Script.initialize = async (window, frame, blessed) => {
 
 	let output = window.createElement('output', {
 		height: '100%-8',
-		width: '60%',
+		width: '70%',
 		padding: 1,
 		top: 4,
 		label: `{bold}{white-fg}Output: {/white-fg}{/bold}`,
@@ -128,7 +130,7 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	let outputDebug = window.createElement('outputDebug', {
 		height: '100%-8',
-		width: '40%+2',
+		width: '30%+2',
 		padding: 1,
 		right: 0,
 		top: 4,

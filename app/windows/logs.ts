@@ -2,18 +2,23 @@ import {calculateWidth, logDirect} from '../helpers';
 import {InfinityMintWindow} from '../window';
 
 let lastLogMessage: string;
+
+/**
+ * called in the initialize function of the window. Used to update the scrollbox element to the latest logs.
+ * @param window
+ */
 let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.enableInput();
 	window.data.log.focus();
 	if (
-		window.getInfinityConsole()?.getLogs()?.pipes[
+		window.getInfinityConsole()?.getPipeFactory()?.pipes[
 			window.data.log.options.pipe
-		] !== undefined
+		]
 	)
 		window.data.log.setContent(
 			window
 				.getInfinityConsole()
-				.getLogs()
+				.getPipeFactory()
 				.pipes[window.data.log.options.pipe].logs.map((log, index) => {
 					if (lastLogMessage && lastLogMessage === log.message)
 						return lineNumber(index, true) + `{grey-fg}${log.pure}{/grey-fg}`;
@@ -26,12 +31,23 @@ let updateContent = (window: InfinityMintWindow) => {
 		);
 };
 
+/**
+ * returns the line number for the log
+ * @param indexCount
+ * @param gray
+ * @returns
+ */
 let lineNumber = (indexCount: number | string, gray?: boolean) => {
 	return `${gray ? '{white-bg}' : '{white-bg}'}{black-fg}${indexCount
 		.toString()
 		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'} `;
 };
 
+/**
+ * is used to update the styles on the scrollUpdate button.
+ * @param window
+ * @param alwaysScroll
+ */
 let alwaysScrollUpdate = (window: InfinityMintWindow, alwaysScroll) => {
 	window.data.log.setLabel(
 		'{bold}{white-fg}Pipe: {/white-fg}' +
@@ -121,7 +137,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 	});
 
-	if (window.data.log?.options?.pipe === undefined)
+	if (!window?.data.log?.options?.pipe)
 		window.data.log.options.pipe = 'default';
 
 	//create buttons
@@ -308,7 +324,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 		'list',
 	);
-	let keys = Object.keys(window.getInfinityConsole().getLogs().pipes);
+	let keys = Object.keys(window.getInfinityConsole().getPipeFactory().pipes);
 	form.setItems(keys);
 	form.on('select', (el: any, selected: any) => {
 		window.data.log.options.pipe = keys[selected];
@@ -327,11 +343,11 @@ Logs.initialize = async (window, frame, blessed) => {
 	deletePipe.on('click', () => {
 		window
 			.getInfinityConsole()
-			.getLogs()
+			.getPipeFactory()
 			.getPipe(window.data.log.options.pipe).logs = [];
 		window
 			.getInfinityConsole()
-			.getLogs()
+			.getPipeFactory()
 			.getPipe(window.data.log.options.pipe)
 			.log('{red-fg}pipe deleted{/red-fg}');
 
@@ -391,11 +407,11 @@ Logs.postInitialize = async (window, frame, blessed) => {
 			lastLogMessage = msg;
 		}
 	};
-	window.getInfinityConsole().getLogs().emitter.on('log', cb);
+	window.getInfinityConsole().getPipeFactory().emitter.on('log', cb);
 
 	//save when the window is destroyed
 	window.on('destroy', () => {
-		window.getInfinityConsole().getLogs().emitter.off('log', cb);
+		window.getInfinityConsole().getPipeFactory().emitter.off('log', cb);
 	});
 
 	//save when the window is hidden
@@ -438,7 +454,7 @@ Logs.postInitialize = async (window, frame, blessed) => {
 
 		window.data.log.options.selectedLine = Math.min(
 			(
-				window.getInfinityConsole().getLogs().pipes[
+				window.getInfinityConsole().getPipeFactory().pipes[
 					window.data.log.options.pipe
 				]?.logs || ['']
 			).length - 1,
@@ -456,7 +472,7 @@ Logs.postInitialize = async (window, frame, blessed) => {
 		if (window.isVisible() === false) return;
 
 		let selectedLinePosition = [
-			...(window.getInfinityConsole().getLogs().pipes[
+			...(window.getInfinityConsole().getPipeFactory().pipes[
 				window.data.log.options.pipe
 			]?.logs || ['']),
 		]

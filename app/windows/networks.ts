@@ -1,6 +1,6 @@
 import {InfinityMintWindow} from '../window';
 import hre from 'hardhat';
-import {readSession, saveSession} from '../helpers';
+import {logDirect, readSession, saveSession} from '../helpers';
 
 const Networks = new InfinityMintWindow('Networks');
 
@@ -50,6 +50,7 @@ Networks.initialize = async (window, frame, blessed) => {
 	form.setItems(keys);
 	form.on('select', async (el: any, selected: any) => {
 		let session = readSession();
+		window.hide();
 		await window.getInfinityConsole().changeNetwork(keys[selected]);
 		session.environment.defaultNetwork = keys[selected];
 		saveSession(session);

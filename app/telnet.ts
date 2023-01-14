@@ -9,15 +9,25 @@ import InfinityConsole from './console';
 import {Dictionary} from 'form-data';
 import {logDirect} from './helpers';
 import {startInfinityConsole} from './web3';
-import {defaultFactory, PipeFactory} from './pipes';
+import {PipeFactory} from './pipes';
 
+/**
+ * telnet2 library is used for the telnet server. It is a fork of the original telnet library that is no longer maintained. But this is fork now is also no longer maintained. So we will need to find a new telnet library. This library is used to create a telnet server that will allow users to login and use the console. It is also used to create a telnet client that will allow the console to connect to the telnet server and send commands to it. Its pretty cool. But I kinda wish it was more maintained. But it works for now. Maybe we can find a better library in the future. I will keep looking. Until then, this is what we have. I will also add a link to the telnet2 library in the readme. I like to give credit where credit is due. So here it is. So you can find it if you want to.
+ */
 const telnet = require('telnet2');
+
+/**
+ * The telnet server class
+ */
 export class TelnetServer {
 	private clients: any;
 	private consoles: Dictionary<InfinityConsole>;
 	private online: Dictionary<boolean>;
 	private eventEmitter: InfinityMintEventEmitter;
 
+	/**
+	 * The telnet server constructor. Will read the users from the users.json file and also create a new event emitter.
+	 */
 	constructor() {
 		getUsernames(true);
 		this.consoles = {};
@@ -27,7 +37,7 @@ export class TelnetServer {
 	}
 
 	/**
-	 *
+	 * logs in a user by checking their credentials and creates a new telnet session on success
 	 * @param username
 	 * @param password
 	 * @param sessionId
@@ -43,8 +53,8 @@ export class TelnetServer {
 				sessionId,
 			);
 			this.online[username] = true;
-			this.consoles[sessionId].setUser(usernames[username]);
-			this.consoles[sessionId].setSession(sessions[sessionId]);
+			this.consoles[sessionId].setTelnetUser(usernames[username]);
+			this.consoles[sessionId].setTelnetSession(sessions[sessionId]);
 		} catch (error) {
 			return error.message;
 		}
@@ -52,6 +62,11 @@ export class TelnetServer {
 		return true;
 	}
 
+	/**
+	 * destroys a telnet session and logs out the user
+	 * @param sessionId
+	 * @returns
+	 */
 	public logout(sessionId: string) {
 		if (!sessions[sessionId]) return;
 
@@ -89,14 +104,31 @@ export class TelnetServer {
 		return undefined;
 	}
 
+	/**
+	 * returns the telnet client of a session
+	 * @param sessionId
+	 * @returns
+	 */
 	public getClient(sessionId: string) {
 		return this.clients[sessionId];
 	}
 
+	/**
+	 * returns the InfinityConsole of a session. See {@link app/console.InfinityConsole}.
+	 * @param sessionId
+	 * @returns
+	 */
 	public getConsole(sessionId: string) {
 		return this.consoles[sessionId];
 	}
 
+	/**
+	 * registers a new user. Will check if the username is already taken and if the password is strong enough. Will also create a new user in the users.json file.
+	 * @param username
+	 * @param password
+	 * @param sessionId
+	 * @returns
+	 */
 	public register(username: string, password: string, sessionId: string) {
 		let options = getTelnetOptions();
 		try {
@@ -116,6 +148,10 @@ export class TelnetServer {
 		}
 	}
 
+	/**
+	 * stats the telnet server and waits for connections. You can break the server by pressing CTRL + C.
+	 * @param port
+	 */
 	async start(port?: number) {
 		let options = getTelnetOptions();
 		let config = getConfigFile();
@@ -165,7 +201,7 @@ export class TelnetServer {
 					this.clients[sessionId] = client;
 					this.consoles[sessionId] = infinityConsole;
 					screen = infinityConsole.getScreen();
-					infinityConsole.setClient(client);
+					infinityConsole.setTelnetClient(client);
 
 					client.on('term', terminal => {
 						screen.terminal = terminal;
@@ -255,12 +291,22 @@ export interface UserEntry {
 	userId: number;
 	group: string;
 }
+
+/**
+ * a method to register a new user by creating an md5 salt and a sha512 password from the password parameter. Can be passed a group to assign the user to. The client is the telnet client object.
+ * @param username
+ * @param password
+ * @param client
+ * @param group
+ * @returns
+ */
 export const register = (
 	username: string,
 	password: string,
 	client: any,
-	group: string,
+	group?: string,
 ) => {
+	group = group || 'default';
 	if (usernames[username])
 		throw new Error('username already taken: ' + username);
 
@@ -284,6 +330,9 @@ export const register = (
 	return usernames[username];
 };
 
+/**
+ * saves the usernames to the temp folder
+ */
 export const saveUsernames = () => {
 	fs.writeFileSync(
 		process.cwd() + '/temp/usernames.json',
@@ -292,7 +341,7 @@ export const saveUsernames = () => {
 };
 
 /**
- *
+ * returns the telnet options from the config file
  * @returns
  */
 export const getTelnetOptions = () => {
@@ -308,6 +357,15 @@ export interface SessionEntry {
 }
 
 export let sessions: Dictionary<SessionEntry> = {};
+
+/**
+ * logs in a user by checking the password and salt against the stored password. If the user is already logged in, it throws an error. If the password is incorrect, it throws an error. If the user is not found, it throws an error. If the user is found, it returns the new session entry.
+ * @param username
+ * @param password
+ * @param remoteAddress
+ * @param sessionId
+ * @returns
+ */
 export const loginUser = (
 	username: string,
 	password: string,
@@ -335,6 +393,10 @@ export const loginUser = (
 	return sessions[sessionId];
 };
 
+/**
+ * reads the username list from the temp folder
+ * @returns
+ */
 export const readUsernameList = () => {
 	if (!fs.existsSync(process.cwd() + '/temp/usernames.json'))
 		return {} as typeof usernames;
@@ -343,6 +405,11 @@ export const readUsernameList = () => {
 };
 
 export let usernames: Dictionary<UserEntry>;
+/**
+ * will get the usernames from the temp folder if they are not already loaded else will return current value in memory. If useFresh is true, it will read the usernames from the temp folder.
+ * @param useFresh
+ * @returns
+ */
 export const getUsernames = (useFresh?: boolean) => {
 	if (!usernames || useFresh) {
 		usernames = readUsernameList();
@@ -351,17 +418,19 @@ export const getUsernames = (useFresh?: boolean) => {
 };
 
 /**
- *
+ * returns true if the user is logged in
  * @param client
+ * @param sessionId
  * @returns
  */
 export const hasLoggedIn = (client: any, sessionId: any) => {
-	return getSession(client, sessionId) !== undefined;
+	return getSession(client, sessionId);
 };
 
 /**
- *
+ * gets the session entry for the client and sessionId by checking the remoteAddress and sessionId. If sessionId is not passed, it will return the first client to match the remoteAddress.
  * @param client
+ * @param sessionId
  * @returns
  */
 export const getSession = (client: any, sessionId?: any): SessionEntry => {

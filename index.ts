@@ -5,9 +5,9 @@ import {
 	isEnvTrue,
 	getConfigFile,
 	logDirect,
-	readSession,
 	isInfinityMint,
 	warning,
+	registerNetworkLogs,
 } from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
@@ -17,6 +17,7 @@ import {
 	InfinityMintTelnetOptions,
 } from './app/interfaces';
 import {TelnetServer} from './app/telnet';
+import {startGanache} from './app/ganache';
 
 //export helpers
 export * as Helpers from './app/helpers';
@@ -47,6 +48,15 @@ export let infinityConsole: InfinityConsole;
 export const load = async (
 	options?: InfinityMintConsoleOptions,
 ): Promise<InfinityConsole> => {
+	//register current network pipes
+	registerNetworkLogs();
+	//start ganache
+	if (config.hardhat?.networks?.ganache !== undefined) await startGanache();
+	else
+		warning(
+			'Ganache instance has not been initialized. No connect to ganache testnet.',
+		);
+
 	options = {
 		...(options || {}),
 		...(typeof config?.console === 'object' ? config.console : {}),
@@ -86,9 +96,7 @@ export const load = async (
 					...(options || {}),
 					dontDraw:
 						config.startup ||
-						(config.console === false &&
-							config.console === undefined &&
-							!isEnvTrue('INFINITYMINT_CONSOLE')),
+						(!config.console && !isEnvTrue('INFINITYMINT_CONSOLE')),
 				},
 				defaultFactory,
 			);

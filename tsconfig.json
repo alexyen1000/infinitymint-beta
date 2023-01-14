@@ -22,7 +22,6 @@
 		"dist",
 		"dist/tests",
 		"node_modules",
-		"./scripts",
 		"gems/__",
 		"gems/__cache",
 		"gems/@"

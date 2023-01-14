@@ -5,6 +5,7 @@ import {Dictionary} from 'form-data';
 import path from 'path';
 import fs, {promises} from 'fs';
 import {createHash} from 'node:crypto';
+import InfinityConsole from './console';
 
 export interface ImportInterface {
 	name?: string;
@@ -51,6 +52,10 @@ export interface ImportCache {
 	keys: Dictionary<string>;
 }
 
+/**
+ * returns true if the import cache exists. does not check if its valid.
+ * @returns
+ */
 export const hasImportCache = () => {
 	return fs.existsSync(process.cwd() + '/temp/import_cache.json');
 };
@@ -82,7 +87,7 @@ export const hasImport = async (fileNameOrPath: string) => {
 };
 
 /**
- *
+ * returns the parsedPath to a given fileNameOrPath in the imports cache. You can pass in the full path or just the name of the asset. It can have the extension or not. It can be any case.
  * @param fileNameOrPath
  * @returns
  */
@@ -95,6 +100,10 @@ export const getImport = async (fileNameOrPath: string) => {
 	return imports.database[imports.keys[fileNameOrPath]];
 };
 
+/**
+ * saves the import cache to disk
+ * @param cache
+ */
 export const saveImportCache = (cache: ImportCache) => {
 	log(`saving <${importCount(cache)}> imports to cache file`, 'imports');
 	log('saving imports to /temp/import_cache.json', 'fs');
@@ -104,6 +113,10 @@ export const saveImportCache = (cache: ImportCache) => {
 	);
 };
 
+/**
+ * reads the import cache from disk
+ * @returns
+ */
 export const readImportCache = (): ImportCache => {
 	if (!fs.existsSync(process.cwd() + '/temp/import_cache.json'))
 		return {keys: {}, database: {}, updated: Date.now()} as ImportCache;
@@ -116,19 +129,35 @@ export const readImportCache = (): ImportCache => {
 };
 
 let importCache: ImportCache;
-export const getImports = async (useFresh?: boolean) => {
+/**
+ * returns the current import cache. if useFresh is true, it will recompile the cache. if the cache does not exist, it will create it. It will also save the cache to disk.
+ * @param useFresh
+ * @param infinityConsole
+ * @returns
+ */
+export const getImports = async (
+	useFresh?: boolean,
+	infinityConsole?: InfinityConsole,
+) => {
 	if (
 		useFresh ||
 		(!importCache && !fs.existsSync(process.cwd() + '/temp/import_cache.json'))
 	) {
-		importCache = await getImportCache();
+		importCache = await buildImports([], infinityConsole);
 		saveImportCache(importCache);
 	} else importCache = readImportCache();
 	return importCache;
 };
 
-export const getImportCache = async (
+/**
+ * creates the import cache to be then saved to disk. Can pass in more supported extensions to add to the default ones. More extensions can also be added to the config file.
+ * @param supportedExtensions
+ * @param infinityConsole
+ * @returns
+ */
+export const buildImports = async (
 	supportedExtensions?: string[],
+	infinityConsole?: InfinityConsole,
 ): Promise<ImportCache> => {
 	supportedExtensions = supportedExtensions || [];
 
@@ -196,7 +225,11 @@ export const getImportCache = async (
 	let results = [];
 	for (let i = 0; i < finalLocations.length; i++) {
 		let files = await findFiles(finalLocations[i]);
-		files.forEach(result => results.push(result));
+		files.forEach(result => {
+			if (infinityConsole)
+				infinityConsole.loadingBox.setContent('Loading => ' + result);
+			results.push(result);
+		});
 	}
 
 	let parsedFiles = results.map(filePath => path.parse(filePath));
@@ -222,15 +255,15 @@ export const getImportCache = async (
 		if (root.length > 2) root.slice(1).join('imports');
 		else root = root[1];
 
-		log(
-			`[${i}] found file => ${normalImport.dir + '/' + normalImport.base}`,
-			'imports',
-		);
-		log(`\t -> perfoming checksum`, 'imports');
+		log(`[${i}] found file => ${name}`, 'imports');
+		log(`\t -> calculating checksum`, 'imports');
+
+		if (infinityConsole)
+			infinityConsole.loadingBox.setContent('Calculating Checksum => ' + name);
 
 		let checksum = createHash('md5')
 			.update(
-				await promises.readFile(normalImport.dir + '/' + normalImport.base, {
+				await promises.readFile(name, {
 					encoding: 'utf-8',
 				}),
 			)
@@ -249,6 +282,22 @@ export const getImportCache = async (
 					) !== -1,
 			),
 		};
+
+		//adds settings to the keys
+		if (
+			imports.database[name].settings &&
+			imports.database[name].settings.length > 0
+		)
+			imports.database[name].settings.forEach(setting => {
+				imports.keys[setting.dir + '/' + setting.base] = name;
+				imports.keys['/' + setting.base] = name;
+				let root = setting.dir + '/' + setting.base;
+				root = root.replace(process.cwd(), '');
+				//remove the slash from the start of root if it exists
+				if (root[0] === '/') root = root.substring(1);
+				imports.keys[root] = name;
+				imports.keys['/' + root] = name;
+			});
 
 		imports.keys[normalImport.dir + '/' + normalImport.base] = name;
 		imports.keys[normalImport.dir + '/' + normalImport.name] = name;
@@ -309,6 +358,13 @@ export const getImportCache = async (
 		imports.keys[nss + '/' + normalImport.name] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
+		imports.keys[normalImport.base] = name;
+		imports.keys[normalImport.name] = name;
+		imports.keys[normalImport.name.toLowerCase()] = name;
+		imports.keys[normalImport.base.toLowerCase()] = name;
+
+		if (infinityConsole)
+			infinityConsole.loadingBox.setContent('Imported => ' + name);
 	}
 
 	return imports as ImportCache;

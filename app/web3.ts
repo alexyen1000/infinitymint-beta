@@ -10,8 +10,9 @@ import {
 	saveSession,
 	getSolidityFolder,
 	warning,
+	registerNetworkLogs,
 } from './helpers';
-import {BaseContract} from 'ethers';
+import {BaseContract, BigNumber} from 'ethers';
 import fs from 'fs';
 import {defaultFactory, PipeFactory} from './pipes';
 import {
@@ -20,7 +21,6 @@ import {
 	TransactionReceipt,
 	Provider,
 } from '@ethersproject/providers';
-import GanacheServer from './ganache';
 import {ContractFactory, ContractTransaction} from '@ethersproject/contracts';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {getLocalDeployment, create} from './deployments';
@@ -30,60 +30,31 @@ import {
 	InfinityMintConsoleOptions,
 	InfinityMintConfig,
 	InfinityMintEventEmitter,
+	InfinityMintDeploymentLocal,
+	KeyValue,
+	InfinityMintTempProject,
+	InfinityMintCompiledProject,
 } from './interfaces';
 import {EthereumProvider} from 'ganache';
 import InfinityConsole from './console';
 import {TelnetServer} from './telnet';
+import {Receipt} from 'hardhat-deploy/dist/types';
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
 
+/**
+ * initializes infinityMint by creating the IPFS node and starting the network pipe for the defined networks in the config file. Will also allow piping to occur which will begin piping the calls from console.log to the console.
+ * @param config
+ * @param startGanache
+ * @returns
+ */
 export const initializeInfinityMint = async (
 	config?: InfinityMintConfig,
 	startGanache?: boolean,
 ) => {
 	config = config || getConfigFile();
-	let session = readSession();
-	//register current network pipes
-	registerNetworkLogs();
-
-	//start ganache
-	if (startGanache) {
-		try {
-			//ask if they want to start ganache
-			//start ganache here
-			let obj = {...config.ganache} as any;
-			if (!obj.wallet) obj.wallet = {};
-			if (!session.environment.ganacheMnemonic)
-				throw new Error('no ganache mnemonic');
-
-			obj.wallet.mnemonic = session.environment.ganacheMnemonic;
-			saveSession(session);
-			debugLog('starting ganache with menomic of: ' + obj.wallet.mnemonic);
-
-			//get private keys and save them to file
-			let keys = getPrivateKeys(session.environment.ganacheMnemonic);
-			debugLog(
-				'found ' +
-					keys.length +
-					' private keys for mnemonic: ' +
-					session.environment.ganacheMnemonic,
-			);
-			keys.forEach((key, index) => {
-				debugLog(`[${index}] => ${key}`);
-			});
-			session.environment.ganachePrivateKeys = keys;
-			saveSession(session);
-
-			let provider = await GanacheServer.start(config.ganache || {});
-			startNetworkPipe(provider, 'ganache');
-		} catch (error) {
-			warning('could not start ganache:\n' + error.stack);
-		}
-	} else {
-		warning('no ganache network found');
-	}
-
+	registerNetworkLogs(hre.config.networks);
 	//allow piping
 	allowPiping();
 	//
@@ -102,7 +73,14 @@ export const initializeInfinityMint = async (
 	return config;
 };
 
-//function to launch the console
+/**
+ * used in the index.ts file to initialize and begin the InfinityConsole session. This is the main entry point for the application if you are using the CLI.
+ * @param options
+ * @param pipeFactory
+ * @param telnetServer
+ * @param eventEmitter
+ * @returns
+ */
 export const startInfinityConsole = async (
 	options?: InfinityMintConsoleOptions,
 	pipeFactory?: PipeFactory,
@@ -133,6 +111,10 @@ export const startInfinityConsole = async (
 	return infinityConsole;
 };
 
+/**
+ * reads from the config file to retrieve the default account index and then gets all of the signers for the current provider and returns the default account
+ * @returns
+ */
 export const getDefaultSigner = async () => {
 	let defaultAccount = getDefaultAccountIndex();
 	let signers = await ethers.getSigners();
@@ -150,15 +132,41 @@ export const getDefaultSigner = async () => {
 };
 
 /**
- *
+ * returns the path to the deployment folder for the project and network
+ * @param project
+ * @returns
+ */
+export const getDeploymentProjectPath = (
+	project: InfinityMintCompiledProject | InfinityMintTempProject,
+) => {
+	return (
+		process.cwd() +
+		`/deployments/${hre.network.name}/` +
+		project.name +
+		'@' +
+		project.version +
+		'/'
+	);
+};
+
+/**
+ * deploys a web3 contract and stores the deployment in the deployments folder relative to the project and network. Will use the previous deployment if it exists and usePreviousDeployment is true. Artifacts are read from the artifacts folder relative to the project. If you cannot find the artifact you are looking for, make sure you have run npx hardhat compile and relaunch the console.
  * @param artifactName
+ * @param project
+ * @param signer
  * @param args
+ * @param libraries
+ * @param save
+ * @param logDeployment
+ * @param usePreviousDeployment
  * @returns
  */
 export const deploy = async (
 	artifactName: string,
+	project?: InfinityMintCompiledProject | InfinityMintTempProject,
 	signer?: SignerWithAddress,
 	args?: [],
+	libraries?: {},
 	save?: boolean,
 	logDeployment?: boolean,
 	usePreviousDeployment?: boolean,
@@ -166,8 +174,7 @@ export const deploy = async (
 	signer = signer || (await getDefaultSigner());
 	let artifact = await artifacts.readArtifact(artifactName);
 	let fileName =
-		process.cwd() +
-		`/deployments/${hre.network.name}/${artifact.contractName}.json`;
+		getDeploymentProjectPath(project) + `${artifact.contractName}.json`;
 	let buildInfo = await artifacts.getBuildInfo(artifactName);
 
 	if (usePreviousDeployment && fs.existsSync(fileName)) {
@@ -175,76 +182,80 @@ export const deploy = async (
 			fs.readFileSync(fileName, {
 				encoding: 'utf-8',
 			}),
-		);
+		) as InfinityMintDeploymentLocal;
 
 		if (logDeployment)
 			log(
 				`🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`,
 			);
 
-		let contract = await ethers.getContractAt(
-			artifact.contractName,
-			deployment.address,
-			signer,
-		);
-
-		let session = readSession();
-
-		if (!session.environment?.deployments[contract.address]) {
-			if (!session.environment.deployments)
-				session.environment.deployments = {};
-
-			session.environment.deployments[contract.address] = {
-				...artifact,
-				...buildInfo,
-				args: args,
-				name: artifact.contractName,
-				address: contract.address,
-				transactionHash: contract.deployTransaction.hash,
-				deployer: contract.deployTransaction.from,
-				receipt: contract.deployTransaction,
-			};
-			debugLog(`saving deployment of ${artifact.contractName} to session`);
-			saveSession(session);
-		}
-
-		return contract;
+		writeDeployment(deployment);
+		return deployment;
 	}
 
-	let factory = await ethers.getContractFactory(artifact.contractName, signer);
+	let factory = await ethers.getContractFactory(artifact.contractName, {
+		signer: signer,
+		libraries: libraries,
+	});
 	let contract = await deployContract(factory, args);
 	logTransaction(contract.deployTransaction);
 
 	if (!save) return contract;
 
-	let savedDeployment = {
+	writeDeployment({
 		...artifact,
 		...buildInfo,
+		project,
 		args: args,
-		name: artifact.contractName,
+		key: artifact.contractName,
+		network: project.network,
+		newlyDeployed: true,
+		contractName: artifact.contractName,
 		address: contract.address,
 		transactionHash: contract.deployTransaction.hash,
 		deployer: contract.deployTransaction.from,
-		receipt: contract.deployTransaction,
-	};
+		receipt: contract.deployTransaction as any,
+	});
 
-	let session = readSession();
-
-	if (!session.environment?.deployments) session.environment.deployments = {};
-
-	debugLog(`saving deployment to session`);
-	session.environment.deployments[contract.address] = savedDeployment;
-	saveSession(session);
-
-	debugLog(`saving ${fileName}`);
 	log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
 
-	if (!fs.existsSync(process.cwd() + '/deployments/' + hre.network.name + '/'))
-		fs.mkdirSync(process.cwd() + '/deployments/' + hre.network.name + '/');
-
-	fs.writeFileSync(fileName, JSON.stringify(savedDeployment, null, 2));
 	return contract;
 };
+
+/**
+ * writes the deployment to the /deployments folder based on the network and project
+ * @param deployment
+ * @param project
+ */
+export const writeDeployment = (
+	deployment: InfinityMintDeploymentLocal,
+	project?: InfinityMintCompiledProject | InfinityMintTempProject,
+) => {
+	let session = readSession();
+	project = project || deployment.project;
+	let fileName =
+		getDeploymentProjectPath(project) + `${deployment.contractName}.json`;
+
+	if (!session.environment.deployments) session.environment.deployments = {};
+	if (!session.environment?.deployments[deployment.address]) {
+		session.environment.deployments[deployment.address] = deployment;
+		debugLog(`saving deployment of ${deployment.contractName} to session`);
+		saveSession(session);
+	}
+
+	if (!fs.existsSync(getDeploymentProjectPath(project)))
+		fs.mkdirSync(getDeploymentProjectPath(project));
+
+	debugLog(`saving ${fileName}`);
+	fs.writeFileSync(fileName, JSON.stringify(deployment, null, 2));
+};
+
+/**
+ * uses in the deploy function to specify gas price and other overrides for the transaction
+ */
+interface Overrides extends KeyValue {
+	gasPrice?: BigNumber;
+}
 
 /**
  * Deploys a contract, takes an ethers factory. Does not save the deployment.
@@ -252,9 +263,15 @@ export const deploy = async (
  * @param args
  * @returns
  */
-export const deployContract = async (factory: ContractFactory, args?: []) => {
+export const deployContract = async (
+	factory: ContractFactory,
+	args?: any[],
+	overrides?: Overrides,
+) => {
+	if (overrides) args.push(overrides);
 	let contract = await factory.deploy(args);
-	let tx = await contract.deployed();
+	contract = await contract.deployed();
+	logTransaction(contract.deployTransaction);
 	return contract;
 };
 
@@ -277,8 +294,52 @@ export const deployBytecode = async (
 	return await deployContract(factory, args);
 };
 
+/**
+ * Deploys a contract using hardhat deploy
+ * @param contractName
+ * @param signer
+ * @param gasPrice
+ * @param confirmations
+ * @param usePreviousDeployment
+ * @returns
+ */
+export const hardhatDeploy = async (
+	contractName: string,
+	project: InfinityMintCompiledProject | InfinityMintTempProject,
+	signer?: SignerWithAddress,
+	libraries?: KeyValue,
+	gasPrice?: string | BigNumber,
+	confirmations?: number,
+	usePreviousDeployment?: boolean,
+) => {
+	signer = signer || (await getDefaultSigner());
+	let result: InfinityMintDeploymentLocal = {
+		...(await hre.deployments.deploy(contractName, {
+			from: signer.address,
+			gasPrice: gasPrice,
+			libraries: libraries,
+			log: true,
+			skipIfAlreadyDeployed: usePreviousDeployment,
+			waitConfirmations: confirmations || 1,
+		})),
+		key: contractName,
+		network: project.network,
+		contractName,
+		project,
+		deployer: signer.address,
+	};
+	logTransaction(result.receipt);
+	writeDeployment(result, project);
+	return result;
+};
+
+/**
+ * uses hardhat to change the network to the specified network, will stop the network pipe and start it again if the network is not ganache
+ * @param network
+ */
 export const changeNetwork = (network: string) => {
 	stopNetworkPipe(ethers.provider, hre.network.name);
+
 	hre.changeNetwork(network);
 	if (network !== 'ganache') startNetworkPipe(ethers.provider, network);
 };
@@ -308,12 +369,19 @@ export const getSignedContract = async (
 	signer?: SignerWithAddress,
 ): Promise<BaseContract> => {
 	signer = signer || (await getDefaultSigner());
-	let factory = await ethers.getContractFactory(deployment.name);
+	let factory = await ethers.getContractFactory(deployment.contractName);
 	return factory.connect(signer).attach(deployment.address);
 };
 
+/**
+ * logs a transaction storing the receipt in the session and printing the gas usage
+ * @param execution
+ * @param logMessage
+ * @param printGasUsage
+ * @returns
+ */
 export const logTransaction = async (
-	execution: Promise<ContractTransaction> | ContractTransaction,
+	execution: Promise<ContractTransaction> | ContractTransaction | Receipt,
 	logMessage?: string,
 	printGasUsage?: boolean,
 ) => {
@@ -381,6 +449,11 @@ export const getDeployment = (contractName: string, network?: string) => {
 	);
 };
 
+/**
+ * reads the config file and returns the network settings for the given network
+ * @param network
+ * @returns
+ */
 export const getNetworkSettings = (network: string) => {
 	let config = getConfigFile();
 	return (
@@ -389,34 +462,20 @@ export const getNetworkSettings = (network: string) => {
 	);
 };
 
+/**
+ * reads from the config file and returns the default account index to use
+ * @returns
+ */
 export const getDefaultAccountIndex = () => {
 	let config = getConfigFile();
-	return config?.settings?.networks[hre.network.name]?.defaultAccount || 0;
+	return config?.settings?.networks?.[hre.network.name]?.defaultAccount || 0;
 };
 
-export const registerNetworkLogs = () => {
-	let networks = Object.keys(hre.config.networks);
-	let config = getConfigFile();
-
-	networks.forEach(network => {
-		let settings = config?.settings?.networks[network] || {};
-		if (settings.useDefaultPipe) return;
-		debugLog('registered pipe for ' + network);
-		defaultFactory.registerSimplePipe(network);
-	});
-};
-
-export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
-	let keys = [];
-	walletLength = walletLength || 20;
-	for (let i = 0; i < walletLength; i++) {
-		keys.push(
-			ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/` + i).privateKey,
-		);
-	}
-	return keys;
-};
-
+/**
+ * unregisters all events on the provider and deletes the listener from the ProviderListeners object
+ * @param provider
+ * @param network
+ */
 export const stopNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any,
@@ -438,10 +497,20 @@ export const stopNetworkPipe = (
 	delete ProviderListeners[network];
 };
 
+/**
+ * listens to events on the provider and logs them
+ * @param provider
+ * @param network
+ * @returns
+ */
 export const startNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any,
 ) => {
+	if (defaultFactory.pipes[network] === undefined) {
+		warning('undefined network pipe: ' + network);
+		return;
+	}
 	if (!network) network = hre.network.name;
 	let settings = getNetworkSettings(network);
 

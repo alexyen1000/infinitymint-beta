@@ -30,12 +30,18 @@ import {
 	saveTempDeployedProject,
 } from './projects';
 
+/**
+ * a simple interface to describe a vector
+ */
 export interface Vector {
 	x: number;
 	y: number;
 	z: number;
 }
 
+/**
+ * a simple interface to describe the import from blessed
+ */
 export interface Blessed {
 	screen: (options: any) => BlessedElement;
 	escape: (input: string) => string;
@@ -52,6 +58,9 @@ export interface Blessed {
 	form: (options: BlessedElementOptions) => BlessedElement;
 }
 
+/**
+ * describes the padding of a blessed element
+ */
 export type BlessedElementPadding = {
 	top: string | number;
 	left: string | number;
@@ -59,6 +68,9 @@ export type BlessedElementPadding = {
 	bottom: string | number;
 };
 
+/**
+ * describes the properties of a blessed element, as well as the options you may pass as a parameter in the create element function. This is the base interface for all blessed elements.
+ */
 export interface BlessedElementOptions extends KeyValue {
 	/**
 	 * will always run the think hook of this blessed element even if it is hidden
@@ -97,10 +109,7 @@ export interface BlessedElementOptions extends KeyValue {
 }
 
 /**
- * A very experimentael prototype typescript interfaced for the blessed-js terminal-kit library. Most of the methods
- * on here are probably not going to work.
- *
- * @experimental
+ * describes a blessed element, this is the base interface for all blessed elements.
  */
 export interface BlessedElement extends BlessedElementOptions, KeyValue {
 	focus: Function;
@@ -259,6 +268,12 @@ export const warning = (msg: string | object | number, direct?: true) => {
 	else log(msg, isEnvTrue('PIPE_SEPERATE_WARNINGS') ? 'warning' : 'debug');
 };
 
+/**
+ * gets the elements padding. use type to get the left, right, up, or down padding.
+ * @param element
+ * @param type
+ * @returns
+ */
 export const getElementPadding = (
 	element: BlessedElement,
 	type: 'left' | 'right' | 'up' | 'down',
@@ -268,6 +283,11 @@ export const getElementPadding = (
 	return parseInt(element?.padding[type].toString());
 };
 
+/**
+ * calculates the width of the blessed given elements
+ * @param elements
+ * @returns
+ */
 export const calculateWidth = (...elements: BlessedElement[]) => {
 	let fin = 0;
 	elements
@@ -312,25 +332,125 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 };
 
 /**
+ * delays the current thread for the specified amount of time. Written by the AI
+ * @param ms
+ * @returns
+ */
+export const delay = async (ms: number) =>
+	new Promise(resolve => setTimeout(resolve, ms));
+
+/**
  *
  * @param msg
  */
 const _blessed = require('blessed');
+
+/**
+ * ignores the current console log and pipes it directly to the console.
+ * @param msg
+ */
 export const logDirect = (msg: any) => {
-	if ((console as any)._log && isAllowPiping)
-		(console as any)._log(_blessed.cleanTags(msg));
+	if ((console as any)._log && isAllowPiping && typeof msg !== 'object')
+		(console as any)._log(
+			_blessed.cleanTags(
+				msg instanceof Error
+					? msg.message
+					: typeof msg === 'string'
+					? msg
+						? !isNaN(parseInt(msg))
+						: parseInt(msg.toString())
+					: msg,
+			),
+		);
+	else if ((console as any)._log) (console as any)._log(msg);
 
 	console.log(msg);
 };
 
+let actionProject: InfinityMintTempProject | undefined;
+let actionScript: InfinityMintScriptParameters | undefined;
+let actionType: 'deploy' | 'compile';
 /**
- *
+ * used by the prepare function to set the action project. You should not use this function.
+ * @param project
+ */
+export const setActionProject = (project: InfinityMintTempProject) => {
+	actionProject = project;
+};
+
+/**
+ * allows you to use action instead of having to use stage
+ * @param _stage
+ * @param call
+ * @param cleanup
+ */
+export const prepare = async (
+	project: InfinityMintTempProject,
+	script: InfinityMintScriptParameters,
+	type: 'deploy' | 'compile',
+) => {
+	actionScript = script;
+	actionType = type;
+	if (!project.stages) project.stages = {};
+	setActionProject(project);
+};
+
+/**
+ * must be called after prepare. Allows you to run a stage. A stage is a block of code that can be skipped or the execution can retry from the point this stage is at. This can be used to run a stage always. You may use the action function to run a stage once
+ * @param _stage
+ * @param call
+ * @param cleanup
+ */
+export const always = async (
+	_stage: string,
+	call: (isFirstTime?: boolean) => Promise<void>,
+	cleanup?: (isFirstTime?: boolean) => Promise<void>,
+	action?: 'deploy' | 'compile',
+) => {
+	return await stage(
+		_stage,
+		actionProject!,
+		call,
+		action || actionType,
+		actionScript,
+		true,
+		cleanup,
+	);
+};
+
+/**
+ * you must call prepare before using this function. Allows you to run a stage. A stage is a block of code that can be skipped or the execution can retry from the point this stage is at. This can be used with the always function to run a stage always.
+ * @param _stage
+ * @param call
+ * @param cleanup
+ * @param action
+ * @returns
+ */
+export const action = async (
+	_stage: string,
+	call: (isFirstTime?: boolean) => Promise<void>,
+	cleanup?: (isFirstTime?: boolean) => Promise<void>,
+	action?: 'deploy' | 'compile',
+) => {
+	return await stage(
+		_stage,
+		actionProject!,
+		call,
+		action || actionType,
+		actionScript,
+		false,
+		cleanup,
+	);
+};
+
+/**
+ * runs a stage, a stage is a block of code that can be skipped if the stage has already been run or ran always if alwaysRun is set to true. A simpler way to use this is to use the action function. This requires you to call prepare before using this function. Prepare is a function that sets the project, script, and type for the action function as well as the always function.
  * @param stage
  * @param project
  * @param call
  * @param type
  * @param infinityConsole
- * @param forceRun
+ * @param alwaysRun
  * @returns
  */
 export const stage = async (
@@ -339,26 +459,26 @@ export const stage = async (
 	call: (isFirstTime?: boolean) => Promise<void>,
 	type?: 'compile' | 'deploy',
 	script?: InfinityMintScriptParameters,
-	forceRun?: boolean,
+	alwaysRun?: boolean,
 	cleanup?: (isFirstTime?: boolean) => Promise<void>,
 ): Promise<Error | Error[] | boolean> => {
 	type = type || 'compile';
 	if (!project.stages) project.stages = {};
 	let eventName = 'stage' + (stage[0].toUpperCase() + stage.substring(1));
-	if (script.infinityConsole)
-		script.infinityConsole.debugLog('executing stage => ' + stage);
+	if (script?.infinityConsole)
+		script?.infinityConsole.debugLog('executing stage => ' + stage);
 	else debugLog('executing stage => ' + stage);
 
-	if (script.infinityConsole) script.infinityConsole.emitAny(eventName);
+	if (script?.infinityConsole) script.infinityConsole.emitAny(eventName);
 
-	if (project?.stages[stage] === true && !forceRun) {
-		if (script.infinityConsole)
+	if (project?.stages[stage] === true && !alwaysRun) {
+		if (script?.infinityConsole)
 			script.infinityConsole.debugLog(
 				'\t{cyan-fg}Skipped{/cyan-fg} => ' + stage,
 			);
 		else debugLog('\t{cyan-fg}Skipped{/cyan-fg} => ' + stage);
 
-		if (script.infinityConsole)
+		if (script?.infinityConsole)
 			script.infinityConsole.emitAny(eventName + 'Skipped');
 		return true;
 	}
@@ -370,23 +490,30 @@ export const stage = async (
 	else saveTempDeployedProject(project);
 
 	try {
-		if (script.infinityConsole)
-			script.infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
-		await call(isFirstTime);
+		if (script?.infinityConsole)
+			script?.infinityConsole.emitAny(eventName + 'Pre', isFirstTime);
+
+		await new Promise((resolve, reject) => {
+			setTimeout(async () => {
+				await call(isFirstTime).catch(reject);
+				resolve(true);
+			}, 100);
+		});
+
 		project.stages[stage] = true;
 
-		if (script.infinityConsole)
+		if (script?.infinityConsole)
 			script.infinityConsole.emitAny(eventName + 'Post', isFirstTime);
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
-		if (script.infinityConsole)
-			script.infinityConsole.debugLog(
+		if (script?.infinityConsole)
+			script?.infinityConsole.debugLog(
 				'\t{green-fg}Success{/green-fg} => ' + stage,
 			);
 		else debugLog('\t{green-fg}Success{/green-fg} => ' + stage);
-		if (script.infinityConsole)
-			script.infinityConsole.emitAny(eventName + 'Success');
+		if (script?.infinityConsole)
+			script?.infinityConsole.emitAny(eventName + 'Success');
 		return true;
 	} catch (error) {
 		project.stages[stage] = error;
@@ -394,16 +521,27 @@ export const stage = async (
 		if (type === 'compile') saveTempCompiledProject(project);
 		else saveTempDeployedProject(project);
 
-		if (script.infinityConsole)
-			script.infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
+		if (script?.infinityConsole)
+			script?.infinityConsole.debugLog('\t{red-fg}Failure{/red-fg}');
 		else debugLog('\t{red-fg}Failure{/red-fg} => ' + stage);
-		if (script.infinityConsole)
-			script.infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
+		if (script?.infinityConsole)
+			script?.infinityConsole.emitAny(eventName + 'Failure', isFirstTime);
 
 		if (cleanup) await cleanup();
 
 		return error;
 	}
+};
+
+export const registerNetworkLogs = (_networks?: any) => {
+	let config = getConfigFile();
+	let networks = Object.keys(_networks || config.hardhat.networks);
+	networks.forEach(network => {
+		let settings = config?.settings?.networks?.[network] || {};
+		if (settings.useDefaultPipe) return;
+		debugLog('registered pipe for ' + network);
+		defaultFactory.registerSimplePipe(network);
+	});
 };
 
 const parseCache = {};
@@ -448,19 +586,12 @@ export const write = (path: PathLike, object: any) => {
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let _log = console.log;
-	console.log = (msg: string) => {
-		msg = msg.toString();
-		if (!isAllowPiping) {
-			_log(_blessed.cleanTags(msg));
-			return;
-		}
+	console.log = (msg: any) => {
+		msg = msg instanceof Error ? msg.message : msg;
 
-		if (
-			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
-			msg.toString().substring(0, 4) === 'eth_' &&
-			defaultFactory.pipes['ganache']
-		) {
-			defaultFactory.log(msg, 'ganache');
+		if (!isAllowPiping) {
+			if (typeof msg !== 'object') _log(_blessed.cleanTags(msg));
+			else _log(msg);
 			return;
 		}
 
@@ -468,6 +599,15 @@ export const overwriteConsoleMethods = () => {
 			if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
 		} catch (error) {
 			msg = msg.toString();
+		}
+
+		if (
+			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
+			msg.substring(0, 4) === 'eth_' &&
+			defaultFactory.pipes['ganache']
+		) {
+			defaultFactory.log(msg, 'ganache');
+			return;
 		}
 
 		if (
@@ -506,7 +646,7 @@ export const overwriteConsoleMethods = () => {
 				.split('\n')
 				.forEach((line: string) =>
 					log(
-						`{red-fg}${line}{red-fg}`,
+						`{red-fg}${line}{/red-fg}`,
 						isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
 					),
 				);
@@ -608,7 +748,7 @@ export const prepareConfig = () => {
 	let config = getConfigFile();
 	let session = readSession();
 
-	if (config.hardhat.defaultNetwork === undefined)
+	if (!config.hardhat.defaultNetwork)
 		config.hardhat.defaultNetwork =
 			session.environment.defaultNetwork || 'hardhat';
 
@@ -739,7 +879,6 @@ export const findFiles = (globPattern: string) => {
 
 export const isTypescript = () => {
 	let session = readSession();
-
 	return !session.environment?.javascript;
 };
 
@@ -761,25 +900,17 @@ export const findScripts = async (roots?: string[]) => {
 	let config = getConfigFile();
 	roots = roots || [];
 
-	if (
-		!isInfinityMint() &&
-		!isTypescript() &&
-		isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS')
-	)
+	//try and include everything in the scripts folder of the module
+	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS'))
 		roots.push(
 			process.cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js',
 		);
 
-	//try and include TS scripts
-	if (
-		!isInfinityMint() &&
-		isTypescript() &&
-		isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS')
-	)
-		roots.push(process.cwd() + '/node_modules/infinitymint/scripts/**/*.ts');
-
+	//if we are typescript require ts files
 	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
+	//require JS files always
 	roots.push(process.cwd() + '/scripts/**/*.js');
+
 	roots = [
 		...roots,
 		...(config.roots || []).map(
@@ -788,7 +919,7 @@ export const findScripts = async (roots?: string[]) => {
 				'/' +
 				root +
 				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
-				'**/*.ts',
+				(isTypescript() ? '**/*.ts' : '**/*.js'),
 		),
 		...(config.roots || []).map(
 			(root: string) =>
@@ -839,7 +970,7 @@ export const executeScript = async (
 	try {
 		if (infinityConsole)
 			console.log = (msg: string) => {
-				infinityConsole.getLogs().log(msg, 'default');
+				infinityConsole.getPipeFactory().log(msg, 'default');
 			};
 		if (infinityConsole)
 			console.error = (error: any) => {
@@ -853,11 +984,11 @@ export const executeScript = async (
 			args: args,
 			log: (msg: string) => {
 				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
-				else infinityConsole.getLogs().log(msg, 'default');
+				else infinityConsole.getPipeFactory().log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
 				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
-				else infinityConsole.getLogs().log(msg, 'debug');
+				else infinityConsole.getPipeFactory().log(msg, 'debug');
 			},
 			infinityConsole: infinityConsole,
 			project: getCurrentProject(true),
@@ -1035,6 +1166,7 @@ export const registerGasAndPriceHandlers = (config: InfinityMintConfig) => {
 export const loadInfinityMint = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean,
+	_startGanache?: boolean,
 ) => {
 	initializeGanacheMnemonic();
 	//create default pipes
@@ -1107,6 +1239,9 @@ export const preInitialize = (isJavascript?: boolean) => {
 		'imports',
 		'deployments',
 		'projects',
+		'projects/compiled',
+		'projects/deployed',
+		'projects/bundles',
 	]);
 
 	if (!fs.existsSync(process.cwd() + '/.env')) {
@@ -1149,6 +1284,10 @@ export const preInitialize = (isJavascript?: boolean) => {
 	}
 };
 
+/**
+ * creates the pipes (loggers) on the passed pipe factory.
+ * @param factory
+ */
 export const createPipes = (factory: PipeFactory) => {
 	let pipes = [
 		'debug',
@@ -1188,11 +1327,31 @@ export const createPipes = (factory: PipeFactory) => {
 
 export const initializeGanacheMnemonic = () => {
 	let session = readSession();
-	session.environment.ganacheMnemonic = getGanacheMnemonic();
+
+	if (!isEnvTrue('GANACHE_EXTERNAL'))
+		session.environment.ganacheMnemonic = getGanacheMnemonic();
+	else {
+		if (session.environment.ganacheMnemonic)
+			delete session.environment.ganacheMnemonic;
+
+		if (fs.existsSync(process.cwd() + '/.mnemonics'))
+			session.environment.ganacheMnemonic = readJson(
+				process.cwd() + '/.mnemonics',
+			).ganache.mnemonic;
+		else
+			warning(
+				'no ganache mnemonic found, please create a .mnemonics file by running npm run ganache',
+			);
+	}
+
 	saveSession(session);
-	return session.environment?.ganacheMnemonic;
 };
 
+/**
+ * creates a default infinitymint.config.ts file or a infinitymint.config.js file if useJavascript is true
+ * @param useJavascript
+ * @param useInternalRequire
+ */
 export const createInfinityMintConfig = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean,
@@ -1242,6 +1401,10 @@ export const createInfinityMintConfig = (
 	}
 };
 
+/**
+ * gets the current folder solc is using
+ * @returns
+ */
 export const getSolidityFolder = () => {
 	let session = readSession();
 
@@ -1252,6 +1415,13 @@ export const getSolidityFolder = () => {
 	);
 };
 
+/**
+ * saves a session variable to the .session file
+ * @param session
+ * @param key
+ * @param value
+ * @returns
+ */
 export const saveSessionVariable = (
 	session: InfinityMintSession,
 	key: string,
@@ -1311,14 +1481,29 @@ export const envExists = (key: string) => {
 	return isEnvSet(key as any);
 };
 
+/**
+ * non typed version of isEnvTrue
+ * @param key
+ * @returns
+ */
 export const envTrue = (key: string) => {
 	return isEnvTrue(key as any);
 };
 
+/**
+ * returns if an InfinityMintEnvironmentKeys is set to true in the environment of the current process
+ * @param key
+ * @returns
+ */
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {
 	return process.env[key] && process.env[key] === 'true';
 };
 
+/**
+ * returns true if InfinityMintEnvironmentKeys is set in the environment of the current process. Unlike isEnvTrue this will only check if the key is not empty.
+ * @param key
+ * @returns
+ */
 export const isEnvSet = (key: InfinityMintEnvironmentKeys): boolean => {
 	return process.env[key] && process.env[key]?.trim().length !== 0;
 };

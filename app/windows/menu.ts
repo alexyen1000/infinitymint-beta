@@ -26,6 +26,10 @@ const Menu = new InfinityMintWindow(
 	},
 );
 
+/**
+ * creates the buttons for the menu
+ * @param window
+ */
 let createButtons = (window: InfinityMintWindow) => {
 	let projects = window.createElement('deploy', {
 		bottom: 0,
@@ -178,6 +182,9 @@ let createButtons = (window: InfinityMintWindow) => {
 	});
 };
 
+/**
+ * the images for the menu
+ */
 const files = [
 	'/resources/logos/fractal.gif',
 	'/resources/logos/hypercube.gif',
@@ -189,6 +196,12 @@ const files = [
 	'/resources/logos/2032.gif',
 ];
 
+/**
+ * the think function for the menu, called every console tick
+ * @param window
+ * @param frame
+ * @param blessed
+ */
 Menu.think = (window, frame, blessed) => {
 	if (window.getElement('timeLabel')) {
 		window
@@ -428,6 +441,10 @@ Menu.initialize = async (window, frame, blessed) => {
 	createButtons(window);
 };
 
+/**
+ * called after the window is initialized
+ * @param window
+ */
 Menu.postInitialize = async window => {
 	let noProject = window.getElement('noProjectWarning');
 	window.on('hide', () => {

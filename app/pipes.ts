@@ -37,6 +37,7 @@ export class Pipe {
 		this.appendDate = false;
 		this.created = Date.now();
 		this.logHandler = (str: string) => {
+			str = str.toString();
 			if (
 				this.listen &&
 				(!isEnvTrue('PIPE_IGNORE_CONSOLE') || getConfigFile().console)
@@ -74,7 +75,8 @@ export class Pipe {
 		return new Date(this.created);
 	}
 
-	log(msg: string) {
+	log(msg: any) {
+		msg = msg.toString();
 		this.logHandler(msg);
 	}
 
@@ -95,11 +97,20 @@ export interface PipeOptions {
 }
 
 /**
- * Logging factory class
+ * allows for multiple logging handles to be created to store multiple different logs instead of just one through console.log
  */
 export class PipeFactory {
+	/**
+	 * the logging outputs
+	 */
 	public pipes: Dictionary<Pipe>;
+	/**
+	 * the pipefactory specific event emitter
+	 */
 	public emitter: EventEmitter;
+	/**
+	 * the current default key, default is 'default'
+	 */
 	public currentPipeKey: string;
 	constructor() {
 		this.pipes = {};
@@ -120,7 +131,7 @@ export class PipeFactory {
 		if (!this.currentPipeKey || !this.pipes[this.currentPipeKey])
 			this.currentPipeKey = 'default';
 		this.emitter.emit(
-			'error',
+			this.currentPipeKey + 'Error',
 			error,
 			this.currentPipeKey,
 			this.pipes[this.currentPipeKey].errors.length,
@@ -128,13 +139,13 @@ export class PipeFactory {
 		this.pipes[this.currentPipeKey].error(error);
 	}
 
-	public log(msg: string, pipe?: string, dontHighlight?: boolean) {
+	public log(msg: any, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipeKey;
 		if (!this.pipes[actualPipe] && !this.pipes['default'])
 			throw new Error('bad pipe: ' + actualPipe);
 		else if (!this.pipes[actualPipe]) return this.log(msg, 'default');
 
-		if (!dontHighlight)
+		if (!dontHighlight && typeof msg === 'string')
 			msg = msg
 				.replace(/\[/g, '{yellow-fg}[')
 				.replace(/\]/g, ']{/yellow-fg}')
@@ -241,11 +252,18 @@ export class PipeFactory {
 }
 
 export let defaultFactory: PipeFactory;
+/**
+ * creates the default factory. this MUST be called in index.ts or index.js before any other code is executed
+ */
 export const createDefaultFactory = () => {
 	console.log('🛸 Creating Default Logger');
 	defaultFactory = new PipeFactory();
 };
 
+/**
+ * sets the default factory. the default factory is the one which will be used when console.log is called
+ * @param newDefault
+ */
 export const setDefaultFactory = (newDefault: PipeFactory) => {
 	defaultFactory = newDefault;
 };
