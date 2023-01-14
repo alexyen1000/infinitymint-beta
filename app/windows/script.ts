@@ -234,10 +234,10 @@ Script.initialize = async (window, frame, blessed) => {
 	});
 	close.hide();
 
-	output.setContent(`{cyan-fg}Awaiting Execution...{/cyan-fg}`);
-	setTimeout(async () => {
-		await execute(window);
-	}, 1000);
+	(() => {
+		output.setContent(`{cyan-fg}Awaiting Execution...{/cyan-fg}`);
+		execute(window);
+	})();
 };
 
 Script.setBackgroundThink(true);
