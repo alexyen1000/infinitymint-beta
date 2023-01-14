@@ -43,6 +43,12 @@ import {Receipt} from 'hardhat-deploy/dist/types';
 //stores listeners for the providers
 const ProviderListeners = {} as any;
 
+/**
+ * initializes infinityMint by creating the IPFS node and starting the network pipe for the defined networks in the config file. Will also allow piping to occur which will begin piping the calls from console.log to the console.
+ * @param config
+ * @param startGanache
+ * @returns
+ */
 export const initializeInfinityMint = async (
 	config?: InfinityMintConfig,
 	startGanache?: boolean,
@@ -67,7 +73,14 @@ export const initializeInfinityMint = async (
 	return config;
 };
 
-//function to launch the console
+/**
+ * used in the index.ts file to initialize and begin the InfinityConsole session. This is the main entry point for the application if you are using the CLI.
+ * @param options
+ * @param pipeFactory
+ * @param telnetServer
+ * @param eventEmitter
+ * @returns
+ */
 export const startInfinityConsole = async (
 	options?: InfinityMintConsoleOptions,
 	pipeFactory?: PipeFactory,
@@ -98,6 +111,10 @@ export const startInfinityConsole = async (
 	return infinityConsole;
 };
 
+/**
+ * reads from the config file to retrieve the default account index and then gets all of the signers for the current provider and returns the default account
+ * @returns
+ */
 export const getDefaultSigner = async () => {
 	let defaultAccount = getDefaultAccountIndex();
 	let signers = await ethers.getSigners();
@@ -115,7 +132,7 @@ export const getDefaultSigner = async () => {
 };
 
 /**
- *
+ * returns the path to the deployment folder for the project and network
  * @param project
  * @returns
  */
@@ -133,9 +150,15 @@ export const getDeploymentProjectPath = (
 };
 
 /**
- *
+ * deploys a web3 contract and stores the deployment in the deployments folder relative to the project and network. Will use the previous deployment if it exists and usePreviousDeployment is true. Artifacts are read from the artifacts folder relative to the project. If you cannot find the artifact you are looking for, make sure you have run npx hardhat compile and relaunch the console.
  * @param artifactName
+ * @param project
+ * @param signer
  * @param args
+ * @param libraries
+ * @param save
+ * @param logDeployment
+ * @param usePreviousDeployment
  * @returns
  */
 export const deploy = async (
@@ -199,6 +222,11 @@ export const deploy = async (
 	return contract;
 };
 
+/**
+ * writes the deployment to the /deployments folder based on the network and project
+ * @param deployment
+ * @param project
+ */
 export const writeDeployment = (
 	deployment: InfinityMintDeploymentLocal,
 	project?: InfinityMintCompiledProject | InfinityMintTempProject,
@@ -222,6 +250,9 @@ export const writeDeployment = (
 	fs.writeFileSync(fileName, JSON.stringify(deployment, null, 2));
 };
 
+/**
+ * uses in the deploy function to specify gas price and other overrides for the transaction
+ */
 interface Overrides extends KeyValue {
 	gasPrice?: BigNumber;
 }
@@ -302,6 +333,10 @@ export const hardhatDeploy = async (
 	return result;
 };
 
+/**
+ * uses hardhat to change the network to the specified network, will stop the network pipe and start it again if the network is not ganache
+ * @param network
+ */
 export const changeNetwork = (network: string) => {
 	stopNetworkPipe(ethers.provider, hre.network.name);
 
@@ -338,6 +373,13 @@ export const getSignedContract = async (
 	return factory.connect(signer).attach(deployment.address);
 };
 
+/**
+ * logs a transaction storing the receipt in the session and printing the gas usage
+ * @param execution
+ * @param logMessage
+ * @param printGasUsage
+ * @returns
+ */
 export const logTransaction = async (
 	execution: Promise<ContractTransaction> | ContractTransaction | Receipt,
 	logMessage?: string,
@@ -407,6 +449,11 @@ export const getDeployment = (contractName: string, network?: string) => {
 	);
 };
 
+/**
+ * reads the config file and returns the network settings for the given network
+ * @param network
+ * @returns
+ */
 export const getNetworkSettings = (network: string) => {
 	let config = getConfigFile();
 	return (
@@ -415,11 +462,20 @@ export const getNetworkSettings = (network: string) => {
 	);
 };
 
+/**
+ * reads from the config file and returns the default account index to use
+ * @returns
+ */
 export const getDefaultAccountIndex = () => {
 	let config = getConfigFile();
 	return config?.settings?.networks?.[hre.network.name]?.defaultAccount || 0;
 };
 
+/**
+ * unregisters all events on the provider and deletes the listener from the ProviderListeners object
+ * @param provider
+ * @param network
+ */
 export const stopNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any,
@@ -441,6 +497,12 @@ export const stopNetworkPipe = (
 	delete ProviderListeners[network];
 };
 
+/**
+ * listens to events on the provider and logs them
+ * @param provider
+ * @param network
+ * @returns
+ */
 export const startNetworkPipe = (
 	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
 	network?: any,

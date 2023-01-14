@@ -22,6 +22,12 @@ export const tracks = ['contents.mp3', 'menu.mp3'].map(file =>
 );
 
 let clockInterval: any;
+
+/**
+ * will attempt to play the next track, keeping the tunes going. Will also update the clock. This is called when a track is finished. Also updates the title of the window. If the window is destroyed, it will stop the clock. And the tunes will stop playing. If the window is destroyed, it will stop the clock. And the tunes will stop playing. Uses the window.options.currentTrack to keep track of the current track. Plays a random track from the tracks array.
+ * @param window
+ * @returns
+ */
 const onFinished = async (window: InfinityMintWindow) => {
 	if (!window.hasInfinityConsole()) return;
 	//gets the music window

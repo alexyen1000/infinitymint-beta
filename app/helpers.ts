@@ -30,12 +30,18 @@ import {
 	saveTempDeployedProject,
 } from './projects';
 
+/**
+ * a simple interface to describe a vector
+ */
 export interface Vector {
 	x: number;
 	y: number;
 	z: number;
 }
 
+/**
+ * a simple interface to describe the import from blessed
+ */
 export interface Blessed {
 	screen: (options: any) => BlessedElement;
 	escape: (input: string) => string;
@@ -52,6 +58,9 @@ export interface Blessed {
 	form: (options: BlessedElementOptions) => BlessedElement;
 }
 
+/**
+ * describes the padding of a blessed element
+ */
 export type BlessedElementPadding = {
 	top: string | number;
 	left: string | number;
@@ -59,6 +68,9 @@ export type BlessedElementPadding = {
 	bottom: string | number;
 };
 
+/**
+ * describes the properties of a blessed element, as well as the options you may pass as a parameter in the create element function. This is the base interface for all blessed elements.
+ */
 export interface BlessedElementOptions extends KeyValue {
 	/**
 	 * will always run the think hook of this blessed element even if it is hidden
@@ -97,10 +109,7 @@ export interface BlessedElementOptions extends KeyValue {
 }
 
 /**
- * A very experimentael prototype typescript interfaced for the blessed-js terminal-kit library. Most of the methods
- * on here are probably not going to work.
- *
- * @experimental
+ * describes a blessed element, this is the base interface for all blessed elements.
  */
 export interface BlessedElement extends BlessedElementOptions, KeyValue {
 	focus: Function;
@@ -335,6 +344,11 @@ export const delay = async (ms: number) =>
  * @param msg
  */
 const _blessed = require('blessed');
+
+/**
+ * ignores the current console log and pipes it directly to the console.
+ * @param msg
+ */
 export const logDirect = (msg: any) => {
 	if ((console as any)._log && isAllowPiping)
 		(console as any)._log(
@@ -352,14 +366,90 @@ export const logDirect = (msg: any) => {
 	console.log(msg);
 };
 
+let actionProject: InfinityMintTempProject | undefined;
+let actionScript: InfinityMintScriptParameters | undefined;
+let actionType: 'deploy' | 'compile';
 /**
- *
+ * used by the prepare function to set the action project. You should not use this function.
+ * @param project
+ */
+export const setActionProject = (project: InfinityMintTempProject) => {
+	actionProject = project;
+};
+
+/**
+ * allows you to use action instead of having to use stage
+ * @param _stage
+ * @param call
+ * @param cleanup
+ */
+export const prepare = async (
+	project: InfinityMintTempProject,
+	script: InfinityMintScriptParameters,
+	type: 'deploy' | 'compile',
+) => {
+	actionScript = script;
+	actionType = type;
+	if (!project.stages) project.stages = {};
+	setActionProject(project);
+};
+
+/**
+ * must be called after prepare. Allows you to run a stage. A stage is a block of code that can be skipped or the execution can retry from the point this stage is at. This can be used to run a stage always. You may use the action function to run a stage once
+ * @param _stage
+ * @param call
+ * @param cleanup
+ */
+export const always = async (
+	_stage: string,
+	call: (isFirstTime?: boolean) => Promise<void>,
+	cleanup?: (isFirstTime?: boolean) => Promise<void>,
+	action?: 'deploy' | 'compile',
+) => {
+	return await stage(
+		_stage,
+		actionProject!,
+		call,
+		action || actionType,
+		actionScript,
+		true,
+		cleanup,
+	);
+};
+
+/**
+ * you must call prepare before using this function. Allows you to run a stage. A stage is a block of code that can be skipped or the execution can retry from the point this stage is at. This can be used with the always function to run a stage always.
+ * @param _stage
+ * @param call
+ * @param cleanup
+ * @param action
+ * @returns
+ */
+export const action = async (
+	_stage: string,
+	call: (isFirstTime?: boolean) => Promise<void>,
+	cleanup?: (isFirstTime?: boolean) => Promise<void>,
+	action?: 'deploy' | 'compile',
+) => {
+	return await stage(
+		_stage,
+		actionProject!,
+		call,
+		action || actionType,
+		actionScript,
+		false,
+		cleanup,
+	);
+};
+
+/**
+ * runs a stage, a stage is a block of code that can be skipped if the stage has already been run or ran always if alwaysRun is set to true. A simpler way to use this is to use the action function. This requires you to call prepare before using this function. Prepare is a function that sets the project, script, and type for the action function as well as the always function.
  * @param stage
  * @param project
  * @param call
  * @param type
  * @param infinityConsole
- * @param forceRun
+ * @param alwaysRun
  * @returns
  */
 export const stage = async (
@@ -368,7 +458,7 @@ export const stage = async (
 	call: (isFirstTime?: boolean) => Promise<void>,
 	type?: 'compile' | 'deploy',
 	script?: InfinityMintScriptParameters,
-	forceRun?: boolean,
+	alwaysRun?: boolean,
 	cleanup?: (isFirstTime?: boolean) => Promise<void>,
 ): Promise<Error | Error[] | boolean> => {
 	type = type || 'compile';
@@ -380,7 +470,7 @@ export const stage = async (
 
 	if (script?.infinityConsole) script.infinityConsole.emitAny(eventName);
 
-	if (project?.stages[stage] === true && !forceRun) {
+	if (project?.stages[stage] === true && !alwaysRun) {
 		if (script?.infinityConsole)
 			script.infinityConsole.debugLog(
 				'\t{cyan-fg}Skipped{/cyan-fg} => ' + stage,

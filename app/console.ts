@@ -18,7 +18,6 @@ import {
 	getConfigFile,
 	getInfinityMintVersion,
 	isEnvTrue,
-	logDirect,
 	requireScript,
 	requireWindow,
 	warning,

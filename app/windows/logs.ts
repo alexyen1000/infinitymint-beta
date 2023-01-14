@@ -2,6 +2,11 @@ import {calculateWidth, logDirect} from '../helpers';
 import {InfinityMintWindow} from '../window';
 
 let lastLogMessage: string;
+
+/**
+ * called in the initialize function of the window. Used to update the scrollbox element to the latest logs.
+ * @param window
+ */
 let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.enableInput();
 	window.data.log.focus();
@@ -26,12 +31,23 @@ let updateContent = (window: InfinityMintWindow) => {
 		);
 };
 
+/**
+ * returns the line number for the log
+ * @param indexCount
+ * @param gray
+ * @returns
+ */
 let lineNumber = (indexCount: number | string, gray?: boolean) => {
 	return `${gray ? '{white-bg}' : '{white-bg}'}{black-fg}${indexCount
 		.toString()
 		.padEnd(6, ' ')}{/black-fg}${gray ? '{/white-bg}' : '{/white-bg}'} `;
 };
 
+/**
+ * is used to update the styles on the scrollUpdate button.
+ * @param window
+ * @param alwaysScroll
+ */
 let alwaysScrollUpdate = (window: InfinityMintWindow, alwaysScroll) => {
 	window.data.log.setLabel(
 		'{bold}{white-fg}Pipe: {/white-fg}' +
