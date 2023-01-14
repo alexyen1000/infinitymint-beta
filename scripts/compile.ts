@@ -563,7 +563,7 @@ const compile: InfinityMintScript = {
 						);
 						let size = fs.statSync(path.dir + '/' + path.base).size / 1024;
 						totalSize += size;
-						project.bundles.imports[importCache.keys[file]].raw = location;
+						project.bundles.imports[importCache.keys[file]].bundle = location;
 						script.log(`\t{cyan-fg}Read => ${location}{/}`);
 					}),
 				);

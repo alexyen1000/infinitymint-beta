@@ -206,7 +206,7 @@ export interface InfinityMintCompiledProject {
 	 */
 	bundles?: Dictionary<{
 		version?: string;
-		raw?: string;
+		bundle?: string;
 		imports?: Dictionary<BundleType>;
 		ipfs?: Array<PathLike>;
 	}>;
