@@ -120,7 +120,8 @@ const compile: InfinityMintScript = {
 									(content as undefined) !== 'object')
 							) {
 								script.log(
-									'\t{yellow-fg}Content key is null => {/}' + contentKey,
+									'\t{yellow-fg}is null assuming none import=> {/}' +
+										contentKey,
 								);
 								path.content[contentKey] = {
 									fileName: 'none',
@@ -273,13 +274,17 @@ const compile: InfinityMintScript = {
 				let setupImport = (
 					path: InfinityMintProjectPath | InfinityMintProjectAsset,
 				) => {
-					if (!path || !path.fileName) {
-						script.log(`\t{yellow-fg}null import{/}`);
+					if (!path?.fileName) {
+						script.log(
+							`\t{yellow-fg}No Filename defined =>{/} ${
+								path.name || 'unknown'
+							}`,
+						);
 						return;
 					}
 
 					if (path?.fileName === 'none') {
-						script.log(`\t{yellow-fg}None Import{/}`);
+						script.log(`\t{yellow-fg}Null/None Import =>{/} ${path.name}`);
 						return;
 					}
 
@@ -396,7 +401,16 @@ const compile: InfinityMintScript = {
 									}
 
 									let newImport = {
-										fileName: (path.content[content] as unknown) || 'none',
+										fileName:
+											typeof path.content[content] === 'string'
+												? content
+													? typeof path.content[content] === 'object'
+													: (
+															path.content[
+																content
+															] as InfinityMintProjectContent
+													  ).fileName
+												: 'none',
 										name: content,
 									} as InfinityMintProjectContent;
 
