@@ -519,6 +519,7 @@ const compile: InfinityMintScript = {
 				});
 
 				project.imports = imports;
+				project.compiled = true;
 			});
 
 			if (setup !== true) throw setup;
@@ -547,7 +548,6 @@ const compile: InfinityMintScript = {
 				};
 
 				let rawBundle = {};
-				let totalSize = 0;
 				//pack all the files
 				await Promise.all(
 					Object.keys(files).map(async (file: string) => {
@@ -559,8 +559,6 @@ const compile: InfinityMintScript = {
 						rawBundle[location] = await fs.promises.readFile(
 							path.dir + '/' + path.base,
 						);
-						let size = fs.statSync(path.dir + '/' + path.base).size / 1024;
-						totalSize += size;
 						project.bundles.imports[importCache.keys[file]].bundle = location;
 						script.log(`\t{cyan-fg}Read => ${location}{/}`);
 					}),
@@ -608,12 +606,11 @@ const compile: InfinityMintScript = {
 			)}.json`;
 			let tempLocation = `${process.cwd()}/temp/projects/${getProjectFullName(
 				project,
-			)}.compiled.json`;
+			)}.compiled.temp.json`;
 			fs.copyFileSync(tempLocation, projectLocation);
-			fs.unlinkSync(tempLocation);
 		});
 
-		if (!copy) throw copy;
+		if (copy !== true) throw copy;
 
 		script.log('{green-fg}{bold}Compilation Successful{/}');
 		script.log(`\tProject: ${project.name}`);
@@ -623,6 +620,22 @@ const compile: InfinityMintScript = {
 		script.log(
 			'{gray-fg}{bold}You can now go ahead and {cyan-fg}deploy this project!{/}',
 		);
+
+		//check if the temporary compiled project exists and delete it
+		if (
+			fs.existsSync(
+				`${process.cwd()}/temp/projects/${getProjectFullName(
+					project,
+				)}.compiled.temp.json`,
+			)
+		)
+			fs.unlinkSync(
+				`${process.cwd()}/temp/projects/${getProjectFullName(
+					project,
+				)}.compiled.temp.json`,
+			);
+
+		return true;
 	},
 	arguments: [
 		{

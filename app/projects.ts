@@ -1,6 +1,7 @@
 import {
 	readSession,
 	log,
+	readJson,
 	getConfigFile,
 	findFiles,
 	write,
@@ -71,9 +72,8 @@ export const getCompiledProject = (
 	version = version || '1.0.0';
 	let projectName = getProjectName(project);
 	let filename = `/projects/compiled/${projectName}@${version}.json`;
-	let res = require(process.cwd() + filename);
-	res = res.default || res;
-	//
+	let res = readJson(process.cwd() + filename);
+
 	if (!res.compiled)
 		throw new Error(`project ${projectName} has not been compiled`);
 
@@ -87,7 +87,6 @@ export const hasTempDeployedProject = (
 	let projectName = getProjectName(project);
 	version = version || '1.0.0';
 	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
-	logDirect(filename);
 	return fs.existsSync(process.cwd() + filename);
 };
 
@@ -142,8 +141,7 @@ export const getTempDeployedProject = (
 	let projectName = getProjectName(project);
 	let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
 	try {
-		let res = require(process.cwd() + filename);
-		res = res.default || res;
+		let res = readJson(process.cwd() + filename);
 		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error('could not load temp deployed project: ' + error.message);
@@ -164,8 +162,7 @@ export const getTempCompiledProject = (
 	let projectName = getProjectName(project);
 	let filename = `/temp/projects/${projectName}@${version}.compiled.temp.json`;
 	try {
-		let res = require(process.cwd() + filename);
-		res = res.default || res;
+		let res = readJson(process.cwd() + filename);
 		return res as InfinityMintTempProject;
 	} catch (error) {
 		throw new Error('could not load temp compiled project: ' + error.message);
@@ -202,8 +199,7 @@ export const getDeployedProject = (
 
 	let projectName = getProjectName(project);
 	let filename = `/projects/deployed/${projectName}@${version}.json`;
-	let res = require(process.cwd() + filename);
-	res = res.default || res;
+	let res = readJson(process.cwd() + filename);
 	//
 	if (!res.compiled)
 		throw new Error(`project ${projectName} has not been compiled`);
