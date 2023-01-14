@@ -1,4 +1,4 @@
-import {InfinityMintDeploymentScript} from '@app/interfaces';
+import {InfinityMintDeploymentScript} from '../../app/interfaces';
 
 const SimpleToken: InfinityMintDeploymentScript = {
 	//going to give

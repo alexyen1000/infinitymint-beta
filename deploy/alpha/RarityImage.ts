@@ -1,4 +1,4 @@
-import {InfinityMintDeploymentScript} from '@app/interfaces';
+import {InfinityMintDeploymentScript} from '../../app/interfaces';
 
 const RarityImage: InfinityMintDeploymentScript = {
 	//going to give

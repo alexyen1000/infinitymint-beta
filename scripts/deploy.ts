@@ -93,19 +93,25 @@ const deploy: InfinityMintScript = {
 		let libraies = deployments.filter(deployment => deployment.isLibrary());
 		let important = deployments.filter(deployment => deployment.isImportant());
 
-		deployments = libraies
-			.concat(important)
-			.concat(
-				deployments
-					.filter(
-						deployment => !deployment.isLibrary() && !deployment.isImportant(),
-					)
-					.reverse(),
-			);
+		let importantDeployments = [...libraies];
+		important.forEach((deployment, index) => {
+			if (
+				importantDeployments.filter(
+					thatDeployment => thatDeployment.getKey() === deployment.getKey(),
+				).length === 0
+			)
+				importantDeployments.push(deployment);
+		});
 
-		script.log(`{cyan-fg}{bold}deploying ${deployments.length} contracts{/}`);
+		importantDeployments.sort((a, b) => {
+			if (a.isLibrary() && !b.isLibrary()) return -1;
+			if (!a.isLibrary() && b.isLibrary()) return 1;
+			return 0;
+		});
+
+		script.log(`{yellow-fg}{bold}deploying ${deployments.length} contracts{/}`);
 		deployments.forEach(deployment => {
-			script.log(`{cyan-fg}{bold} - ${deployment.getKey()}{/}`);
+			script.log(`{white-fg}{bold} - ${deployment.getKey()}{/}`);
 		});
 
 		let contracts = {...project.deployments};

@@ -508,6 +508,8 @@ export class InfinityMintDeployment {
 		this.reloadScript();
 		let result = await this.execute('deploy', args);
 
+		if (!result) throw new Error('deploy function did not return a contract');
+
 		let contracts: Contract[];
 		if (!(result instanceof Array)) contracts = [result] as Contract[];
 		else contracts = result as Contract[];

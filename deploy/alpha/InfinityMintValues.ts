@@ -1,5 +1,5 @@
-import {InfinityMintDeploymentScript} from '@app/interfaces';
-import {logTransaction} from '@app/web3';
+import {InfinityMintDeploymentScript} from '../../app/interfaces';
+import {logTransaction} from '../../app/web3';
 import {InfinityMintValues} from '../../typechain-types';
 
 const DefaultValues = {
