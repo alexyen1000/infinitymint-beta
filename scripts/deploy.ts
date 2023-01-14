@@ -31,13 +31,13 @@ const deploy: InfinityMintScript = {
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = 'deploy_' + project.name;
-			if (!script.infinityConsole.getLogs().pipes[pipeName])
-				script.infinityConsole.getLogs().registerSimplePipe(pipeName, {
+			if (!script.infinityConsole.getPipeFactory().pipes[pipeName])
+				script.infinityConsole.getPipeFactory().registerSimplePipe(pipeName, {
 					listen: true,
 				});
 
 			//all log messages will now go to deploy
-			script.infinityConsole.getLogs().setCurrentPipe(pipeName);
+			script.infinityConsole.getPipeFactory().setCurrentPipe(pipeName);
 		}
 
 		//make sure stages are created
@@ -80,7 +80,9 @@ const deploy: InfinityMintScript = {
 							notUniqueAndImportant
 								.map(
 									deployment =>
-										deployment.getKey() + ':' + deployment.getFilePath(),
+										deployment.getKey() +
+										':' +
+										deployment.getTemporaryFilePath(),
 								)
 								.join(','),
 					);
@@ -287,7 +289,7 @@ const deploy: InfinityMintScript = {
 					}
 
 					script.log(
-						`{green-fg}successfully deployed{/green-fg} ${deployment.getFilePath()}(` +
+						`{green-fg}successfully deployed{/green-fg} ${deployment.getTemporaryFilePath()}(` +
 							project.name +
 							')',
 					);
@@ -324,7 +326,7 @@ const deploy: InfinityMintScript = {
 						async () => {
 							if (!deployment.getDeploymentScript().setup) {
 								script.log(
-									`[${i}] => {yellow-fg} Skipping ${deployment.getFilePath()} setup since already done`,
+									`[${i}] => {yellow-fg} Skipping ${deployment.getTemporaryFilePath()} setup since already done`,
 								);
 								return;
 							}
@@ -369,7 +371,7 @@ const deploy: InfinityMintScript = {
 					if (result !== true) throw result;
 
 					script.log(
-						`{green-fg}successfully setup ${deployment.getFilePath()}{/green-fg} (` +
+						`{green-fg}successfully setup ${deployment.getTemporaryFilePath()}{/green-fg} (` +
 							project.name +
 							')',
 					);

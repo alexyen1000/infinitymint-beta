@@ -598,7 +598,7 @@ export class InfinityMintWindow {
 			log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 		else
 			this.getInfinityConsole()
-				.getLogs()
+				.getPipeFactory()
 				.log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 	}
 

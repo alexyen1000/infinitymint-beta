@@ -1328,6 +1328,9 @@ export interface InfinityMintIPFSOptions {
  */
 export interface InfinityMintConfigSettingsNetwork {
 	defaultAccount?: number;
+	/**
+	 * will pipe the events emitted by this network to the default log and not its own network name specific log.
+	 */
 	useDefaultPipe?: boolean;
 	/**
 	 * Allows you to specify an RPC to use for this network in a client setting. Does not equal the RPC which is used for hardhat to communicate in chain and is just used to create JsonStaticProvider on reacts end.
@@ -1369,7 +1372,13 @@ export interface InfinityMintConfigSettingsNetwork {
 }
 
 export interface InfinityMintSessionEnvironment extends KeyValue {
+	/**
+	 * the current ganache mnemonic
+	 */
 	ganacheMnemonic?: string;
+	/**
+	 * the current selected project
+	 */
 	project?: KeyValue;
 }
 
@@ -1377,7 +1386,13 @@ export interface InfinityMintSessionEnvironment extends KeyValue {
  * the interface for the .session file
  */
 export interface InfinityMintSession {
+	/**
+	 * can be used to store any data you want to be stored in the session file
+	 */
 	environment?: InfinityMintSessionEnvironment;
+	/**
+	 * is the date the session file was created
+	 */
 	created: number;
 }
 
@@ -1403,11 +1418,29 @@ export interface InfinityMintConfigSettingsBuild extends KeyValue {}
  */
 export interface InfinityMintConfigSettingsNetworks
 	extends Dictionary<InfinityMintConfigSettingsNetwork> {
+	/**
+	 * the ganache network, see {@link InfinityMintConfigSettingsNetwork} for a list of all the settings you can configure for this network.
+	 */
 	ganache?: InfinityMintConfigSettingsNetwork;
+	/**
+	 * the hardhat network, see {@link InfinityMintConfigSettingsNetwork} for a list of all the settings you can configure for this network.
+	 */
 	hardhat?: InfinityMintConfigSettingsNetwork;
+	/**
+	 * the ethereum network, see {@link InfinityMintConfigSettingsNetwork} for a list of all the settings you can configure for this network.
+	 */
 	ethereum?: InfinityMintConfigSettingsNetwork;
+	/**
+	 * the polygon network, see {@link InfinityMintConfigSettingsNetwork} for a list of all the settings you can configure for this network.
+	 */
 	polygon?: InfinityMintConfigSettingsNetwork;
+	/**
+	 * the mumabi network, see {@link InfinityMintConfigSettingsNetwork} for a list of all the settings you can configure for this network.
+	 */
 	mumbai?: InfinityMintConfigSettingsNetwork;
+	/**
+	 * the goerli network, see {@link InfinityMintConfigSettingsNetwork} for a list of all the settings you can configure for this network.
+	 */
 	goreli?: InfinityMintConfigSettingsNetwork;
 }
 /**
@@ -1510,6 +1543,9 @@ export interface InfinityMintTelnetOptions {
 	 * port to run telnet on
 	 */
 	port?: number;
+	/**
+	 * any methods here are defined with the event name as the key and the method as the value. The method will be called with InfinityMintEventParameters as the first argument. There are also some special events which are defined in the {@link InfinityMintEvents} interface.
+	 */
 	events?: InfinityMintEvents;
 	/**
 	 * the title to present on the login screen
@@ -1542,26 +1578,53 @@ export interface InfinityMintTelnetOptions {
  */
 
 export interface InfinityMintScript {
+	/**
+	 * the name of the script
+	 */
 	name?: string;
 	/**
 	 * The location of the script file
 	 */
 	fileName?: string;
+	/**
+	 * description of the script to be displayed in the help menu
+	 */
 	description?: string;
 	/**
 	 * called when the script is executed, is passed {@link InfinityMintScriptParameters}. Return false to signify that this script failed.
 	 */
 	execute: FuncSingle<InfinityMintScriptParameters, Promise<boolean | void>>;
+	/**
+	 * called when the script is loaded, is passed {@link InfinityMintScriptEventParameters}.
+	 */
 	loaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
+	/**
+	 * called when the script is reloaded, is passed {@link InfinityMintScriptEventParameters}.
+	 */
 	reloaded?: FuncSingle<InfinityMintScriptEventParameters, Promise<void>>;
+	/**
+	 * the arguments which can be passed to this script. See {@link InfinityMintScriptArguments}
+	 */
 	arguments?: InfinityMintScriptArguments[];
+	/**
+	 * the events to define for this script. See {@link InfinityMintEvents} for a list of events which can be defined. The method is passed {@link InfinityMintScriptEventParameters} as the first argument.
+	 */
 	events?: InfinityMintEvents;
 	/**
 	 * registers this InfinityMint script as a hardhat task as well.
 	 */
 	task?: true;
+	/**
+	 * the solidity folder solc should use when compiling this script
+	 */
 	solidityFolder?: string;
+	/**
+	 * if this script is javascript or not
+	 */
 	javascript?: true;
+	/**
+	 * a object or dictionary of objects which define the authors of this script.
+	 */
 	author?: KeyValue | KeyValue[];
 }
 
@@ -1575,17 +1638,38 @@ export interface InfinityMintScriptParameters
 	 * Refers to the current script of which the parameters values come from. Could not be available due to the fact this extends InfinityMintDeploymentParameters and InfinityMintEventEmit
 	 */
 	script?: InfinityMintScript;
+	/**
+	 * the gems which are loaded into the console. See {@link InfinityMintGemScript}
+	 */
 	gems?: Dictionary<InfinityMintGemScript>;
+	/**
+	 * the arguments which were passed to the script. See {@link InfinityMintScriptArguments}
+	 */
 	args?: Dictionary<InfinityMintScriptArguments>;
 }
 
 export interface InfinityMintScriptEventParameters {
+	/**
+	 * the infinity console instance which is running this script
+	 */
 	console?: InfinityConsole;
+	/**
+	 * a way to log to the console
+	 */
 	log: typeof log;
+	/**
+	 * a secondary log used to log debug messages
+	 */
 	debugLog: typeof debugLog;
+	/**
+	 * the script which this event is being called for
+	 */
 	script?: InfinityMintDeploymentScript;
 }
 
+/**
+ * todo: figure out what this is
+ */
 export interface InfinityMintDeploymentParametersDeployments
 	extends Dictionary<InfinityMintDeploymentLive> {
 	assets: InfinityMintDeploymentLive;
@@ -1599,14 +1683,41 @@ export interface InfinityMintDeploymentParametersDeployments
 	InfinityMintProject: InfinityMintDeploymentLive;
 }
 
+/**
+ * the deployed contract fresh from the blockchain. This is the result of a deploy script. See {@link InfinityMintDeploymentScript}.
+ */
 export interface InfinityMintDeploymentLocal extends DeployResult {
+	/**
+	 * the artifact name of the contract which was deployed. usually the contract name or source file name without the extension.
+	 */
 	contractName: string;
+	/**
+	 * the project this contract was deployed from
+	 */
 	project: InfinityMintCompiledProject;
+	/**
+	 * the address that deployed this contract
+	 */
 	deployer?: string;
+	/**
+	 * the name of this deploymentLocal, usually the artifact name.
+	 */
 	name?: string;
+	/**
+	 * the key this deploymentLocal is stored under in the contract property of the InfinityMintDeployedProject. See {@link InfinityMintDeployedProject}
+	 */
 	key: string;
+	/**
+	 * if this deployment was deployed from a javascript based deployment script. See {@link InfinityMintDeploymentScript}
+	 */
 	javascript?: boolean;
-	network: object;
+	/**
+	 * The network name and chainId this deployment was deploymend too.
+	 */
+	network: {
+		name: string;
+		chainId: number;
+	};
 }
 
 /**
@@ -1718,12 +1829,17 @@ export interface InfinityMintDeploymentLive extends KeyValue {
 	 * true if the contract has had its setup method called successfully in the deploy script, see {@link InfinityMintDeploymentScript}
 	 */
 	setup?: boolean;
-
+	/**
+	 * the parsed path of the deployment script which deployed this contract
+	 */
 	source?: ParsedPath;
 	/**
 	 * is true if the project file this deployment is from is a javascript file and not typescript
 	 */
 	javascript?: boolean;
+	/**
+	 * if this is a new deployment or not
+	 */
 	newlyDeployed: boolean;
 }
 

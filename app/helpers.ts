@@ -259,6 +259,12 @@ export const warning = (msg: string | object | number, direct?: true) => {
 	else log(msg, isEnvTrue('PIPE_SEPERATE_WARNINGS') ? 'warning' : 'debug');
 };
 
+/**
+ * gets the elements padding. use type to get the left, right, up, or down padding.
+ * @param element
+ * @param type
+ * @returns
+ */
 export const getElementPadding = (
 	element: BlessedElement,
 	type: 'left' | 'right' | 'up' | 'down',
@@ -268,6 +274,11 @@ export const getElementPadding = (
 	return parseInt(element?.padding[type].toString());
 };
 
+/**
+ * calculates the width of the blessed given elements
+ * @param elements
+ * @returns
+ */
 export const calculateWidth = (...elements: BlessedElement[]) => {
 	let fin = 0;
 	elements
@@ -311,7 +322,11 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 	};
 };
 
-//wrote by AI (MysqLLoL)
+/**
+ * delays the current thread for the specified amount of time. Written by the AI
+ * @param ms
+ * @returns
+ */
 export const delay = async (ms: number) =>
 	new Promise(resolve => setTimeout(resolve, ms));
 
@@ -863,7 +878,7 @@ export const executeScript = async (
 	try {
 		if (infinityConsole)
 			console.log = (msg: string) => {
-				infinityConsole.getLogs().log(msg, 'default');
+				infinityConsole.getPipeFactory().log(msg, 'default');
 			};
 		if (infinityConsole)
 			console.error = (error: any) => {
@@ -877,11 +892,11 @@ export const executeScript = async (
 			args: args,
 			log: (msg: string) => {
 				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
-				else infinityConsole.getLogs().log(msg, 'default');
+				else infinityConsole.getPipeFactory().log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
 				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
-				else infinityConsole.getLogs().log(msg, 'debug');
+				else infinityConsole.getPipeFactory().log(msg, 'debug');
 			},
 			infinityConsole: infinityConsole,
 			project: getCurrentProject(true),
@@ -1174,6 +1189,10 @@ export const preInitialize = (isJavascript?: boolean) => {
 	}
 };
 
+/**
+ * creates the pipes (loggers) on the passed pipe factory.
+ * @param factory
+ */
 export const createPipes = (factory: PipeFactory) => {
 	let pipes = [
 		'debug',
@@ -1233,6 +1252,11 @@ export const initializeGanacheMnemonic = () => {
 	saveSession(session);
 };
 
+/**
+ * creates a default infinitymint.config.ts file or a infinitymint.config.js file if useJavascript is true
+ * @param useJavascript
+ * @param useInternalRequire
+ */
 export const createInfinityMintConfig = (
 	useJavascript?: boolean,
 	useInternalRequire?: boolean,
@@ -1282,6 +1306,10 @@ export const createInfinityMintConfig = (
 	}
 };
 
+/**
+ * gets the current folder solc is using
+ * @returns
+ */
 export const getSolidityFolder = () => {
 	let session = readSession();
 
@@ -1292,6 +1320,13 @@ export const getSolidityFolder = () => {
 	);
 };
 
+/**
+ * saves a session variable to the .session file
+ * @param session
+ * @param key
+ * @param value
+ * @returns
+ */
 export const saveSessionVariable = (
 	session: InfinityMintSession,
 	key: string,
@@ -1351,14 +1386,29 @@ export const envExists = (key: string) => {
 	return isEnvSet(key as any);
 };
 
+/**
+ * non typed version of isEnvTrue
+ * @param key
+ * @returns
+ */
 export const envTrue = (key: string) => {
 	return isEnvTrue(key as any);
 };
 
+/**
+ * returns if an InfinityMintEnvironmentKeys is set to true in the environment of the current process
+ * @param key
+ * @returns
+ */
 export const isEnvTrue = (key: InfinityMintEnvironmentKeys): boolean => {
 	return process.env[key] && process.env[key] === 'true';
 };
 
+/**
+ * returns true if InfinityMintEnvironmentKeys is set in the environment of the current process. Unlike isEnvTrue this will only check if the key is not empty.
+ * @param key
+ * @returns
+ */
 export const isEnvSet = (key: InfinityMintEnvironmentKeys): boolean => {
 	return process.env[key] && process.env[key]?.trim().length !== 0;
 };

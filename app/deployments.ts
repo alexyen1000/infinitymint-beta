@@ -51,11 +51,11 @@ import InfinityConsole from './console';
  */
 export class InfinityMintDeployment {
 	/**
-	 * node even emitter
+	 * the event emitter for this deployment. Will be the event emitter of the infinity console if available or a new one.
 	 */
 	protected emitter: EventEmitter;
 	/**
-	 * the infinity mint deployment script
+	 * the deployment script which was used to create this InfinityMintDeployment. See {@link app/interfaces.InfinityMintDeploymentScript}
 	 */
 	protected deploymentScript: InfinityMintDeploymentScript;
 	/**
@@ -63,19 +63,19 @@ export class InfinityMintDeployment {
 	 */
 	protected liveDeployments: InfinityMintDeploymentLive[];
 	/**
-	 * the location of the deployment script which determains its behaviur
+	 * the location of the deployment script file
 	 */
 	protected deploymentScriptLocation: string;
 	/**
-	 * the key of this deployment
+	 * the key this deployment will take in the contract property of the InfinityMintDeployedProject. See {@link app/interfaces.InfinityMintDeployedProject}
 	 */
 	protected key: string;
 	/**
-	 * the infinity mint project this deployment is attached too
+	 * the project this deployment is for. See {@link app/interfaces.InfinityMintProject}
 	 */
 	protected project: InfinityMintCompiledProject | InfinityMintTempProject;
 	/**
-	 * the network the deployment is on
+	 * the network name this deployment is for
 	 */
 	protected network: string;
 	/**
@@ -88,10 +88,13 @@ export class InfinityMintDeployment {
 	protected hasSetupDeployments: boolean;
 
 	/**
-	 * might be available
+	 * creates a new InfinityMintDeployment. See {@link app/interfaces.InfinityMintDeploymentScript} for more information on the deployment script. The property key of the deployment script much match the key parameter.
+	 * @param deploymentScriptLocation
+	 * @param key
+	 * @param network
+	 * @param project
+	 * @param console
 	 */
-	private console?: InfinityConsole;
-
 	constructor(
 		deploymentScriptLocation: string,
 		key: string,
@@ -120,9 +123,8 @@ export class InfinityMintDeployment {
 		this.network = network;
 		this.project = project;
 		this.liveDeployments = [];
-		this.console = console;
 
-		if (fs.existsSync(this.getFilePath())) {
+		if (fs.existsSync(this.getTemporaryFilePath())) {
 			this.liveDeployments = this.getDeployments();
 			this.hasDeployedAll = this.liveDeployments.length !== 0;
 			this.hasSetupDeployments =
@@ -162,7 +164,7 @@ export class InfinityMintDeployment {
 	}
 
 	/**
-	 *
+	 * unregisters a listener
 	 * @param event
 	 * @param callback
 	 * @returns
@@ -171,33 +173,61 @@ export class InfinityMintDeployment {
 		return this.emitter.off(event, callback);
 	}
 
+	/**
+	 * returns the index of this deployment. the index is used to determine the order in which the deployments are deployed. The default index is 10.
+	 * @returns
+	 */
 	getIndex() {
 		return this.deploymentScript.index || 10;
 	}
 
-	getsolidityFolder() {
+	/**
+	 * returns the current solidity folder. The default solidity folder is 'alpha'. The solidity folder is the folder solc will use to compile the contracts.
+	 * @returns
+	 */
+	getSolidityFolder() {
 		return this.deploymentScript.solidityFolder || 'alpha';
 	}
 
+	/**
+	 * returns the key of this deployment. The key is the same key in the property contracts in the InfinityMintDeployedProject. See {@link app/interfaces.InfinityMintDeployedProject}
+	 * @returns
+	 */
 	getKey() {
 		return this.key;
 	}
 
-	getModule() {
+	/**
+	 * Defines which InfinityMintProjectModules this deployment satities. A module is a type of contract that is used by other contracts or by the frontend. See {@link app/interfaces.InfinityMintProjectModules}. Some possible modules include 'erc721', 'assets', 'random' and 'minter'.
+	 * @returns
+	 */
+	getModuleKey() {
 		return this.deploymentScript.module;
 	}
 
+	/**
+	 * gets the name of the live deployment at the specified index. If no index is specified, the name of the first live deployment is returned.
+	 * @param index
+	 * @returns
+	 */
 	getContractName(index?: 0) {
 		return this.liveDeployments.length !== 0
 			? this.liveDeployments[index].name
 			: this.deploymentScript.contract;
 	}
 
+	/**
+	 * returns the permissions of this deployment. The permissions are used to determine which contracts can call this contract.
+	 */
 	getPermissions() {
 		return this.deploymentScript.permissions;
 	}
 
-	getFilePath() {
+	/**
+	 * gets the temporary deployment file path
+	 * @returns
+	 */
+	getTemporaryFilePath() {
 		return (
 			process.cwd() +
 			`/temp/deployments/${this.project.name}@${
@@ -206,13 +236,18 @@ export class InfinityMintDeployment {
 		);
 	}
 
-	private read() {
-		if (!fs.existsSync(this.getFilePath()))
+	/**
+	 * TODO: needs an interface
+	 * returns a parsed temporary deployment
+	 * @returns
+	 */
+	private readTemporaryDeployment() {
+		if (!fs.existsSync(this.getTemporaryFilePath()))
 			return {
 				liveDeployments: {},
 			};
 		let result = JSON.parse(
-			fs.readFileSync(this.getFilePath(), {
+			fs.readFileSync(this.getTemporaryFilePath(), {
 				encoding: 'utf-8',
 			}),
 		);
@@ -222,59 +257,115 @@ export class InfinityMintDeployment {
 			(result.network && result.network !== this.network)
 		)
 			throw new Error(
-				'bad file: ' + this.getFilePath() + ' is from another network/project',
+				'bad file: ' +
+					this.getTemporaryFilePath() +
+					' is from another network/project',
 			);
 
 		return result;
 	}
 
+	/**
+	 * returns a live deployment by its artifact name
+	 * @param name
+	 * @returns
+	 */
 	getDeploymentByArtifactName(name: string) {
-		return this.liveDeployments.filter(deployment => (deployment.name = name));
+		return this.liveDeployments.filter(
+			deployment => (deployment.name = name),
+		)[0];
 	}
 
+	/**
+	 * gets the deployer of the live deployment at the specified index. If no index is specified, the deployer of the first live deployment is returned.
+	 * @param index
+	 * @returns
+	 */
 	getDeployer(index?: number) {
 		return this.liveDeployments[index || 0].deployer;
 	}
 
+	/**
+	 * gets the approved addresses of the live deployment at the specified index. If no index is specified, the approved addresses of the first live deployment is returned.
+	 * @param index
+	 * @returns
+	 */
 	getApproved(index?: number) {
 		return this.liveDeployments[index || 0].approved;
 	}
 
+	/**
+	 * gets the address of the live deployment at the specified index. If no index is specified, the address of the first live deployment is returned.
+	 * @param index
+	 * @returns
+	 */
 	getAddress(index?: number) {
 		return this.liveDeployments[index || 0].address;
 	}
 
+	/**
+	 * returns true if this deployment is a library
+	 * @returns
+	 */
 	isLibrary() {
 		return this.deploymentScript.library;
 	}
 
+	/**
+	 * returns the abi of the live deployment at the specified index. If no index is specified, the abi of the first live deployment is returned.
+	 * @param index
+	 * @returns
+	 */
 	getAbi(index?: number) {
 		return this.liveDeployments[index || 0].abi;
 	}
 
+	/**
+	 * returns all of the deployed contracts for this deployment
+	 * @returns
+	 */
 	getDeployments() {
-		let deployments = this.read();
+		let deployments = this.readTemporaryDeployment();
 		return deployments.liveDeployments as InfinityMintDeploymentLive[];
 	}
 
+	/**
+	 * returns true if this deployment is important. An important deployment is a deployment that is required for the project to function. If an important deployment fails to deploy, the project will not be deployed. Import contracts will also be deployed first.
+	 * @returns
+	 */
 	isImportant() {
 		return this.deploymentScript?.important;
 	}
 
+	/**
+	 * returns true if this deployment is unique. A unique deployment is a deployment that can only be deployed once. If a unique deployment has already been deployed, it will not be deployed again.
+	 * @returns
+	 */
 	isUnique() {
 		return this.deploymentScript?.unique;
 	}
 
+	/**
+	 * returns true if this deployment has been deployed
+	 * @returns
+	 */
 	hasDeployed() {
 		return this.hasDeployedAll;
 	}
 
+	/**
+	 * returns true if the deployment has been setup
+	 * @returns
+	 */
 	hasSetup() {
 		return this.hasSetupDeployments;
 	}
 
-	save() {
-		let deployments = this.read();
+	/**
+	 * saves the live deployments to the temporary deployment file
+	 */
+	saveTemporaryDeployments() {
+		let deployments = this.readTemporaryDeployment();
 		deployments.liveDeployments = this.liveDeployments;
 		deployments.updated = Date.now();
 		deployments.network = this.network;
@@ -297,7 +388,7 @@ export class InfinityMintDeployment {
 					}/`,
 			);
 
-		fs.writeFileSync(this.getFilePath(), JSON.stringify(deployments));
+		fs.writeFileSync(this.getTemporaryFilePath(), JSON.stringify(deployments));
 	}
 
 	/**
@@ -346,7 +437,7 @@ export class InfinityMintDeployment {
 			);
 
 		this.liveDeployments = liveDeployments as InfinityMintDeploymentLive[];
-		this.save();
+		this.saveTemporaryDeployments();
 	}
 
 	/**
@@ -392,10 +483,18 @@ export class InfinityMintDeployment {
 		) as InfinityMintDeploymentLocal;
 	}
 
+	/**
+	 * returns the deployment script for this deployment
+	 * @returns
+	 */
 	public getDeploymentScript() {
 		return this.deploymentScript;
 	}
 
+	/**
+	 * returns the location the deployment script is located at
+	 * @returns
+	 */
 	public getDeploymentScriptLocation() {
 		return this.deploymentScriptLocation;
 	}
@@ -427,10 +526,15 @@ export class InfinityMintDeployment {
 			this.liveDeployments.push(this.populateLiveDeployment(deployment));
 		});
 
-		this.save();
+		this.saveTemporaryDeployments();
 		return this.liveDeployments;
 	}
 
+	/**
+	 * used internally to turn an InfinityMintDeploymentLocal into an InfinityMintDeploymentLive
+	 * @param localDeployment
+	 * @returns
+	 */
 	private populateLiveDeployment(localDeployment: InfinityMintDeploymentLocal) {
 		let deployment = localDeployment as InfinityMintDeploymentLive;
 		deployment.key = this.deploymentScript.key;
@@ -445,6 +549,12 @@ export class InfinityMintDeployment {
 		return deployment as any;
 	}
 
+	/**
+	 * approves wallets passed in to be able to run admin methods on the contract
+	 * @param addresses
+	 * @param log
+	 * @returns
+	 */
 	async setPermissions(addresses: string[], log: boolean) {
 		let contract = await this.getSignedContract();
 		let authenticator = contract;
@@ -465,6 +575,10 @@ export class InfinityMintDeployment {
 			);
 	}
 
+	/**
+	 * calls the setup method on the deployment script
+	 * @param args
+	 */
 	async setup(...args: any) {
 		this.reloadScript();
 		await this.execute('setup', args);
@@ -520,8 +634,9 @@ export class InfinityMintDeployment {
 }
 
 /**
- *
+ * loads all deployment classes for a project
  * @param project
+ * @param console
  * @returns
  */
 export const loadDeploymentClasses = async (
@@ -584,7 +699,7 @@ export const getProjectDeploymentClasses = async (
 		deployment =>
 			Object.keys(compiledProject.modules).filter(
 				key =>
-					key === deployment.getModule() &&
+					key === deployment.getModuleKey() &&
 					compiledProject.modules[key] === deployment.getContractName(),
 			).length !== 0,
 	);

@@ -43,8 +43,8 @@ export class TelnetServer {
 				sessionId,
 			);
 			this.online[username] = true;
-			this.consoles[sessionId].setUser(usernames[username]);
-			this.consoles[sessionId].setSession(sessions[sessionId]);
+			this.consoles[sessionId].setTelnetUser(usernames[username]);
+			this.consoles[sessionId].setTelnetSession(sessions[sessionId]);
 		} catch (error) {
 			return error.message;
 		}
@@ -165,7 +165,7 @@ export class TelnetServer {
 					this.clients[sessionId] = client;
 					this.consoles[sessionId] = infinityConsole;
 					screen = infinityConsole.getScreen();
-					infinityConsole.setClient(client);
+					infinityConsole.setTelnetClient(client);
 
 					client.on('term', terminal => {
 						screen.terminal = terminal;

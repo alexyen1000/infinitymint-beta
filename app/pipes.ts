@@ -95,11 +95,20 @@ export interface PipeOptions {
 }
 
 /**
- * Logging factory class
+ * allows for multiple logging handles to be created to store multiple different logs instead of just one through console.log
  */
 export class PipeFactory {
+	/**
+	 * the logging outputs
+	 */
 	public pipes: Dictionary<Pipe>;
+	/**
+	 * the pipefactory specific event emitter
+	 */
 	public emitter: EventEmitter;
+	/**
+	 * the current default key, default is 'default'
+	 */
 	public currentPipeKey: string;
 	constructor() {
 		this.pipes = {};
@@ -241,11 +250,18 @@ export class PipeFactory {
 }
 
 export let defaultFactory: PipeFactory;
+/**
+ * creates the default factory. this MUST be called in index.ts or index.js before any other code is executed
+ */
 export const createDefaultFactory = () => {
 	console.log('🛸 Creating Default Logger');
 	defaultFactory = new PipeFactory();
 };
 
+/**
+ * sets the default factory. the default factory is the one which will be used when console.log is called
+ * @param newDefault
+ */
 export const setDefaultFactory = (newDefault: PipeFactory) => {
 	defaultFactory = newDefault;
 };

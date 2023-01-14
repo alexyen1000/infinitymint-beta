@@ -93,10 +93,10 @@ Script.initialize = async (window, frame, blessed) => {
 		window.getScreen().render();
 	};
 
-	window.getInfinityConsole().getLogs().emitter.on('log', cb);
+	window.getInfinityConsole().getPipeFactory().emitter.on('log', cb);
 	//when this window is destroyed, destroy the output emitter
 	window.on('destroy', () => {
-		window.getInfinityConsole().getLogs().emitter.off('log', cb);
+		window.getInfinityConsole().getPipeFactory().emitter.off('log', cb);
 	});
 
 	window.think = async (window, element) => {

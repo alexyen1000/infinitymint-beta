@@ -11,12 +11,21 @@ import {
 import {startNetworkPipe} from './web3';
 
 const {tcpPingPort} = require('tcp-ping-port');
+/**
+ * ganache server
+ */
 export class GanacheServer {
 	public server?: Server;
 	public options?: ServerOptions;
 	public port?: number;
 	public provider: EthereumProvider;
 
+	/**
+	 * stars the ganache server
+	 * @param options
+	 * @param port
+	 * @returns
+	 */
 	async start(
 		options: ServerOptions,
 		port?: number,
@@ -37,7 +46,7 @@ export class GanacheServer {
 	}
 
 	/**
-	 *
+	 * creates the ganache server and returns the provider
 	 * @param options
 	 * @returns
 	 */
@@ -75,12 +84,22 @@ export class GanacheServer {
 		return this.provider;
 	}
 
+	/**
+	 * returns the ganache provider
+	 * @returns
+	 */
 	getProvider() {
 		if (this.provider == undefined) throw new Error('invalid ethers provider');
 		return this.provider;
 	}
 }
 
+/**
+ * gets the private keys from a mnemonic
+ * @param mnemonic
+ * @param walletLength
+ * @returns
+ */
 export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
 	let keys = [];
 	walletLength = walletLength || 20;
@@ -92,8 +111,14 @@ export const getPrivateKeys = (mnemonic: any, walletLength?: number) => {
 	return keys;
 };
 
+/**
+ * creates a default ganache server instance
+ */
 const GanacheServerInstance = new GanacheServer();
 
+/**
+ * method to start ganache
+ */
 export const startGanache = async () => {
 	try {
 		let session = readSession();
