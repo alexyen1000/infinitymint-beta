@@ -111,45 +111,57 @@ const compile: InfinityMintScript = {
 					files.push(fileName);
 
 					if (path.content)
-						Object.values(path.content)
-							.filter(
-								content =>
-									typeof content === 'string' && typeof content === 'object',
-							)
-							.forEach(content => {
-								let fileName = (
-									typeof content === 'string'
-										? content
-										: (content?.fileName || content).toString()
-								).toLowerCase();
+						Object.keys(path.content).forEach(contentKey => {
+							let content = path.content[contentKey];
 
-								script.log('\t{cyan-fg}Checking: ' + fileName + '{/}');
+							if (
+								!content ||
+								((content as unknown) !== 'string' &&
+									(content as undefined) !== 'object')
+							) {
+								script.log(
+									'\t{yellow-fg}Content key is null => {/}' + contentKey,
+								);
+								path.content[contentKey] = {
+									fileName: 'none',
+									name: contentKey,
+								};
+								return;
+							}
 
-								if (
-									fileName === 'undefined' ||
-									fileName === 'null' ||
-									fileName === 'NaN' ||
-									fileName.length === 0
-								) {
-									script.log(
-										'\t{yellow-fg}Non Uniform Content: ' + fileName + '{/}',
+							let fileName =
+								typeof content === 'string'
+									? content
+									: content?.fileName || content || 'undefined';
+							fileName = fileName.toString().toLowerCase();
+
+							script.log('\t{cyan-fg}Checking: ' + fileName + '{/}');
+
+							if (
+								fileName === 'undefined' ||
+								fileName === 'null' ||
+								fileName === 'NaN' ||
+								fileName.length === 0
+							) {
+								script.log(
+									'\t{yellow-fg}Non Uniform Content: ' + fileName + '{/}',
+								);
+							} else {
+								if (!importCache.keys[fileName]) {
+									hasErrors = true;
+									errors.push(
+										`${type} (${i}) content error: File not found => ` +
+											fileName,
 									);
-								} else {
-									if (!importCache.keys[fileName]) {
-										hasErrors = true;
-										errors.push(
-											`${type} (${i}) content error: File not found => ` +
-												fileName,
-										);
-										return;
-									} else
-										script.log(
-											'\t{cyan-fg}Verified Content: ' + fileName + '{/}',
-										);
-								}
+									return;
+								} else
+									script.log(
+										'\t{cyan-fg}Verified Content: ' + fileName + '{/}',
+									);
+							}
 
-								files.push(fileName);
-							});
+							files.push(fileName);
+						});
 
 					if (
 						typeof path.settings === 'string' &&
@@ -256,17 +268,21 @@ const compile: InfinityMintScript = {
 				);
 			}
 
-			let setup = await action('setup', async () => {
-				(project as InfinityMintCompiledProject).imports =
-					{
-						...((project as InfinityMintCompiledProject).imports || {}),
-					} || {};
-
-				let imports = (project as InfinityMintCompiledProject).imports || {};
-
+			let setup = await always('setup', async () => {
+				let imports = {};
 				let setupImport = (
 					path: InfinityMintProjectPath | InfinityMintProjectAsset,
 				) => {
+					if (!path || !path.fileName) {
+						script.log(`\t{yellow-fg}null import{/}`);
+						return;
+					}
+
+					if (path?.fileName === 'none') {
+						script.log(`\t{yellow-fg}None Import{/}`);
+						return;
+					}
+
 					script.log(`\t{cyan-fg}Setting Up{/} => ${path.fileName}`);
 					let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
 					let pathImport = importCache.database[importCache.keys[fileName]];
@@ -367,17 +383,23 @@ const compile: InfinityMintScript = {
 						if (path.content) {
 							//if this path has content
 							if ((project as InfinityMintProject).javascript) {
-								let newContent = {};
 								Object.keys(path.content).map(content => {
-									let newImport = (newContent[content] = {
-										fileName:
-											typeof path.content![content] === 'string'
-												? path.content![content]
-												: path.content![content].fileName,
-										...(typeof path.content![content] !== 'string'
-											? path.content![content]
-											: {}),
-									} as InfinityMintProjectContent);
+									if (
+										!content ||
+										(typeof path.content[content] !== 'string' &&
+											typeof path.content[content] !== 'object')
+									) {
+										script.log(
+											'{yellow-fg}Content Key is invalid => {/}' + content,
+										);
+										return;
+									}
+
+									let newImport = {
+										fileName: (path.content[content] as unknown) || 'none',
+										name: content,
+									} as InfinityMintProjectContent;
+
 									script.infinityConsole.emit(
 										'preCompileSetup',
 										newImport,
@@ -391,43 +413,52 @@ const compile: InfinityMintScript = {
 									);
 									path.content![content] = newImport;
 								});
-							} else
-								Object.keys(path.content)
-									.filter(
-										content =>
-											typeof content === 'string' &&
-											typeof content === 'object',
-									)
-									.forEach(content => {
-										script.infinityConsole.emit(
-											'preCompileSetup',
-											path.content![content],
-											typeof path.content![content],
+							} else {
+								Object.keys(path.content).forEach(content => {
+									if (
+										!content ||
+										(typeof path.content[content] !== 'string' &&
+											typeof path.content[content] !== 'object')
+									) {
+										script.log(
+											'{yellow-fg}Content key is invalid => {/}' + content,
 										);
-										setupImport(path.content![content]);
-										script.infinityConsole.emit(
-											'postCompileSetup',
-											path.content![content],
-											typeof path.content![content],
-										);
-									});
+										return;
+									}
+
+									script.infinityConsole.emit(
+										'preCompileSetup',
+										path.content![content],
+										typeof path.content![content],
+									);
+									setupImport(path.content![content]);
+									script.infinityConsole.emit(
+										'postCompileSetup',
+										path.content![content],
+										typeof path.content![content],
+									);
+								});
+							}
 						}
 					}
 
 					//create basic exports object to fill in later
 					path.export = {
 						key: `${project.name}@${fileName}`,
-						checksum: path.source.checksum,
+						checksum: path?.source?.checksum,
 						project: project.name,
 						version: project.version || {
 							version: '1.0.0',
 							tag: 'initial',
 						},
-						stats: fs.statSync(`${path.source.dir}/${path.source.base}`),
+						stats: path?.source
+							? fs.statSync(`${path.source.dir}/${path.source.base}`)
+							: ({} as any),
 						exported: Date.now(),
 					};
 
-					imports[path.export.key] = path.source.dir + '/' + path.source.base;
+					if (path?.source)
+						imports[path.export.key] = path.source.dir + '/' + path.source.base;
 
 					path.checksum = createHash('md5')
 						.update(JSON.stringify(JSON.stringify(path)))
@@ -473,11 +504,14 @@ const compile: InfinityMintScript = {
 							typeof project.paths[i],
 						);
 					}
+
+				project.imports = imports;
 			});
+
+			if (setup !== true) throw setup;
 
 			let buildImports = await action('buildImports', async () => {
 				let imports = (project as InfinityMintCompiledProject).imports || {};
-
 				let keys = Object.keys(imports);
 
 				if (keys.length === 0)
@@ -485,7 +519,7 @@ const compile: InfinityMintScript = {
 				//this is where we need to go over every file reference in the project and include all of them
 			});
 
-			if (setup !== true) throw setup;
+			if (buildImports !== true) throw buildImports;
 		});
 
 		if (result !== true) throw result;
