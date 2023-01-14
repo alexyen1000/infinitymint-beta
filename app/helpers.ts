@@ -1239,6 +1239,9 @@ export const preInitialize = (isJavascript?: boolean) => {
 		'imports',
 		'deployments',
 		'projects',
+		'projects/compiled',
+		'projects/deployed',
+		'projects/bundles',
 	]);
 
 	if (!fs.existsSync(process.cwd() + '/.env')) {

@@ -552,17 +552,18 @@ const compile: InfinityMintScript = {
 				await Promise.all(
 					Object.keys(files).map(async (file: string) => {
 						script.log(`\t{cyan-fg}Packing ${file}{/}`);
-						let location = importCache.keys[file];
-						let path = importCache.database[location];
+
+						let path = importCache.database[importCache.keys[file]];
+						let location = (path.dir + '/' + path.base).split('imports')[1];
 						if (path === undefined || path.dir === undefined) return;
 
-						project.bundles.imports[location] = path;
+						project.bundles.imports[importCache.keys[file]] = path;
 						rawBundle[location] = await fs.promises.readFile(
 							path.dir + '/' + path.base,
 						);
 						let size = fs.statSync(path.dir + '/' + path.base).size / 1024;
 						totalSize += size;
-						project.bundles.imports[location].raw = location;
+						project.bundles.imports[importCache.keys[file]].raw = location;
 						script.log(`\t{cyan-fg}Read => ${location}{/}`);
 					}),
 				);
@@ -573,6 +574,9 @@ const compile: InfinityMintScript = {
 					script.log(`\t\t{green-fg}Zipping => ${key}{/}`);
 					zip.file(key, rawBundle[key]);
 				});
+
+				zip.file('project.json', JSON.stringify(project));
+
 				let zipBuffer = await zip.generateAsync({type: 'nodebuffer'});
 
 				script.log(`\t{cyan-fg}Saving Bundle...{/}`);
@@ -596,6 +600,22 @@ const compile: InfinityMintScript = {
 		});
 
 		if (result !== true) throw result;
+
+		script.log('{cyan-fg}Copying Project...{/}');
+
+		//copy the project from the temp projects folder to the projects folder
+		let copy = await action('copyProject', async () => {
+			let projectLocation = `${process.cwd()}/projects/compiled/${getProjectFullName(
+				project,
+			)}.json`;
+			let tempLocation = `${process.cwd()}/temp/projects/${getProjectFullName(
+				project,
+			)}.compiled.json`;
+			fs.copyFileSync(tempLocation, projectLocation);
+			fs.unlinkSync(tempLocation);
+		});
+
+		if (!copy) throw copy;
 
 		script.log('{green-fg}{bold}Compilation Successful{/}');
 		script.log(`\tProject: ${project.name}`);
