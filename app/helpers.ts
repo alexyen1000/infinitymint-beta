@@ -350,7 +350,7 @@ const _blessed = require('blessed');
  * @param msg
  */
 export const logDirect = (msg: any) => {
-	if ((console as any)._log && isAllowPiping)
+	if ((console as any)._log && isAllowPiping && typeof msg !== 'object')
 		(console as any)._log(
 			_blessed.cleanTags(
 				msg instanceof Error
@@ -362,6 +362,7 @@ export const logDirect = (msg: any) => {
 					: msg,
 			),
 		);
+	else if ((console as any)._log) (console as any)._log(msg);
 
 	console.log(msg);
 };
@@ -586,19 +587,11 @@ export const overwriteConsoleMethods = () => {
 	//overwrite console log
 	let _log = console.log;
 	console.log = (msg: any) => {
-		msg = msg instanceof Error ? msg.message : msg.toString();
+		msg = msg instanceof Error ? msg.message : msg;
 
 		if (!isAllowPiping) {
-			_log(_blessed.cleanTags(msg));
-			return;
-		}
-
-		if (
-			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
-			msg.toString().substring(0, 4) === 'eth_' &&
-			defaultFactory.pipes['ganache']
-		) {
-			defaultFactory.log(msg, 'ganache');
+			if (typeof msg !== 'object') _log(_blessed.cleanTags(msg));
+			else _log(msg);
 			return;
 		}
 
@@ -606,6 +599,15 @@ export const overwriteConsoleMethods = () => {
 			if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
 		} catch (error) {
 			msg = msg.toString();
+		}
+
+		if (
+			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
+			msg.substring(0, 4) === 'eth_' &&
+			defaultFactory.pipes['ganache']
+		) {
+			defaultFactory.log(msg, 'ganache');
+			return;
 		}
 
 		if (

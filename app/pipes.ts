@@ -37,6 +37,7 @@ export class Pipe {
 		this.appendDate = false;
 		this.created = Date.now();
 		this.logHandler = (str: string) => {
+			str = str.toString();
 			if (
 				this.listen &&
 				(!isEnvTrue('PIPE_IGNORE_CONSOLE') || getConfigFile().console)
@@ -74,7 +75,8 @@ export class Pipe {
 		return new Date(this.created);
 	}
 
-	log(msg: string) {
+	log(msg: any) {
+		msg = msg.toString();
 		this.logHandler(msg);
 	}
 
@@ -137,13 +139,13 @@ export class PipeFactory {
 		this.pipes[this.currentPipeKey].error(error);
 	}
 
-	public log(msg: string, pipe?: string, dontHighlight?: boolean) {
+	public log(msg: any, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipeKey;
 		if (!this.pipes[actualPipe] && !this.pipes['default'])
 			throw new Error('bad pipe: ' + actualPipe);
 		else if (!this.pipes[actualPipe]) return this.log(msg, 'default');
 
-		if (!dontHighlight)
+		if (!dontHighlight && typeof msg === 'string')
 			msg = msg
 				.replace(/\[/g, '{yellow-fg}[')
 				.replace(/\]/g, ']{/yellow-fg}')

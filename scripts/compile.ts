@@ -7,7 +7,7 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '../app/interfaces';
-import {delay, stage, prepare, action, always} from '../app/helpers';
+import {delay, stage, prepare, action, always, logDirect} from '../app/helpers';
 import {createHash} from 'node:crypto';
 import {getImports} from '../app/imports';
 import fs from 'fs';
@@ -111,23 +111,45 @@ const compile: InfinityMintScript = {
 					files.push(fileName);
 
 					if (path.content)
-						Object.values(path.content).forEach(content => {
-							let fileName = (
-								typeof content === 'string'
-									? content
-									: content.fileName.toString()
-							).toLowerCase();
+						Object.values(path.content)
+							.filter(
+								content =>
+									typeof content === 'string' && typeof content === 'object',
+							)
+							.forEach(content => {
+								let fileName = (
+									typeof content === 'string'
+										? content
+										: (content?.fileName || content).toString()
+								).toLowerCase();
 
-							if (!importCache.keys[fileName]) {
-								hasErrors = true;
-								errors.push(
-									`${type} (${i}) content error: File not found => ` + fileName,
-								);
-								return;
-							} else
-								script.log('\t{cyan-fg}Verified Content: ' + fileName + '{/}');
-							files.push(fileName);
-						});
+								script.log('\t{cyan-fg}Checking: ' + fileName + '{/}');
+
+								if (
+									fileName === 'undefined' ||
+									fileName === 'null' ||
+									fileName === 'NaN' ||
+									fileName.length === 0
+								) {
+									script.log(
+										'\t{yellow-fg}Non Uniform Content: ' + fileName + '{/}',
+									);
+								} else {
+									if (!importCache.keys[fileName]) {
+										hasErrors = true;
+										errors.push(
+											`${type} (${i}) content error: File not found => ` +
+												fileName,
+										);
+										return;
+									} else
+										script.log(
+											'\t{cyan-fg}Verified Content: ' + fileName + '{/}',
+										);
+								}
+
+								files.push(fileName);
+							});
 
 					if (
 						typeof path.settings === 'string' &&
@@ -370,19 +392,25 @@ const compile: InfinityMintScript = {
 									path.content![content] = newImport;
 								});
 							} else
-								Object.keys(path.content).forEach(content => {
-									script.infinityConsole.emit(
-										'preCompileSetup',
-										path.content![content],
-										typeof path.content![content],
-									);
-									setupImport(path.content![content]);
-									script.infinityConsole.emit(
-										'postCompileSetup',
-										path.content![content],
-										typeof path.content![content],
-									);
-								});
+								Object.keys(path.content)
+									.filter(
+										content =>
+											typeof content === 'string' &&
+											typeof content === 'object',
+									)
+									.forEach(content => {
+										script.infinityConsole.emit(
+											'preCompileSetup',
+											path.content![content],
+											typeof path.content![content],
+										);
+										setupImport(path.content![content]);
+										script.infinityConsole.emit(
+											'postCompileSetup',
+											path.content![content],
+											typeof path.content![content],
+										);
+									});
 						}
 					}
 
