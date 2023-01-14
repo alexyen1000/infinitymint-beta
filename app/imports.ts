@@ -283,6 +283,7 @@ export const buildImports = async (
 			),
 		};
 
+		//adds settings to the keys
 		if (
 			imports.database[name].settings &&
 			imports.database[name].settings.length > 0
@@ -295,6 +296,7 @@ export const buildImports = async (
 				//remove the slash from the start of root if it exists
 				if (root[0] === '/') root = root.substring(1);
 				imports.keys[root] = name;
+				imports.keys['/' + root] = name;
 			});
 
 		imports.keys[normalImport.dir + '/' + normalImport.base] = name;
