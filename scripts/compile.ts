@@ -538,7 +538,7 @@ const compile: InfinityMintScript = {
 				});
 
 				script.log(
-					`{yellow-fg}Packing${Object.keys(files).length} imports...{/}`,
+					`{yellow-fg}Packing ${Object.keys(files).length} imports...{/}`,
 				);
 
 				project.bundles = {
@@ -551,8 +551,6 @@ const compile: InfinityMintScript = {
 				//pack all the files
 				await Promise.all(
 					Object.keys(files).map(async (file: string) => {
-						script.log(`\t{cyan-fg}Packing ${file}{/}`);
-
 						let path = importCache.database[importCache.keys[file]];
 						let location = (path.dir + '/' + path.base).split('imports')[1];
 						if (path === undefined || path.dir === undefined) return;
