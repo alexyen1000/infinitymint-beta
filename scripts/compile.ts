@@ -1,4 +1,9 @@
-import {getProjectSource, getScriptTemporaryProject} from '../app/projects';
+import {
+	getProjectFullName,
+	getProjectName,
+	getProjectSource,
+	getScriptTemporaryProject,
+} from '../app/projects';
 import {
 	InfinityMintProject,
 	InfinityMintProjectAsset,
@@ -13,6 +18,8 @@ import {getImports} from '../app/imports';
 import fs from 'fs';
 import {InfinityMintSVGSettings} from '../app/content';
 import {InfinityMintCompiledProject} from '../app/interfaces';
+import {getInfinityMintVersion} from 'infinitymint/dist/app/helpers';
+import {getImportCache} from 'infinitymint/dist/app/imports';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -30,7 +37,9 @@ const compile: InfinityMintScript = {
 		prepare(project, script, 'compile');
 
 		script.log(
-			`{cyan-fg}{bold}Compiling Project ${project.name}@${project.version.version}{/}`,
+			`{cyan-fg}{bold}Compiling Project ${project.name}@${
+				project.version.version
+			} with InfinityMint@${getInfinityMintVersion()}{/}`,
 		);
 
 		let importCache = await getImports();
@@ -111,7 +120,7 @@ const compile: InfinityMintScript = {
 					files.push(fileName);
 
 					if (path.content) {
-						script.log('\t{cyan-fg}Verifying content{/}');
+						script.log('\t{cyan-fg}Verifying content...{/}');
 						Object.keys(path.content).forEach(contentKey => {
 							let content = path.content[contentKey];
 
@@ -121,14 +130,23 @@ const compile: InfinityMintScript = {
 									(content as undefined) !== 'object')
 							) {
 								script.log(
-									'\t{yellow-fg}is null assuming none import=> {/}' +
+									'\t{yellow-fg}is null assuming none import => {/}' +
 										contentKey,
 								);
 								path.content[contentKey] = {
 									fileName: 'none',
 									name: contentKey,
 								};
+								script.log('\t\t{red-fg}Warning{/}');
 								return;
+							}
+
+							if (typeof content === 'object' && !content.fileName) {
+								script.log(
+									'\t{yellow-fg}no filename assuming none import=> {/}' +
+										contentKey,
+								);
+								content.fileName = 'none';
 							}
 
 							let fileName =
@@ -145,9 +163,7 @@ const compile: InfinityMintScript = {
 								fileName === 'NaN' ||
 								fileName.length === 0
 							) {
-								script.log(
-									'\t{yellow-fg}Non Uniform Content: ' + fileName + '{/}',
-								);
+								script.log('\t{red-fg}Unable to verify: ' + fileName + '{/}');
 							} else {
 								if (!importCache.keys[fileName]) {
 									hasErrors = true;
@@ -163,6 +179,7 @@ const compile: InfinityMintScript = {
 							}
 
 							files.push(fileName);
+							script.log('\t\t{green-fg}Success{/}');
 						});
 					}
 
@@ -212,7 +229,7 @@ const compile: InfinityMintScript = {
 						...(path.content || {}),
 					};
 					path.valid = false;
-					script.log(`{cyan-fg}[Path ${i}] Verifying...{/}`);
+					script.log(`{yellow-fg}[Path ${i}] Verifying...{/yellow-fg}`);
 					script.infinityConsole.emit('preVerify', path, typeof path);
 					verifyImport(path, i);
 					if (hasErrors) {
@@ -238,7 +255,7 @@ const compile: InfinityMintScript = {
 						...(asset.content || {}),
 					};
 					asset.valid = false;
-					script.log(`{cyan-fg}[Asset ${i}] Verifying...{/}`);
+					script.log(`{yellow-fg}[Asset ${i}] Verifying...{/yellow-fg}`);
 					script.infinityConsole.emit('preVerify', asset, typeof asset);
 					verifyImport(asset, i, 'asset');
 					if (hasErrors) {
@@ -276,23 +293,16 @@ const compile: InfinityMintScript = {
 				let setupImport = (
 					path: InfinityMintProjectPath | InfinityMintProjectAsset,
 				) => {
-					if (!path?.fileName) {
-						script.log(
-							`\t{yellow-fg}No Filename defined => {/} ${
-								path.name || 'unknown'
-							}`,
-						);
-						return;
-					}
-
-					if (path?.fileName === 'none') {
-						script.log(`\t{yellow-fg}Null/None Import => {/} ${path.name}`);
-						return;
-					}
-
 					script.log(`\t{cyan-fg}Setting Up{/} => ${path.fileName}`);
 					let fileName = path.fileName.toString().toLowerCase(); //because of issue with uppercase/lowercase filenames we lowercase it first
-					let pathImport = importCache.database[importCache.keys[fileName]];
+					let pathImport = importCache.database[importCache.keys[fileName]] || {
+						extension: 'none',
+						name: 'none',
+						dir: 'none',
+						checksum: 'none',
+						base: 'none',
+						settings: [],
+					};
 					path.source = pathImport;
 
 					//if its a string then grab that file and add it to pathImports
@@ -350,10 +360,12 @@ const compile: InfinityMintScript = {
 						Object.values(path.settings || {}).forEach(
 							(svgSetting: InfinityMintSVGSettings) => {
 								if (!svgSetting?.style?.css) return;
-
+								let path: string = svgSetting!.style!.css as string;
+								path = path[0] === '/' ? '' : '/' + path;
 								if (svgSetting!.style!.css instanceof Array)
 									svgSetting!.style!.css.forEach(style => {
-										if (!importCache.keys[style.toString()])
+										style = (style[0] === '/' ? '' : '/') + style;
+										if (!importCache.keys[style])
 											throw new Error(
 												`${
 													svgSetting!.source!.dir +
@@ -363,100 +375,58 @@ const compile: InfinityMintScript = {
 											);
 										else {
 											script.log(
-												`\t{cyan-fg}Verified loose CSS reference{/} => ${style}`,
+												`\t{cyan-fg}Included CSS reference{/} => ${style}`,
 											);
-											let path: string = svgSetting!.style!.css as string;
-											imports[path] = path;
+											imports[style] = style;
+											imports[project.name + '@' + style] = style;
+											imports[getProjectFullName(project) + style] = style;
 										}
 									});
-								else if (!importCache.keys[svgSetting!.style!.css as string])
+								else if (!importCache.keys[path])
 									throw new Error(
 										`${
 											svgSetting!.source!.dir + '/' + svgSetting!.source!.base
-										} bad css reference: ${svgSetting!.style!.css}`,
+										} has a bad css reference: ${path}`,
 									);
 								else {
-									script.log(
-										`\t{cyan-fg}Verified loose CSS reference{/} => ${
-											svgSetting!.style!.css
-										}`,
-									);
-									let path: string = svgSetting!.style!.css as string;
+									script.log(`\t{cyan-fg}Included CSS reference{/} => ${path}`);
 									imports[path] = path;
+									imports[project.name + '@' + path] = path;
+									imports[getProjectFullName(project) + path] = path;
 								}
 							},
 						);
 
 						if (path.content) {
-							script.log('\t{cyan-fg}Setting up content{/}');
-							//if this path has content
-							if ((project as InfinityMintProject).javascript) {
-								Object.keys(path.content).map(content => {
-									if (
-										!content ||
-										(typeof path.content[content] !== 'string' &&
-											typeof path.content[content] !== 'object')
-									) {
-										script.log(
-											'{yellow-fg}Content Key is invalid => {/}' + content,
-										);
-										return;
-									}
+							script.log('\t{cyan-fg}Setting Up Path Content...{/}');
+							Object.keys(path.content).map(content => {
+								let newImport = {
+									fileName:
+										typeof path.content[content] === 'string'
+											? content
+												? typeof path.content[content] === 'object'
+												: (path.content[content] as InfinityMintProjectContent)
+														.fileName
+											: 'none',
+									name: content,
+								} as InfinityMintProjectContent;
 
-									let newImport = {
-										fileName:
-											typeof path.content[content] === 'string'
-												? content
-													? typeof path.content[content] === 'object'
-													: (
-															path.content[
-																content
-															] as InfinityMintProjectContent
-													  ).fileName
-												: 'none',
-										name: content,
-									} as InfinityMintProjectContent;
-
-									script.infinityConsole.emit(
-										'preCompileSetup',
-										newImport,
-										typeof newImport,
-									);
-									setupImport(newImport);
-									script.infinityConsole.emit(
-										'postCompileSetup',
-										newImport,
-										typeof newImport,
-									);
-									path.content![content] = newImport;
-								});
-							} else {
-								Object.keys(path.content).forEach(content => {
-									if (
-										!content ||
-										(typeof path.content[content] !== 'string' &&
-											typeof path.content[content] !== 'object')
-									) {
-										script.log(
-											'{yellow-fg}Content key is invalid => {/}' + content,
-										);
-										return;
-									}
-
-									script.infinityConsole.emit(
-										'preCompileSetup',
-										path.content![content],
-										typeof path.content![content],
-									);
-									setupImport(path.content![content]);
-									script.infinityConsole.emit(
-										'postCompileSetup',
-										path.content![content],
-										typeof path.content![content],
-									);
-								});
-							}
+								script.infinityConsole.emit(
+									'preCompileSetup',
+									newImport,
+									typeof newImport,
+								);
+								setupImport(newImport);
+								script.infinityConsole.emit(
+									'postCompileSetup',
+									newImport,
+									typeof newImport,
+								);
+								path.content![content] = newImport;
+							});
 						}
+
+						script.log('\t\t{green-fg}Success{/}');
 					}
 
 					//create basic exports object to fill in later
@@ -468,14 +438,27 @@ const compile: InfinityMintScript = {
 							version: '1.0.0',
 							tag: 'initial',
 						},
-						stats: path?.source
-							? fs.statSync(`${path.source.dir}/${path.source.base}`)
-							: ({} as any),
+						stats:
+							path?.source && path.source.base !== 'none'
+								? fs.statSync(`${path.source.dir}/${path.source.base}`)
+								: ({} as any),
 						exported: Date.now(),
 					};
 
-					if (path?.source)
+					if (path.export.key)
 						imports[path.export.key] = path.source.dir + '/' + path.source.base;
+
+					if (path.source)
+						imports[path.source.dir + '/' + path.source.base] =
+							path.source.dir + '/' + path.source.base;
+
+					imports[project.name + '@' + fileName] =
+						path.source.dir + '/' + path.source.base;
+					imports[fileName] = path.source.dir + '/' + path.source.base;
+					imports[
+						getProjectFullName(project) +
+							((fileName[0] === '/' ? '' : '/') + fileName)
+					] = path.source.dir + '/' + path.source.base;
 
 					path.checksum = createHash('md5')
 						.update(JSON.stringify(JSON.stringify(path)))
@@ -492,7 +475,7 @@ const compile: InfinityMintScript = {
 						project.paths[i],
 						typeof project.paths[i],
 					);
-					script.log(`[Path ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
+					script.log(`[Path ${i}] {yellow-fg}Setting up...{/}`);
 					setupImport(project.paths[i]);
 					script.log(`{green-fg}[Path ${i}] VERIFIED{/}`);
 					project.paths[i].pathId = i;
@@ -511,7 +494,7 @@ const compile: InfinityMintScript = {
 							project.assets[i],
 							typeof project.assets[i],
 						);
-						script.log(`[Asset ${i}] {cyan-fg}Setting up...{/cyan-fg}`);
+						script.log(`[Asset ${i}] {yellow-fg}Setting up...{/}`);
 						setupImport(project.assets[i]);
 						script.log(`{green-fg}[Asset ${i}] VERIFIED{/}`);
 						project.assets[i].assetId = i + 1; //asset ids start counting from 1 as asset id 0 is null asset
@@ -530,10 +513,52 @@ const compile: InfinityMintScript = {
 			let buildImports = await action('buildImports', async () => {
 				let imports = (project as InfinityMintCompiledProject).imports || {};
 				let keys = Object.keys(imports);
+				let importCache = await getImports();
 
 				if (keys.length === 0)
 					throw new Error('project has no imports this is weird!');
 				//this is where we need to go over every file reference in the project and include all of them
+
+				let files = {};
+				Object.keys(imports).forEach(key => {
+					if (!files[imports[key]]) files[imports[key]] = imports[key];
+				});
+
+				script.log(
+					`{yellow-fg}Building ${Object.keys(files).length} imports...{/}`,
+				);
+
+				project.bundles = {
+					version: getInfinityMintVersion(),
+					imports: {},
+				};
+
+				script.log(`{cyan-fg}Creating Raw Bundle{/}`);
+
+				let rawBundle = {};
+				Object.keys(files).forEach((file: string) => {
+					script.log(`\t{cyan-fg}Packing ${file}{/}`);
+					let location = importCache.keys[file];
+					let path = importCache.database[location];
+					project.bundles.imports[file] = path.dir + '/' + path.base;
+
+					rawBundle[location] = fs.readFileSync(path.dir + '/' + path.base);
+					project.bundles.imports[file].raw = location;
+					script.log(`\t\t{green-fg}Packed ${file}{/}`);
+				});
+
+				script.log(`{cyan-fg}Saving Raw Bundle{/}`);
+
+				if (!fs.existsSync(`${project.source.dir}/bundles/`))
+					fs.mkdirSync(`${project.source.dir}/bundles/`);
+
+				await fs.promises.writeFile(
+					`${project.source.dir}/bundles/${project.version.version}.raw.bundle`,
+					JSON.stringify(rawBundle),
+					{
+						encoding: 'binary',
+					},
+				);
 			});
 
 			if (buildImports !== true) throw buildImports;

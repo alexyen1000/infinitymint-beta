@@ -79,6 +79,10 @@ export interface InfinityMintApplicationConfig {
 	testChains: any[];
 }
 
+export interface BundleType extends ImportType {
+	raw: string;
+}
+
 /**
  * For backwards compatability and JavaScript support. A Definition for the classic InfinityMint omega project. Iss used when projects are .js and not .ts before they have been compiled. When they get compiled they get turned into normal project interface. See {@link InfinityMintProject}.
  */
@@ -202,9 +206,9 @@ export interface InfinityMintCompiledProject {
 	 */
 	bundles?: Dictionary<{
 		version?: string;
-		paths?: {
-			ipfs?: Array<PathLike>;
-		};
+		raw?: string;
+		imports?: Dictionary<BundleType>;
+		ipfs?: Array<PathLike>;
 	}>;
 
 	/**

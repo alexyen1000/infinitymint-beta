@@ -283,6 +283,20 @@ export const buildImports = async (
 			),
 		};
 
+		if (
+			imports.database[name].settings &&
+			imports.database[name].settings.length > 0
+		)
+			imports.database[name].settings.forEach(setting => {
+				imports.keys[setting.dir + '/' + setting.base] = name;
+				imports.keys['/' + setting.base] = name;
+				let root = setting.dir + '/' + setting.base;
+				root = root.replace(process.cwd(), '');
+				//remove the slash from the start of root if it exists
+				if (root[0] === '/') root = root.substring(1);
+				imports.keys[root] = name;
+			});
+
 		imports.keys[normalImport.dir + '/' + normalImport.base] = name;
 		imports.keys[normalImport.dir + '/' + normalImport.name] = name;
 		imports.keys[process.cwd() + '/imports' + root + '/' + normalImport.name] =

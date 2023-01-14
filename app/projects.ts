@@ -91,6 +91,12 @@ export const hasTempDeployedProject = (
 	return fs.existsSync(process.cwd() + filename);
 };
 
+export const getProjectFullName = (
+	project: InfinityMintProject | InfinityMintTempProject,
+) => {
+	return getProjectName(project) + '@' + project.version.version;
+};
+
 export const getProjectName = (
 	project: InfinityMintProject | InfinityMintTempProject,
 ) => {
