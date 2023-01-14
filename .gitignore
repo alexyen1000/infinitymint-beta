@@ -11,6 +11,8 @@ artifacts/
 
 .mnemonics
 
+/projects/bundles/
+
 # Deployments
 /deployments/hardhat/
 /deployments/ganache/

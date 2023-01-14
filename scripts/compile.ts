@@ -125,45 +125,44 @@ const compile: InfinityMintScript = {
 							let content = path.content[contentKey];
 
 							if (
-								!content ||
-								((content as unknown) !== 'string' &&
-									(content as undefined) !== 'object')
+								content !== null &&
+								typeof content === 'object' &&
+								!content?.fileName
 							) {
 								script.log(
-									'\t{yellow-fg}is null assuming none import => {/}' +
-										contentKey,
-								);
-								path.content[contentKey] = {
-									fileName: 'none',
-									name: contentKey,
-								};
-								script.log('\t\t{red-fg}Warning{/}');
-								return;
-							}
-
-							if (typeof content === 'object' && !content.fileName) {
-								script.log(
-									'\t{yellow-fg}no filename assuming none import=> {/}' +
+									'\t{yellow-fg}no filename assuming none import => {/}' +
 										contentKey,
 								);
 								content.fileName = 'none';
+							} else if (typeof content === 'string') {
+								content = {
+									fileName: content,
+									name: contentKey,
+								};
+							} else {
+								script.log(
+									'\t{yellow-fg}weird type assuming none => {/}' + contentKey,
+								);
+								content = {
+									fileName: 'none',
+									name: 'none',
+								};
 							}
 
-							let fileName =
-								typeof content === 'string'
-									? content
-									: content?.fileName || content || 'undefined';
-							fileName = fileName.toString().toLowerCase();
+							fileName = content.fileName.toString().toLowerCase();
 
-							script.log('\t{cyan-fg}Checking: ' + fileName + '{/}');
+							script.log('\t{cyan-fg}Checking Content: ' + fileName + '{/}');
 
 							if (
 								fileName === 'undefined' ||
 								fileName === 'null' ||
 								fileName === 'NaN' ||
+								fileName === 'none' ||
 								fileName.length === 0
 							) {
-								script.log('\t{red-fg}Unable to verify: ' + fileName + '{/}');
+								script.log(
+									'\t{red-fg}Unable to verify content => ' + fileName + '{/}',
+								);
 							} else {
 								if (!importCache.keys[fileName]) {
 									hasErrors = true;
@@ -172,13 +171,10 @@ const compile: InfinityMintScript = {
 											fileName,
 									);
 									return;
-								} else
-									script.log(
-										'\t{cyan-fg}Verified Content: ' + fileName + '{/}',
-									);
+								}
+								files.push(fileName);
 							}
 
-							files.push(fileName);
 							script.log('\t\t{green-fg}Success{/}');
 						});
 					}
@@ -289,7 +285,7 @@ const compile: InfinityMintScript = {
 			}
 
 			let setup = await always('setup', async () => {
-				let imports = {};
+				let imports = project.imports || {};
 				let setupImport = (
 					path: InfinityMintProjectPath | InfinityMintProjectAsset,
 				) => {
@@ -402,13 +398,11 @@ const compile: InfinityMintScript = {
 							Object.keys(path.content).map(content => {
 								let newImport = {
 									fileName:
-										typeof path.content[content] === 'string'
-											? content
-												? typeof path.content[content] === 'object'
-												: (path.content[content] as InfinityMintProjectContent)
-														.fileName
-											: 'none',
+										path.content[content].fileName || path.content[content],
 									name: content,
+									...(typeof path.content[content] === 'object'
+										? path.content[content]
+										: {}),
 								} as InfinityMintProjectContent;
 
 								script.infinityConsole.emit(
@@ -525,7 +519,7 @@ const compile: InfinityMintScript = {
 				});
 
 				script.log(
-					`{yellow-fg}Building ${Object.keys(files).length} imports...{/}`,
+					`{yellow-fg}Packing${Object.keys(files).length} imports...{/}`,
 				);
 
 				project.bundles = {
@@ -533,31 +527,50 @@ const compile: InfinityMintScript = {
 					imports: {},
 				};
 
-				script.log(`{cyan-fg}Creating Raw Bundle{/}`);
-
 				let rawBundle = {};
-				Object.keys(files).forEach((file: string) => {
-					script.log(`\t{cyan-fg}Packing ${file}{/}`);
-					let location = importCache.keys[file];
-					let path = importCache.database[location];
-					project.bundles.imports[file] = path.dir + '/' + path.base;
+				let totalSize = 0;
+				//pack all the files
+				await Promise.all(
+					Object.keys(files).map(async (file: string) => {
+						script.log(`\t{cyan-fg}Packing ${file}{/}`);
+						let location = importCache.keys[file];
+						let path = importCache.database[location];
+						if (path === undefined || path.dir === undefined) return;
 
-					rawBundle[location] = fs.readFileSync(path.dir + '/' + path.base);
-					project.bundles.imports[file].raw = location;
-					script.log(`\t\t{green-fg}Packed ${file}{/}`);
-				});
+						project.bundles.imports[file] = path;
+						rawBundle[location] = await fs.promises.readFile(
+							path.dir + '/' + path.base,
+						);
+						let size = fs.statSync(path.dir + '/' + path.base).size / 1024;
+						totalSize += size;
+						project.bundles.imports[file].raw = location;
+						script.log(
+							`\t\t{green-fg}Packed ${path.base} => ${
+								size.toFixed(2) + 'kb'
+							}{/}`,
+						);
+					}),
+				);
 
-				script.log(`{cyan-fg}Saving Raw Bundle{/}`);
+				script.log(`{cyan-fg}Saving Raw Bundle...{/}`);
 
-				if (!fs.existsSync(`${project.source.dir}/bundles/`))
-					fs.mkdirSync(`${project.source.dir}/bundles/`);
+				if (!fs.existsSync(process.cwd() + '/projects/bundles/'))
+					fs.mkdirSync(process.cwd() + '/projects/bundles/');
 
 				await fs.promises.writeFile(
-					`${project.source.dir}/bundles/${project.version.version}.raw.bundle`,
+					`${process.cwd()}/projects/bundles/${getProjectFullName(
+						project,
+					)}.raw.bundle`,
 					JSON.stringify(rawBundle),
 					{
-						encoding: 'binary',
+						encoding: 'utf8',
 					},
+				);
+
+				script.log(
+					`{cyan-fg}Succesfully wrote bundle total size => ${totalSize.toFixed(
+						2,
+					)}kb {/}`,
 				);
 			});
 

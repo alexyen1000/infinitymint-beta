@@ -358,6 +358,10 @@ export const buildImports = async (
 		imports.keys[nss + '/' + normalImport.name] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
 		imports.keys[nss + '/' + normalImport.base] = name;
+		imports.keys[normalImport.base] = name;
+		imports.keys[normalImport.name] = name;
+		imports.keys[normalImport.name.toLowerCase()] = name;
+		imports.keys[normalImport.base.toLowerCase()] = name;
 
 		if (infinityConsole)
 			infinityConsole.loadingBox.setContent('Imported => ' + name);
