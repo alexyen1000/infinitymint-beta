@@ -11,6 +11,7 @@ import {PathLike, Stats} from 'fs';
 import {InfinityMintSVGSettings} from './content';
 import {GasPriceFunction, TokenPriceFunction} from './gasAndPrices';
 import {ImportType} from './imports';
+import {ParsedPath} from 'path';
 import {DeployResult} from 'hardhat-deploy/dist/types';
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
@@ -194,6 +195,11 @@ export interface InfinityMintCompiledProject {
 	/**
 	 *
 	 */
+	source?: ParsedPath;
+
+	/**
+	 *
+	 */
 	bundles?: Dictionary<{
 		version?: string;
 		paths?: {
@@ -267,7 +273,10 @@ export interface InfinityMintTempProject
 	 */
 	setup?: boolean;
 
-	source?: string;
+	/**
+	 *
+	 */
+	source?: ParsedPath;
 }
 
 /**
@@ -485,7 +494,10 @@ export interface InfinityMintProject {
 		 */
 		version: string;
 	};
-	source?: string;
+	/**
+	 * where this project is
+	 */
+	source?: ParsedPath;
 	/**
 	 * is true if the source file for this project is a javascript file, using javascript InfinityMint project.
 	 * @private
@@ -1590,7 +1602,11 @@ export interface InfinityMintDeploymentParametersDeployments
 export interface InfinityMintDeploymentLocal extends DeployResult {
 	contractName: string;
 	project: InfinityMintCompiledProject;
-	deployer: string;
+	deployer?: string;
+	name?: string;
+	key: string;
+	javascript?: boolean;
+	network: object;
 }
 
 /**
@@ -1660,29 +1676,29 @@ export interface InfinityMintDeploymentLive extends KeyValue {
 	/**
 	 *  The abi of the current dpeloyment.
 	 */
-	abi?: Array<any>;
+	abi: Array<any>;
 	/**
 	 * the key of this live deployment, by default will be the contract name
 	 */
-	key?: string;
+	key: string;
 	/**
 	 * The name of the current deployment, same as the .sol filename.
 	 */
-	name: string;
+	contractName: string;
 	/**
 	 * The address of this deployment on the blockchain.
 	 */
-	address?: string;
+	address: string;
 	/**
 	 * The name of the project this deployment was deployed under.
 	 *
 	 * @see {@link InfinityMintProject}
 	 */
-	project?: string;
+	project: InfinityMintCompiledProject;
 	/**
 	 * The network name and chainId this deployment was deploymend too.
 	 */
-	network?: {
+	network: {
 		name: string;
 		chainId: number;
 	};
@@ -1703,14 +1719,12 @@ export interface InfinityMintDeploymentLive extends KeyValue {
 	 */
 	setup?: boolean;
 
-	/**
-	 * the location of the deployment script which deployed this deployment
-	 */
-	deploymentScript?: string;
+	source?: ParsedPath;
 	/**
 	 * is true if the project file this deployment is from is a javascript file and not typescript
 	 */
 	javascript?: boolean;
+	newlyDeployed: boolean;
 }
 
 /**

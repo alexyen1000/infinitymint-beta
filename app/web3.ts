@@ -184,6 +184,8 @@ export const deploy = async (
 		...buildInfo,
 		project,
 		args: args,
+		key: artifact.contractName,
+		network: project.network,
 		newlyDeployed: true,
 		contractName: artifact.contractName,
 		address: contract.address,
@@ -289,6 +291,8 @@ export const hardhatDeploy = async (
 			skipIfAlreadyDeployed: usePreviousDeployment,
 			waitConfirmations: confirmations || 1,
 		})),
+		key: contractName,
+		network: project.network,
 		contractName,
 		project,
 		deployer: signer.address,
@@ -330,7 +334,7 @@ export const getSignedContract = async (
 	signer?: SignerWithAddress,
 ): Promise<BaseContract> => {
 	signer = signer || (await getDefaultSigner());
-	let factory = await ethers.getContractFactory(deployment.name);
+	let factory = await ethers.getContractFactory(deployment.contractName);
 	return factory.connect(signer).attach(deployment.address);
 };
 

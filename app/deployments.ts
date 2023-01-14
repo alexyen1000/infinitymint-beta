@@ -10,6 +10,7 @@ import {
 	InfinityMintDeployedProject,
 	InfinityMintEventEmitter,
 	KeyValue,
+	InfinityMintTempProject,
 } from './interfaces';
 import {
 	debugLog,
@@ -72,7 +73,7 @@ export class InfinityMintDeployment {
 	/**
 	 * the infinity mint project this deployment is attached too
 	 */
-	protected project: InfinityMintProject;
+	protected project: InfinityMintCompiledProject | InfinityMintTempProject;
 	/**
 	 * the network the deployment is on
 	 */
@@ -95,7 +96,7 @@ export class InfinityMintDeployment {
 		deploymentScriptLocation: string,
 		key: string,
 		network: string,
-		project: InfinityMintProject,
+		project: InfinityMintCompiledProject | InfinityMintTempProject,
 		console?: InfinityConsole,
 	) {
 		this.emitter = console?.getEventEmitter() || new events.EventEmitter();
@@ -332,7 +333,7 @@ export class InfinityMintDeployment {
 		let mismatchNetworkAndProject = liveDeployments.filter(
 			(deployment: InfinityMintDeploymentLive) =>
 				deployment.network.name !== this.network ||
-				deployment.project !== this.project.name,
+				deployment.project.name !== this.project.name,
 		) as InfinityMintDeploymentLive[];
 
 		//throw error if we found any
@@ -430,17 +431,17 @@ export class InfinityMintDeployment {
 		return this.liveDeployments;
 	}
 
-	private populateLiveDeployment(deployment: InfinityMintDeploymentLocal) {
-		deployment = deployment as InfinityMintDeploymentLive;
+	private populateLiveDeployment(localDeployment: InfinityMintDeploymentLocal) {
+		let deployment = localDeployment as InfinityMintDeploymentLive;
 		deployment.key = this.deploymentScript.key;
-		deployment.javascript = this.project.javascript;
-		deployment.project = this.project.name;
+		deployment.javascript = deployment.source.ext === '.js';
+		deployment.project = this.project;
 		deployment.network = {
 			name: hre.network.name,
 			chainId: hre.network.config.chainId,
 		};
 		deployment.name = deployment.contractName;
-		deployment.deploymentScript = this.deploymentScriptLocation;
+		deployment.source = path.parse(this.deploymentScriptLocation);
 		return deployment as any;
 	}
 
@@ -706,15 +707,11 @@ export const create = (
 	liveDeployment: InfinityMintDeploymentLive,
 	deploymentScript?: string,
 ) => {
-	let project = requireProject(
-		liveDeployment.project,
-		liveDeployment.javascript,
-	);
 	return new InfinityMintDeployment(
 		deploymentScript || liveDeployment.deploymentScript,
 		liveDeployment.key,
 		liveDeployment.network.name,
-		project,
+		liveDeployment.project,
 	);
 };
 
