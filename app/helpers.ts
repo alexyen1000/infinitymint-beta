@@ -311,6 +311,10 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
 	};
 };
 
+//wrote by AI (MysqLLoL)
+export const delay = async (ms: number) =>
+	new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  *
  * @param msg

@@ -7,7 +7,7 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '../app/interfaces';
-import {stage} from '../app/helpers';
+import {delay, stage} from '../app/helpers';
 import {createHash} from 'node:crypto';
 import {getImports} from '../app/imports';
 import fs from 'fs';
