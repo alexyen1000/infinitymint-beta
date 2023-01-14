@@ -110,7 +110,8 @@ const compile: InfinityMintScript = {
 
 					files.push(fileName);
 
-					if (path.content)
+					if (path.content) {
+						script.log('\t{cyan-fg}Verifying content{/}');
 						Object.keys(path.content).forEach(contentKey => {
 							let content = path.content[contentKey];
 
@@ -163,6 +164,7 @@ const compile: InfinityMintScript = {
 
 							files.push(fileName);
 						});
+					}
 
 					if (
 						typeof path.settings === 'string' &&
@@ -276,7 +278,7 @@ const compile: InfinityMintScript = {
 				) => {
 					if (!path?.fileName) {
 						script.log(
-							`\t{yellow-fg}No Filename defined =>{/} ${
+							`\t{yellow-fg}No Filename defined => {/} ${
 								path.name || 'unknown'
 							}`,
 						);
@@ -284,7 +286,7 @@ const compile: InfinityMintScript = {
 					}
 
 					if (path?.fileName === 'none') {
-						script.log(`\t{yellow-fg}Null/None Import =>{/} ${path.name}`);
+						script.log(`\t{yellow-fg}Null/None Import => {/} ${path.name}`);
 						return;
 					}
 
@@ -386,6 +388,7 @@ const compile: InfinityMintScript = {
 						);
 
 						if (path.content) {
+							script.log('\t{cyan-fg}Setting up content{/}');
 							//if this path has content
 							if ((project as InfinityMintProject).javascript) {
 								Object.keys(path.content).map(content => {
