@@ -59,6 +59,7 @@
     "ipfs-bitswap": "^15.0.0",
     "ipfs-core": "0.14.0",
     "ipfs-core-types": "^0.13.0",
+    "jszip": "^3.10.1",
     "module-alias": "^2.2.2",
     "multiformats": "^9.6.5",
     "play-sound": "^1.1.5",

@@ -1,6 +1,5 @@
 import {
 	getProjectFullName,
-	getProjectName,
 	getProjectSource,
 	getScriptTemporaryProject,
 } from '../app/projects';
@@ -12,14 +11,13 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '../app/interfaces';
-import {delay, stage, prepare, action, always, logDirect} from '../app/helpers';
+import {getInfinityMintVersion, prepare, action, always} from '../app/helpers';
 import {createHash} from 'node:crypto';
 import {getImports} from '../app/imports';
 import fs from 'fs';
 import {InfinityMintSVGSettings} from '../app/content';
 import {InfinityMintCompiledProject} from '../app/interfaces';
-import {getInfinityMintVersion} from 'infinitymint/dist/app/helpers';
-import {getImportCache} from 'infinitymint/dist/app/imports';
+import JSZip from 'jszip';
 
 const compile: InfinityMintScript = {
 	name: 'Compile Project',
@@ -374,7 +372,7 @@ const compile: InfinityMintScript = {
 												`\t{cyan-fg}Included CSS reference{/} => ${style}`,
 											);
 											let truePath =
-												svgSetting.source.dir.split('imports/')[0] + style;
+												svgSetting.source.dir.split('imports')[0] + style;
 											imports[style] = truePath;
 											imports[project.name + '@' + style] = truePath;
 											imports[getProjectFullName(project) + style] = truePath;
@@ -394,7 +392,7 @@ const compile: InfinityMintScript = {
 								else {
 									script.log(`\t{cyan-fg}Included CSS reference{/} => ${path}`);
 									let truePath =
-										svgSetting.source.dir.split('imports/')[0] + path;
+										svgSetting.source.dir.split('imports')[0] + path;
 									imports[path] = truePath;
 									imports[svgSetting.source.dir + path] = truePath;
 									imports[process.cwd() + path] = truePath;
@@ -465,9 +463,7 @@ const compile: InfinityMintScript = {
 
 					imports[fileName] = path.source.dir + '/' + path.source.base;
 					imports[fileNameWithSlash] = path.source.dir + '/' + path.source.base;
-					imports['imports/' + fileNameWithSlash] =
-						path.source.dir + '/' + path.source.base;
-					imports['/imports/' + fileNameWithSlash] =
+					imports[process.cwd() + fileNameWithSlash] =
 						path.source.dir + '/' + path.source.base;
 					imports[getProjectFullName(project) + fileNameWithSlash] =
 						path.source.dir + '/' + path.source.base;
@@ -567,37 +563,32 @@ const compile: InfinityMintScript = {
 						let size = fs.statSync(path.dir + '/' + path.base).size / 1024;
 						totalSize += size;
 						project.bundles.imports[location].raw = location;
-						script.log(
-							`\t\t{green-fg}Packed ${path.base} => ${
-								size.toFixed(2) + 'kb'
-							}{/}`,
-						);
+						script.log(`\t{cyan-fg}Read => ${location}{/}`);
 					}),
 				);
 
-				script.log(`{cyan-fg}Saving Raw Bundle...{/}`);
+				//build a zip file out of each member of the raw bundle
+				let zip = new JSZip();
+				Object.keys(rawBundle).forEach(key => {
+					script.log(`\t\t{green-fg}Zipping => ${key}{/}`);
+					zip.file(key, rawBundle[key]);
+				});
+				let zipBuffer = await zip.generateAsync({type: 'nodebuffer'});
 
+				script.log(`\t{cyan-fg}Saving Bundle...{/}`);
 				if (!fs.existsSync(process.cwd() + '/projects/bundles/'))
 					fs.mkdirSync(process.cwd() + '/projects/bundles/');
 
 				await fs.promises.writeFile(
 					`${process.cwd()}/projects/bundles/${getProjectFullName(
 						project,
-					)}.raw.bundle`,
-					Object.keys(rawBundle).map(key => {
-						let base64 = Buffer.from(rawBundle[key]).toString('base64');
-						let charm = `[${key}]<${base64.length}>:`;
-						return Buffer.from(`${charm + base64}`).toString('hex');
-					}),
-					{
-						encoding: 'ascii',
-					},
+					)}.bundle`,
+					zipBuffer,
 				);
-
+				let zippedSize = zipBuffer.length / 1024;
+				script.log('{green-fg}Bundle Wrote Successfully{/}');
 				script.log(
-					`{cyan-fg}Succesfully wrote bundle total size => ${(
-						totalSize / 1024
-					).toFixed(2)}mb {/}`,
+					`\t{cyan-fg}Bundle Size  => ${(zippedSize / 1024).toFixed(2)}mb {/}`,
 				);
 			});
 
