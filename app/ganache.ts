@@ -10,6 +10,7 @@ import {
 } from './helpers';
 import {startNetworkPipe} from './web3';
 
+//used to ping stuff to see if its online
 const {tcpPingPort} = require('tcp-ping-port');
 /**
  * ganache server
@@ -34,12 +35,20 @@ export class GanacheServer {
 
 		this.port = parseInt((port || process.env.GANACHE_PORT || 8545).toString());
 
-		if ((await tcpPingPort('localhost', this.port)).online === true) {
+		if (
+			(await tcpPingPort('127.0.0.1', this.port)).online === true ||
+			(await tcpPingPort('localhost', this.port)).online === true
+		) {
 			log(
 				'{cyan-fg}{bold}Previous Ganache Server{/bold}{/cyan-fg} => http://localhost:' +
 					this.port,
 			);
-			return (await import('hardhat')).getProvider('ganache') as any;
+
+			//just import the current provider for ganache since hardhat manages this, doing it this way
+			//seems to fix issues with ganache/hardhat starting before/after eachover
+			return new Promise(async resolve => {
+				resolve((await import('hardhat')).getProvider('ganache') as any);
+			});
 		}
 
 		return await this.createServer(options);
