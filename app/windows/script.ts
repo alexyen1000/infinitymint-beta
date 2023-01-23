@@ -1,7 +1,6 @@
 import {executeScript, isInfinityMint, warning} from '../helpers';
 import {InfinityMintWindow} from '../window';
 import {InfinityMintScript} from '../interfaces';
-import {defaultFactory} from '../pipes';
 
 const Script = new InfinityMintWindow(
 	'Script',

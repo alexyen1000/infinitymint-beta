@@ -1,63 +1,62 @@
-import { InfinityMintWindow } from "../window";
-import hre from "hardhat";
+import {InfinityMintWindow} from '../window';
 
 const Scaffold = new InfinityMintWindow(
-	"Scaffold",
+	'Scaffold',
 	{
-		fg: "white",
-		bg: "grey",
+		fg: 'white',
+		bg: 'grey',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
-	}
+		type: 'line',
+	},
 );
 Scaffold.initialize = async (window, frame, blessed) => {
 	let form = window.createElement(
-		"form",
+		'form',
 		{
-			label: "{bold}(Enter/Double-Click to select){/bold}",
+			label: '{bold}(Enter/Double-Click to select){/bold}',
 			tags: true,
 			top: 4,
 			left: 0,
-			width: "50%",
-			height: "100%-" + (frame.bottom + frame.top + 4),
+			width: '50%',
+			height: '100%-' + (frame.bottom + frame.top + 4),
 			padding: 2,
 			keys: true,
 			vi: true,
 			mouse: true,
-			border: "line",
+			border: 'line',
 			scrollbar: {
-				ch: " ",
+				ch: ' ',
 				track: {
-					bg: "black",
+					bg: 'black',
 				},
 				style: {
 					inverse: true,
 				},
 			},
 			style: {
-				bg: "black",
-				fg: "white",
+				bg: 'black',
+				fg: 'white',
 				item: {
 					hover: {
-						bg: "green",
-						fg: "black",
+						bg: 'green',
+						fg: 'black',
 					},
 				},
 				selected: {
-					bg: "grey",
-					fg: "green",
+					bg: 'grey',
+					fg: 'green',
 					bold: true,
 				},
 			},
 		},
-		"list"
+		'list',
 	);
 
-	let artifacts = await hre.artifacts.getAllFullyQualifiedNames();
-	form.setItems(artifacts);
+	//let artifacts = await window.getInfinityConsole().getArtifacts();
+	//form.setItems(artifacts);
 };
 export default Scaffold;
