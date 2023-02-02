@@ -5,6 +5,6 @@ const InfinityMintStorage: InfinityMintDeploymentScript = {
 	module: 'storage',
 	index: 3, //should be after values
 	solidityFolder: 'alpha',
-	permissions: ['approved'],
+	permissions: ['approved', 'erc721', 'api'],
 };
 export default InfinityMintStorage;
