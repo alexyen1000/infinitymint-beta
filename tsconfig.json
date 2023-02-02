@@ -22,6 +22,7 @@
 		"dist",
 		"dist/tests",
 		"node_modules",
+		"./examples",
 		"gems/__",
 		"gems/__cache",
 		"gems/@"
@@ -33,7 +34,6 @@
 		"./deploy",
 		"./scripts",
 		"./imports",
-		"./examples",
 		"./typechain-types",
 		"./index.ts",
 		"./tests"
