@@ -1,3 +1,5 @@
+import {defaultFactory} from './pipes';
+
 const colours = {
 	Reset: '\x1b[0m',
 	Bright: '\x1b[1m',
@@ -25,6 +27,19 @@ const colours = {
 	BgCyan: '\x1b[46m',
 	BgWhite: '\x1b[47m',
 	BgGray: '\x1b[100m',
+};
+
+export const blessedLog = (...any: any[]) => {
+	const args = any.map(arg => {
+		if (arg instanceof Object) {
+			return JSON.stringify(arg);
+		} else {
+			return arg;
+		}
+	});
+
+	let results = args.join(' ');
+	((console as any)._log || (console as any).log)(blessedToAnsi(results));
 };
 
 Object.keys(colours).forEach(key => {

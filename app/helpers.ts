@@ -210,6 +210,13 @@ export interface Rectangle {
 	z: number;
 }
 
+let onlyDefault = false;
+
+export const setOnlyDefault = (value: boolean) => {
+	onlyDefault = value;
+	if (value) logDirect('⚠️ WARNING ⚠️ Only default logging is enabled');
+};
+
 /**
  * Logs a console message to the current pipe.
  * @param msg
@@ -217,43 +224,43 @@ export interface Rectangle {
  */
 export const log = (msg: string | object | number, pipe?: string) => {
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+	if (typeof msg === 'number') msg = msg.toString();
+	pipe = pipe || 'default';
 
-	if (!defaultFactory?.log) {
-		if ((console as any)?._log) (console as any)?._log(msg);
-		else if (isEnvTrue('PIPE_IGNORE_CONSOLE')) console.log(msg);
+	if (pipe !== 'default' && pipe !== 'debug' && onlyDefault) return;
+
+	if (!defaultFactory?.log || !defaultFactory.pipes[pipe]) {
+		if ((console as any)?._log)
+			(console as any)?._log(msg, scriptMode ? '[' + pipe + ']' : pipe);
 		return;
 	}
 
-	//if we aren't overwriting console methods and console is false
-	if (
-		!isAllowPiping ||
-		isEnvTrue('PIPE_IGNORE_CONSOLE') ||
-		(!isEnvTrue('PIPE_IGNORE_CONSOLE') &&
-			getConfigFile().console === false &&
-			isEnvTrue('PIPE_SILENCE') === false)
-	)
-		console.log(
-			msg + (pipe === 'default' || !pipe ? '' : ` <${pipe || 'unkown'}>`),
+	if (!isAllowPiping) {
+		msg = blessedToAnsi(
+			defaultFactory.addColoursToString(defaultFactory.messageToString(msg)),
 		);
+		if ((console as any)?._log)
+			(console as any)?._log(msg, scriptMode ? '[' + pipe + ']' : pipe);
+		return;
+	}
 
-	defaultFactory.log(msg.toString(), pipe);
+	console.log(msg);
 };
 
+let disableDebugLog = false;
+
+export const setDebugLogDisabled = (disabled: boolean) => {
+	disableDebugLog = disabled;
+
+	if (disabled) logDirect('⚠️ WARNING ⚠️ Debug log is disabled');
+};
 /**
  * Logs a debug message to the current pipe.
  * @param msg
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
-	if (!defaultFactory?.pipes && (console as any)?._log) {
-		(console as any)?._log(msg + ' <debug>');
-		return;
-	} else if (!defaultFactory?.pipes) {
-		console.log(msg);
-		return;
-	}
-	//throw away debug msgs if no pipe for it
-	if (!defaultFactory.pipes['debug']) return;
+	if (disableDebugLog) return;
 
 	log(msg, 'debug');
 };
@@ -598,17 +605,55 @@ export const write = (path: PathLike, object: any) => {
 	);
 };
 
+const blockedMessages = [
+	'eth_chainId',
+	'eth_getBlockByNumber',
+	'eth_getBlockByHash',
+	'eth_getBlockTransactionCountByNumber',
+	'eth_blockNumber',
+	'eth_getBalance',
+	'eth_getFilterChanges',
+	'eth_getTransactionByHash',
+	'eth_getTransactionReceipt',
+	'eth_getTransactionCount',
+	'eth_getCode',
+	'eth_getLogs',
+	'eth_getStorageAt',
+	'eth_getTransactionByBlockNumberAndIndex',
+	'eth_getTransactionByBlockHashAndIndex',
+	'eth_getBlockTransactionCountByHash',
+	'eth_getUncleCountByBlockNumber',
+	'eth_getUncleCountByBlockHash',
+	'eth_getUncleByBlockNumberAndIndex',
+	'eth_getUncleByBlockHashAndIndex',
+	'eth_getCompilers',
+	'eth_compileLLL',
+	'eth_compileSolidity',
+	'eth_compileSerpent',
+	'eth_newFilter',
+	'eth_newBlockFilter',
+	'eth_newPendingTransactionFilter',
+	'eth_uninstallFilter',
+];
 export const consoleLogReplacement = (...any: any[]) => {
 	let msg = any[0];
 	if (msg instanceof Error) msg = msg.message;
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+
+	if (blockedMessages.some(m => msg.indexOf(m) !== -1)) return;
 
 	if (isAllowPiping && msg.indexOf('<#DONT_LOG_ME$>') === -1)
 		defaultFactory.log(msg, defaultFactory.currentPipeKey || 'default');
 
 	//do normal log as well
 	(console as any)._log(
-		scriptMode ? blessedToAnsi(msg) : _blessed.cleanTags(msg),
+		scriptMode
+			? blessedToAnsi(
+					defaultFactory.addColoursToString(
+						defaultFactory.messageToString(msg),
+					),
+			  )
+			: _blessed.cleanTags(msg),
 		...any.slice(1),
 	);
 };
@@ -937,6 +982,7 @@ export const executeScript = async (
 	args?: Dictionary<InfinityMintScriptArguments>,
 	infinityConsole?: InfinityConsole,
 	overwriteConsoleMethods: boolean = true,
+	disableDebugLog: boolean = false,
 ) => {
 	let _exit = (process as any).exit;
 	let _log = console.log;
@@ -967,6 +1013,7 @@ export const executeScript = async (
 				else infinityConsole.log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
+				if (disableDebugLog) return;
 				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
 				else infinityConsole.log(msg, 'debug');
 			},

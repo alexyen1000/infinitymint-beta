@@ -4,13 +4,16 @@ import {startGanache} from './ganache';
 import {
 	executeScript,
 	getConfigFile,
+	logDirect,
 	registerNetworkLogs,
+	setDebugLogDisabled,
+	setOnlyDefault,
 	warning,
 } from './helpers';
 import {InfinityMintConsoleOptions} from './interfaces';
 //import things we need
 import {defaultFactory} from './pipes';
-import {blessedToAnsi} from './colours';
+import {blessedToAnsi, blessedLog} from './colours';
 import {startInfinityConsole} from './web3';
 
 let config = getConfigFile();
@@ -18,6 +21,15 @@ let options: InfinityMintConsoleOptions;
 
 //require index.ts with __BIN set to true
 (async () => {
+	setOnlyDefault(true);
+	setDebugLogDisabled(true);
+
+	if (yargs.argv['no-debug-logs'] && yargs.argv['show-debug-logs'] !== 'false')
+		setDebugLogDisabled(false);
+
+	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')
+		setOnlyDefault(false);
+
 	//register current network pipes
 	registerNetworkLogs();
 	//start ganache
@@ -41,7 +53,9 @@ let options: InfinityMintConsoleOptions;
 	);
 
 	infinityConsole.getConsoleLogs().emitter.on('log', log => {
-		(console as any)._log(blessedToAnsi(log));
+		(console as any)._log(
+			blessedToAnsi(defaultFactory.addColoursToString(log)),
+		);
 	});
 
 	if (yargs.argv._[0] === undefined && yargs.argv.script === undefined) {
@@ -61,6 +75,8 @@ let options: InfinityMintConsoleOptions;
 		});
 	} else {
 		let scriptName = yargs.argv._[0];
+		let argv = yargs.argv;
+		argv._ = argv._.slice(1);
 
 		if (
 			infinityConsole
@@ -74,24 +90,25 @@ let options: InfinityMintConsoleOptions;
 		)
 			throw new Error('script ' + scriptName + ' does not exist.');
 
-		infinityConsole.log(yargs.argv);
-
 		let script = infinityConsole.getScript(scriptName);
 		let scriptArguments: any = {};
-		Object.keys(yargs.argv).map((key, index) => {
-			let value = yargs.argv[key];
+
+		Object.keys(argv).map((key, index) => {
+			let value = argv[key];
+
+			if (!value || value.length === 0) value = true;
 
 			if (key[0] === '_') return;
 			if (key[0] === '$') {
 				let index = key.split('$')[1];
 				if (index === undefined) return;
-				key = Object.keys(script.arguments)[index];
-				value = value[index];
+				key = script.arguments[index].name;
+				value = argv._[parseInt(index)];
 			}
 
 			scriptArguments[key] = {
 				...(script.arguments[key] || {}),
-				key: value,
+				name: key,
 				value,
 			};
 
@@ -135,11 +152,13 @@ let options: InfinityMintConsoleOptions;
 			scriptArguments,
 			infinityConsole,
 			false,
+			scriptArguments['no-debug-logs']?.value || false,
 		);
 	}
 })()
 	.catch(err => {
-		console.error(err);
+		blessedLog(`{red-fg}{bold}Error: ${err.message}{/}`);
+		blessedLog(`{red-fg}Stack: ${err.stack}{/}`);
 	})
 	.finally(() => {
 		process.exit(0);

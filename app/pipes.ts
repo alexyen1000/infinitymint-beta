@@ -130,21 +130,33 @@ export class PipeFactory {
 		this.pipes[this.currentPipeKey].error(error);
 	}
 
+	public messageToString(msg: any) {
+		if (typeof msg === 'string') return msg;
+		else if (msg instanceof Error) return msg.message;
+		else if (msg instanceof ChildProcess) return msg.pid;
+		else if (!isNaN(msg)) return msg.toString();
+		else return JSON.stringify(msg);
+	}
+
+	public addColoursToString(msg: string) {
+		return msg
+			.replace(/\[/g, '{yellow-fg}[')
+			.replace(/\]/g, ']{/yellow-fg}')
+			.replace(/\</g, '{cyan-fg}<')
+			.replace(/\>/g, '>{/cyan-fg}')
+			.replace(/\(/g, '{cyan-fg}(')
+			.replace(/\)/g, '){/cyan-fg}')
+			.replace(/=>/g, '{magenta-fg}=>{/magenta-fg}');
+	}
+
 	public log(msg: any, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipeKey;
 		if (!this.pipes[actualPipe] && !this.pipes['default'])
 			throw new Error('bad pipe: ' + actualPipe);
 		else if (!this.pipes[actualPipe]) return this.log(msg, 'default');
 
-		if (!dontHighlight && typeof msg === 'string')
-			msg = msg
-				.replace(/\[/g, '{yellow-fg}[')
-				.replace(/\]/g, ']{/yellow-fg}')
-				.replace(/\</g, '{cyan-fg}<')
-				.replace(/\>/g, '>{/cyan-fg}')
-				.replace(/\(/g, '{cyan-fg}(')
-				.replace(/\)/g, '){/cyan-fg}')
-				.replace(/=>/g, '{magenta-fg}=>{/magenta-fg}');
+		msg = this.messageToString(msg);
+		msg = dontHighlight ? msg : this.addColoursToString(msg);
 
 		this.emitter.emit(
 			'log',
