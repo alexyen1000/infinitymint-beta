@@ -835,7 +835,7 @@ export const findWindows = async (roots?: PathLike[]): Promise<string[]> => {
 };
 
 export const getInfinityMintVersion = () => {
-	if (isInfinityMint()) return getPackageJson()?.version || '1.0.0';
+	if (isInfinityMint()) return findLocalPackageJson()?.version || '1.0.0';
 
 	if (!fs.existsSync(cwd() + '/node_modules/infinitymint/package.json'))
 		return '1.0.0';
@@ -849,7 +849,7 @@ export const getInfinityMintVersion = () => {
 	);
 };
 
-export const getPackageJson = () => {
+export const findLocalPackageJson = () => {
 	if (
 		!fs.existsSync('./../package.json') &&
 		!fs.existsSync(cwd() + '/package.json')
@@ -974,7 +974,7 @@ export const executeScript = async (
 	try {
 		if (infinityConsole)
 			console.log = (msg: string) => {
-				infinityConsole.getPipeFactory().log(msg, 'default');
+				infinityConsole.log(msg, 'default');
 			};
 		if (infinityConsole)
 			console.error = (error: any) => {
@@ -988,11 +988,11 @@ export const executeScript = async (
 			args: args,
 			log: (msg: string) => {
 				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
-				else infinityConsole.getPipeFactory().log(msg, 'default');
+				else infinityConsole.log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
 				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
-				else infinityConsole.getPipeFactory().log(msg, 'debug');
+				else infinityConsole.log(msg, 'debug');
 			},
 			infinityConsole: infinityConsole,
 			project: getCurrentProject(true),
@@ -1127,7 +1127,7 @@ export const requireScript = async (
 
 export const isInfinityMint = () => {
 	try {
-		let packageJson = getPackageJson();
+		let packageJson = findLocalPackageJson();
 		if (packageJson?.name === 'infinitymint') return true;
 	} catch (error) {
 		if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
@@ -1178,7 +1178,7 @@ export const loadInfinityMint = (
 
 	//try to automatically add module alias
 	try {
-		let projectJson = getPackageJson();
+		let projectJson = findLocalPackageJson();
 		if (!projectJson._moduleAliases) {
 			projectJson._moduleAliases = {
 				'@app': './node_modules/infinitymint/dist/app/',

@@ -138,7 +138,7 @@ Projects.initialize = async (window, frame, blessed) => {
 
 	if (window.data.currentProject) notice.hide();
 
-	let scripts = Object.values(window.getInfinityConsole().getProjects());
+	let scripts = Object.values(window.getInfinityConsole().getParsedProjects());
 	let projects = scripts.map(
 		project =>
 			`${

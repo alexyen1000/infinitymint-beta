@@ -257,7 +257,7 @@ export let defaultFactory: PipeFactory;
  */
 export const createDefaultFactory = () => {
 	console.log('🛸 Creating Default Logger');
-	defaultFactory = new PipeFactory();
+	if (defaultFactory === undefined) defaultFactory = new PipeFactory();
 };
 
 /**

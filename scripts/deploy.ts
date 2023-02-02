@@ -38,13 +38,13 @@ const deploy: InfinityMintScript = {
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = 'deploy_' + project.name;
-			if (!script.infinityConsole.getPipeFactory().pipes[pipeName])
-				script.infinityConsole.getPipeFactory().registerSimplePipe(pipeName, {
+			if (!script.infinityConsole.getConsoleLogs().pipes[pipeName])
+				script.infinityConsole.getConsoleLogs().registerSimplePipe(pipeName, {
 					listen: true,
 				});
 
 			//all log messages will now go to deploy
-			script.infinityConsole.getPipeFactory().setCurrentPipe(pipeName);
+			script.infinityConsole.getConsoleLogs().setCurrentPipe(pipeName);
 		}
 
 		if (!project.network)
@@ -54,7 +54,7 @@ const deploy: InfinityMintScript = {
 				url: config.settings?.networks?.[
 					script.infinityConsole.getCurrentNetwork().name
 				]?.rpc,
-				tokenSymbol: script.infinityConsole.getTokenSymbol(),
+				tokenSymbol: script.infinityConsole.getCurrentTokenSymbol(),
 			};
 
 		//sets the project and script to be the one used by the action method. Must be called before any action is called or any always is called
@@ -65,10 +65,7 @@ const deploy: InfinityMintScript = {
 		);
 
 		let deployments: InfinityMintDeployment[] =
-			await script.infinityConsole.getDeploymentClasses(
-				project,
-				script.infinityConsole,
-			);
+			await script.infinityConsole.getProjectDeploymentClasses(project);
 
 		let notUniqueAndImportant = deployments
 			.filter(deployment => !deployment.isUnique() && !deployment.isImportant())

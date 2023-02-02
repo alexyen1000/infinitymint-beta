@@ -11,14 +11,14 @@ let updateContent = (window: InfinityMintWindow) => {
 	window.data.log.enableInput();
 	window.data.log.focus();
 	if (
-		window.getInfinityConsole()?.getPipeFactory()?.pipes[
+		window.getInfinityConsole()?.getConsoleLogs()?.pipes[
 			window.data.log.options.pipe
 		]
 	)
 		window.data.log.setContent(
 			window
 				.getInfinityConsole()
-				.getPipeFactory()
+				.getConsoleLogs()
 				.pipes[window.data.log.options.pipe].logs.map((log, index) => {
 					if (lastLogMessage && lastLogMessage === log.message)
 						return lineNumber(index, true) + `{grey-fg}${log.pure}{/grey-fg}`;
@@ -324,7 +324,7 @@ Logs.initialize = async (window, frame, blessed) => {
 		},
 		'list',
 	);
-	let keys = Object.keys(window.getInfinityConsole().getPipeFactory().pipes);
+	let keys = Object.keys(window.getInfinityConsole().getConsoleLogs().pipes);
 	form.setItems(keys);
 	form.on('select', (el: any, selected: any) => {
 		window.data.log.options.pipe = keys[selected];
@@ -343,11 +343,11 @@ Logs.initialize = async (window, frame, blessed) => {
 	deletePipe.on('click', () => {
 		window
 			.getInfinityConsole()
-			.getPipeFactory()
+			.getConsoleLogs()
 			.getPipe(window.data.log.options.pipe).logs = [];
 		window
 			.getInfinityConsole()
-			.getPipeFactory()
+			.getConsoleLogs()
 			.getPipe(window.data.log.options.pipe)
 			.log('{red-fg}pipe deleted{/red-fg}');
 
@@ -407,11 +407,11 @@ Logs.postInitialize = async (window, frame, blessed) => {
 			lastLogMessage = msg;
 		}
 	};
-	window.getInfinityConsole().getPipeFactory().emitter.on('log', cb);
+	window.getInfinityConsole().getConsoleLogs().emitter.on('log', cb);
 
 	//save when the window is destroyed
 	window.on('destroy', () => {
-		window.getInfinityConsole().getPipeFactory().emitter.off('log', cb);
+		window.getInfinityConsole().getConsoleLogs().emitter.off('log', cb);
 	});
 
 	//save when the window is hidden
@@ -454,7 +454,7 @@ Logs.postInitialize = async (window, frame, blessed) => {
 
 		window.data.log.options.selectedLine = Math.min(
 			(
-				window.getInfinityConsole().getPipeFactory().pipes[
+				window.getInfinityConsole().getConsoleLogs().pipes[
 					window.data.log.options.pipe
 				]?.logs || ['']
 			).length - 1,
@@ -472,7 +472,7 @@ Logs.postInitialize = async (window, frame, blessed) => {
 		if (window.isVisible() === false) return;
 
 		let selectedLinePosition = [
-			...(window.getInfinityConsole().getPipeFactory().pipes[
+			...(window.getInfinityConsole().getConsoleLogs().pipes[
 				window.data.log.options.pipe
 			]?.logs || ['']),
 		]

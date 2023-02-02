@@ -65,7 +65,6 @@ const execute = async (window: InfinityMintWindow) => {
 		window
 			.getInfinityConsole()
 			.log('{red-fg}{bold}{underline}script failed exectuion{/}');
-		if (!window.getInfinityConsole().isTelnet()) console.error(error);
 
 		window.elements['retry'].show();
 		window.setHideCloseButton(false);
@@ -73,7 +72,6 @@ const execute = async (window: InfinityMintWindow) => {
 		window.elements['outputDebug'].setScrollPerc(100);
 
 		window.getInfinityConsole().errorHandler(error);
-		//log normally to default console if we aren't telnet
 	}
 };
 
@@ -92,10 +90,10 @@ Script.initialize = async (window, frame, blessed) => {
 		window.getScreen().render();
 	};
 
-	window.getInfinityConsole().getPipeFactory().emitter.on('log', cb);
+	window.getInfinityConsole().getConsoleLogs().emitter.on('log', cb);
 	//when this window is destroyed, destroy the output emitter
 	window.on('destroy', () => {
-		window.getInfinityConsole().getPipeFactory().emitter.off('log', cb);
+		window.getInfinityConsole().getConsoleLogs().emitter.off('log', cb);
 	});
 
 	window.think = async (window, element) => {

@@ -27,14 +27,19 @@ import hre from 'hardhat';
 import {getTelnetOptions, SessionEntry, TelnetServer} from './telnet';
 import {InfinityMintEventEmitter} from './interfaces';
 import {InfinityMintWindow} from './window';
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
+import {HardhatRuntimeEnvironment, Network} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {changeNetwork, getDefaultAccountIndex} from './web3';
-import {defaultFactory, PipeFactory} from './pipes';
+import {defaultFactory as globalLogs, PipeFactory} from './pipes';
 import {Dictionary} from 'form-data';
 import {BigNumber} from 'ethers';
-import {getProjectDeploymentClasses} from './deployments';
+import {
+	getProjectDeploymentClasses,
+	InfinityMintDeployment,
+} from './deployments';
+import path from 'path';
 import {getImports, hasImportCache, ImportCache} from './imports';
+import {JsonRpcProvider} from '@ethersproject/providers';
 //blessed
 import blessed from 'blessed';
 import {findProjects, saveProjects} from './projects';
@@ -167,7 +172,7 @@ export class InfinityConsole {
 	/**
 	 * loggers for the console
 	 */
-	private pipeFactory: PipeFactory;
+	private logs: PipeFactory;
 	/**
 	 * projects cache
 	 */
@@ -186,8 +191,8 @@ export class InfinityConsole {
 		telnetServer?: TelnetServer,
 		eventEmitter?: InfinityMintEventEmitter,
 	) {
-		this.pipeFactory = pipeFactory || defaultFactory;
-		createPipes(this.pipeFactory);
+		this.logs = pipeFactory || globalLogs;
+		createPipes(this.logs);
 
 		this.windows = [];
 		this.allowExit = true;
@@ -338,7 +343,7 @@ export class InfinityConsole {
 	 * gets the consoles session id. this is used to identify the console in the telnet server as well as also being used to identify the console in the event emitter
 	 * @returns
 	 */
-	public getSessionId() {
+	public getSessionId(): string {
 		return this.sessionId;
 	}
 
@@ -346,7 +351,7 @@ export class InfinityConsole {
 	 * gets the consoles event emitter
 	 * @returns
 	 */
-	public getEventEmitter() {
+	public getEventEmitter(): InfinityMintEventEmitter {
 		return this.eventEmitter;
 	}
 
@@ -354,15 +359,15 @@ export class InfinityConsole {
 	 * gets the screen the console is running on
 	 * @returns
 	 */
-	public getScreen() {
+	public getScreen(): BlessedElement {
 		return this.screen;
 	}
 
 	/**
-	 * returns the current account of the console which is the first member of the signers array
+	 * returns the current account of the console which is the first member of the signers array but with a correctly resolved address
 	 * @returns
 	 */
-	public getAccount() {
+	public getAccount(): SignerWithAddress {
 		return this.account;
 	}
 
@@ -370,7 +375,7 @@ export class InfinityConsole {
 	 * returns the current balance of the account
 	 * @returns
 	 */
-	public getBalance() {
+	public getBalance(): BigNumber {
 		return this.balance;
 	}
 
@@ -378,7 +383,7 @@ export class InfinityConsole {
 	 * returns the current chain id
 	 * @returns
 	 */
-	public getCurrentChainId() {
+	public getCurrentChainId(): number {
 		return this.chainId;
 	}
 
@@ -386,8 +391,8 @@ export class InfinityConsole {
 	 * returns the pipe factory which holds the loggers for the console
 	 * @returns
 	 */
-	public getPipes() {
-		return PipeFactory;
+	public getGlobalLogs(): PipeFactory {
+		return globalLogs;
 	}
 
 	/**
@@ -396,7 +401,7 @@ export class InfinityConsole {
 	 * @param pipe
 	 */
 	public log(msg: string, pipe?: string) {
-		this.pipeFactory.log(msg, pipe || 'default');
+		this.logs.log(msg, pipe || 'default');
 	}
 
 	/**
@@ -405,18 +410,54 @@ export class InfinityConsole {
 	 */
 	public error(error: Error) {
 		if (this.isTelnet())
-			this.pipeFactory.log(
+			this.logs.log(
 				'{red-fg}' + error.message + '\n' + error.stack + '{/red-fg}',
 			);
 		else console.error(error);
 
-		this.pipeFactory.error(error);
+		this.logs.error(error);
 	}
 
 	/**
 	 * initializes the input keys property to equal the default keyboard shortcuts allowing the user to navigate the console and close windows
 	 */
 	public registerDefaultKeys() {
+		const close = (ch: string, key: string) => {
+			if (!this.allowExit) {
+				this.debugLog('not showing CloseBox as allowExit is false');
+				return;
+			}
+
+			if (this.errorBox && !this.errorBox.hidden) {
+				this.errorBox.destroy();
+				this.errorBox = undefined;
+				return;
+			}
+
+			if (!this.currentWindow) {
+				this.gotoWindow('CloseBox');
+				return;
+			}
+
+			if (this.currentWindow?.name !== 'CloseBox') {
+				let windows = this.getWindowsByName('CloseBox');
+				if (windows.length !== 0)
+					windows[0].options.currentWindow = this.currentWindow?.name;
+
+				this.gotoWindow('CloseBox');
+				//if the closeBox aka the current window is visible and we press control-c again just exit
+			} else if (this.currentWindow?.name === 'CloseBox') {
+				if (this.client) {
+					this.destroy();
+					return;
+				}
+
+				if (this.currentWindow.isVisible()) {
+					this.currentAudio?.kill();
+					process.exit(0);
+				} else this.currentWindow.show();
+			}
+		};
 		//default input keys
 		this.inputKeys = {
 			'C-l': [
@@ -481,44 +522,7 @@ export class InfinityConsole {
 					this.windowManager.focus();
 				},
 			],
-			'C-c': [
-				(ch: string, key: string) => {
-					if (!this.allowExit) {
-						this.debugLog('not showing CloseBox as allowExit is false');
-						return;
-					}
-
-					if (this.errorBox && !this.errorBox.hidden) {
-						this.errorBox.destroy();
-						this.errorBox = undefined;
-						return;
-					}
-
-					if (!this.currentWindow) {
-						this.gotoWindow('CloseBox');
-						return;
-					}
-
-					if (this.currentWindow?.name !== 'CloseBox') {
-						let windows = this.getWindowsByName('CloseBox');
-						if (windows.length !== 0)
-							windows[0].options.currentWindow = this.currentWindow?.name;
-
-						this.gotoWindow('CloseBox');
-						//if the closeBox aka the current window is visible and we press control-c again just exit
-					} else if (this.currentWindow?.name === 'CloseBox') {
-						if (this.client) {
-							this.destroy();
-							return;
-						}
-
-						if (this.currentWindow.isVisible()) {
-							this.currentAudio?.kill();
-							process.exit(0);
-						} else this.currentWindow.show();
-					}
-				},
-			],
+			'C-c': [close],
 		};
 	}
 
@@ -527,10 +531,7 @@ export class InfinityConsole {
 	 * @returns
 	 */
 	public getSigner(): SignerWithAddress {
-		if (!this.signers)
-			throw new Error('signers must be initialized before getting signer');
-
-		return this.signers[0];
+		return this.getSigners()[0];
 	}
 
 	/**
@@ -613,16 +614,19 @@ export class InfinityConsole {
 		//so we only fire once
 		if (window.data.destroy) window.off('destroy', window.data.destroy);
 
-		window.data.destroy = window.on('destroy', () => {
+		window.data.destroy = () => {
 			this.updateWindowsList();
-		});
+		};
+		window.on('destroy', window.data.destroy);
 
 		//so we only fire once
 		if (window.data.hide) window.off('hide', window.data.hide);
+
 		//when the current window is hiden, rebuild the item
-		window.data.hide = window.on('hide', () => {
+		window.data.hide = () => {
 			this.updateWindowsList();
-		});
+		};
+		window.on('hide', window.data.hide);
 	}
 
 	/**
@@ -729,7 +733,7 @@ export class InfinityConsole {
 	 * Returns the current consoles windows
 	 * @returns
 	 */
-	public getWindows() {
+	public getWindows(): InfinityMintWindow[] {
 		return this.windows;
 	}
 
@@ -738,7 +742,7 @@ export class InfinityConsole {
 	 * @param id
 	 * @returns
 	 */
-	public getWindowById(id: string | Window) {
+	public getWindowById(id: string | Window): InfinityMintWindow {
 		return this.windows
 			.filter(thatWindow => thatWindow.getId() === id.toString())
 			.pop();
@@ -748,7 +752,7 @@ export class InfinityConsole {
 	 * returns the current consoles imports
 	 * @returns
 	 */
-	public getImports() {
+	public getImports(): ImportCache {
 		return this.imports;
 	}
 
@@ -758,7 +762,7 @@ export class InfinityConsole {
 	 * @param oldest
 	 * @returns
 	 */
-	public getWindowByAge(name: string, oldest: boolean) {
+	public getWindowByAge(name: string, oldest: boolean): InfinityMintWindow[] {
 		let windows = this.getWindowsByName(name);
 		if (oldest) {
 			windows = windows.sort((a, b) => {
@@ -778,7 +782,7 @@ export class InfinityConsole {
 	 * @param name
 	 * @returns
 	 */
-	public getWindowsByName(name: string) {
+	public getWindowsByName(name: string): InfinityMintWindow[] {
 		return this.windows.filter(thatWindow => thatWindow.name === name);
 	}
 
@@ -786,7 +790,7 @@ export class InfinityConsole {
 	 * gets the current tick of the console. The tick is the number of times the console has been updated. The speed of which the console updates is determined by the config file
 	 * @returns
 	 */
-	public getTick() {
+	public getTick(): number {
 		return this.tick;
 	}
 
@@ -805,7 +809,7 @@ export class InfinityConsole {
 	 * returns true if there is a request to kill the current audio stream
 	 * @returns
 	 */
-	public audioAwaitingKill() {
+	public audioAwaitingKill(): boolean {
 		if (!getConfigFile().music) return false;
 		return this.currentAudioAwaitingKill;
 	}
@@ -815,7 +819,7 @@ export class InfinityConsole {
 	 * @param windowName
 	 * @returns
 	 */
-	public getWindow(windowName: string) {
+	public getWindow(windowName: string): InfinityMintWindow {
 		return this.getWindowsByName(windowName)[0];
 	}
 
@@ -824,7 +828,7 @@ export class InfinityConsole {
 	 * @param windowName
 	 * @returns
 	 */
-	public windowExists(windowName: string) {
+	public windowExists(windowName: string): boolean {
 		return this.getWindowsByName(windowName).length !== 0;
 	}
 
@@ -832,7 +836,7 @@ export class InfinityConsole {
 	 * returns true if audio is current playing
 	 * @returns
 	 */
-	public isAudioPlaying() {
+	public isAudioPlaying(): boolean {
 		if (!getConfigFile().music) false;
 		return !!this.currentAudio;
 	}
@@ -893,7 +897,7 @@ export class InfinityConsole {
 	 * gets the current window
 	 * @returns
 	 */
-	public getCurrentWindow() {
+	public getCurrentWindow(): InfinityMintWindow {
 		return this.currentWindow;
 	}
 
@@ -901,7 +905,7 @@ export class InfinityConsole {
 	 * Returns true if there is a current window
 	 * @returns
 	 */
-	public hasCurrentWindow() {
+	public hasCurrentWindow(): boolean {
 		return !!this.currentWindow;
 	}
 
@@ -926,7 +930,7 @@ export class InfinityConsole {
 		});
 	}
 
-	public hasWindow = (window: InfinityMintWindow) => {
+	public hasWindow = (window: InfinityMintWindow): boolean => {
 		return (
 			this.windows.filter(thatWindow => thatWindow.getId() === window.getId())
 				.length !== 0
@@ -1160,6 +1164,7 @@ export class InfinityConsole {
 			left: 'center',
 			shrink: true,
 			width: '80%',
+			keys: true,
 			mouse: true,
 			keyboard: true,
 			parent: this.screen,
@@ -1202,6 +1207,7 @@ export class InfinityConsole {
 		this.errorBox.setFront();
 		this.errorBox.focus();
 		this.errorBox.enableInput();
+		this.errorBox.enableKeys();
 	}
 
 	/**
@@ -1256,7 +1262,7 @@ export class InfinityConsole {
 	 * Returns the telnet client for this console.
 	 * @returns
 	 */
-	public getTelnetClient() {
+	public getTelnetClient(): any {
 		return this.client;
 	}
 
@@ -1264,7 +1270,7 @@ export class InfinityConsole {
 	 * Used by the close method to determine if the console can exit or not.
 	 * @returns
 	 */
-	public canExit() {
+	public canCloseInfinityMint(): boolean {
 		return this.allowExit;
 	}
 
@@ -1273,7 +1279,7 @@ export class InfinityConsole {
 	 * @param string
 	 * @returns
 	 */
-	public async changeNetwork(string: string) {
+	public async changeNetwork(string: string): Promise<JsonRpcProvider> {
 		changeNetwork(string);
 		await this.reload(true);
 		return ethers.provider;
@@ -1306,8 +1312,8 @@ export class InfinityConsole {
 	 * Returns the PipeFactory instance associated with this console
 	 * @returns
 	 */
-	public getPipeFactory() {
-		return this.pipeFactory;
+	public getConsoleLogs() {
+		return this.logs;
 	}
 
 	/**
@@ -1349,11 +1355,11 @@ export class InfinityConsole {
 		});
 	}
 
-	public getTokenSymbol() {
+	public getCurrentTokenSymbol(): string {
 		return 'eth';
 	}
 
-	public getCurrentNetwork() {
+	public getCurrentNetwork(): Network {
 		return this.network;
 	}
 
@@ -1385,11 +1391,11 @@ export class InfinityConsole {
 	 * @returns
 	 */
 
-	public async getProvider() {
+	public getProvider(): JsonRpcProvider {
 		return ethers.provider;
 	}
 
-	public getScripts() {
+	public getScripts(): InfinityMintScript[] {
 		return this.scripts || [];
 	}
 
@@ -1399,12 +1405,11 @@ export class InfinityConsole {
 	 * @param console
 	 * @returns
 	 */
-	public async getDeploymentClasses(
+	public async getProjectDeploymentClasses(
 		projectName: string | InfinityMintTempProject | InfinityMintCompiledProject,
-		console: InfinityConsole,
 		gems?: boolean,
-	) {
-		return await getProjectDeploymentClasses(projectName, console);
+	): Promise<InfinityMintDeployment[]> {
+		return await getProjectDeploymentClasses(projectName, this);
 	}
 
 	public async refreshScripts() {
@@ -1499,7 +1504,7 @@ export class InfinityConsole {
 			} catch (error) {
 				if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
 
-				this.pipeFactory.getPipe(this.pipeFactory.currentPipeKey).error(error);
+				this.logs.getPipe(this.logs.currentPipeKey).error(error);
 				this.debugLog(
 					`{red-fg}Script Failure: {/red-fg} ${error.message} <${script.name}>`,
 				);
@@ -1515,9 +1520,9 @@ export class InfinityConsole {
 	 */
 	public debugLog(msg: string) {
 		//throw away debug log
-		if (!this.pipeFactory.pipes['debug']) return;
+		if (!this.logs.pipes['debug']) return;
 
-		return this.pipeFactory.log(msg, 'debug');
+		return this.logs.log(msg, 'debug');
 	}
 
 	/**
@@ -1548,11 +1553,11 @@ export class InfinityConsole {
 			infinityConsole: this,
 			event: eventParameters,
 			log: msg => {
-				this.getPipeFactory().log(msg.toString());
+				this.log(msg.toString());
 			},
 			eventEmitter: this.eventEmitter,
 			debugLog: msg => {
-				this.getPipeFactory().log(msg.toString(), 'debug');
+				this.log(msg.toString(), 'debug');
 			},
 		} as InfinityMintEventEmit<typeof eventType>);
 	}
@@ -1694,7 +1699,7 @@ export class InfinityConsole {
 	 * Returns the list of paths to projects which have been found
 	 * @returns
 	 */
-	public getProjects() {
+	public getParsedProjects(): Dictionary<path.ParsedPath> {
 		return this.projects.database;
 	}
 
