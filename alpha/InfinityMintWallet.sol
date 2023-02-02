@@ -2,9 +2,9 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Authentication.sol";
-import "./IERC721.sol";
-import "./IntegrityInterface.sol";
+import './Authentication.sol';
+import './IERC721.sol';
+import './IntegrityInterface.sol';
 
 contract InfinityMintWallet is
 	Authentication,
@@ -13,7 +13,7 @@ contract InfinityMintWallet is
 	InfinityMintObject
 {
 	/// @notice the version type of wallet this is
-	bytes public walletType = "Wallet";
+	bytes public walletType = 'Wallet';
 	/// @notice the location of the main ERC721 contract this wallet was spawned from;
 	address public erc721;
 	/// @notice the main ERC721 contract this wallet is attached too
@@ -54,7 +54,7 @@ contract InfinityMintWallet is
 			address(this),
 			deployer,
 			currentTokenId,
-			"wallet", //no version type with wallet
+			'wallet', //no version type with wallet
 			type(IntegrityInterface).interfaceId
 		);
 	}
@@ -76,8 +76,8 @@ contract InfinityMintWallet is
 	 */
 	function transferOwnershipToTokenOwner() public onlyOnce {
 		address owner = IERC721(erc721).ownerOf(currentTokenId);
-		require(deployer != owner, "owner of the token is the deployer");
-		require(sender() == owner, "sender must be the new owner");
+		require(deployer != owner, 'owner of the token is the deployer');
+		require(sender() == owner, 'sender must be the new owner');
 
 		transferOwnership(owner);
 	}
@@ -103,7 +103,7 @@ contract InfinityMintWallet is
 			value: 0
 		}(
 			abi.encodeWithSignature(
-				"transfer(address,address,uint256)",
+				'transfer(address,address,uint256)',
 				address(this),
 				address(to),
 				tokenId
@@ -111,7 +111,7 @@ contract InfinityMintWallet is
 		);
 
 		if (!success) {
-			if (returnData.length == 0) revert("call reverted");
+			if (returnData.length == 0) revert('call reverted');
 			else
 				assembly {
 					let returndata_size := mload(returnData)

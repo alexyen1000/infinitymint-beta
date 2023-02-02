@@ -2,7 +2,7 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Authentication.sol";
+import './Authentication.sol';
 
 /// @title InfinityMint Royalty Abstract Contract
 /// @author Llydia Cross
@@ -35,18 +35,18 @@ abstract contract Royalty is Authentication {
 		valuesController = InfinityMintValues(valuesContract);
 
 		tokenPrice =
-			valuesController.tryGetValue("startingPrice") *
-			valuesController.tryGetValue("baseTokenValue");
+			valuesController.tryGetValue('startingPrice') *
+			valuesController.tryGetValue('baseTokenValue');
 		lastTokenPrice =
-			valuesController.tryGetValue("startingPrice") *
-			valuesController.tryGetValue("baseTokenValue");
+			valuesController.tryGetValue('startingPrice') *
+			valuesController.tryGetValue('baseTokenValue');
 		originalTokenPrice =
-			valuesController.tryGetValue("startingPrice") *
-			valuesController.tryGetValue("baseTokenValue");
+			valuesController.tryGetValue('startingPrice') *
+			valuesController.tryGetValue('baseTokenValue');
 
-		if (valuesController.tryGetValue("stickerSplit") > 100)
-			revert("sticker split is a value over 100");
-		stickerSplit = valuesController.tryGetValue("stickerSplit");
+		if (valuesController.tryGetValue('stickerSplit') > 100)
+			revert('sticker split is a value over 100');
+		stickerSplit = valuesController.tryGetValue('stickerSplit');
 	}
 
 	function changePrice(uint256 _tokenPrice) public onlyDeployer {
@@ -64,7 +64,7 @@ abstract contract Royalty is Authentication {
 		onlyOnce
 		returns (uint256 total)
 	{
-		if (values[addr] <= 0) revert("Invalid or Empty address");
+		if (values[addr] <= 0) revert('Invalid or Empty address');
 
 		total = values[addr];
 		values[addr] = 0;

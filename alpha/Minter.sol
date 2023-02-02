@@ -2,11 +2,11 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Authentication.sol";
-import "./InfinityMintStorage.sol";
-import "./Asset.sol";
-import "./RandomNumber.sol";
-import "./InfinityMintObject.sol";
+import './Authentication.sol';
+import './InfinityMintStorage.sol';
+import './Asset.sol';
+import './RandomNumber.sol';
+import './InfinityMintObject.sol';
 
 /// @title Minter Interface
 /// @author Llydia Cross

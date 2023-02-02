@@ -3,8 +3,8 @@
 pragma solidity ^0.8.0;
 
 //this is implemented by every contract in our system
-import "./InfinityMintUtil.sol";
-import "./InfinityMintValues.sol";
+import './InfinityMintUtil.sol';
+import './InfinityMintValues.sol';
 
 abstract contract InfinityMintObject {
 	/// @notice The main InfinityMint object, TODO: Work out a way for this to easily be modified

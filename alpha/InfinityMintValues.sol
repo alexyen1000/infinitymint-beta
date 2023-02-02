@@ -53,7 +53,7 @@ contract InfinityMintValues {
 	}
 
 	function getValue(string memory key) external view returns (uint256) {
-		if (!registeredValues[key]) revert("Invalid Value");
+		if (!registeredValues[key]) revert('Invalid Value');
 
 		return values[key];
 	}

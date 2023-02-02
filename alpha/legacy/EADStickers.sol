@@ -2,9 +2,9 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Stickers.sol";
-import "../ERC721.sol";
-import "../IntegrityInterface.sol";
+import './Stickers.sol';
+import '../ERC721.sol';
+import '../IntegrityInterface.sol';
 
 /// @title InfinityMint Ethereum Ad Service Sticker ERC721
 /// @author Llydia Cross
@@ -56,11 +56,11 @@ contract EADStickers is Stickers, ERC721 {
 		address erc721Destination,
 		address EASWalletAddress,
 		address valuesContract
-	) ERC721("EADS Sticker", "EADS") Stickers(valuesContract) {
+	) ERC721('EADS Sticker', 'EADS') Stickers(valuesContract) {
 		erc721TokenId = tokenId;
 		erc721 = erc721Destination;
 		EASWallet = InfinityMintWallet(payable(EASWalletAddress));
-		versionType = "EADStickers"; // Should be the contract name
+		versionType = 'EADStickers'; // Should be the contract name
 	}
 
 	/**
@@ -70,8 +70,8 @@ contract EADStickers is Stickers, ERC721 {
 	 */
 	function transferOwnershipToTokenOwner() public onlyOnce {
 		address owner = IERC721(erc721).ownerOf(erc721TokenId);
-		require(deployer != owner, "owner of the token is the deployer");
-		require(msg.sender == owner, "sender must be the new owner");
+		require(deployer != owner, 'owner of the token is the deployer');
+		require(msg.sender == owner, 'sender must be the new owner');
 		transferOwnership(owner);
 	}
 
@@ -98,11 +98,11 @@ contract EADStickers is Stickers, ERC721 {
 
 	/// @notice  Sets the ethereum ad service wallet location
 	function setWalletAddresss(address EASWalletAddress) public onlyDeployer {
-		require(isContract(EASWalletAddress), "is not a contract");
+		require(isContract(EASWalletAddress), 'is not a contract');
 		require(
 			InfinityMintWallet(payable(EASWalletAddress)).deployer() ==
 				deployer,
-			"the deployer for this contract and the wallet contract must be the same"
+			'the deployer for this contract and the wallet contract must be the same'
 		);
 
 		EASWallet = InfinityMintWallet(payable(EASWalletAddress));
@@ -113,7 +113,7 @@ contract EADStickers is Stickers, ERC721 {
 		//first we check if the current deployer of this contract is approved or the owner of the tokenID it is attached too
 		(bool success, bytes memory returnData) = erc721.staticcall(
 			abi.encodeWithSignature(
-				"isApprovedOrOwner(uint256,address)",
+				'isApprovedOrOwner(uint256,address)',
 				erc721TokenId,
 				deployer
 			)
@@ -133,16 +133,16 @@ contract EADStickers is Stickers, ERC721 {
 		address sender = (msg.sender);
 
 		require(isApprovedOrOwner(sender, uint256(stickerId))); // ERC721 permissions can update the sticker
-		require(isSafe(packed, erc721TokenId), "your packed sticker is unsafe");
+		require(isSafe(packed, erc721TokenId), 'your packed sticker is unsafe');
 		require(
 			enabled,
-			"stickers are not enabled right now and need to be enabled in order to update"
+			'stickers are not enabled right now and need to be enabled in order to update'
 		);
 
 		(, , , address theirOwner) = unpackSticker(packed);
 		(, , , address actualOwner) = unpackSticker(stickers[stickerId]);
 
-		require(theirOwner == actualOwner, "trying to change the owner");
+		require(theirOwner == actualOwner, 'trying to change the owner');
 
 		stickers[stickerId] = packed;
 	}
@@ -189,7 +189,7 @@ contract EADStickers is Stickers, ERC721 {
 			requests[sender][index],
 			(uint256, address, bytes)
 		);
-		require(sender == savedSender, "sender and saved sender are different");
+		require(sender == savedSender, 'sender and saved sender are different');
 
 		//mint the sticker
 		ERC721.mint(savedSender, currentStickerId, packed);
@@ -200,7 +200,7 @@ contract EADStickers is Stickers, ERC721 {
 		//if the price is greater than 100 wei or zero, we hit back the parent ERC721 with the royalty cut
 		if (
 			(price > 100 || price == 0) &&
-			valuesController.tryGetValue("stickerSplit") >= 2
+			valuesController.tryGetValue('stickerSplit') >= 2
 		) {
 			//this is what we went back to parent ERC721
 			uint256 cut = 0;
@@ -209,7 +209,7 @@ contract EADStickers is Stickers, ERC721 {
 			if (price != 0) {
 				cut =
 					(price / 100) *
-					valuesController.tryGetValue("stickerSplit");
+					valuesController.tryGetValue('stickerSplit');
 
 				//deduct the cut from the value that the deployer holds onto
 				if (price - cut > 0) price = price - cut;
@@ -220,14 +220,14 @@ contract EADStickers is Stickers, ERC721 {
 				value: cut
 			}(
 				abi.encodeWithSignature(
-					"depositStickerRoyalty(uint32)",
+					'depositStickerRoyalty(uint32)',
 					erc721TokenId
 				)
 			);
 
 			if (!success) {
 				if (returnData.length == 0)
-					revert("cannot deposit royalty to main ERC721");
+					revert('cannot deposit royalty to main ERC721');
 				else
 					assembly {
 						let returndata_size := mload(returnData)
@@ -236,7 +236,7 @@ contract EADStickers is Stickers, ERC721 {
 			}
 
 			//send it to the wallet currently associated with this sticker contract
-			EASWallet.deposit{ value: price }();
+			EASWallet.deposit{value: price}();
 		}
 
 		//delete the old now acccepted request
@@ -256,13 +256,13 @@ contract EADStickers is Stickers, ERC721 {
 		if (
 			bytes(uri[stickerId]).length == 0 &&
 			stickers[uint32(stickerId)].length == 0
-		) revert("Token URI for non existent token");
+		) revert('Token URI for non existent token');
 
 		if (bytes(uri[stickerId]).length != 0) return uri[stickerId];
 
 		require(
 			isSafe(stickers[uint32(stickerId)], erc721TokenId),
-			"request is not safely packed"
+			'request is not safely packed'
 		);
 
 		(, , string memory object, ) = unpackSticker(
@@ -275,13 +275,13 @@ contract EADStickers is Stickers, ERC721 {
 	/// @notice  Adds a sticker request for the owner to accept.
 	/// @dev Its up to the end user to validate the sticker and make sure it is safe. We do various validation and check summing to make sure things are okay.
 	function addRequest(bytes memory packed) public payable override onlyOnce {
-		require(msg.value == stickerPrice, "not the sticker price");
-		require(isSafe(packed, erc721TokenId), "your packed sticker is unsafe");
-		require(enabled, "no new stickers can be added right now");
+		require(msg.value == stickerPrice, 'not the sticker price');
+		require(isSafe(packed, erc721TokenId), 'your packed sticker is unsafe');
+		require(enabled, 'no new stickers can be added right now');
 		address sender = (msg.sender);
 		require(
 			balanceOf(msg.sender) < 100,
-			"you have minted the maximum amount of stickers to this wallet, use another wallet to mint more."
+			'you have minted the maximum amount of stickers to this wallet, use another wallet to mint more.'
 		);
 
 		//add it!

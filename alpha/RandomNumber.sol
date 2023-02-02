@@ -2,7 +2,7 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./InfinityMintValues.sol";
+import './InfinityMintValues.sol';
 
 /// @title InfinityMint Random Number Abstract Contract
 /// @author Llydia Cross
@@ -15,7 +15,7 @@ abstract contract RandomNumber {
 
 	constructor(address valuesContract) {
 		valuesController = InfinityMintValues(valuesContract);
-		randomnessFactor = valuesController.getValue("randomessFactor");
+		randomnessFactor = valuesController.getValue('randomessFactor');
 	}
 
 	function getNumber() external returns (uint256) {
@@ -23,7 +23,7 @@ abstract contract RandomNumber {
 			++salt;
 		}
 
-		return unsafeNumber(valuesController.getValue("maxRandomNumber"), salt);
+		return unsafeNumber(valuesController.getValue('maxRandomNumber'), salt);
 	}
 
 	function getMaxNumber(uint256 maxNumber) external returns (uint256) {

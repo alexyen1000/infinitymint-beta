@@ -2,8 +2,8 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./InfinityMintObject.sol";
-import "./Authentication.sol";
+import './InfinityMintObject.sol';
+import './Authentication.sol';
 
 /// @title InfinityMint storage controller
 /// @author Llydia Cross
@@ -35,7 +35,7 @@ contract InfinityMintStorage is Authentication, InfinityMintObject {
 		public
 		onlyApproved
 	{
-		require(timestamp > block.timestamp, "timestamp must be in the future");
+		require(timestamp > block.timestamp, 'timestamp must be in the future');
 		previewTimestamp[addr] = timestamp;
 	}
 
@@ -69,10 +69,10 @@ contract InfinityMintStorage is Authentication, InfinityMintObject {
 		string memory _flag,
 		bool position
 	) public onlyApproved {
-		require(this.flag(tokenId, "immutable") != true, "token is immutable");
+		require(this.flag(tokenId, 'immutable') != true, 'token is immutable');
 		require(
-			!InfinityMintUtil.isEqual(bytes(_flag), "immutable"),
-			"token immutable/mutable state cannot be modified this way for security reasons"
+			!InfinityMintUtil.isEqual(bytes(_flag), 'immutable'),
+			'token immutable/mutable state cannot be modified this way for security reasons'
 		);
 		tokenFlags[tokenId][_flag] = position;
 	}
@@ -192,7 +192,7 @@ contract InfinityMintStorage is Authentication, InfinityMintObject {
 	/// @dev returns an InfinityObject defined in {InfinityMintObject}
 	/// @param tokenId the tokenId to get
 	function get(uint32 tokenId) public view returns (InfinityObject memory) {
-		if (tokens[tokenId].owner == address(0x0)) revert("invalid token");
+		if (tokens[tokenId].owner == address(0x0)) revert('invalid token');
 
 		return tokens[tokenId];
 	}
@@ -207,8 +207,8 @@ contract InfinityMintStorage is Authentication, InfinityMintObject {
 		public
 		onlyApproved
 	{
-		require(data.owner != address(0x0), "null owner");
-		require(data.currentTokenId == tokenId, "tokenID mismatch");
+		require(data.owner != address(0x0), 'null owner');
+		require(data.currentTokenId == tokenId, 'tokenID mismatch');
 		tokens[tokenId] = data;
 	}
 
@@ -232,7 +232,7 @@ contract InfinityMintStorage is Authentication, InfinityMintObject {
 	{
 		require(
 			previews[owner][index].owner != address(0x0),
-			"invalid preview"
+			'invalid preview'
 		);
 
 		return previews[owner][index];

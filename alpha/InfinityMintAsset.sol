@@ -2,8 +2,8 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Asset.sol";
-import "./Authentication.sol";
+import './Asset.sol';
+import './Authentication.sol';
 
 abstract contract InfinityMintAsset is Asset, Authentication {
 	mapping(uint256 => bool) internal disabledPaths; //disabled paths which are not picked
@@ -12,8 +12,8 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 	//user values
 	InfinityMintValues internal valuesController;
 	//the token name
-	string internal tokenName = "asset";
-	string public typeOf = "any"; //the type of assetId is default
+	string internal tokenName = 'asset';
+	string public typeOf = 'any'; //the type of assetId is default
 
 	//path stuff
 	uint256 internal pathCount;
@@ -140,10 +140,8 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 		string memory defaultName = getDefaultName();
 
 		// incremental and incremental use nextPath to get their name
-		if (
-			!valuesController.isTrue("incrementalMode")
-		) {
-			if (nameCount <= 0 && valuesController.isTrue("mustGenerateName"))
+		if (!valuesController.isTrue('incrementalMode')) {
+			if (nameCount <= 0 && valuesController.isTrue('mustGenerateName'))
 				nameCount = 1;
 
 			if (nameCount <= 0 || names.length == 0) {
@@ -170,7 +168,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 		} else {
 			results = new string[](2);
 
-			if (names.length == 0) results[0] = "";
+			if (names.length == 0) results[0] = '';
 			else if (nextPath < names.length) results[0] = names[nextPath];
 			else results[0] = names[0];
 			results[1] = defaultName;
@@ -182,7 +180,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 		uint32,
 		RandomNumber
 	) public virtual override returns (bytes memory) {
-		return "{}"; //returns a blank json array
+		return '{}'; //returns a blank json array
 	}
 
 	function getDefaultName()
@@ -213,7 +211,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 				lastAssets,
 				getNames(
 					randomNumberController.getMaxNumber(
-						valuesController.tryGetValue("nameCount")
+						valuesController.tryGetValue('nameCount')
 					),
 					randomNumberController
 				),
@@ -366,7 +364,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 
 	function addAssets(uint256[] memory rarities) public onlyDeployer {
 		for (uint256 i = 0; i < rarities.length; ) {
-			if (rarities[i] > 100) revert("one of more rarities are above 100");
+			if (rarities[i] > 100) revert('one of more rarities are above 100');
 			assetRarity.push(rarities[i]);
 			//increment asset counter
 			assetId += 1;
@@ -392,7 +390,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 		returns (uint32[] memory result)
 	{
 		uint32 pathSize = getPathSize(pathId);
-		uint256 div = valuesController.tryGetValue("colourChunkSize");
+		uint256 div = valuesController.tryGetValue('colourChunkSize');
 
 		if (div <= 0) div = 4;
 
@@ -401,7 +399,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 			result[0] = uint32(randomNumberController.getMaxNumber(0xFFFFFF));
 			result[1] = pathSize;
 			result[2] = uint32(randomNumberController.getMaxNumber(0xFFFFFFFF));
-			result[3] = uint32(valuesController.tryGetValue("extraColours"));
+			result[3] = uint32(valuesController.tryGetValue('extraColours'));
 			return result;
 		}
 
@@ -429,7 +427,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 			randomNumberController.getMaxNumber(0xFFFFFFFF)
 		);
 		result[result.length - 1] = uint32(
-			valuesController.tryGetValue("extraColours")
+			valuesController.tryGetValue('extraColours')
 		);
 	}
 

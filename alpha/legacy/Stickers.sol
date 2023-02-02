@@ -2,10 +2,10 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "../InfinityMintWallet.sol";
-import "./StickerInterface.sol";
-import "../IntegrityInterface.sol";
-import "../Authentication.sol";
+import '../InfinityMintWallet.sol';
+import './StickerInterface.sol';
+import '../IntegrityInterface.sol';
+import '../Authentication.sol';
 
 abstract contract Stickers is
 	StickerInterface,
@@ -13,7 +13,7 @@ abstract contract Stickers is
 	Authentication
 {
 	/// @notice Should be the name of the contract or the name of this contract
-	bytes public versionType = "Stickers";
+	bytes public versionType = 'Stickers';
 	address public erc721;
 	uint32 public currentTokenId;
 	uint256 public stickerPrice;
@@ -32,7 +32,7 @@ abstract contract Stickers is
 	constructor(address valuesContract) {
 		enabled = true;
 		valuesController = InfinityMintValues(valuesContract);
-		stickerPrice = 1 * valuesController.tryGetValue("baseTokenValue");
+		stickerPrice = 1 * valuesController.tryGetValue('baseTokenValue');
 	}
 
 	function totalSupply() external view returns (uint256) {
@@ -62,7 +62,7 @@ abstract contract Stickers is
 		view
 		returns (bool, string memory)
 	{
-		if (flags[stickerId].length == 0) return (false, "");
+		if (flags[stickerId].length == 0) return (false, '');
 		return abi.decode(flags[stickerId], (bool, string));
 	}
 
