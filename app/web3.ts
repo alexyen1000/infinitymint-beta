@@ -57,7 +57,7 @@ export const initializeInfinityMint = async (
 	config = config || getConfigFile();
 	registerNetworkLogs(hre.config.networks);
 	//allow piping
-	allowPiping();
+	if (process.env.__BIN !== 'true') allowPiping();
 	//
 	logDirect('🪐 Starting InfinityConsole');
 

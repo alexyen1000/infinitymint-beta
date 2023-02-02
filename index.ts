@@ -95,7 +95,8 @@ export const load = async (
 					...(options || {}),
 					dontDraw:
 						config.startup ||
-						(!config.console && !isEnvTrue('INFINITYMINT_CONSOLE')),
+						(!config.console && !isEnvTrue('INFINITYMINT_CONSOLE')) ||
+						process.env.__DONT_DRAW === 'true',
 				},
 				defaultFactory,
 			);

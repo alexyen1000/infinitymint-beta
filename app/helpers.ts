@@ -372,9 +372,7 @@ export const logDirect = (msg: any) => {
 					: msg,
 			),
 		);
-	else if ((console as any)._log) (console as any)._log(msg);
-
-	console.log(msg);
+	else console.log(msg);
 };
 
 let actionProject: InfinityMintTempProject | undefined;
@@ -587,85 +585,61 @@ export const write = (path: PathLike, object: any) => {
 		typeof object === 'object' ? JSON.stringify(object) : object,
 	);
 };
+
+export const consoleLogReplacement = (...any: any[]) => {
+	let msg = any[0];
+	if (msg instanceof Error) msg = msg.message;
+	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+
+	if (isAllowPiping)
+		defaultFactory.log(msg, defaultFactory.currentPipeKey || 'default');
+
+	//do normal log as well
+	(console as any)._log(msg, ...any.slice(1));
+};
+
+export const consleErrorReplacement = (...any: any[]) => {
+	let error = any[0];
+
+	defaultFactory.error(error);
+
+	if (
+		isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ||
+		isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT')
+	) {
+		log(
+			`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
+			isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
+		);
+		((error?.stack || error?.message || 'unknown') as string)
+			.split('\n')
+			.forEach((line: string) =>
+				log(
+					`{red-fg}${line}{/red-fg}`,
+					isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
+				),
+			);
+	}
+
+	if (
+		defaultFactory.pipes[defaultFactory.currentPipeKey || 'default']?.listen ||
+		isEnvTrue('PIPE_ECHO_ERRORS')
+	)
+		(console as any)._error(error);
+};
+
 /**
  * Overwrites default behaviour of console.log and console.error
  */
 export const overwriteConsoleMethods = () => {
 	//overwrite console log
-	let _log = console.log;
-	console.log = (msg: any) => {
-		msg = msg instanceof Error ? msg.message : msg;
+	let __log = console.log;
+	(console as any)._log = (...any: any[]) => __log(...any);
+	console.log = consoleLogReplacement;
 
-		if (!isAllowPiping) {
-			if (typeof msg !== 'object') _log(_blessed.cleanTags(msg));
-			else _log(msg);
-			return;
-		}
-
-		try {
-			if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
-		} catch (error) {
-			msg = msg.toString();
-		}
-
-		if (
-			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
-			msg.substring(0, 4) === 'eth_' &&
-			defaultFactory.pipes['ganache']
-		) {
-			defaultFactory.log(msg, 'ganache');
-			return;
-		}
-
-		if (
-			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
-			defaultFactory.pipes[defaultFactory.currentPipeKey]
-		)
-			defaultFactory.log(msg, defaultFactory.currentPipeKey);
-
-		if (
-			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
-			(!defaultFactory.pipes[defaultFactory.currentPipeKey] &&
-				!isEnvTrue('PIPE_SILENCE_UNDEFINED_PIPE'))
-		)
-			_log(_blessed.cleanTags(msg.replace('<#DONT_LOG_ME$>', '')));
-	};
-	(console as any)._log = _log;
-
-	let _error = console.error;
-	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
-		if (!isAllowPiping) {
-			_error(error);
-			return;
-		}
-		if (defaultFactory.pipes[defaultFactory.currentPipeKey] && !dontSendToPipe)
-			defaultFactory.getPipe(defaultFactory.currentPipeKey).error(error);
-
-		if (
-			isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ||
-			isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT')
-		) {
-			log(
-				`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
-				isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
-			);
-			((error?.stack || error?.message || 'unknown') as string)
-				.split('\n')
-				.forEach((line: string) =>
-					log(
-						`{red-fg}${line}{/red-fg}`,
-						isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
-					),
-				);
-		}
-
-		if (
-			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
-			isEnvTrue('PIPE_ECHO_ERRORS')
-		)
-			_error(error);
-	};
-	(console as any)._error = _error;
+	let __error = console.error;
+	(console as any)._error = (...any: any[]) => __error(...any);
+	console.error = consleErrorReplacement;
 };
 
 /**
