@@ -12,6 +12,7 @@ import {
 	warning,
 	registerNetworkLogs,
 	cwd,
+	setScriptMode,
 } from './helpers';
 import {BaseContract, BigNumber} from 'ethers';
 import fs from 'fs';
@@ -91,6 +92,9 @@ export const startInfinityConsole = async (
 	debugLog(
 		'starting InfinityConsole with solidity root of ' + getSolidityFolder(),
 	);
+
+	//set the script mode if applicable
+	setScriptMode(options.scriptMode || false);
 
 	let infinityConsole = new InfinityConsole(
 		options,

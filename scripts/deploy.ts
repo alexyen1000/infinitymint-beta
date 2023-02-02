@@ -18,7 +18,7 @@ import {
 } from '../app/helpers';
 
 const deploy: InfinityMintScript = {
-	name: 'Deploy Project',
+	name: 'Deploy',
 	description:
 		'Deploys InfinityMint or a specific InfinityMint contract related to the current project',
 	/**

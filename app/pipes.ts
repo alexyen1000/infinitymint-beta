@@ -36,13 +36,14 @@ export class Pipe {
 		this.errors = [];
 		this.appendDate = false;
 		this.created = Date.now();
+
 		this.logHandler = (str: string) => {
 			str = str.toString();
-			if (
-				this.listen &&
-				(!isEnvTrue('PIPE_IGNORE_CONSOLE') || getConfigFile().console)
-			)
-				console.log('<#DONT_LOG_ME$>' + str);
+
+			if (this.listen)
+				console.log(
+					(!isEnvTrue('PIPE_IGNORE_CONSOLE') ? '<#DONT_LOG_ME$>' : '') + str,
+				);
 
 			this.logs.push({
 				message: str,
@@ -52,16 +53,6 @@ export class Pipe {
 			});
 		};
 		this.errorHandler = (err: Error) => {
-			if (
-				this.listen &&
-				!isEnvTrue('PIPE_IGNORE_CONSOLE') &&
-				getConfigFile().console
-			)
-				console.error(err, false);
-
-			if (isEnvTrue('PIPE_IGNORE_CONSOLE') && !getConfigFile().console)
-				console.error(err);
-
 			this.errors.push(err);
 		};
 		this.terminationHandler = () => {};

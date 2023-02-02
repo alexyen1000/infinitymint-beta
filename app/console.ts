@@ -1149,6 +1149,20 @@ export class InfinityConsole {
 	}
 
 	/**
+	 *
+	 * @param scriptName
+	 * @returns
+	 */
+	public getScript(scriptName: string): InfinityMintScript {
+		return this.scripts.find(
+			script =>
+				script.name.toLowerCase() === scriptName.toLowerCase() ||
+				script.fileName.split('.')[0].toLowerCase() ===
+					scriptName.toLowerCase(),
+		);
+	}
+
+	/**
 	 * Displays an error in a box. Will not display if the console is not drawing.
 	 * @param error
 	 * @param onClick

@@ -29,6 +29,7 @@ import {
 	saveTempCompiledProject,
 	saveTempDeployedProject,
 } from './projects';
+import {blessedToAnsi} from './colours';
 
 /**
  * a simple interface to describe a vector
@@ -355,24 +356,35 @@ export const cwd = () => {
  */
 const _blessed = require('blessed');
 
+let scriptMode = false;
+
+export const setScriptMode = (scriptMode: boolean) => {
+	scriptMode = scriptMode;
+};
+
 /**
  * ignores the current console log and pipes it directly to the console.
  * @param msg
  */
-export const logDirect = (msg: any) => {
-	if ((console as any)._log && isAllowPiping && typeof msg !== 'object')
-		(console as any)._log(
-			_blessed.cleanTags(
-				msg instanceof Error
-					? msg.message
-					: typeof msg === 'string'
-					? msg
-						? !isNaN(parseInt(msg))
-						: parseInt(msg.toString())
-					: msg,
-			),
-		);
-	else console.log(msg);
+export const logDirect = (...any: any) => {
+	if (!isAllowPiping) {
+		console.log(...any);
+		return;
+	}
+
+	let msg = any[0];
+	msg =
+		msg instanceof Error
+			? msg.message
+			: typeof msg === 'string'
+			? msg
+				? !isNaN(parseInt(msg))
+				: parseInt(msg.toString())
+			: msg;
+
+	(console as any)._log(
+		scriptMode ? blessedToAnsi(msg) : _blessed.cleanTags(msg),
+	);
 };
 
 let actionProject: InfinityMintTempProject | undefined;
@@ -591,47 +603,34 @@ export const consoleLogReplacement = (...any: any[]) => {
 	if (msg instanceof Error) msg = msg.message;
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
 
-	if (isAllowPiping)
+	if (isAllowPiping && msg.indexOf('<#DONT_LOG_ME$>') === -1)
 		defaultFactory.log(msg, defaultFactory.currentPipeKey || 'default');
 
 	//do normal log as well
-	(console as any)._log(msg, ...any.slice(1));
+	(console as any)._log(
+		scriptMode ? blessedToAnsi(msg) : _blessed.cleanTags(msg),
+		...any.slice(1),
+	);
 };
 
-export const consleErrorReplacement = (...any: any[]) => {
+export const consoleErrorReplacement = (...any: any[]) => {
 	let error = any[0];
-
+	//adds it to the log
 	defaultFactory.error(error);
 
-	if (
-		isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ||
-		isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT')
-	) {
-		log(
-			`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
-			isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
-		);
-		((error?.stack || error?.message || 'unknown') as string)
-			.split('\n')
-			.forEach((line: string) =>
-				log(
-					`{red-fg}${line}{/red-fg}`,
-					isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
-				),
-			);
-	}
+	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG'))
+		defaultFactory.pipes['debug'].error(error);
 
-	if (
-		defaultFactory.pipes[defaultFactory.currentPipeKey || 'default']?.listen ||
-		isEnvTrue('PIPE_ECHO_ERRORS')
-	)
-		(console as any)._error(error);
+	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT'))
+		defaultFactory.pipes['default'].error(error);
+
+	if (isEnvTrue('PIPE_ECHO_ERRORS')) (console as any)._error(...any);
 };
 
 /**
  * Overwrites default behaviour of console.log and console.error
  */
-export const overwriteConsoleMethods = () => {
+export const ovewriteConsoleMethods = () => {
 	//overwrite console log
 	let __log = console.log;
 	(console as any)._log = (...any: any[]) => __log(...any);
@@ -639,7 +638,7 @@ export const overwriteConsoleMethods = () => {
 
 	let __error = console.error;
 	(console as any)._error = (...any: any[]) => __error(...any);
-	console.error = consleErrorReplacement;
+	console.error = consoleErrorReplacement;
 };
 
 /**
@@ -737,7 +736,7 @@ export const prepareConfig = () => {
 	prepareHardhatConfig(session, config);
 
 	//overwrite the console methods
-	if (!isEnvTrue('PIPE_IGNORE_CONSOLE')) overwriteConsoleMethods();
+	if (!isEnvTrue('PIPE_IGNORE_CONSOLE')) ovewriteConsoleMethods();
 
 	let solidityModuleFolder =
 		cwd() +
@@ -937,6 +936,7 @@ export const executeScript = async (
 	gems?: Dictionary<InfinityMintGemScript>,
 	args?: Dictionary<InfinityMintScriptArguments>,
 	infinityConsole?: InfinityConsole,
+	overwriteConsoleMethods: boolean = true,
 ) => {
 	let _exit = (process as any).exit;
 	let _log = console.log;
@@ -946,14 +946,16 @@ export const executeScript = async (
 		else warning('halted exit code: ' + 0);
 	};
 	try {
-		if (infinityConsole)
-			console.log = (msg: string) => {
-				infinityConsole.log(msg, 'default');
-			};
-		if (infinityConsole)
-			console.error = (error: any) => {
-				infinityConsole.errorHandler(error);
-			};
+		if (overwriteConsoleMethods) {
+			if (infinityConsole)
+				console.log = (msg: string) => {
+					infinityConsole.log(msg, 'default');
+				};
+			if (infinityConsole)
+				console.error = (error: any) => {
+					infinityConsole.errorHandler(error);
+				};
+		}
 
 		await script.execute({
 			script: script,
