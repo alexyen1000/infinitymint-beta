@@ -13,6 +13,7 @@ import {
 	InfinityMintTempProject,
 } from './interfaces';
 import {
+	cwd,
 	debugLog,
 	findFiles,
 	isEnvTrue,
@@ -229,7 +230,7 @@ export class InfinityMintDeployment {
 	 */
 	getTemporaryFilePath() {
 		return (
-			process.cwd() +
+			cwd() +
 			`/temp/deployments/${this.project.name}@${
 				this.project.version?.version || '1.0.0'
 			}/${this.key}_${this.network}.json`
@@ -375,14 +376,14 @@ export class InfinityMintDeployment {
 		//make the directory
 		if (
 			!fs.existsSync(
-				process.cwd() +
+				cwd() +
 					`/temp/deployments/${this.project.name}@${
 						this.project.version?.version || '1.0.0'
 					}/`,
 			)
 		)
 			fs.mkdirSync(
-				process.cwd() +
+				cwd() +
 					`/temp/deployments/${this.project.name}@${
 						this.project.version?.version || '1.0.0'
 					}/`,
@@ -448,12 +449,7 @@ export class InfinityMintDeployment {
 	hasLocalDeployment(index?: number) {
 		let deployment = this.liveDeployments[index || 0];
 		let path =
-			process.cwd() +
-			'/deployments/' +
-			this.network +
-			'/' +
-			deployment.name +
-			'.json';
+			cwd() + '/deployments/' + this.network + '/' + deployment.name + '.json';
 
 		return fs.existsSync(path);
 	}
@@ -466,12 +462,7 @@ export class InfinityMintDeployment {
 	getLocalDeployment(index?: number) {
 		let deployment = this.liveDeployments[index || 0];
 		let path =
-			process.cwd() +
-			'/deployments/' +
-			this.network +
-			'/' +
-			deployment.name +
-			'.json';
+			cwd() + '/deployments/' + this.network + '/' + deployment.name + '.json';
 
 		if (!fs.existsSync(path))
 			throw new Error('local deployment not found: ' + path);
@@ -653,7 +644,7 @@ export const loadDeploymentClasses = async (
 			...(await getDeploymentClasses(
 				project,
 				console,
-				process.cwd() + '/node_modules/infinitymint/',
+				cwd() + '/node_modules/infinitymint/',
 			)),
 		];
 
@@ -753,8 +744,7 @@ export const getLocalDeployment = (contractName: string, network: string) => {
  * @returns
  */
 export const readLocalDeployment = (contractName: string, network: string) => {
-	let path =
-		process.cwd() + '/deployments/' + network + '/' + contractName + '.json';
+	let path = cwd() + '/deployments/' + network + '/' + contractName + '.json';
 
 	if (!fs.existsSync(path)) throw new Error(`${path} not found`);
 	return JSON.parse(
@@ -779,7 +769,7 @@ export const hasDeploymentManifest = (
 	if (!network) throw new Error('unable to automatically determain network');
 
 	let path =
-		process.cwd() +
+		cwd() +
 		`/temp/deployments/${project.name}@${
 			project.version?.version || '1.0.0'
 		}/${contractName}_${network}.json`;
@@ -805,7 +795,7 @@ export const getLiveDeployments = (
 	network: string,
 ) => {
 	let path =
-		process.cwd() +
+		cwd() +
 		`/temp/deployments/${project.name}@${
 			project.version?.version || '1.0.0'
 		}/${contractName}_${network}.json`;
@@ -854,11 +844,11 @@ export const getDeploymentClasses = async (
 	if (!network) throw new Error('unable to automatically determain network');
 
 	let searchLocations = [...(roots || [])];
-	searchLocations.push(process.cwd() + '/deploy/**/*.js');
-	if (isTypescript()) searchLocations.push(process.cwd() + '/deploy/**/*.ts');
+	searchLocations.push(cwd() + '/deploy/**/*.js');
+	if (isTypescript()) searchLocations.push(cwd() + '/deploy/**/*.ts');
 	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_DEPLOY'))
 		searchLocations.push(
-			process.cwd() + '/node_modules/infinitymint/dist/deploy/**/*.js',
+			cwd() + '/node_modules/infinitymint/dist/deploy/**/*.js',
 		);
 
 	let deployments = [];

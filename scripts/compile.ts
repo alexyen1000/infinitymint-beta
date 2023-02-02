@@ -11,7 +11,13 @@ import {
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '../app/interfaces';
-import {getInfinityMintVersion, prepare, action, always} from '../app/helpers';
+import {
+	getInfinityMintVersion,
+	prepare,
+	action,
+	always,
+	cwd,
+} from '../app/helpers';
 import {createHash} from 'node:crypto';
 import {getImports} from '../app/imports';
 import fs from 'fs';
@@ -376,7 +382,7 @@ const compile: InfinityMintScript = {
 											imports[style] = truePath;
 											imports[project.name + '@' + style] = truePath;
 											imports[getProjectFullName(project) + style] = truePath;
-											imports[process.cwd() + style] = truePath;
+											imports[cwd() + style] = truePath;
 											imports[
 												(svgSetting.source.dir + style).replace(/\/\//g, '/')
 											] = truePath;
@@ -395,7 +401,7 @@ const compile: InfinityMintScript = {
 										svgSetting.source.dir.split('imports')[0] + path;
 									imports[path] = truePath;
 									imports[svgSetting.source.dir + path] = truePath;
-									imports[process.cwd() + path] = truePath;
+									imports[cwd() + path] = truePath;
 									imports[project.name + '@' + path] = truePath;
 									imports[getProjectFullName(project) + path] = truePath;
 									imports[truePath] = truePath;
@@ -464,7 +470,7 @@ const compile: InfinityMintScript = {
 
 					imports[fileName] = path.source.dir + '/' + path.source.base;
 					imports[fileNameWithSlash] = path.source.dir + '/' + path.source.base;
-					imports[process.cwd() + fileNameWithSlash] =
+					imports[cwd() + fileNameWithSlash] =
 						path.source.dir + '/' + path.source.base;
 					imports[getProjectFullName(project) + fileNameWithSlash] =
 						path.source.dir + '/' + path.source.base;
@@ -579,13 +585,11 @@ const compile: InfinityMintScript = {
 				let zipBuffer = await zip.generateAsync({type: 'nodebuffer'});
 
 				script.log(`\t{cyan-fg}Saving Bundle...{/}`);
-				if (!fs.existsSync(process.cwd() + '/projects/bundles/'))
-					fs.mkdirSync(process.cwd() + '/projects/bundles/');
+				if (!fs.existsSync(cwd() + '/projects/bundles/'))
+					fs.mkdirSync(cwd() + '/projects/bundles/');
 
 				await fs.promises.writeFile(
-					`${process.cwd()}/projects/bundles/${getProjectFullName(
-						project,
-					)}.bundle`,
+					`${cwd()}/projects/bundles/${getProjectFullName(project)}.bundle`,
 					zipBuffer,
 				);
 				let zippedSize = zipBuffer.length / 1024;
@@ -604,10 +608,10 @@ const compile: InfinityMintScript = {
 
 		//copy the project from the temp projects folder to the projects folder, will always run regardless of it calling action and not always
 		let copy = await action('copyProject', async () => {
-			let projectLocation = `${process.cwd()}/projects/compiled/${getProjectFullName(
+			let projectLocation = `${cwd()}/projects/compiled/${getProjectFullName(
 				project,
 			)}.json`;
-			let tempLocation = `${process.cwd()}/temp/projects/${getProjectFullName(
+			let tempLocation = `${cwd()}/temp/projects/${getProjectFullName(
 				project,
 			)}.compiled.temp.json`;
 			fs.copyFileSync(tempLocation, projectLocation);
@@ -628,13 +632,13 @@ const compile: InfinityMintScript = {
 		//check if the temporary compiled project exists and delete it
 		if (
 			fs.existsSync(
-				`${process.cwd()}/temp/projects/${getProjectFullName(
+				`${cwd()}/temp/projects/${getProjectFullName(
 					project,
 				)}.compiled.temp.json`,
 			)
 		)
 			fs.unlinkSync(
-				`${process.cwd()}/temp/projects/${getProjectFullName(
+				`${cwd()}/temp/projects/${getProjectFullName(
 					project,
 				)}.compiled.temp.json`,
 			);

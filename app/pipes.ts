@@ -1,6 +1,6 @@
 import {ChildProcess} from 'child_process';
 import {Dictionary} from 'form-data';
-import {debugLog, getConfigFile, isEnvTrue, warning} from './helpers';
+import {cwd, debugLog, getConfigFile, isEnvTrue, warning} from './helpers';
 import fs from 'fs';
 import {EventEmitter} from 'events';
 
@@ -198,7 +198,7 @@ export class PipeFactory {
 			debugLog('saving pipe => (' + pipe.toString() + ')');
 
 		fs.writeFileSync(
-			process.cwd() + '/temp/pipes/' + pipe.toString() + `.${Date.now()}.json`,
+			cwd() + '/temp/pipes/' + pipe.toString() + `.${Date.now()}.json`,
 			JSON.stringify({
 				name: pipe.toString(),
 				logs: this.pipes[pipe.toString()].logs,

@@ -13,6 +13,7 @@ import fs from 'fs';
 import {
 	BlessedElement,
 	createPipes,
+	cwd,
 	findScripts,
 	findWindows,
 	getConfigFile,
@@ -862,10 +863,10 @@ export class InfinityConsole {
 	public playAudio(path: string, onFinished?: Function, onKilled?: Function) {
 		if (!getConfigFile().music) return;
 		this.currentAudioKilled = false;
-		this.debugLog('playing => ' + process.cwd() + path);
+		this.debugLog('playing => ' + cwd() + path);
 		// configure arguments for executable if any
 		this.currentAudio = this.player.play(
-			process.cwd() + path,
+			cwd() + path,
 			{afplay: ['-v', 1] /* lower volume for afplay on OSX */},
 			(err: Error | any) => {
 				if (err && !this.currentAudio.killed) {
@@ -875,12 +876,12 @@ export class InfinityConsole {
 				}
 
 				if (this.currentAudio.killed) {
-					this.debugLog('killed => ' + process.cwd() + path);
+					this.debugLog('killed => ' + cwd() + path);
 					this.currentAudio = null;
 					this.currentAudioKilled = true;
 					if (onKilled) onKilled(this.currentWindow, this);
 				} else {
-					this.debugLog('finished playing => ' + process.cwd() + path);
+					this.debugLog('finished playing => ' + cwd() + path);
 					this.currentAudio = null;
 					if (onFinished) onFinished(this.currentWindow, this);
 				}

@@ -11,6 +11,7 @@ import {InfinityMintWindow} from '../window';
 import hre from 'hardhat';
 import {getDefaultAccountIndex} from '../web3';
 import {importCount} from '../imports';
+import {cwd} from '../helpers';
 
 const Menu = new InfinityMintWindow(
 	'Menu',
@@ -283,8 +284,8 @@ Menu.initialize = async (window, frame, blessed) => {
 				),
 				padding: 0,
 				file: isInfinityMint()
-					? process.cwd() + files[Math.floor(Math.random() * files.length)]
-					: process.cwd() +
+					? cwd() + files[Math.floor(Math.random() * files.length)]
+					: cwd() +
 					  '/node_modules/infinitymint' +
 					  files[Math.floor(Math.random() * files.length)],
 				animate: true,
@@ -400,7 +401,7 @@ Menu.initialize = async (window, frame, blessed) => {
 				},
 			},
 			border: window.getBorder(),
-			content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${process.cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
+			content: `{gray-bg}{magenta-fg}cwd =>{/magenta-fg} {white-fg}${cwd()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}solidity_folder =>{/magenta-fg} {white-fg}${getSolidityFolder()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}default_account =>{/magenta-fg} {white-fg}${getDefaultAccountIndex()}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}loaded_scripts =>{/magenta-fg} {white-fg}${
 				window.getInfinityConsole().getScripts().length
 			}{/white-fg}{/gray-bg}\n{gray-bg}{magenta-fg}typescript =>{/magenta-fg} {white-fg}${
 				isTypescript() ? 'true' : 'false'

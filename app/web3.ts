@@ -11,6 +11,7 @@ import {
 	getSolidityFolder,
 	warning,
 	registerNetworkLogs,
+	cwd,
 } from './helpers';
 import {BaseContract, BigNumber} from 'ethers';
 import fs from 'fs';
@@ -140,7 +141,7 @@ export const getDeploymentProjectPath = (
 	project: InfinityMintCompiledProject | InfinityMintTempProject,
 ) => {
 	return (
-		process.cwd() +
+		cwd() +
 		`/deployments/${hre.network.name}/` +
 		project.name +
 		'@' +

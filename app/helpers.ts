@@ -308,14 +308,14 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
  * @returns
  */
 export const readSession = (forceRead?: boolean): InfinityMintSession => {
-	if (!fs.existsSync(process.cwd() + '/.session'))
+	if (!fs.existsSync(cwd() + '/.session'))
 		return {created: Date.now(), environment: {}};
 
 	if (memorySession && !forceRead) return memorySession;
 
 	try {
 		let result = JSON.parse(
-			fs.readFileSync(process.cwd() + '/.session', {
+			fs.readFileSync(cwd() + '/.session', {
 				encoding: 'utf-8',
 			}),
 		);
@@ -338,6 +338,16 @@ export const readSession = (forceRead?: boolean): InfinityMintSession => {
  */
 export const delay = async (ms: number) =>
 	new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * the most safest safe way to get cwd according to stack overflow
+ * @returns
+ */
+export const cwd = () => {
+	let result = path.resolve(process.cwd());
+	if (result === '/') return '';
+	return result;
+};
 
 /**
  *
@@ -553,12 +563,9 @@ export const parse = (
 	if (parseCache[path.toString()] && useCache)
 		return parseCache[path.toString()];
 
-	let result = fs.readFileSync(
-		process.cwd() + (path[0] !== '/' ? '/' + path : path),
-		{
-			encoding: (encoding || 'utf-8') as any,
-		},
-	);
+	let result = fs.readFileSync(cwd() + (path[0] !== '/' ? '/' + path : path), {
+		encoding: (encoding || 'utf-8') as any,
+	});
 
 	let parsedResult: string;
 	if (typeof result === typeof Buffer)
@@ -576,7 +583,7 @@ export const parse = (
 export const write = (path: PathLike, object: any) => {
 	log('writing ' + path, 'fs');
 	fs.writeFileSync(
-		process.cwd() + (path[0] !== '/' ? '/' + path : path),
+		cwd() + (path[0] !== '/' ? '/' + path : path),
 		typeof object === 'object' ? JSON.stringify(object) : object,
 	);
 };
@@ -666,7 +673,7 @@ export const overwriteConsoleMethods = () => {
  * @returns
  */
 export const getConfigFile = () => {
-	let res = require(process.cwd() + '/infinitymint.config');
+	let res = require(cwd() + '/infinitymint.config');
 	res = res.default || res;
 	return res as InfinityMintConfig;
 };
@@ -676,8 +683,8 @@ export const copyContractsFromNodeModule = (
 	source: PathLike,
 ) => {
 	if (
-		fs.existsSync(process.cwd() + '/package.json') &&
-		readJson(process.cwd() + '/package.json').name === 'infinitymint'
+		fs.existsSync(cwd() + '/package.json') &&
+		readJson(cwd() + '/package.json').name === 'infinitymint'
 	)
 		throw new Error('cannot use node modules in InfinityMint package');
 
@@ -719,17 +726,17 @@ export const prepareHardhatConfig = (
 export const cleanCompilations = () => {
 	try {
 		debugLog('removing ./artifacts');
-		fs.rmdirSync(process.cwd() + '/artifacts', {
+		fs.rmdirSync(cwd() + '/artifacts', {
 			recursive: true,
 			force: true,
 		} as any);
 		debugLog('removing ./cache');
-		fs.rmdirSync(process.cwd() + '/cache', {
+		fs.rmdirSync(cwd() + '/cache', {
 			recursive: true,
 			force: true,
 		} as any);
 		debugLog('removing ./typechain-types');
-		fs.rmdirSync(process.cwd() + '.typechain-types', {
+		fs.rmdirSync(cwd() + '.typechain-types', {
 			recursive: true,
 			force: true,
 		} as any);
@@ -759,11 +766,11 @@ export const prepareConfig = () => {
 	if (!isEnvTrue('PIPE_IGNORE_CONSOLE')) overwriteConsoleMethods();
 
 	let solidityModuleFolder =
-		process.cwd() +
+		cwd() +
 		'/node_modules/infinitymint/' +
 		(process.env.DEFAULT_SOLIDITY_FOLDER || 'alpha');
 	let solidityFolder =
-		process.cwd() + '/' + (process.env.DEFAULT_SOLIDITY_FOLDER || 'alpha');
+		cwd() + '/' + (process.env.DEFAULT_SOLIDITY_FOLDER || 'alpha');
 
 	if (isEnvTrue('SOLIDITY_USE_NODE_MODULE'))
 		copyContractsFromNodeModule(solidityFolder, solidityModuleFolder);
@@ -810,12 +817,12 @@ export const findWindows = async (roots?: PathLike[]): Promise<string[]> => {
 
 	if (!isInfinityMint())
 		searchLocations.push(
-			process.cwd() + '/node_modules/infinitymint/dist/app/windows/**/*.js',
+			cwd() + '/node_modules/infinitymint/dist/app/windows/**/*.js',
 		);
-	else searchLocations.push(process.cwd() + '/app/windows/**/*.ts');
+	else searchLocations.push(cwd() + '/app/windows/**/*.ts');
 
-	searchLocations.push(process.cwd() + '/windows/**/*.js');
-	if (isTypescript()) searchLocations.push(process.cwd() + '/windows/**/*.ts');
+	searchLocations.push(cwd() + '/windows/**/*.js');
+	if (isTypescript()) searchLocations.push(cwd() + '/windows/**/*.ts');
 
 	let files = [];
 
@@ -830,15 +837,14 @@ export const findWindows = async (roots?: PathLike[]): Promise<string[]> => {
 export const getInfinityMintVersion = () => {
 	if (isInfinityMint()) return getPackageJson()?.version || '1.0.0';
 
-	if (!fs.existsSync(process.cwd() + '/node_modules/infinitymint/package.json'))
+	if (!fs.existsSync(cwd() + '/node_modules/infinitymint/package.json'))
 		return '1.0.0';
 
 	return (
 		JSON.parse(
-			fs.readFileSync(
-				process.cwd() + '/node_modules/infinitymint/package.json',
-				{encoding: 'utf-8'},
-			),
+			fs.readFileSync(cwd() + '/node_modules/infinitymint/package.json', {
+				encoding: 'utf-8',
+			}),
 		)?.version || '1.0.0'
 	);
 };
@@ -846,7 +852,7 @@ export const getInfinityMintVersion = () => {
 export const getPackageJson = () => {
 	if (
 		!fs.existsSync('./../package.json') &&
-		!fs.existsSync(process.cwd() + '/package.json')
+		!fs.existsSync(cwd() + '/package.json')
 	)
 		throw new Error('no package.json');
 
@@ -854,7 +860,7 @@ export const getPackageJson = () => {
 		fs.readFileSync(
 			fs.existsSync('./../package.json')
 				? './../package.json'
-				: process.cwd() + '/package.json',
+				: cwd() + '/package.json',
 			{
 				encoding: 'utf-8',
 			},
@@ -902,20 +908,18 @@ export const findScripts = async (roots?: string[]) => {
 
 	//try and include everything in the scripts folder of the module
 	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS'))
-		roots.push(
-			process.cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js',
-		);
+		roots.push(cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js');
 
 	//if we are typescript require ts files
-	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
+	if (isTypescript()) roots.push(cwd() + '/scripts/**/*.ts');
 	//require JS files always
-	roots.push(process.cwd() + '/scripts/**/*.js');
+	roots.push(cwd() + '/scripts/**/*.js');
 
 	roots = [
 		...roots,
 		...(config.roots || []).map(
 			(root: string) =>
-				process.cwd() +
+				cwd() +
 				'/' +
 				root +
 				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
@@ -923,7 +927,7 @@ export const findScripts = async (roots?: string[]) => {
 		),
 		...(config.roots || []).map(
 			(root: string) =>
-				process.cwd() +
+				cwd() +
 				'/' +
 				root +
 				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
@@ -1181,7 +1185,7 @@ export const loadInfinityMint = (
 			};
 		}
 		fs.writeFileSync(
-			process.cwd() + '/package.json',
+			cwd() + '/package.json',
 			JSON.stringify(projectJson, null, 2),
 		);
 	} catch (error) {}
@@ -1193,9 +1197,7 @@ export const loadInfinityMint = (
 export const createDirs = (dirs: string[]) => {
 	dirs
 		.filter((dir: string) => !fs.existsSync(dir))
-		.forEach(dir =>
-			fs.mkdirSync(process.cwd() + (dir[0] !== '/' ? '/' + dir : dir)),
-		);
+		.forEach(dir => fs.mkdirSync(cwd() + (dir[0] !== '/' ? '/' + dir : dir)));
 };
 
 export const readJson = (fileName: string) => {
@@ -1223,7 +1225,7 @@ export const createEnvFile = (source: any) => {
 		}\n`;
 	});
 
-	fs.writeFileSync(process.cwd() + '/.env', stub);
+	fs.writeFileSync(cwd() + '/.env', stub);
 };
 
 export const preInitialize = (isJavascript?: boolean) => {
@@ -1244,14 +1246,13 @@ export const preInitialize = (isJavascript?: boolean) => {
 		'projects/bundles',
 	]);
 
-	if (!fs.existsSync(process.cwd() + '/.env')) {
+	if (!fs.existsSync(cwd() + '/.env')) {
 		//if it isn't javascript we can just include the .env.ts file, else if we aren't just copy the .env from the examples/js folder instead
 		let path: PathLike;
 		if (!isJavascript) {
-			path = fs.existsSync(process.cwd() + '/examples/example.env.ts')
-				? process.cwd() + '/examples/example.env.ts'
-				: process.cwd() +
-				  '/node_modules/infinitymint/dist/examples/example.env.js';
+			path = fs.existsSync(cwd() + '/examples/example.env.ts')
+				? cwd() + '/examples/example.env.ts'
+				: cwd() + '/node_modules/infinitymint/dist/examples/example.env.js';
 
 			if (!fs.existsSync(path))
 				throw new Error(
@@ -1268,16 +1269,16 @@ export const preInitialize = (isJavascript?: boolean) => {
 				return;
 			}
 		} else {
-			path = fs.existsSync(process.cwd() + '/examples/js/example.env')
-				? process.cwd() + '/examples/js/example.env'
-				: process.cwd() + '/node_modules/infinitymint/examples/js/example.env';
+			path = fs.existsSync(cwd() + '/examples/js/example.env')
+				? cwd() + '/examples/js/example.env'
+				: cwd() + '/node_modules/infinitymint/examples/js/example.env';
 
 			if (!fs.existsSync(path))
 				throw new Error(
 					'could not find: ' + path + ' to create .env file with',
 				);
 
-			fs.copyFileSync(path, process.cwd() + '/.env');
+			fs.copyFileSync(path, cwd() + '/.env');
 		}
 
 		console.log('made .env from ' + path);
@@ -1334,9 +1335,9 @@ export const initializeGanacheMnemonic = () => {
 		if (session.environment.ganacheMnemonic)
 			delete session.environment.ganacheMnemonic;
 
-		if (fs.existsSync(process.cwd() + '/.mnemonics'))
+		if (fs.existsSync(cwd() + '/.mnemonics'))
 			session.environment.ganacheMnemonic = readJson(
-				process.cwd() + '/.mnemonics',
+				cwd() + '/.mnemonics',
 			).ganache.mnemonic;
 		else
 			warning(
@@ -1396,8 +1397,8 @@ export const createInfinityMintConfig = (
 		export default config;`;
 
 	//check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
-	if (!fs.existsSync(process.cwd() + '/' + filename)) {
-		fs.writeFileSync(process.cwd() + '/' + filename, stub);
+	if (!fs.existsSync(cwd() + '/' + filename)) {
+		fs.writeFileSync(cwd() + '/' + filename, stub);
 	}
 };
 
@@ -1440,7 +1441,7 @@ let memorySession: InfinityMintSession;
  */
 export const saveSession = (session: InfinityMintSession) => {
 	memorySession = session;
-	fs.writeFileSync(process.cwd() + '/.session', JSON.stringify(session));
+	fs.writeFileSync(cwd() + '/.session', JSON.stringify(session));
 };
 
 /**
@@ -1451,8 +1452,8 @@ export const getGanacheMnemonic = () => {
 	if (readSession()?.environment?.ganacheMnemonic)
 		return readSession()?.environment?.ganacheMnemonic;
 
-	return fs.existsSync(process.cwd() + '/.mnemonic')
-		? fs.readFileSync(process.cwd() + '/.mnemonic', {
+	return fs.existsSync(cwd() + '/.mnemonic')
+		? fs.readFileSync(cwd() + '/.mnemonic', {
 				encoding: 'utf-8',
 		  })
 		: generateMnemonic();

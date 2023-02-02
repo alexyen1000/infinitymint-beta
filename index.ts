@@ -8,6 +8,7 @@ import {
 	isInfinityMint,
 	warning,
 	registerNetworkLogs,
+	cwd,
 } from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
@@ -64,14 +65,12 @@ export const load = async (
 
 	try {
 		if (isInfinityMint())
-			(await import(process.cwd() + '/dist/app/pipes')).setDefaultFactory(
+			(await import(cwd() + '/dist/app/pipes')).setDefaultFactory(
 				defaultFactory as any,
 			);
 		else
 			(
-				await import(
-					process.cwd() + '/node_modules/infinitymint/dist/app/pipes'
-				)
+				await import(cwd() + '/node_modules/infinitymint/dist/app/pipes')
 			).setDefaultFactory(defaultFactory as any);
 	} catch (error) {
 		warning('could not change default logger in node_modules: ' + error.stack);
