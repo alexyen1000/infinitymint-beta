@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import yargs from 'yargs';
 import {startGanache} from './ganache';
 import {
