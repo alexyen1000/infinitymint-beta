@@ -1,4 +1,8 @@
 #!/usr/bin/env ts-node
+import {createDefaultFactory} from 'infinitymint/dist/app/pipes';
+// Create default pipe
+createDefaultFactory();
+
 import hre from 'hardhat';
 let loadHre = hre.artifacts; // load hardhat runtime environment
 import dotEnv from 'dotenv';

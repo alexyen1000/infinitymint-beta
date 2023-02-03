@@ -260,8 +260,10 @@ export let defaultFactory: PipeFactory;
  * creates the default factory. this MUST be called in index.ts or index.js before any other code is executed
  */
 export const createDefaultFactory = () => {
-	console.log('🛸 Creating Default Logger');
-	if (defaultFactory === undefined) defaultFactory = new PipeFactory();
+	if (defaultFactory === undefined) {
+		console.log('🛸 Creating Default Logger for ' + __filename);
+		defaultFactory = new PipeFactory();
+	}
 };
 
 /**
