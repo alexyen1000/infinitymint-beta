@@ -229,21 +229,19 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	if (pipe !== 'default' && pipe !== 'debug' && onlyDefault) return;
 
-	defaultFactory.log(msg, pipe);
-	if (
-		(isEnvTrue('PIPE_IGNORE_CONSOLE') || !isAllowPiping) &&
-		(console as any)._log
-	) {
-		if (scriptMode)
-			msg = blessedToAnsi(
-				defaultFactory.addColoursToString(defaultFactory.messageToString(msg)),
-			);
+	if (isAllowPiping) defaultFactory.log(msg, pipe);
 
-		(console as any)._log(
-			blessedToAnsi(
-				defaultFactory.addColoursToString(defaultFactory.messageToString(msg)),
-			),
-		);
+	if (!isAllowPiping || isEnvTrue('PIPE_IGNORE_CONSOLE')) {
+		if (!(console as any)._log) {
+			console.log(msg);
+		} else
+			(console as any)._log(
+				blessedToAnsi(
+					defaultFactory.addColoursToString(
+						defaultFactory.messageToString(msg),
+					),
+				),
+			);
 	}
 };
 
@@ -680,7 +678,7 @@ export const consoleErrorReplacement = (...any: any[]) => {
 	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT'))
 		defaultFactory.pipes['default'].log(error);
 
-	if (isEnvTrue('PIPE_ECHO_ERRORS') || scriptMode)
+	if (isEnvTrue('PIPE_ECHO_ERRORS') || scriptMode || !isAllowPiping)
 		(console as any)._error(...any);
 };
 

@@ -204,7 +204,7 @@ export const deploy = async (
 		libraries: libraries,
 	});
 	let contract = await deployContract(factory, args);
-	logTransaction(contract.deployTransaction);
+	await logTransaction(contract.deployTransaction);
 
 	if (!save) return contract;
 
@@ -277,7 +277,7 @@ export const deployContract = async (
 	if (overrides) args.push(overrides);
 	let contract = await factory.deploy(args);
 	contract = await contract.deployed();
-	logTransaction(contract.deployTransaction);
+	await logTransaction(contract.deployTransaction);
 	return contract;
 };
 
@@ -334,7 +334,7 @@ export const hardhatDeploy = async (
 		project,
 		deployer: signer.address,
 	};
-	logTransaction(result.receipt);
+	await logTransaction(result.receipt);
 	writeDeployment(result, project);
 	return result;
 };
@@ -348,6 +348,36 @@ export const changeNetwork = (network: string) => {
 
 	hre.changeNetwork(network);
 	if (network !== 'ganache') startNetworkPipe(ethers.provider, network);
+};
+
+/**
+ * Easly deploys a contract unassociated with any infinity mint project through its artifcact name and saves it to the deployments folder under the "__" folder
+ * @param contractName
+ * @param libraries
+ * @param gasPrice
+ * @returns
+ */
+export const deployAnonContract = async (
+	contractName: string,
+	libraries?: any[],
+	gasPrice?: string | BigNumber,
+) => {
+	return await hardhatDeploy(
+		contractName,
+		{
+			name: '__',
+			version: 'any',
+			network: {
+				chainId: hre.network.config.chainId,
+				name: hre.network.name,
+			},
+		} as any,
+		await getDefaultSigner(),
+		libraries,
+		gasPrice,
+		undefined,
+		false,
+	);
 };
 
 /**
@@ -389,23 +419,24 @@ export const getSignedContract = async (
 export const logTransaction = async (
 	execution: Promise<ContractTransaction> | ContractTransaction | Receipt,
 	logMessage?: string,
-	printGasUsage?: boolean,
+	printGasUsage: boolean = true,
 ) => {
-	if (logMessage?.length !== 0) {
+	if (logMessage && logMessage?.length !== 0) {
 		log(`🏳️‍🌈 ${logMessage}`);
 	}
 
 	if (typeof execution === typeof Promise)
 		execution = await (execution as Promise<ContractTransaction>);
 
-	let tx = execution as ContractTransaction;
-	log(`🏷️ <${tx.hash}>(chainId: ${tx.chainId})`);
+	let tx = execution as any;
+	let hash = tx.hash || tx.transactionHash;
+
+	log(`🏷️  {cyan-fg}transaction hash{/cyan-fg} => <${hash}>`);
+
 	let receipt: TransactionReceipt;
 	if (tx.wait) {
 		receipt = await tx.wait();
-	} else receipt = await ethers.provider.getTransactionReceipt(tx.blockHash);
-
-	log(`{green-fg}😊 Success{/green-fg}`);
+	} else receipt = await ethers.provider.getTransactionReceipt(hash);
 
 	let session = readSession();
 
@@ -414,14 +445,22 @@ export const logTransaction = async (
 
 	let savedReceipt = {
 		...receipt,
-		gasUsedEther: ethers.utils.formatEther(receipt.gasUsed.toString()),
+		gasUsedEther: ethers.utils.formatEther(
+			receipt.gasUsed.toNumber() * receipt.effectiveGasPrice.toNumber(),
+		),
 		gasUsedNumerical: parseInt(receipt.gasUsed.toString()),
 	};
 	session.environment.temporaryGasReceipts.push({savedReceipt});
 
 	if (printGasUsage)
 		log(
-			'{magenta-fg}⛽ gas: {/magenta-fg}' + savedReceipt.gasUsedEther + ' ETH',
+			'{magenta-fg}⛽ gas => {/magenta-fg}' +
+				savedReceipt.gasUsedEther +
+				' eth / ' +
+				savedReceipt.gasUsedNumerical +
+				' gas / ' +
+				savedReceipt.effectiveGasPrice +
+				' wei',
 		);
 
 	saveSession(session);

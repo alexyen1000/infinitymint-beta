@@ -1,26 +1,9 @@
-import {getScriptTemporaryProject} from '../app/projects';
 import {
-	InfinityMintProject,
-	InfinityMintProjectAsset,
-	InfinityMintProjectContent,
-	InfinityMintProjectPath,
 	InfinityMintScript,
 	InfinityMintScriptParameters,
 } from '../app/interfaces';
-import {
-	getInfinityMintVersion,
-	prepare,
-	action,
-	always,
-	cwd,
-} from '../app/helpers';
-import {hardhatDeploy} from '../app/web3';
-
-// Use the IM Local deployment. It's not been attached to anything
-// All web3 functions return local deployment shit
-// Use `script.args.contractName`
-// Add a warning box saying "hey this is gonna overwrite your shit"
-// Use `deployHardhat` - it's ported from the old buildtools
+import {deployAnonContract} from '../app/web3';
+import fs from 'fs';
 
 const deployContract: InfinityMintScript = {
 	name: 'DeployContract',
@@ -29,14 +12,26 @@ const deployContract: InfinityMintScript = {
 	execute: async (script: InfinityMintScriptParameters) => {
 		if (!script.args?.contractName?.value) throw new Error('bad');
 
-		let deployment = await hardhatDeploy(script.args.contractName.value, {
-			network: {
-				chainId: script.infinityConsole.getCurrentChainId(),
-				name: script.infinityConsole.getCurrentNetwork().name,
-			},
-		} as any);
-
-		script.log('deployed contract to => ' + deployment.address);
+		script.log(
+			'\n{underline}deploying {yellow-fg}{bold}' +
+				script.args.contractName.value +
+				'{/}',
+		);
+		let deployment = await deployAnonContract(script.args.contractName.value);
+		script.log(
+			'\n{green-fg}successfully deployed {cyan-fg}{bold}' +
+				script.args.contractName.value +
+				'{/} to => ' +
+				deployment.address,
+		);
+		script.log('cleaning up...');
+		fs.unlinkSync(
+			'./deployments/' +
+				script.infinityConsole.getCurrentNetwork().name +
+				'/' +
+				deployment.contractName +
+				'.json',
+		);
 	},
 	arguments: [
 		{
