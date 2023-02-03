@@ -1,4 +1,4 @@
-#!/usr/bin/env -S ts-node
+#!/usr/bin/env ts-node
 import hre from 'hardhat';
 let loadHre = hre.artifacts; // load hardhat runtime environment
 import dotEnv from 'dotenv';

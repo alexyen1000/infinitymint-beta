@@ -3,6 +3,8 @@ import {getConfigFile, log} from './helpers';
 import {InfinityMintIPFSOptions} from './interfaces';
 const {tcpPingPort} = require('tcp-ping-port');
 
+import Core from 'ipfs-core';
+
 class IPFS {
 	private kuboAvailable: boolean;
 	private web3Storage: Web3Storage;
