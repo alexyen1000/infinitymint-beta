@@ -121,6 +121,7 @@ export class PipeFactory {
 		//go back to the default pipe
 		if (!this.currentPipeKey || !this.pipes[this.currentPipeKey])
 			this.currentPipeKey = 'default';
+
 		this.emitter.emit(
 			this.currentPipeKey + 'Error',
 			error,

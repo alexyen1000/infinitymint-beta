@@ -61,7 +61,7 @@ export const initializeInfinityMint = async (
 	registerNetworkLogs(hre.config.networks);
 
 	//
-	logDirect('🪐 Starting InfinityConsole');
+	console.log('🪐 Starting InfinityConsole');
 
 	try {
 		//create IPFS node
