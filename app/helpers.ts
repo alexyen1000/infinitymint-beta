@@ -670,10 +670,10 @@ export const consoleErrorReplacement = (...any: any[]) => {
 	defaultFactory.error(error);
 
 	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG'))
-		defaultFactory.pipes['debug'].error(error);
+		defaultFactory.pipes['debug'].log(error);
 
 	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT'))
-		defaultFactory.pipes['default'].error(error);
+		defaultFactory.pipes['default'].log(error);
 
 	if (isEnvTrue('PIPE_ECHO_ERRORS') || scriptMode)
 		(console as any)._error(...any);
