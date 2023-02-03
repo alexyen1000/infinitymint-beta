@@ -28,7 +28,8 @@ let options: InfinityMintConsoleOptions;
 	if (
 		(yargs.argv['show-all-logs'] &&
 			yargs.argv['show-all-logs'] !== 'false' &&
-			yargs.argv['show-debug-logs'] !== 'false') ||
+			(yargs.argv['show-debug-logs'] === undefined ||
+				yargs.argv['show-debug-logs'] !== 'false')) ||
 		(yargs.argv['show-debug-logs'] && yargs.argv['show-debug-logs'] !== 'false')
 	)
 		setDebugLogDisabled(false);
