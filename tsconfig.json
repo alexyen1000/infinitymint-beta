@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "ES2015",
-		"module": "NodeNext",
+		"module": "umd",
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,

@@ -29,7 +29,7 @@
   "bugs": {
     "url": "https://github.com/0x0zAgency/infinitymint-beta/issues"
   },
-  "bin": "./bin.js",
+  "bin": "./dist/app/bin.ts",
   "devDependencies": {
     "chai": "^4.3.7",
     "prettier-config-xo": "^2.0.0",
@@ -56,7 +56,7 @@
     "hardhat": "^2.12.4",
     "hardhat-change-network": "^0.0.7",
     "hardhat-deploy": "^0.11.22",
-    "infinitymint": "^1.1.6",
+    "infinitymint": "^1.1.8",
     "ipfs-bitswap": "^15.0.0",
     "ipfs-core": "0.14.0",
     "ipfs-core-types": "^0.13.0",

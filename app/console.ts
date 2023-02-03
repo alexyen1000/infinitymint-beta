@@ -1052,7 +1052,7 @@ export class InfinityConsole {
 			},
 		});
 		//when an item is selected form the list box, attempt to show or hide that Windoiw.
-		this.windowManager.on('select', async (_el: Element, selected: any) => {
+		this.windowManager.on('select', async (_el: any, selected: any) => {
 			try {
 				if (this.currentWindow?.isForcedOpen()) {
 					this.currentWindow.show();
