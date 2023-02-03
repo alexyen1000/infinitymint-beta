@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
+import {startGanache} from './ganache';
 import {
 	executeScript,
 	getConfigFile,
@@ -41,23 +42,14 @@ let options: InfinityMintConsoleOptions;
 	if (yargs.argv['network'] !== undefined)
 		session.environment.defaultNetwork = yargs.argv['network'];
 
+	console.log(session.environment.defaultNetwork);
+
 	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')
 		setOnlyDefault(false);
 	else setOnlyDefault(true);
 
 	//register current network pipes
 	registerNetworkLogs();
-
-	if (
-		!isEnvSet('GANACHE_EXTERNAL') &&
-		(yargs.argv['--ganache'] ||
-			session.environment.defaultNetwork === 'ganache')
-	)
-		require('./ganache').startGanache();
-	else
-		warning(
-			'Ganache instance has not been initialized. No connect to ganache testnet.',
-		);
 
 	//refresh the current network with the new network, this fixes ganache issues
 	if (session.environment.defaultNetwork !== undefined)
