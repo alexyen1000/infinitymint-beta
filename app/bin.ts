@@ -78,6 +78,11 @@ let options: InfinityMintConsoleOptions;
 	});
 
 	logDirect('🧱 {cyan-fg}Current network is ' + hre.network.name + '{/}');
+	logDirect(
+		'🧱 {cyan-fg}Current account is ' +
+			infinityConsole.getAccount().address +
+			'{/}',
+	);
 
 	if (yargs.argv._[0] === undefined && yargs.argv.script === undefined) {
 		//no script entry here

@@ -214,7 +214,7 @@ let onlyDefault = false;
 
 export const setOnlyDefault = (value: boolean) => {
 	onlyDefault = value;
-	if (value) logDirect('⚠️ WARNING ⚠️ Only default logging is enabled');
+	if (value) warning('Only default pipe (console.log) is being piped');
 };
 
 /**
@@ -252,7 +252,7 @@ let disableDebugLog = false;
 export const setDebugLogDisabled = (disabled: boolean) => {
 	disableDebugLog = disabled;
 
-	if (disabled) logDirect('⚠️ WARNING ⚠️ Debug log is disabled');
+	if (disabled) warning('Debug log messages are disabled');
 };
 /**
  * Logs a debug message to the current pipe.
@@ -379,17 +379,10 @@ export const logDirect = (...any: any) => {
 		return;
 	}
 
-	console.log(...any);
-
 	let msg = any[0];
-	msg =
-		msg instanceof Error
-			? msg.message
-			: typeof msg === 'string'
-			? msg
-				? !isNaN(parseInt(msg))
-				: parseInt(msg.toString())
-			: msg;
+	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+	if (typeof msg === 'number') msg = msg.toString();
+	if (msg instanceof Error) msg = msg.stack || msg.message || msg.toString();
 
 	(console as any)._log(
 		scriptMode ? blessedToAnsi(msg) : _blessed.cleanTags(msg),
@@ -682,7 +675,8 @@ export const consoleErrorReplacement = (...any: any[]) => {
 	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT'))
 		defaultFactory.pipes['default'].error(error);
 
-	if (isEnvTrue('PIPE_ECHO_ERRORS')) (console as any)._error(...any);
+	if (isEnvTrue('PIPE_ECHO_ERRORS') || scriptMode)
+		(console as any)._error(...any);
 };
 
 /**
