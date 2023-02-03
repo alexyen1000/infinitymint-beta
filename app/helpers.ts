@@ -647,9 +647,11 @@ const blockedMessages = [
 	'net_version',
 ];
 export const consoleLogReplacement = (...any: any[]) => {
-	let msg = any[0];
+	let msg = any[0] || '';
 	if (msg instanceof Error) msg = msg.message;
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+
+	if (msg.length === 0) return;
 
 	let pipe = any[1] || defaultFactory.currentPipeKey || 'default';
 
