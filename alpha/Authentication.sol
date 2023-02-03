@@ -2,7 +2,7 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./InfinityMintObject.sol";
+import './InfinityMintObject.sol';
 
 abstract contract Authentication {
 	address public deployer;
@@ -35,17 +35,17 @@ abstract contract Authentication {
 	}
 
 	modifier onlyDeployer() {
-		require(deployer == msg.sender, "not deployer");
+		require(deployer == msg.sender, 'not deployer');
 		_;
 	}
 
 	modifier onlyApproved() {
-		require(deployer == msg.sender || approved[msg.sender], "not approved");
+		require(deployer == msg.sender || approved[msg.sender], 'not approved');
 		_;
 	}
 
 	function setPrivilages(address addr, bool value) public onlyDeployer {
-		require(addr != deployer, "cannot modify deployer");
+		require(addr != deployer, 'cannot modify deployer');
 		approved[addr] = value;
 
 		emit PermissionChange(msg.sender, addr, value);

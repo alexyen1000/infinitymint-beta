@@ -1,6 +1,5 @@
 import {InfinityMintWindow} from '../window';
-import hre from 'hardhat';
-import {logDirect, readSession, saveSession} from '../helpers';
+import {getConfigFile, logDirect, readSession, saveSession} from '../helpers';
 
 const Networks = new InfinityMintWindow('Networks');
 
@@ -46,7 +45,7 @@ Networks.initialize = async (window, frame, blessed) => {
 			},
 		}),
 	);
-	let keys = Object.keys(hre.config.networks);
+	let keys = Object.keys(getConfigFile().hardhat.networks);
 	form.setItems(keys);
 	form.on('select', async (el: any, selected: any) => {
 		let session = readSession();

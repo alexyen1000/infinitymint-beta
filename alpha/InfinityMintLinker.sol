@@ -2,9 +2,9 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Authentication.sol";
-import "./IntegrityInterface.sol";
-import "./InfinityMintStorage.sol";
+import './Authentication.sol';
+import './IntegrityInterface.sol';
+import './InfinityMintStorage.sol';
 
 /// @title InfinityMint Linker
 /// @author Llydia Cross
@@ -38,7 +38,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 	}
 
 	function getLink(uint256 index) external view returns (Link memory) {
-		require(bytes(links[index].key).length != 0, "link is invalid");
+		require(bytes(links[index].key).length != 0, 'link is invalid');
 		return links[index];
 	}
 
@@ -59,8 +59,8 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 		bool forcedOnly,
 		bool permanent
 	) public onlyApproved {
-		require(index < 32, "can only have a maximum index of 32");
-		require(links[index].active != true, "link already established");
+		require(index < 32, 'can only have a maximum index of 32');
+		require(links[index].active != true, 'link already established');
 		links[index] = Link(
 			index,
 			versionType,
@@ -79,7 +79,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 
 	/// @notice disables this link from being used in the future
 	function toggleSupport(uint256 index) public onlyApproved {
-		require(bytes(links[index].key).length != 0, "invalid link");
+		require(bytes(links[index].key).length != 0, 'invalid link');
 		links[index].active = false;
 	}
 
@@ -102,7 +102,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 		Link memory tempLink = requireLinkFromKey(keyToChange);
 		require(
 			hasKey(key) == false,
-			"cannot change key to that key as that key already exists"
+			'cannot change key to that key as that key already exists'
 		);
 
 		tempLink.key = key;
@@ -110,7 +110,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 	}
 
 	function hasKey(string calldata key) internal view returns (bool) {
-		require(bytes(key).length != 0, "blank key");
+		require(bytes(key).length != 0, 'blank key');
 
 		for (uint256 i = 0; i < linkCount; ) {
 			if (
@@ -133,7 +133,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 		view
 		returns (Link memory)
 	{
-		require(bytes(key).length != 0, "blank key");
+		require(bytes(key).length != 0, 'blank key');
 
 		Link memory tempLink;
 		bool hasFound = false;
@@ -150,7 +150,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 			}
 		}
 
-		require(hasFound, "key invalid");
+		require(hasFound, 'key invalid');
 		return tempLink;
 	}
 
@@ -160,7 +160,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 		string calldata key,
 		address destination
 	) public {
-		require(isApprovedOrOwner(sender(), tokenId), "not owner");
+		require(isApprovedOrOwner(sender(), tokenId), 'not owner');
 		_setLink(tokenId, key, destination);
 	}
 
@@ -201,14 +201,14 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 	}
 
 	function unlink(uint256 tokenId, string calldata key) public {
-		require(isApprovedOrOwner(sender(), tokenId), "not owner");
+		require(isApprovedOrOwner(sender(), tokenId), 'not owner');
 
 		Link memory link = requireLinkFromKey(key); // will throw
 		InfinityObject memory token = storageController.get(uint32(tokenId)); // will throw
-		require(link.permanent != true, "link can never be unlinked");
+		require(link.permanent != true, 'link can never be unlinked');
 		require(
 			link.forcedOnly != true,
-			"link must be managed through an external contract"
+			'link must be managed through an external contract'
 		);
 
 		//the first two indexes should always be index 0 (wallet) and index 1 (stickers), the erc721
@@ -219,13 +219,13 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 		//burning eads contracts.
 		require(
 			link.index != 0 ||
-				storageController.flag(tokenId, "canUnlinkIndex0"),
-			"index 0 cannot be unlinked at this time"
+				storageController.flag(tokenId, 'canUnlinkIndex0'),
+			'index 0 cannot be unlinked at this time'
 		);
 		require(
 			link.index != 1 ||
-				storageController.flag(tokenId, "canUnlinkIndex1"),
-			"index 1 cannot be unlinked at this time"
+				storageController.flag(tokenId, 'canUnlinkIndex1'),
+			'index 1 cannot be unlinked at this time'
 		);
 
 		token.destinations[link.index] = address(0x0);
@@ -241,7 +241,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 		InfinityObject memory token = storageController.get(uint32(tokenId)); // will throw
 
 		//must be set by another contract
-		require(link.forcedOnly != true, "cannot be set by linker");
+		require(link.forcedOnly != true, 'cannot be set by linker');
 		//if the destinations isnt zero require it to be a new index or an unmapped but created inex
 		require(
 			token.destinations.length == 0 ||
@@ -250,7 +250,7 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 						? token.destinations[link.index] == address(0x0)
 						: true
 				),
-			"previous link already established"
+			'previous link already established'
 		);
 
 		// for stuff like ENS Registry contracts and the like outside of InfinityMint we can chose not to verify
@@ -263,14 +263,14 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 				bytes4 interfaceId
 			) = IntegrityInterface(destination).getIntegrity();
 
-			require(_deployer == sender(), "mismatch 0");
-			require(from == destination, "mismatch 1");
-			require(tokenId == _tokenId, "mismatch 2");
+			require(_deployer == sender(), 'mismatch 0');
+			require(from == destination, 'mismatch 1');
+			require(tokenId == _tokenId, 'mismatch 2');
 			require(
 				InfinityMintUtil.isEqual(versionType, link.versionType),
-				"mismatch 3"
+				'mismatch 3'
 			);
-			require(interfaceId == link.interfaceId, "mismatch 4");
+			require(interfaceId == link.interfaceId, 'mismatch 4');
 		}
 
 		if (token.destinations.length == 0) {
@@ -309,14 +309,14 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
 	{
 		(bool success, bytes memory returnData) = erc721Location.staticcall(
 			abi.encodeWithSignature(
-				"isApprovedOrOwner(address,uint256)",
+				'isApprovedOrOwner(address,uint256)',
 				owner,
 				tokenId
 			)
 		);
 
 		if (!success) {
-			if (returnData.length == 0) revert("is approved or owner reverted");
+			if (returnData.length == 0) revert('is approved or owner reverted');
 			else
 				assembly {
 					let returndata_size := mload(returnData)

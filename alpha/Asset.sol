@@ -2,7 +2,7 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./RandomNumber.sol";
+import './RandomNumber.sol';
 
 abstract contract Asset {
 	struct PartialStruct {

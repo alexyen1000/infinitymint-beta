@@ -1,7 +1,7 @@
 import {InfinityMintScript} from '../app/interfaces';
 
 const ens: InfinityMintScript = {
-	name: 'Set ENS Content Record',
+	name: 'ENS',
 	description:
 		'Set your ENS content records to point to your uploaded InfinityMint projects on IPFS',
 	execute: async () => {},

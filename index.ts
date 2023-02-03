@@ -8,6 +8,8 @@ import {
 	isInfinityMint,
 	warning,
 	registerNetworkLogs,
+	cwd,
+	readSession,
 } from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
@@ -18,6 +20,7 @@ import {
 } from './app/interfaces';
 import {TelnetServer} from './app/telnet';
 import {startGanache} from './app/ganache';
+import hre from 'hardhat';
 
 //export helpers
 export * as Helpers from './app/helpers';
@@ -54,8 +57,13 @@ export const load = async (
 	if (config.hardhat?.networks?.ganache !== undefined) await startGanache();
 	else
 		warning(
-			'Ganache instance has not been initialized. No connect to ganache testnet.',
+			'Ganache instance has not been initialized. No connection to ganache testnet.',
 		);
+
+	let session = readSession();
+	//change the network to the current network, this fixes ganache issues
+	if (session.environment.defaultNetwork !== undefined)
+		hre.changeNetwork(session.environment.defaultNetwork);
 
 	options = {
 		...(options || {}),
@@ -64,14 +72,12 @@ export const load = async (
 
 	try {
 		if (isInfinityMint())
-			(await import(process.cwd() + '/dist/app/pipes')).setDefaultFactory(
+			(await import(cwd() + '/dist/app/pipes')).setDefaultFactory(
 				defaultFactory as any,
 			);
 		else
 			(
-				await import(
-					process.cwd() + '/node_modules/infinitymint/dist/app/pipes'
-				)
+				await import(cwd() + '/node_modules/infinitymint/dist/app/pipes')
 			).setDefaultFactory(defaultFactory as any);
 	} catch (error) {
 		warning('could not change default logger in node_modules: ' + error.stack);
@@ -96,7 +102,8 @@ export const load = async (
 					...(options || {}),
 					dontDraw:
 						config.startup ||
-						(!config.console && !isEnvTrue('INFINITYMINT_CONSOLE')),
+						(!config.console && !isEnvTrue('INFINITYMINT_CONSOLE')) ||
+						process.env.__DONT_DRAW === 'true',
 				},
 				defaultFactory,
 			);

@@ -4,7 +4,7 @@ import {
 } from './interfaces';
 import {createHash} from 'node:crypto';
 import fs from 'fs';
-import {BlessedElement, getConfigFile} from './helpers';
+import {BlessedElement, cwd, getConfigFile} from './helpers';
 import InfinityConsole from './console';
 import {Dictionary} from 'form-data';
 import {logDirect} from './helpers';
@@ -334,10 +334,7 @@ export const register = (
  * saves the usernames to the temp folder
  */
 export const saveUsernames = () => {
-	fs.writeFileSync(
-		process.cwd() + '/temp/usernames.json',
-		JSON.stringify(usernames),
-	);
+	fs.writeFileSync(cwd() + '/temp/usernames.json', JSON.stringify(usernames));
 };
 
 /**
@@ -398,10 +395,10 @@ export const loginUser = (
  * @returns
  */
 export const readUsernameList = () => {
-	if (!fs.existsSync(process.cwd() + '/temp/usernames.json'))
+	if (!fs.existsSync(cwd() + '/temp/usernames.json'))
 		return {} as typeof usernames;
 
-	return JSON.parse(process.cwd() + '/temp/username.json');
+	return JSON.parse(cwd() + '/temp/username.json');
 };
 
 export let usernames: Dictionary<UserEntry>;

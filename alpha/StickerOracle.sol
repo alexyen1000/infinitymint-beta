@@ -2,9 +2,9 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Authentication.sol";
-import "./ERC721.sol";
-import "./StickerOracle.sol";
+import './Authentication.sol';
+import './ERC721.sol';
+import './StickerOracle.sol';
 
 contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	ERC721 erc721;
@@ -57,7 +57,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	modifier onlyApprovedStickerContracts() {
 		require(
 			validDestinations[sender()],
-			"sender is not an approved sticker contract"
+			'sender is not an approved sticker contract'
 		);
 		_;
 	}
@@ -73,7 +73,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	function topup() public payable {
 		require(
 			addressRegistrations[sender()].valid,
-			"already regsitered for this address"
+			'already regsitered for this address'
 		);
 
 		registrations[addressRegistrations[sender()].oracleId].balance =
@@ -86,7 +86,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 		uint256 duration,
 		address owner
 	) external view returns (bool) {
-		require(addressRegistrations[owner].valid, "invalid owner");
+		require(addressRegistrations[owner].valid, 'invalid owner');
 
 		return
 			registrations[addressRegistrations[sender()].oracleId].balance >=
@@ -96,7 +96,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	function register() public payable {
 		require(
 			addressRegistrations[sender()].valid == false,
-			"already registered this address"
+			'already registered this address'
 		);
 
 		registrations[oracleId] = RegistrationObject(
@@ -121,7 +121,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	{
 		require(
 			registrations[oracleId].valid,
-			"invalid registration at this id"
+			'invalid registration at this id'
 		);
 		return registrations[_oracleId];
 	}
@@ -133,7 +133,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	{
 		require(
 			addressRegistrations[addr].valid,
-			"invalid registration for address"
+			'invalid registration for address'
 		);
 		return registrations[addressRegistrations[addr].oracleId];
 	}
@@ -144,23 +144,23 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	) public {
 		require(
 			stickersDestination != address(0x0),
-			"enter a sticker destination"
+			'enter a sticker destination'
 		);
 
 		require(
 			erc721.isApprovedOrOwner(sender(), tokenId),
-			"ERC721: not approved"
+			'ERC721: not approved'
 		);
 
 		Authentication auth = Authentication(stickersDestination);
 		require(
 			auth.deployer() == sender() || auth.isAuthenticated(sender()),
-			"not approved with stickers destination"
+			'not approved with stickers destination'
 		);
 
 		require(
 			registeredStickerDestinations[tokenId].valid == false,
-			"already registered"
+			'already registered'
 		);
 
 		registeredStickerDestinations[tokenId] = StickerDestination(
@@ -189,18 +189,18 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 	) public {
 		require(
 			registeredStickerDestinations[tokenId].valid,
-			"no registry for this tokenId"
+			'no registry for this tokenId'
 		);
 		require(
 			stickerEnd <= block.timestamp,
-			"end is zero or a time in the past"
+			'end is zero or a time in the past'
 		);
 
 		address dest = registeredStickerDestinations[tokenId].destination;
 
 		require(checkSenderIsAuthenticated(dest));
 		require(isValidSticker(dest, stickerId));
-		require(registeredStickers[dest][stickerId] != 0, "already registered");
+		require(registeredStickers[dest][stickerId] != 0, 'already registered');
 
 		registeredStickers[dest][stickerId] = stickerEnd;
 	}
@@ -221,7 +221,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 		returns (StickerDestination memory dest)
 	{
 		dest = registeredStickerDestinations[tokenId];
-		require(dest.valid, "invalid sticker destination");
+		require(dest.valid, 'invalid sticker destination');
 	}
 
 	function verifyRegistration(uint256 tokenId, address stickersDestination)
@@ -242,7 +242,7 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 		returns (bool)
 	{
 		(bool success, ) = stickerDestination.staticcall(
-			abi.encodeWithSignature("getSticker(uint256)", stickerId)
+			abi.encodeWithSignature('getSticker(uint256)', stickerId)
 		);
 
 		return success;
@@ -254,11 +254,11 @@ contract StickerOracle is ERC721, Authentication, InfinityMintObject {
 		returns (bool)
 	{
 		(bool success, bytes memory returnData) = stickerDestination.staticcall(
-			abi.encodeWithSignature("isAuthenticated(address)", sender())
+			abi.encodeWithSignature('isAuthenticated(address)', sender())
 		);
 
 		if (!success) {
-			if (returnData.length == 0) revert("is approved or owner reverted");
+			if (returnData.length == 0) revert('is approved or owner reverted');
 			else
 				assembly {
 					let returndata_size := mload(returnData)

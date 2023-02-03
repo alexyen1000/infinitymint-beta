@@ -2,10 +2,10 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./ERC721.sol";
-import "./StickerOracle.sol";
-import "./Authentication.sol";
-import "./IntegrityInterface.sol";
+import './ERC721.sol';
+import './StickerOracle.sol';
+import './Authentication.sol';
+import './IntegrityInterface.sol';
 
 contract NewStickers is ERC721, Authentication, IntegrityInterface {
 	//has run a sucesful setup call
@@ -76,7 +76,7 @@ contract NewStickers is ERC721, Authentication, IntegrityInterface {
 			address(this),
 			deployer,
 			tokenId,
-			"new",
+			'new',
 			type(IntegrityInterface).interfaceId
 		);
 	}
@@ -87,23 +87,23 @@ contract NewStickers is ERC721, Authentication, IntegrityInterface {
 		bool utility, //if it is a utility sticker or not,
 		bytes memory requestData
 	) public payable {
-		require(utility == false || pps == 0, "pps must be zero if untility");
+		require(utility == false || pps == 0, 'pps must be zero if untility');
 
 		require(
 			hasSetup,
-			"deployer has not set up this stickers contract successfully"
+			'deployer has not set up this stickers contract successfully'
 		);
 
 		StickerOracle.RegistrationObject memory obj = stickerOracle
 			.findRegistration(_sender());
 		require(
 			obj.valid == true,
-			"please register with sticker oracle first with the current address"
+			'please register with sticker oracle first with the current address'
 		);
 
 		require(
 			utility || stickerOracle.canAfford(pps, duration, _sender()),
-			"cannot afford the PPS you have set for that duration currently"
+			'cannot afford the PPS you have set for that duration currently'
 		);
 	}
 
@@ -144,7 +144,7 @@ contract NewStickers is ERC721, Authentication, IntegrityInterface {
 	}
 
 	function setup() public onlyDeployer {
-		require(hasSetup == false, "has already set up");
+		require(hasSetup == false, 'has already set up');
 
 		if (stickerOracle.verifyRegistration(tokenId, address(this))) {
 			hasSetup = true;

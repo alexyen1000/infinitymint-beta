@@ -6,6 +6,8 @@
  * put inside of here.
  */
 
+//them aliases
+import 'module-alias/register';
 //import our hardhat plugins
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomiclabs/hardhat-ethers';
@@ -15,14 +17,7 @@ import {createDefaultFactory} from './app/pipes';
 //create default pipe
 createDefaultFactory();
 
-//then aliases
-import 'module-alias/register';
-import {
-	debugLog,
-	prepareConfig,
-	loadInfinityMint,
-	logDirect,
-} from './app/helpers';
+import {prepareConfig, loadInfinityMint, logDirect} from './app/helpers';
 
 //require dotenv
 require('dotenv').config({
@@ -35,7 +30,5 @@ loadInfinityMint(false, true);
 //return the infinitymint config file
 let config = prepareConfig();
 
-debugLog('loaded hardhat.config.ts');
-debugLog('default network: ' + config.hardhat.defaultNetwork);
-
+logDirect('🧱 Loaded hardhat.config.ts');
 export default config.hardhat; //export the infinity mint configuration file

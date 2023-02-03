@@ -2,9 +2,9 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./IERC721.sol";
-import "./ERC165.sol";
-import "./IERC165.sol";
+import './IERC721.sol';
+import './ERC165.sol';
+import './IERC165.sol';
 
 /// @title ERC-721 Infinity Mint Implementation
 /// @author Llydia Cross
@@ -73,7 +73,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 		override
 		returns (address)
 	{
-		require(exists(_tokenId), "invalid tokenId");
+		require(exists(_tokenId), 'invalid tokenId');
 		return tokens[_tokenId];
 	}
 
@@ -146,10 +146,10 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 	function approve(address _to, uint256 _tokenId) public override {
 		address owner = ERC721.ownerOf(_tokenId);
 
-		require(_to != owner, "cannot approve owner");
+		require(_to != owner, 'cannot approve owner');
 		require(
 			_sender() == owner || isApprovedForAll(owner, _sender()),
-			"ERC721: approve caller is not token owner or approved for all"
+			'ERC721: approve caller is not token owner or approved for all'
 		);
 		approvedTokens[_tokenId] = _to;
 		emit Approval(owner, _to, _tokenId);
@@ -164,8 +164,8 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 		uint256 _tokenId,
 		bytes memory _data
 	) internal {
-		require(_to != address(0x0), "0x0 mint");
-		require(!exists(_tokenId), "already minted");
+		require(_to != address(0x0), '0x0 mint');
+		require(!exists(_tokenId), 'already minted');
 
 		balance[_to] += 1;
 		tokens[_tokenId] = _to;
@@ -204,9 +204,9 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 	) public virtual override {
 		require(
 			isApprovedOrOwner(_sender(), _tokenId),
-			"not approved or owner"
+			'not approved or owner'
 		);
-		require(_from != address(0x0), "sending to null address");
+		require(_from != address(0x0), 'sending to null address');
 
 		//before the transfer
 		beforeTransfer(_from, _to, _tokenId);
@@ -254,7 +254,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 		address _to,
 		uint256 _tokenId
 	) public virtual override {
-		_safeTransferFrom(_from, _to, _tokenId, "");
+		_safeTransferFrom(_from, _to, _tokenId, '');
 	}
 
 	/**
@@ -270,7 +270,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 		//check that it implements an IERC721 receiver if it is a contract
 		require(
 			checkERC721Received(_sender(), _from, _to, _tokenId, _data),
-			"ERC721 Receiver Confirmation Is Bad"
+			'ERC721 Receiver Confirmation Is Bad'
 		);
 	}
 
@@ -297,7 +297,7 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata {
 			return (confirmation == IERC721Receiver.onERC721Received.selector);
 		} catch (bytes memory reason) {
 			if (reason.length == 0) {
-				revert("This contract does not implement an IERC721Receiver");
+				revert('This contract does not implement an IERC721Receiver');
 			} else {
 				assembly {
 					revert(add(32, reason), mload(reason))

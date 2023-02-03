@@ -589,7 +589,7 @@ export class InfinityMintWindow {
 	 * Get the infinity console this window is contained in. Through the InfinityConsole you can change the network, refresh web3 and do a lot more!
 	 * @returns
 	 */
-	public getInfinityConsole() {
+	public getInfinityConsole(): InfinityConsole {
 		if (!this.container)
 			throw new Error('no infinityconsole associated with this window');
 
@@ -637,7 +637,7 @@ export class InfinityMintWindow {
 	 * gets the guuid of the window
 	 * @returns
 	 */
-	public getId() {
+	public getId(): string {
 		return this.id;
 	}
 
@@ -662,7 +662,7 @@ export class InfinityMintWindow {
 	 * returns the frame of the window
 	 * @returns
 	 */
-	public getFrame() {
+	public getFrame(): BlessedElement {
 		return this.elements['frame'];
 	}
 
@@ -719,7 +719,7 @@ export class InfinityMintWindow {
 	 * gets the width of the window. Might be a number or a number with a px or % at the end.
 	 * @returns
 	 */
-	public getWidth() {
+	public getWidth(): number | string {
 		return this.options?.style?.width || this.data?.style?.width || '100%';
 	}
 
@@ -727,7 +727,7 @@ export class InfinityMintWindow {
 	 * gets the calculated width of a window. Unlike getWidth will always return a number.
 	 * @returns
 	 */
-	public getCalculatedWidth() {
+	public getCalculatedWidth(): number {
 		return this.elements['frame'].cols || 0;
 	}
 
@@ -735,7 +735,7 @@ export class InfinityMintWindow {
 	 * gets the calculated height of a window. Unlike getHeight will always return a number.
 	 * @returns
 	 */
-	public getCalculatedHeight() {
+	public getCalculatedHeight(): number {
 		return this.elements['frame'].rows || 0;
 	}
 
@@ -743,7 +743,7 @@ export class InfinityMintWindow {
 	 * gets the height of the window. Might be a number or a number with a px or % at the end.
 	 * @returns
 	 */
-	public getHeight() {
+	public getHeight(): number | string {
 		return this.options?.style?.height || this.data?.style?.height || '100%';
 	}
 
@@ -751,7 +751,7 @@ export class InfinityMintWindow {
 	 * gets the calculated x (left) position of the window. Unlike getX will always return a number.
 	 * @returns
 	 */
-	public getCalculatedX() {
+	public getCalculatedX(): number {
 		return this.elements['frame'].left || 0;
 	}
 
@@ -759,7 +759,7 @@ export class InfinityMintWindow {
 	 * gets the calculated y (top) position of the window. Unlike getY will always return a number.
 	 * @returns
 	 */
-	public getCalculatedY() {
+	public getCalculatedY(): number {
 		return this.elements['frame'].top || 0;
 	}
 
@@ -767,7 +767,7 @@ export class InfinityMintWindow {
 	 * returns the x (left) position of the window. Might be a number or a number with a px or % at the end.
 	 * @returns
 	 */
-	public getX() {
+	public getX(): number | string {
 		return this.options?.style?.left || this.options?.data?.left || 0;
 	}
 
@@ -775,7 +775,7 @@ export class InfinityMintWindow {
 	 * returns the y (top) position of the window. Might be a number or a number with a px or % at the end.
 	 * @returns
 	 */
-	public getY() {
+	public getY(): number | string {
 		return this.options?.style?.top || this.options?.data?.top || 0;
 	}
 
@@ -837,9 +837,10 @@ export class InfinityMintWindow {
 		if (!this.hasInfinityConsole())
 			log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
 		else
-			this.getInfinityConsole()
-				.getPipeFactory()
-				.log(string + ` => <${window.name}>[${window.getId()}]`, 'windows');
+			this.getInfinityConsole().log(
+				string + ` => <${window.name}>[${window.getId()}]`,
+				'windows',
+			);
 	}
 
 	/**
@@ -951,7 +952,7 @@ export class InfinityMintWindow {
 	 * returns the screen of the window
 	 * @returns
 	 */
-	public getScreen() {
+	public getScreen(): BlessedElement {
 		return this.screen;
 	}
 

@@ -1,7 +1,7 @@
 import {InfinityMintScript} from '../app/interfaces';
 
 const serve: InfinityMintScript = {
-	name: 'Serve Project',
+	name: 'Serve',
 	description:
 		'Serve your project to a remote IPFS destination or repository to make your InfinityMint accessible in a web2 or web3 browser.',
 	execute: async () => {},

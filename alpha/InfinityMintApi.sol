@@ -2,11 +2,11 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./InfinityMint.sol";
-import "./Asset.sol";
-import "./InfinityMintValues.sol";
-import "./Royalty.sol";
-import "./InfinityMintProject.sol";
+import './InfinityMint.sol';
+import './Asset.sol';
+import './InfinityMintValues.sol';
+import './Royalty.sol';
+import './InfinityMintProject.sol';
 
 /// @title InfinityMint API
 /// @author Llydia Cross
@@ -80,8 +80,8 @@ contract InfinityMintApi is InfinityMintObject {
 		returns (uint32[] memory tokens)
 	{
 		require(
-			!valuesController.isTrue("disableRegisteredTokens"),
-			"all tokens method is disabled"
+			!valuesController.isTrue('disableRegisteredTokens'),
+			'all tokens method is disabled'
 		);
 
 		return storageController.getAllRegisteredTokens(owner);
@@ -100,7 +100,7 @@ contract InfinityMintApi is InfinityMintObject {
 		address addr = getLink(tokenId, 0);
 		if (addr == address(0x0)) return 0;
 		(bool success, bytes memory returnData) = addr.staticcall(
-			abi.encodeWithSignature("getBalance")
+			abi.encodeWithSignature('getBalance')
 		);
 
 		if (!success) return 0;
@@ -114,7 +114,7 @@ contract InfinityMintApi is InfinityMintObject {
 
 	function getWalletContract(uint32 tokenId) public view returns (address) {
 		return
-			getLink(tokenId, valuesController.tryGetValue("linkWalletIndex"));
+			getLink(tokenId, valuesController.tryGetValue('linkWalletIndex'));
 	}
 
 	function getLink(uint32 tokenId, uint256 index)
@@ -130,7 +130,7 @@ contract InfinityMintApi is InfinityMintObject {
 
 	function getStickerContract(uint32 tokenId) public view returns (address) {
 		return
-			getLink(tokenId, valuesController.tryGetValue("linkStickersIndex"));
+			getLink(tokenId, valuesController.tryGetValue('linkStickersIndex'));
 	}
 
 	function getPreviewTimestamp(address addr) public view returns (uint256) {
@@ -140,7 +140,7 @@ contract InfinityMintApi is InfinityMintObject {
 	function getPreviewCount(address addr) public view returns (uint256 count) {
 		//find previews
 		InfinityMintObject.InfinityObject[] memory previews = storageController
-			.findPreviews(addr, valuesController.tryGetValue("previewCount"));
+			.findPreviews(addr, valuesController.tryGetValue('previewCount'));
 
 		//since mappings initialize their values at defaults we need to check if we are owner
 		count = 0;
@@ -154,11 +154,11 @@ contract InfinityMintApi is InfinityMintObject {
 	}
 
 	function getPreviews(address addr) external view returns (uint32[] memory) {
-		require(addr != address(0x0), "cannot view previews for null address");
+		require(addr != address(0x0), 'cannot view previews for null address');
 
 		//find previews
 		InfinityMintObject.InfinityObject[] memory previews = storageController
-			.findPreviews(addr, valuesController.tryGetValue("previewCount"));
+			.findPreviews(addr, valuesController.tryGetValue('previewCount'));
 
 		//since mappings initialize their values at defaults we need to check if we are owner
 		uint256 count = 0;
@@ -199,6 +199,6 @@ contract InfinityMintApi is InfinityMintObject {
 
 	//the total amount of tokens
 	function totalSupply() external view returns (uint256) {
-		return valuesController.tryGetValue("maxSupply");
+		return valuesController.tryGetValue('maxSupply');
 	}
 }

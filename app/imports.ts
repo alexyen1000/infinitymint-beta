@@ -1,6 +1,6 @@
 import {InfinityMintSVGSettings} from './content';
 import {PathLike} from 'fs';
-import {debugLog, findFiles, getConfigFile, log, warning} from './helpers';
+import {cwd, debugLog, findFiles, getConfigFile, log, warning} from './helpers';
 import {Dictionary} from 'form-data';
 import path from 'path';
 import fs, {promises} from 'fs';
@@ -57,7 +57,7 @@ export interface ImportCache {
  * @returns
  */
 export const hasImportCache = () => {
-	return fs.existsSync(process.cwd() + '/temp/import_cache.json');
+	return fs.existsSync(cwd() + '/temp/import_cache.json');
 };
 
 /**
@@ -108,7 +108,7 @@ export const saveImportCache = (cache: ImportCache) => {
 	log(`saving <${importCount(cache)}> imports to cache file`, 'imports');
 	log('saving imports to /temp/import_cache.json', 'fs');
 	fs.writeFileSync(
-		process.cwd() + '/temp/import_cache.json',
+		cwd() + '/temp/import_cache.json',
 		JSON.stringify(cache, null, 2),
 	);
 };
@@ -118,11 +118,11 @@ export const saveImportCache = (cache: ImportCache) => {
  * @returns
  */
 export const readImportCache = (): ImportCache => {
-	if (!fs.existsSync(process.cwd() + '/temp/import_cache.json'))
+	if (!fs.existsSync(cwd() + '/temp/import_cache.json'))
 		return {keys: {}, database: {}, updated: Date.now()} as ImportCache;
 
 	return JSON.parse(
-		fs.readFileSync(process.cwd() + '/temp/import_cache.json', {
+		fs.readFileSync(cwd() + '/temp/import_cache.json', {
 			encoding: 'utf-8',
 		}),
 	) as ImportCache;
@@ -141,7 +141,7 @@ export const getImports = async (
 ) => {
 	if (
 		useFresh ||
-		(!importCache && !fs.existsSync(process.cwd() + '/temp/import_cache.json'))
+		(!importCache && !fs.existsSync(cwd() + '/temp/import_cache.json'))
 	) {
 		importCache = await buildImports([], infinityConsole);
 		saveImportCache(importCache);
@@ -189,16 +189,16 @@ export const buildImports = async (
 	[
 		...(config.imports || []).map(
 			(root: string) =>
-				process.cwd() +
+				cwd() +
 				'/' +
 				(root.indexOf('imports') === -1
 					? root + (root[root.length - 1] !== '/' ? '/imports/' : 'imports/')
 					: root),
 		),
-		process.cwd() + '/imports/',
+		cwd() + '/imports/',
 		...(config.roots || []).map(
 			(root: string) =>
-				process.cwd() +
+				cwd() +
 				'/' +
 				(root.indexOf('imports') === -1
 					? root + (root[root.length - 1] !== '/' ? '/imports/' : 'imports/')
@@ -292,7 +292,7 @@ export const buildImports = async (
 				imports.keys[setting.dir + '/' + setting.base] = name;
 				imports.keys['/' + setting.base] = name;
 				let root = setting.dir + '/' + setting.base;
-				root = root.replace(process.cwd(), '');
+				root = root.replace(cwd(), '');
 				//remove the slash from the start of root if it exists
 				if (root[0] === '/') root = root.substring(1);
 				imports.keys[root] = name;
@@ -301,10 +301,8 @@ export const buildImports = async (
 
 		imports.keys[normalImport.dir + '/' + normalImport.base] = name;
 		imports.keys[normalImport.dir + '/' + normalImport.name] = name;
-		imports.keys[process.cwd() + '/imports' + root + '/' + normalImport.name] =
-			name;
-		imports.keys[process.cwd() + '/imports' + root + '/' + normalImport.base] =
-			name;
+		imports.keys[cwd() + '/imports' + root + '/' + normalImport.name] = name;
+		imports.keys[cwd() + '/imports' + root + '/' + normalImport.base] = name;
 		imports.keys[
 			'imports/' + normalImport.name + normalImport.ext.toLowerCase()
 		] = name;

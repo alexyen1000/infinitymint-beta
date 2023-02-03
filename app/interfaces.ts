@@ -1538,8 +1538,14 @@ export interface InfinityMintConsoleOptions {
 	 * the initial window the console should open into
 	 */
 	initialWindow?: string | Window;
-	//will not start blessed and draw nothing to this console.
+	/**
+	 * does not draw the infinity console to the screen, used in script mode and testing
+	 */
 	dontDraw?: boolean;
+	/**
+	 * in script mode, infinity mint will colour console.log outputs
+	 */
+	scriptMode?: boolean;
 }
 
 export interface InfinityMintTelnetOptions {
@@ -1959,7 +1965,7 @@ export interface InfinityMintDeploymentScript {
 	/**
 	 * Defines which InfinityMint module this deployment satisfies (see {@link InfinityMintProjectModules}).
 	 */
-	module?: InfinityMintProjetModulesKeys[] | string;
+	module?: InfinityMintProjetModulesKeys | string;
 	/**
 	 * Will be the filename of the deploy script by default.
 	 */

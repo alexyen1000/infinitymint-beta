@@ -74,7 +74,6 @@ export const registerHandler = (
 
 	handlers[network][type].push(handler as any);
 
-	debugLog('registered new (' + type + ') handler for ' + network);
 	return handler;
 };
 

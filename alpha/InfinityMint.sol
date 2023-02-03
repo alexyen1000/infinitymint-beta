@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 
 //
-import "./ERC721.sol";
-import "./InfinityMintStorage.sol";
-import "./Royalty.sol";
-import "./Authentication.sol";
-import "./Minter.sol";
-import "./InfinityMintObject.sol";
+import './ERC721.sol';
+import './InfinityMintStorage.sol';
+import './Royalty.sol';
+import './Authentication.sol';
+import './Minter.sol';
+import './InfinityMintObject.sol';
 
 /// @title InfinityMint ERC721 Implementation
 /// @author Llydia Cross
@@ -92,7 +92,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	/// @notice the total supply of tokens
 	/// @dev Returns the max supply of tokens, not the amount that have been minted. (so the tokenId)
 	function totalSupply() public view returns (uint256) {
-		return valuesController.tryGetValue("maxSupply");
+		return valuesController.tryGetValue('maxSupply');
 	}
 
 	/// @notice Toggles mints allowing people to either mint or not mint tokens.
@@ -105,19 +105,19 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	function getPreview() public {
 		require(
 			veriyMint(0, false),
-			"failed mint check: mints are disabled, mints are at a max supply"
+			'failed mint check: mints are disabled, mints are at a max supply'
 		); //does not check the price
 
 		//if the user has already had their daily preview mints
 		require(
-			valuesController.tryGetValue("previewCount") > 0,
-			"previews are disabled"
+			valuesController.tryGetValue('previewCount') > 0,
+			'previews are disabled'
 		);
 
 		//the preview timer will default to zero unless a preview has already been minted so there for it can be used like a check
 		require(
 			block.timestamp > storageController.getPreviewTimestamp(sender()),
-			"please mint previews or wait until preview counter is up"
+			'please mint previews or wait until preview counter is up'
 		);
 
 		//minter controller will store the previews for us
@@ -128,7 +128,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 
 		//get cooldown of previews
 		uint256 cooldownPeriod = valuesController.tryGetValue(
-			"previewCooldownSeconds"
+			'previewCooldownSeconds'
 		);
 		//if it is 0 (not set), set to 60 seconds
 		if (cooldownPeriod == 0) cooldownPeriod = 60;
@@ -149,7 +149,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		uint256 value = (msg.value);
 		require(
 			veriyMint(value, !approved[sender()]),
-			"failed mint verification"
+			'failed mint verification'
 		); //will not check the price for approved members
 
 		completeMint(
@@ -177,13 +177,13 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		string[] memory names
 	) public onlyApproved {
 		require(
-			currentTokenId != valuesController.tryGetValue("maxSupply"),
-			"max supply has been reached raise it before minting"
+			currentTokenId != valuesController.tryGetValue('maxSupply'),
+			'max supply has been reached raise it before minting'
 		);
 
 		//if we are incrementmode we want to set the last path id (which is actually the next one) to be plus one of the current
 		//path id in case an on chain mint occurs
-		if (valuesController.isTrue("incremental"))
+		if (valuesController.isTrue('incremental'))
 			minterController.assetController().setLastPathId(pathId + 1);
 
 		completeMint(
@@ -214,10 +214,10 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	/// @dev must have byteMint enabled in valuesController
 	function mintArguments(bytes memory data) public payable onlyOnce {
 		require(
-			valuesController.isTrue("byteMint"),
-			"must mint with mint instead of byteMint"
+			valuesController.isTrue('byteMint'),
+			'must mint with mint instead of byteMint'
 		);
-		require(data.length != 0, "length of bytes is zero");
+		require(data.length != 0, 'length of bytes is zero');
 
 		_mint(data);
 	}
@@ -225,11 +225,11 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	/// @notice Public method to mint a token taking no bytes argument
 	function mint() public payable onlyOnce {
 		require(
-			!valuesController.isTrue("byteMint"),
-			"must mint with byteMint instead of mint"
+			!valuesController.isTrue('byteMint'),
+			'must mint with byteMint instead of mint'
 		);
 
-		_mint(bytes(""));
+		_mint(bytes(''));
 	}
 
 	/// @notice returns the tokenURI for a token, will return the
@@ -239,12 +239,12 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		override
 		returns (string memory result)
 	{
-		require(tokenId < currentTokenId, "tokenURI for non-existent token");
+		require(tokenId < currentTokenId, 'tokenURI for non-existent token');
 
-		result = "https://bafybeihxmdkmvvjksktowehyvwqh62bwnv4vja6llbl7kbzvbrgee5aimu.ipfs.w3s.link/default_uri.json"; //our default
+		result = 'https://bafybeihxmdkmvvjksktowehyvwqh62bwnv4vja6llbl7kbzvbrgee5aimu.ipfs.w3s.link/default_uri.json'; //our default
 		string memory defaultTokenURI = storageController.getOption(
 			address(this),
-			"defaultTokenURI"
+			'defaultTokenURI'
 		); //NOTE: assuming this is JSON or URI is http address...
 		//This must have in it somewhere the key "default": true else the react applicaton will think that this is an actual tokenURI
 
@@ -254,29 +254,29 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		string memory currentTokenURI = uri[tokenId];
 
 		if (
-			storageController.tokenFlag(uint32(tokenId), "forceTokenURI") &&
+			storageController.tokenFlag(uint32(tokenId), 'forceTokenURI') &&
 			bytes(currentTokenURI).length != 0
 		) result = currentTokenURI;
 		else if (
-			storageController.flag(owner, "usingRoot") ||
-			storageController.flag(address(this), "usingRoot")
+			storageController.flag(owner, 'usingRoot') ||
+			storageController.flag(address(this), 'usingRoot')
 		) {
 			//if the owner of the token is using the root, then return the address of the owner, if the project is using a root, return this current address
-			address selector = storageController.flag(owner, "usingRoot")
+			address selector = storageController.flag(owner, 'usingRoot')
 				? owner
 				: address(this);
 			//gets the root of the tokenURI destination, could be anything, HTTP link or more.
-			string memory root = storageController.getOption(selector, "root");
+			string memory root = storageController.getOption(selector, 'root');
 			//the preix to add to the end or the stitch, by default .json will be added unless the boolean inside of the
 			//values controller called "removeDefaultSuffix" is true.
 			string memory rootSuffix = storageController.getOption(
 				selector,
-				"rootSuffix"
+				'rootSuffix'
 			);
 			if (
 				bytes(rootSuffix).length == 0 &&
-				!valuesController.isTrue("removeDefaultSuffix")
-			) rootSuffix = ".json";
+				!valuesController.isTrue('removeDefaultSuffix')
+			) rootSuffix = '.json';
 
 			if (bytes(root).length != 0)
 				result = InfinityMintUtil.filepath(
@@ -291,17 +291,17 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	/// @dev The totals that the sender can withdraw is managed by the royalty controller
 	function withdraw() public onlyOnce {
 		uint256 total = royaltyController.values(sender());
-		require(total > 0, "no balance to withdraw");
+		require(total > 0, 'no balance to withdraw');
 		require(
 			address(this).balance - total >= 0,
-			"cannot afford to withdraw"
+			'cannot afford to withdraw'
 		);
 
 		total = royaltyController.dispenseRoyalty(sender()); //will revert if bad, results in the value to be deposited. Has Re-entry protection.
-		require(total > 0, "value returned from royalty controller is bad");
+		require(total > 0, 'value returned from royalty controller is bad');
 
-		(bool success, ) = sender().call{ value: total }("");
-		require(success, "did not transfer successfully");
+		(bool success, ) = sender().call{value: total}('');
+		require(success, 'did not transfer successfully');
 	}
 
 	/// @notice this can only be called by sticker contracts and is used to pay back the contract owner their sticker cut TODO: Turn this into a non static function capable of accepting payments not just from the sticker
@@ -312,13 +312,13 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		require(
 			storageController.validDestination(
 				tokenId,
-				valuesController.tryGetValue("linkStickerIndex")
+				valuesController.tryGetValue('linkStickerIndex')
 			),
-			"sticker contract not set"
+			'sticker contract not set'
 		);
 		require(
 			sender() == temp.destinations[1],
-			"Sender must be the sticker contract attached to this token"
+			'Sender must be the sticker contract attached to this token'
 		);
 
 		//if the value is less than 100 and we cannot split it up efficiently then do not incre
@@ -328,7 +328,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 				value(),
 				royaltyController.SPLIT_TYPE_STICKER()
 			);
-		else revert("value given must be over 100, or zero");
+		else revert('value given must be over 100, or zero');
 	}
 
 	/// @notice Allows approved contracts to deposit royalty types
@@ -338,11 +338,11 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		onlyOnce
 		onlyApproved
 	{
-		require(msg.value >= 0, "not allowed to deposit zero values");
+		require(msg.value >= 0, 'not allowed to deposit zero values');
 		require(
 			royaltyType == royaltyController.SPLIT_TYPE_MINT() &&
 				royaltyType != royaltyController.SPLIT_TYPE_STICKER(),
-			"invalid royalty type"
+			'invalid royalty type'
 		);
 
 		//increment
@@ -355,7 +355,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	function transferBatch(uint256[] memory tokenIds, address destination)
 		public
 	{
-		require(tokenIds.length < 32, "please split up into chunks of 32");
+		require(tokenIds.length < 32, 'please split up into chunks of 32');
 		for (uint256 i = 0; i < tokenIds.length; ) {
 			safeTransferFrom(sender(), destination, tokenIds[i]);
 			unchecked {
@@ -371,23 +371,23 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		uint256 tokenId
 	) internal override {
 		require(
-			storageController.tokenFlag(uint32(tokenId), "locked") != true,
-			"This token is locked and needs to be unlocked before it can be transfered"
+			storageController.tokenFlag(uint32(tokenId), 'locked') != true,
+			'This token is locked and needs to be unlocked before it can be transfered'
 		);
 
 		//used in InfinityMint linker, means that non permament links can be relinked
-		if (valuesController.isTrue("enableTransferUnlinks")) {
+		if (valuesController.isTrue('enableTransferUnlinks')) {
 			if (storageController.hasDestinaton(uint32(tokenId), 0))
 				storageController.setTokenFlag(
 					uint32(tokenId),
-					"canUnlinkIndex0",
+					'canUnlinkIndex0',
 					true
 				);
 
 			if (storageController.hasDestinaton(uint32(tokenId), 0))
 				storageController.setTokenFlag(
 					uint32(tokenId),
-					"canUnlinkIndex1",
+					'canUnlinkIndex1',
 					true
 				);
 		}
@@ -395,7 +395,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		//transfer it in storage
 		storageController.transfer(to, uint32(tokenId));
 
-		if (!valuesController.isTrue("disableRegisteredTokens")) {
+		if (!valuesController.isTrue('disableRegisteredTokens')) {
 			storageController.addToRegisteredTokens(to, uint32(tokenId));
 
 			if (from != address(0x0))
@@ -413,7 +413,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	function setTokenURI(uint32 tokenId, string memory json) public {
 		require(
 			isApprovedOrOwner(sender(), tokenId),
-			"is not Owner, approved or approved for all"
+			'is not Owner, approved or approved for all'
 		);
 		uri[tokenId] = json;
 	}
@@ -436,7 +436,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		storageController.set(currentTokenId, data);
 
 		//added for fast on chain look up on ganache basically, in a live environment registeredTokens should be disabled
-		if (!valuesController.isTrue("disableRegisteredTokens"))
+		if (!valuesController.isTrue('disableRegisteredTokens'))
 			storageController.addToRegisteredTokens(
 				mintReceiver,
 				currentTokenId
@@ -444,7 +444,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		//deletes previews and preview timestamp so they can receive more previews
 		storageController.deletePreview(
 			mintReceiver,
-			valuesController.tryGetValue("previewCount")
+			valuesController.tryGetValue('previewCount')
 		);
 
 		//increment balance inside of royalty controller
@@ -472,7 +472,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 		//check if mint is valid
 		require(
 			veriyMint(value(), !approved[sender()]),
-			"failed mint check: mints are disabled, mints are at a max supply or you did not pay enough"
+			'failed mint check: mints are disabled, mints are at a max supply or you did not pay enough'
 		);
 		completeMint(
 			minterController.mint(currentTokenId, sender(), data),
@@ -493,7 +493,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
 	{
 		if (!mintsEnabled) return false;
 
-		if (currentTokenId >= valuesController.tryGetValue("maxSupply"))
+		if (currentTokenId >= valuesController.tryGetValue('maxSupply'))
 			return false;
 
 		if (checkPrice && mintPrice != royaltyController.tokenPrice())

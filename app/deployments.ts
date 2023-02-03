@@ -13,6 +13,7 @@ import {
 	InfinityMintTempProject,
 } from './interfaces';
 import {
+	cwd,
 	debugLog,
 	findFiles,
 	isEnvTrue,
@@ -213,7 +214,7 @@ export class InfinityMintDeployment {
 	getContractName(index?: 0) {
 		return this.liveDeployments.length !== 0
 			? this.liveDeployments[index].name
-			: this.deploymentScript.contract;
+			: this.deploymentScript.contract || this.key;
 	}
 
 	/**
@@ -229,7 +230,7 @@ export class InfinityMintDeployment {
 	 */
 	getTemporaryFilePath() {
 		return (
-			process.cwd() +
+			cwd() +
 			`/temp/deployments/${this.project.name}@${
 				this.project.version?.version || '1.0.0'
 			}/${this.key}_${this.network}.json`
@@ -375,14 +376,14 @@ export class InfinityMintDeployment {
 		//make the directory
 		if (
 			!fs.existsSync(
-				process.cwd() +
+				cwd() +
 					`/temp/deployments/${this.project.name}@${
 						this.project.version?.version || '1.0.0'
 					}/`,
 			)
 		)
 			fs.mkdirSync(
-				process.cwd() +
+				cwd() +
 					`/temp/deployments/${this.project.name}@${
 						this.project.version?.version || '1.0.0'
 					}/`,
@@ -448,12 +449,7 @@ export class InfinityMintDeployment {
 	hasLocalDeployment(index?: number) {
 		let deployment = this.liveDeployments[index || 0];
 		let path =
-			process.cwd() +
-			'/deployments/' +
-			this.network +
-			'/' +
-			deployment.name +
-			'.json';
+			cwd() + '/deployments/' + this.network + '/' + deployment.name + '.json';
 
 		return fs.existsSync(path);
 	}
@@ -466,12 +462,7 @@ export class InfinityMintDeployment {
 	getLocalDeployment(index?: number) {
 		let deployment = this.liveDeployments[index || 0];
 		let path =
-			process.cwd() +
-			'/deployments/' +
-			this.network +
-			'/' +
-			deployment.name +
-			'.json';
+			cwd() + '/deployments/' + this.network + '/' + deployment.name + '.json';
 
 		if (!fs.existsSync(path))
 			throw new Error('local deployment not found: ' + path);
@@ -507,6 +498,8 @@ export class InfinityMintDeployment {
 	async deploy(...args: any) {
 		this.reloadScript();
 		let result = await this.execute('deploy', args);
+
+		if (!result) throw new Error('deploy function did not return a contract');
 
 		let contracts: Contract[];
 		if (!(result instanceof Array)) contracts = [result] as Contract[];
@@ -651,7 +644,7 @@ export const loadDeploymentClasses = async (
 			...(await getDeploymentClasses(
 				project,
 				console,
-				process.cwd() + '/node_modules/infinitymint/',
+				cwd() + '/node_modules/infinitymint/',
 			)),
 		];
 
@@ -704,30 +697,36 @@ export const getProjectDeploymentClasses = async (
 			).length !== 0,
 	);
 
-	let otherDeployments = loadedDeploymentClasses.filter(
-		deployment =>
-			moduleDeployments.filter(
-				thatDeployment =>
-					deployment.getContractName() === thatDeployment.getContractName(),
-			).length !== 0 &&
-			[
-				...(setings?.disabledContracts || []),
-				...(compiledProject.settings?.disabledContracts || ([] as any)),
-			].filter(
-				value =>
-					value === deployment.getContractName() ||
-					value === deployment.getKey(),
-			).length === 0,
-	);
+	let otherDeployments = loadedDeploymentClasses
+		.filter(
+			deployment =>
+				moduleDeployments.filter(
+					thatDeployment =>
+						deployment.getContractName() === thatDeployment.getContractName() &&
+						deployment.getModuleKey() === thatDeployment.getModuleKey(),
+				).length === 0 &&
+				[
+					...(setings?.disabledContracts || []),
+					...(compiledProject.settings?.disabledContracts || ([] as any)),
+				].filter(
+					value =>
+						value === deployment.getContractName() ||
+						value === deployment.getKey(),
+				).length === 0,
+		)
+		.filter(
+			deployment =>
+				compiledProject.modules[deployment.getModuleKey()] === undefined,
+		);
 
 	let deployments = [...moduleDeployments, ...otherDeployments];
 
-	//now we need to sort the deployments ranked on their index, then put libraries first, then put important first
-	deployments = deployments.sort((a, b) =>
-		a.isLibrary() || a.isImportant()
-			? deployments.length
-			: a.getIndex() - b.getIndex(),
-	);
+	//sort the deployments based on getIndex
+	deployments.sort((a, b) => {
+		if (a.getIndex() > b.getIndex()) return 1;
+		if (a.getIndex() < b.getIndex()) return -1;
+		return 0;
+	});
 
 	return deployments;
 };
@@ -745,8 +744,7 @@ export const getLocalDeployment = (contractName: string, network: string) => {
  * @returns
  */
 export const readLocalDeployment = (contractName: string, network: string) => {
-	let path =
-		process.cwd() + '/deployments/' + network + '/' + contractName + '.json';
+	let path = cwd() + '/deployments/' + network + '/' + contractName + '.json';
 
 	if (!fs.existsSync(path)) throw new Error(`${path} not found`);
 	return JSON.parse(
@@ -771,7 +769,7 @@ export const hasDeploymentManifest = (
 	if (!network) throw new Error('unable to automatically determain network');
 
 	let path =
-		process.cwd() +
+		cwd() +
 		`/temp/deployments/${project.name}@${
 			project.version?.version || '1.0.0'
 		}/${contractName}_${network}.json`;
@@ -797,7 +795,7 @@ export const getLiveDeployments = (
 	network: string,
 ) => {
 	let path =
-		process.cwd() +
+		cwd() +
 		`/temp/deployments/${project.name}@${
 			project.version?.version || '1.0.0'
 		}/${contractName}_${network}.json`;
@@ -846,11 +844,11 @@ export const getDeploymentClasses = async (
 	if (!network) throw new Error('unable to automatically determain network');
 
 	let searchLocations = [...(roots || [])];
-	searchLocations.push(process.cwd() + '/deploy/**/*.js');
-	if (isTypescript()) searchLocations.push(process.cwd() + '/deploy/**/*.ts');
+	searchLocations.push(cwd() + '/deploy/**/*.js');
+	if (isTypescript()) searchLocations.push(cwd() + '/deploy/**/*.ts');
 	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_DEPLOY'))
 		searchLocations.push(
-			process.cwd() + '/node_modules/infinitymint/dist/deploy/**/*.js',
+			cwd() + '/node_modules/infinitymint/dist/deploy/**/*.js',
 		);
 
 	let deployments = [];

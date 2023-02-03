@@ -1,6 +1,6 @@
 import {ChildProcess} from 'child_process';
 import {Dictionary} from 'form-data';
-import {debugLog, getConfigFile, isEnvTrue, warning} from './helpers';
+import {cwd, debugLog, getConfigFile, isEnvTrue, warning} from './helpers';
 import fs from 'fs';
 import {EventEmitter} from 'events';
 
@@ -36,13 +36,14 @@ export class Pipe {
 		this.errors = [];
 		this.appendDate = false;
 		this.created = Date.now();
+
 		this.logHandler = (str: string) => {
 			str = str.toString();
-			if (
-				this.listen &&
-				(!isEnvTrue('PIPE_IGNORE_CONSOLE') || getConfigFile().console)
-			)
-				console.log('<#DONT_LOG_ME$>' + str);
+
+			if (this.listen)
+				console.log(
+					(!isEnvTrue('PIPE_IGNORE_CONSOLE') ? '<#DONT_LOG_ME$>' : '') + str,
+				);
 
 			this.logs.push({
 				message: str,
@@ -52,16 +53,6 @@ export class Pipe {
 			});
 		};
 		this.errorHandler = (err: Error) => {
-			if (
-				this.listen &&
-				!isEnvTrue('PIPE_IGNORE_CONSOLE') &&
-				getConfigFile().console
-			)
-				console.error(err, false);
-
-			if (isEnvTrue('PIPE_IGNORE_CONSOLE') && !getConfigFile().console)
-				console.error(err);
-
 			this.errors.push(err);
 		};
 		this.terminationHandler = () => {};
@@ -130,6 +121,7 @@ export class PipeFactory {
 		//go back to the default pipe
 		if (!this.currentPipeKey || !this.pipes[this.currentPipeKey])
 			this.currentPipeKey = 'default';
+
 		this.emitter.emit(
 			this.currentPipeKey + 'Error',
 			error,
@@ -139,21 +131,33 @@ export class PipeFactory {
 		this.pipes[this.currentPipeKey].error(error);
 	}
 
+	public messageToString(msg: any) {
+		if (typeof msg === 'string') return msg;
+		else if (msg instanceof Error) return msg.message;
+		else if (msg instanceof ChildProcess) return msg.pid;
+		else if (!isNaN(msg)) return msg.toString();
+		else return JSON.stringify(msg);
+	}
+
+	public addColoursToString(msg: string) {
+		return msg
+			.replace(/\[/g, '{yellow-fg}[')
+			.replace(/\]/g, ']{/yellow-fg}')
+			.replace(/\</g, '{cyan-fg}<')
+			.replace(/\>/g, '>{/cyan-fg}')
+			.replace(/\(/g, '{cyan-fg}(')
+			.replace(/\)/g, '){/cyan-fg}')
+			.replace(/=>/g, '{magenta-fg}=>{/magenta-fg}');
+	}
+
 	public log(msg: any, pipe?: string, dontHighlight?: boolean) {
 		let actualPipe = pipe || this.currentPipeKey;
 		if (!this.pipes[actualPipe] && !this.pipes['default'])
 			throw new Error('bad pipe: ' + actualPipe);
 		else if (!this.pipes[actualPipe]) return this.log(msg, 'default');
 
-		if (!dontHighlight && typeof msg === 'string')
-			msg = msg
-				.replace(/\[/g, '{yellow-fg}[')
-				.replace(/\]/g, ']{/yellow-fg}')
-				.replace(/\</g, '{cyan-fg}<')
-				.replace(/\>/g, '>{/cyan-fg}')
-				.replace(/\(/g, '{cyan-fg}(')
-				.replace(/\)/g, '){/cyan-fg}')
-				.replace(/=>/g, '{magenta-fg}=>{/magenta-fg}');
+		msg = this.messageToString(msg);
+		msg = dontHighlight ? msg : this.addColoursToString(msg);
 
 		this.emitter.emit(
 			'log',
@@ -198,7 +202,7 @@ export class PipeFactory {
 			debugLog('saving pipe => (' + pipe.toString() + ')');
 
 		fs.writeFileSync(
-			process.cwd() + '/temp/pipes/' + pipe.toString() + `.${Date.now()}.json`,
+			cwd() + '/temp/pipes/' + pipe.toString() + `.${Date.now()}.json`,
 			JSON.stringify({
 				name: pipe.toString(),
 				logs: this.pipes[pipe.toString()].logs,
@@ -257,7 +261,7 @@ export let defaultFactory: PipeFactory;
  */
 export const createDefaultFactory = () => {
 	console.log('🛸 Creating Default Logger');
-	defaultFactory = new PipeFactory();
+	if (defaultFactory === undefined) defaultFactory = new PipeFactory();
 };
 
 /**

@@ -29,6 +29,7 @@ import {
 	saveTempCompiledProject,
 	saveTempDeployedProject,
 } from './projects';
+import {blessedToAnsi} from './colours';
 
 /**
  * a simple interface to describe a vector
@@ -209,6 +210,13 @@ export interface Rectangle {
 	z: number;
 }
 
+let onlyDefault = false;
+
+export const setOnlyDefault = (value: boolean) => {
+	onlyDefault = value;
+	if (value) warning('Only default pipe (console.log) is being piped');
+};
+
 /**
  * Logs a console message to the current pipe.
  * @param msg
@@ -216,43 +224,41 @@ export interface Rectangle {
  */
 export const log = (msg: string | object | number, pipe?: string) => {
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+	if (typeof msg === 'number') msg = msg.toString();
+	pipe = pipe || 'default';
 
-	if (!defaultFactory?.log) {
-		if ((console as any)?._log) (console as any)?._log(msg);
-		else if (isEnvTrue('PIPE_IGNORE_CONSOLE')) console.log(msg);
-		return;
+	if (pipe !== 'default' && pipe !== 'debug' && onlyDefault) return;
+
+	if (isAllowPiping) defaultFactory.log(msg, pipe);
+
+	if (!isAllowPiping || isEnvTrue('PIPE_IGNORE_CONSOLE')) {
+		if (!(console as any)._log) {
+			console.log(msg);
+		} else
+			(console as any)._log(
+				blessedToAnsi(
+					defaultFactory.addColoursToString(
+						defaultFactory.messageToString(msg),
+					),
+				),
+			);
 	}
-
-	//if we aren't overwriting console methods and console is false
-	if (
-		!isAllowPiping ||
-		isEnvTrue('PIPE_IGNORE_CONSOLE') ||
-		(!isEnvTrue('PIPE_IGNORE_CONSOLE') &&
-			getConfigFile().console === false &&
-			isEnvTrue('PIPE_SILENCE') === false)
-	)
-		console.log(
-			msg + (pipe === 'default' || !pipe ? '' : ` <${pipe || 'unkown'}>`),
-		);
-
-	defaultFactory.log(msg.toString(), pipe);
 };
 
+let disableDebugLog = false;
+
+export const setDebugLogDisabled = (disabled: boolean) => {
+	disableDebugLog = disabled;
+
+	if (disabled) warning('Debug log messages are disabled');
+};
 /**
  * Logs a debug message to the current pipe.
  * @param msg
  * @param pipe
  */
 export const debugLog = (msg: string | object | number) => {
-	if (!defaultFactory?.pipes && (console as any)?._log) {
-		(console as any)?._log(msg + ' <debug>');
-		return;
-	} else if (!defaultFactory?.pipes) {
-		console.log(msg);
-		return;
-	}
-	//throw away debug msgs if no pipe for it
-	if (!defaultFactory.pipes['debug']) return;
+	if (disableDebugLog) return;
 
 	log(msg, 'debug');
 };
@@ -308,14 +314,14 @@ export const calculateWidth = (...elements: BlessedElement[]) => {
  * @returns
  */
 export const readSession = (forceRead?: boolean): InfinityMintSession => {
-	if (!fs.existsSync(process.cwd() + '/.session'))
+	if (!fs.existsSync(cwd() + '/.session'))
 		return {created: Date.now(), environment: {}};
 
 	if (memorySession && !forceRead) return memorySession;
 
 	try {
 		let result = JSON.parse(
-			fs.readFileSync(process.cwd() + '/.session', {
+			fs.readFileSync(cwd() + '/.session', {
 				encoding: 'utf-8',
 			}),
 		);
@@ -340,31 +346,47 @@ export const delay = async (ms: number) =>
 	new Promise(resolve => setTimeout(resolve, ms));
 
 /**
+ * the most safest safe way to get cwd according to stack overflow
+ * @returns
+ */
+export const cwd = () => {
+	let result = path.resolve(process.cwd());
+	if (result === '/') return '';
+	return result;
+};
+
+/**
  *
  * @param msg
  */
 const _blessed = require('blessed');
 
+let scriptMode = false;
+
+export const setScriptMode = (scriptMode: boolean) => {
+	scriptMode = scriptMode;
+};
+
 /**
  * ignores the current console log and pipes it directly to the console.
  * @param msg
  */
-export const logDirect = (msg: any) => {
-	if ((console as any)._log && isAllowPiping && typeof msg !== 'object')
-		(console as any)._log(
-			_blessed.cleanTags(
-				msg instanceof Error
-					? msg.message
-					: typeof msg === 'string'
-					? msg
-						? !isNaN(parseInt(msg))
-						: parseInt(msg.toString())
-					: msg,
-			),
-		);
-	else if ((console as any)._log) (console as any)._log(msg);
+export const logDirect = (...any: any) => {
+	if ((console as any)._log === undefined) {
+		console.log(...any);
+		return;
+	}
 
-	console.log(msg);
+	let msg = any[0];
+	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+	if (typeof msg === 'number') msg = msg.toString();
+	if (msg instanceof Error) msg = msg.stack || msg.message || msg.toString();
+
+	(console as any)._log(
+		scriptMode ? blessedToAnsi(msg) : _blessed.cleanTags(msg),
+	);
+
+	if (isAllowPiping) console.log(msg);
 };
 
 let actionProject: InfinityMintTempProject | undefined;
@@ -553,12 +575,9 @@ export const parse = (
 	if (parseCache[path.toString()] && useCache)
 		return parseCache[path.toString()];
 
-	let result = fs.readFileSync(
-		process.cwd() + (path[0] !== '/' ? '/' + path : path),
-		{
-			encoding: (encoding || 'utf-8') as any,
-		},
-	);
+	let result = fs.readFileSync(cwd() + (path[0] !== '/' ? '/' + path : path), {
+		encoding: (encoding || 'utf-8') as any,
+	});
 
 	let parsedResult: string;
 	if (typeof result === typeof Buffer)
@@ -576,89 +595,105 @@ export const parse = (
 export const write = (path: PathLike, object: any) => {
 	log('writing ' + path, 'fs');
 	fs.writeFileSync(
-		process.cwd() + (path[0] !== '/' ? '/' + path : path),
+		cwd() + (path[0] !== '/' ? '/' + path : path),
 		typeof object === 'object' ? JSON.stringify(object) : object,
 	);
 };
+
+const blockedMessages = [
+	'eth_chainId',
+	'eth_getBlockByNumber',
+	'eth_getBlockByHash',
+	'eth_getBlockTransactionCountByNumber',
+	'eth_blockNumber',
+	'eth_getBalance',
+	'eth_estimateGas',
+	'eth_gasPrice',
+	'eth_sendRawTransaction',
+	'eth_getFilterChanges',
+	'eth_getTransactionByHash',
+	'eth_getTransactionReceipt',
+	'eth_getTransactionCount',
+	'eth_getCode',
+	'eth_getLogs',
+	'eth_getStorageAt',
+	'eth_getTransactionByBlockNumberAndIndex',
+	'eth_getTransactionByBlockHashAndIndex',
+	'eth_getBlockTransactionCountByHash',
+	'eth_getUncleCountByBlockNumber',
+	'eth_getUncleCountByBlockHash',
+	'eth_getUncleByBlockNumberAndIndex',
+	'eth_getUncleByBlockHashAndIndex',
+	'eth_getCompilers',
+	'eth_compileLLL',
+	'eth_compileSolidity',
+	'eth_compileSerpent',
+	'eth_newFilter',
+	'eth_newBlockFilter',
+	'eth_newPendingTransactionFilter',
+	'eth_uninstallFilter',
+	'net_version',
+];
+export const consoleLogReplacement = (...any: any[]) => {
+	let msg = any[0];
+	if (msg instanceof Error) msg = msg.message;
+	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+
+	let pipe = any[1] || defaultFactory.currentPipeKey || 'default';
+
+	//this is a very stupid way to filter out the eth messages from console log, too bad!
+	if (blockedMessages.some(m => msg.indexOf(m) !== -1)) {
+		if (scriptMode) return;
+
+		pipe = 'localhost';
+	}
+
+	if (isAllowPiping && msg.indexOf('<#DONT_LOG_ME$>') === -1)
+		defaultFactory.log(msg, pipe);
+
+	msg = msg.replace('<#DONT_LOG_ME$>', '');
+
+	//do normal log as well
+	if (pipe !== 'localhost' && (!scriptMode || isEnvTrue('PIPE_IGNORE_CONSOLE')))
+		(console as any)._log(
+			scriptMode
+				? blessedToAnsi(
+						defaultFactory.addColoursToString(
+							defaultFactory.messageToString(msg),
+						),
+				  )
+				: _blessed.cleanTags(msg),
+			...any.slice(1).filter((a: any) => a !== pipe),
+		);
+};
+
+export const consoleErrorReplacement = (...any: any[]) => {
+	let error = any[0];
+	//adds it to the log
+	defaultFactory.error(error);
+
+	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG'))
+		defaultFactory.pipes['debug'].log(error);
+
+	if (isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT'))
+		defaultFactory.pipes['default'].log(error);
+
+	if (isEnvTrue('PIPE_ECHO_ERRORS') || scriptMode || !isAllowPiping)
+		(console as any)._error(...any);
+};
+
 /**
  * Overwrites default behaviour of console.log and console.error
  */
-export const overwriteConsoleMethods = () => {
+export const ovewriteConsoleMethods = () => {
 	//overwrite console log
-	let _log = console.log;
-	console.log = (msg: any) => {
-		msg = msg instanceof Error ? msg.message : msg;
+	let __log = console.log;
+	(console as any)._log = (...any: any[]) => __log(...any);
+	console.log = consoleLogReplacement;
 
-		if (!isAllowPiping) {
-			if (typeof msg !== 'object') _log(_blessed.cleanTags(msg));
-			else _log(msg);
-			return;
-		}
-
-		try {
-			if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
-		} catch (error) {
-			msg = msg.toString();
-		}
-
-		if (
-			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
-			msg.substring(0, 4) === 'eth_' &&
-			defaultFactory.pipes['ganache']
-		) {
-			defaultFactory.log(msg, 'ganache');
-			return;
-		}
-
-		if (
-			msg.indexOf('<#DONT_LOG_ME$>') === -1 &&
-			defaultFactory.pipes[defaultFactory.currentPipeKey]
-		)
-			defaultFactory.log(msg, defaultFactory.currentPipeKey);
-
-		if (
-			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
-			(!defaultFactory.pipes[defaultFactory.currentPipeKey] &&
-				!isEnvTrue('PIPE_SILENCE_UNDEFINED_PIPE'))
-		)
-			_log(_blessed.cleanTags(msg.replace('<#DONT_LOG_ME$>', '')));
-	};
-	(console as any)._log = _log;
-
-	let _error = console.error;
-	console.error = (error: any | Error, dontSendToPipe?: boolean) => {
-		if (!isAllowPiping) {
-			_error(error);
-			return;
-		}
-		if (defaultFactory.pipes[defaultFactory.currentPipeKey] && !dontSendToPipe)
-			defaultFactory.getPipe(defaultFactory.currentPipeKey).error(error);
-
-		if (
-			isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ||
-			isEnvTrue('PIPE_LOG_ERRORS_TO_DEFAULT')
-		) {
-			log(
-				`{red-fg}{bold}⚠️ AN ERROR HAS OCCURED ⚠️{/bold}{/red-fg}`,
-				isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
-			);
-			((error?.stack || error?.message || 'unknown') as string)
-				.split('\n')
-				.forEach((line: string) =>
-					log(
-						`{red-fg}${line}{/red-fg}`,
-						isEnvTrue('PIPE_LOG_ERRORS_TO_DEBUG') ? 'debug' : 'default',
-					),
-				);
-		}
-
-		if (
-			defaultFactory.pipes[defaultFactory.currentPipeKey]?.listen ||
-			isEnvTrue('PIPE_ECHO_ERRORS')
-		)
-			_error(error);
-	};
-	(console as any)._error = _error;
+	let __error = console.error;
+	(console as any)._error = (...any: any[]) => __error(...any);
+	console.error = consoleErrorReplacement;
 };
 
 /**
@@ -666,7 +701,7 @@ export const overwriteConsoleMethods = () => {
  * @returns
  */
 export const getConfigFile = () => {
-	let res = require(process.cwd() + '/infinitymint.config');
+	let res = require(cwd() + '/infinitymint.config');
 	res = res.default || res;
 	return res as InfinityMintConfig;
 };
@@ -676,8 +711,8 @@ export const copyContractsFromNodeModule = (
 	source: PathLike,
 ) => {
 	if (
-		fs.existsSync(process.cwd() + '/package.json') &&
-		readJson(process.cwd() + '/package.json').name === 'infinitymint'
+		fs.existsSync(cwd() + '/package.json') &&
+		readJson(cwd() + '/package.json').name === 'infinitymint'
 	)
 		throw new Error('cannot use node modules in InfinityMint package');
 
@@ -719,17 +754,17 @@ export const prepareHardhatConfig = (
 export const cleanCompilations = () => {
 	try {
 		debugLog('removing ./artifacts');
-		fs.rmdirSync(process.cwd() + '/artifacts', {
+		fs.rmdirSync(cwd() + '/artifacts', {
 			recursive: true,
 			force: true,
 		} as any);
 		debugLog('removing ./cache');
-		fs.rmdirSync(process.cwd() + '/cache', {
+		fs.rmdirSync(cwd() + '/cache', {
 			recursive: true,
 			force: true,
 		} as any);
 		debugLog('removing ./typechain-types');
-		fs.rmdirSync(process.cwd() + '.typechain-types', {
+		fs.rmdirSync(cwd() + '.typechain-types', {
 			recursive: true,
 			force: true,
 		} as any);
@@ -756,14 +791,14 @@ export const prepareConfig = () => {
 	prepareHardhatConfig(session, config);
 
 	//overwrite the console methods
-	if (!isEnvTrue('PIPE_IGNORE_CONSOLE')) overwriteConsoleMethods();
+	if (!isEnvTrue('PIPE_IGNORE_CONSOLE')) ovewriteConsoleMethods();
 
 	let solidityModuleFolder =
-		process.cwd() +
+		cwd() +
 		'/node_modules/infinitymint/' +
 		(process.env.DEFAULT_SOLIDITY_FOLDER || 'alpha');
 	let solidityFolder =
-		process.cwd() + '/' + (process.env.DEFAULT_SOLIDITY_FOLDER || 'alpha');
+		cwd() + '/' + (process.env.DEFAULT_SOLIDITY_FOLDER || 'alpha');
 
 	if (isEnvTrue('SOLIDITY_USE_NODE_MODULE'))
 		copyContractsFromNodeModule(solidityFolder, solidityModuleFolder);
@@ -810,12 +845,12 @@ export const findWindows = async (roots?: PathLike[]): Promise<string[]> => {
 
 	if (!isInfinityMint())
 		searchLocations.push(
-			process.cwd() + '/node_modules/infinitymint/dist/app/windows/**/*.js',
+			cwd() + '/node_modules/infinitymint/dist/app/windows/**/*.js',
 		);
-	else searchLocations.push(process.cwd() + '/app/windows/**/*.ts');
+	else searchLocations.push(cwd() + '/app/windows/**/*.ts');
 
-	searchLocations.push(process.cwd() + '/windows/**/*.js');
-	if (isTypescript()) searchLocations.push(process.cwd() + '/windows/**/*.ts');
+	searchLocations.push(cwd() + '/windows/**/*.js');
+	if (isTypescript()) searchLocations.push(cwd() + '/windows/**/*.ts');
 
 	let files = [];
 
@@ -828,25 +863,24 @@ export const findWindows = async (roots?: PathLike[]): Promise<string[]> => {
 };
 
 export const getInfinityMintVersion = () => {
-	if (isInfinityMint()) return getPackageJson()?.version || '1.0.0';
+	if (isInfinityMint()) return findLocalPackageJson()?.version || '1.0.0';
 
-	if (!fs.existsSync(process.cwd() + '/node_modules/infinitymint/package.json'))
+	if (!fs.existsSync(cwd() + '/node_modules/infinitymint/package.json'))
 		return '1.0.0';
 
 	return (
 		JSON.parse(
-			fs.readFileSync(
-				process.cwd() + '/node_modules/infinitymint/package.json',
-				{encoding: 'utf-8'},
-			),
+			fs.readFileSync(cwd() + '/node_modules/infinitymint/package.json', {
+				encoding: 'utf-8',
+			}),
 		)?.version || '1.0.0'
 	);
 };
 
-export const getPackageJson = () => {
+export const findLocalPackageJson = () => {
 	if (
 		!fs.existsSync('./../package.json') &&
-		!fs.existsSync(process.cwd() + '/package.json')
+		!fs.existsSync(cwd() + '/package.json')
 	)
 		throw new Error('no package.json');
 
@@ -854,7 +888,7 @@ export const getPackageJson = () => {
 		fs.readFileSync(
 			fs.existsSync('./../package.json')
 				? './../package.json'
-				: process.cwd() + '/package.json',
+				: cwd() + '/package.json',
 			{
 				encoding: 'utf-8',
 			},
@@ -902,20 +936,18 @@ export const findScripts = async (roots?: string[]) => {
 
 	//try and include everything in the scripts folder of the module
 	if (!isInfinityMint() && isEnvTrue('INFINITYMINT_INCLUDE_SCRIPTS'))
-		roots.push(
-			process.cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js',
-		);
+		roots.push(cwd() + '/node_modules/infinitymint/dist/scripts/**/*.js');
 
 	//if we are typescript require ts files
-	if (isTypescript()) roots.push(process.cwd() + '/scripts/**/*.ts');
+	if (isTypescript()) roots.push(cwd() + '/scripts/**/*.ts');
 	//require JS files always
-	roots.push(process.cwd() + '/scripts/**/*.js');
+	roots.push(cwd() + '/scripts/**/*.js');
 
 	roots = [
 		...roots,
 		...(config.roots || []).map(
 			(root: string) =>
-				process.cwd() +
+				cwd() +
 				'/' +
 				root +
 				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
@@ -923,7 +955,7 @@ export const findScripts = async (roots?: string[]) => {
 		),
 		...(config.roots || []).map(
 			(root: string) =>
-				process.cwd() +
+				cwd() +
 				'/' +
 				root +
 				(root[root.length - 1] !== '/' ? '/scripts/' : 'scripts/') +
@@ -959,6 +991,8 @@ export const executeScript = async (
 	gems?: Dictionary<InfinityMintGemScript>,
 	args?: Dictionary<InfinityMintScriptArguments>,
 	infinityConsole?: InfinityConsole,
+	overwriteConsoleMethods: boolean = true,
+	disableDebugLog: boolean = false,
 ) => {
 	let _exit = (process as any).exit;
 	let _log = console.log;
@@ -968,14 +1002,16 @@ export const executeScript = async (
 		else warning('halted exit code: ' + 0);
 	};
 	try {
-		if (infinityConsole)
-			console.log = (msg: string) => {
-				infinityConsole.getPipeFactory().log(msg, 'default');
-			};
-		if (infinityConsole)
-			console.error = (error: any) => {
-				infinityConsole.errorHandler(error);
-			};
+		if (overwriteConsoleMethods) {
+			if (infinityConsole)
+				console.log = (msg: string) => {
+					infinityConsole.log(msg, 'default');
+				};
+			if (infinityConsole)
+				console.error = (error: any) => {
+					infinityConsole.errorHandler(error);
+				};
+		}
 
 		await script.execute({
 			script: script,
@@ -983,12 +1019,11 @@ export const executeScript = async (
 			gems: gems,
 			args: args,
 			log: (msg: string) => {
-				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
-				else infinityConsole.getPipeFactory().log(msg, 'default');
+				infinityConsole.log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
-				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
-				else infinityConsole.getPipeFactory().log(msg, 'debug');
+				if (disableDebugLog) return;
+				infinityConsole.debugLog(msg);
 			},
 			infinityConsole: infinityConsole,
 			project: getCurrentProject(true),
@@ -1123,7 +1158,7 @@ export const requireScript = async (
 
 export const isInfinityMint = () => {
 	try {
-		let packageJson = getPackageJson();
+		let packageJson = findLocalPackageJson();
 		if (packageJson?.name === 'infinitymint') return true;
 	} catch (error) {
 		if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
@@ -1174,14 +1209,14 @@ export const loadInfinityMint = (
 
 	//try to automatically add module alias
 	try {
-		let projectJson = getPackageJson();
+		let projectJson = findLocalPackageJson();
 		if (!projectJson._moduleAliases) {
 			projectJson._moduleAliases = {
 				'@app': './node_modules/infinitymint/dist/app/',
 			};
 		}
 		fs.writeFileSync(
-			process.cwd() + '/package.json',
+			cwd() + '/package.json',
 			JSON.stringify(projectJson, null, 2),
 		);
 	} catch (error) {}
@@ -1193,9 +1228,7 @@ export const loadInfinityMint = (
 export const createDirs = (dirs: string[]) => {
 	dirs
 		.filter((dir: string) => !fs.existsSync(dir))
-		.forEach(dir =>
-			fs.mkdirSync(process.cwd() + (dir[0] !== '/' ? '/' + dir : dir)),
-		);
+		.forEach(dir => fs.mkdirSync(cwd() + (dir[0] !== '/' ? '/' + dir : dir)));
 };
 
 export const readJson = (fileName: string) => {
@@ -1223,7 +1256,7 @@ export const createEnvFile = (source: any) => {
 		}\n`;
 	});
 
-	fs.writeFileSync(process.cwd() + '/.env', stub);
+	fs.writeFileSync(cwd() + '/.env', stub);
 };
 
 export const preInitialize = (isJavascript?: boolean) => {
@@ -1244,14 +1277,13 @@ export const preInitialize = (isJavascript?: boolean) => {
 		'projects/bundles',
 	]);
 
-	if (!fs.existsSync(process.cwd() + '/.env')) {
+	if (!fs.existsSync(cwd() + '/.env')) {
 		//if it isn't javascript we can just include the .env.ts file, else if we aren't just copy the .env from the examples/js folder instead
 		let path: PathLike;
 		if (!isJavascript) {
-			path = fs.existsSync(process.cwd() + '/examples/example.env.ts')
-				? process.cwd() + '/examples/example.env.ts'
-				: process.cwd() +
-				  '/node_modules/infinitymint/dist/examples/example.env.js';
+			path = fs.existsSync(cwd() + '/examples/example.env.ts')
+				? cwd() + '/examples/example.env.ts'
+				: cwd() + '/node_modules/infinitymint/dist/examples/example.env.js';
 
 			if (!fs.existsSync(path))
 				throw new Error(
@@ -1268,16 +1300,16 @@ export const preInitialize = (isJavascript?: boolean) => {
 				return;
 			}
 		} else {
-			path = fs.existsSync(process.cwd() + '/examples/js/example.env')
-				? process.cwd() + '/examples/js/example.env'
-				: process.cwd() + '/node_modules/infinitymint/examples/js/example.env';
+			path = fs.existsSync(cwd() + '/examples/js/example.env')
+				? cwd() + '/examples/js/example.env'
+				: cwd() + '/node_modules/infinitymint/examples/js/example.env';
 
 			if (!fs.existsSync(path))
 				throw new Error(
 					'could not find: ' + path + ' to create .env file with',
 				);
 
-			fs.copyFileSync(path, process.cwd() + '/.env');
+			fs.copyFileSync(path, cwd() + '/.env');
 		}
 
 		console.log('made .env from ' + path);
@@ -1334,9 +1366,9 @@ export const initializeGanacheMnemonic = () => {
 		if (session.environment.ganacheMnemonic)
 			delete session.environment.ganacheMnemonic;
 
-		if (fs.existsSync(process.cwd() + '/.mnemonics'))
+		if (fs.existsSync(cwd() + '/.mnemonics'))
 			session.environment.ganacheMnemonic = readJson(
-				process.cwd() + '/.mnemonics',
+				cwd() + '/.mnemonics',
 			).ganache.mnemonic;
 		else
 			warning(
@@ -1396,8 +1428,8 @@ export const createInfinityMintConfig = (
 		export default config;`;
 
 	//check if the infinity mint config file has not been created, if it hasn't then create a new config file with the values of the object above
-	if (!fs.existsSync(process.cwd() + '/' + filename)) {
-		fs.writeFileSync(process.cwd() + '/' + filename, stub);
+	if (!fs.existsSync(cwd() + '/' + filename)) {
+		fs.writeFileSync(cwd() + '/' + filename, stub);
 	}
 };
 
@@ -1440,7 +1472,7 @@ let memorySession: InfinityMintSession;
  */
 export const saveSession = (session: InfinityMintSession) => {
 	memorySession = session;
-	fs.writeFileSync(process.cwd() + '/.session', JSON.stringify(session));
+	fs.writeFileSync(cwd() + '/.session', JSON.stringify(session));
 };
 
 /**
@@ -1451,8 +1483,8 @@ export const getGanacheMnemonic = () => {
 	if (readSession()?.environment?.ganacheMnemonic)
 		return readSession()?.environment?.ganacheMnemonic;
 
-	return fs.existsSync(process.cwd() + '/.mnemonic')
-		? fs.readFileSync(process.cwd() + '/.mnemonic', {
+	return fs.existsSync(cwd() + '/.mnemonic')
+		? fs.readFileSync(cwd() + '/.mnemonic', {
 				encoding: 'utf-8',
 		  })
 		: generateMnemonic();

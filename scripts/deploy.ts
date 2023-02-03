@@ -8,10 +8,17 @@ import {
 } from '../app/interfaces';
 import {InfinityMintDeployment} from '../app/deployments';
 import {getScriptTemporaryProject} from '../app/projects';
-import {action, always, getConfigFile, prepare, stage} from '../app/helpers';
+import {
+	action,
+	always,
+	getConfigFile,
+	logDirect,
+	prepare,
+	stage,
+} from '../app/helpers';
 
 const deploy: InfinityMintScript = {
-	name: 'Deploy Project',
+	name: 'Deploy',
 	description:
 		'Deploys InfinityMint or a specific InfinityMint contract related to the current project',
 	/**
@@ -31,13 +38,13 @@ const deploy: InfinityMintScript = {
 		if (script.args?.setPipe?.value) {
 			//pipes are used to pipe console.log and console.errors to containers which can then be viewed instead of logs/debug logs all being in one place, here we are registering a new pipe for this deployment process and setting it as the current pipe
 			let pipeName = 'deploy_' + project.name;
-			if (!script.infinityConsole.getPipeFactory().pipes[pipeName])
-				script.infinityConsole.getPipeFactory().registerSimplePipe(pipeName, {
+			if (!script.infinityConsole.getConsoleLogs().pipes[pipeName])
+				script.infinityConsole.getConsoleLogs().registerSimplePipe(pipeName, {
 					listen: true,
 				});
 
 			//all log messages will now go to deploy
-			script.infinityConsole.getPipeFactory().setCurrentPipe(pipeName);
+			script.infinityConsole.getConsoleLogs().setCurrentPipe(pipeName);
 		}
 
 		if (!project.network)
@@ -47,7 +54,7 @@ const deploy: InfinityMintScript = {
 				url: config.settings?.networks?.[
 					script.infinityConsole.getCurrentNetwork().name
 				]?.rpc,
-				tokenSymbol: script.infinityConsole.getTokenSymbol(),
+				tokenSymbol: script.infinityConsole.getCurrentTokenSymbol(),
 			};
 
 		//sets the project and script to be the one used by the action method. Must be called before any action is called or any always is called
@@ -58,12 +65,10 @@ const deploy: InfinityMintScript = {
 		);
 
 		let deployments: InfinityMintDeployment[] =
-			await script.infinityConsole.getDeploymentClasses(
-				project,
-				script.infinityConsole,
-			);
+			await script.infinityConsole.getProjectDeploymentClasses(project);
+
 		let notUniqueAndImportant = deployments
-			.filter(deployment => deployment.isUnique() && deployment.isImportant())
+			.filter(deployment => !deployment.isUnique() && !deployment.isImportant())
 			.filter(
 				deployment =>
 					deployments.filter(
@@ -79,8 +84,32 @@ const deploy: InfinityMintScript = {
 							deployment =>
 								deployment.getKey() + ':' + deployment.getTemporaryFilePath(),
 						)
-						.join(','),
+						.join('\n'),
 			);
+
+		let libraies = deployments.filter(deployment => deployment.isLibrary());
+		let important = deployments.filter(deployment => deployment.isImportant());
+
+		let importantDeployments = [...libraies];
+		important.forEach((deployment, index) => {
+			if (
+				importantDeployments.filter(
+					thatDeployment => thatDeployment.getKey() === deployment.getKey(),
+				).length === 0
+			)
+				importantDeployments.push(deployment);
+		});
+
+		importantDeployments.sort((a, b) => {
+			if (a.isLibrary() && !b.isLibrary()) return -1;
+			if (!a.isLibrary() && b.isLibrary()) return 1;
+			return 0;
+		});
+
+		script.log(`{yellow-fg}{bold}deploying ${deployments.length} contracts{/}`);
+		deployments.forEach(deployment => {
+			script.log(`{white-fg}{bold} - ${deployment.getKey()}{/}`);
+		});
 
 		let contracts = {...project.deployments};
 		//deploy stage

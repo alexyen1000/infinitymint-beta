@@ -2,7 +2,7 @@
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "./Authentication.sol";
+import './Authentication.sol';
 
 contract InfinityMintProject is InfinityMintObject, Authentication {
 	mapping(uint256 => bytes) internal projects;
@@ -24,10 +24,10 @@ contract InfinityMintProject is InfinityMintObject, Authentication {
 	}
 
 	function setInitialProject(bytes memory project) public onlyDeployer {
-		require(nextVersion == 0, "initial project already set");
+		require(nextVersion == 0, 'initial project already set');
 		projects[nextVersion] = project;
-		tags[nextVersion] = "initial";
-		interactions["initial"] = abi.encode(
+		tags[nextVersion] = 'initial';
+		interactions['initial'] = abi.encode(
 			sender(),
 			block.timestamp,
 			block.number,
@@ -40,8 +40,8 @@ contract InfinityMintProject is InfinityMintObject, Authentication {
 	}
 
 	function setVersion(uint256 version) public onlyApproved {
-		require(version < nextVersion && version > 0, "invalid version");
-		require(projects[version].length != 0, "blank project set");
+		require(version < nextVersion && version > 0, 'invalid version');
+		require(projects[version].length != 0, 'blank project set');
 		outputVersion = version;
 	}
 
@@ -90,10 +90,10 @@ contract InfinityMintProject is InfinityMintObject, Authentication {
 		bytes memory tag,
 		bool setAsCurrentVersion
 	) public onlyApproved {
-		require(bytes(project).length != 0, "blank project set");
-		require(bytes(tag).length != 0, "blank tag set");
-		require(interactions[tag].length == 0, "tag already set");
-		require(nextVersion != 0, "initial project not set by deployer");
+		require(bytes(project).length != 0, 'blank project set');
+		require(bytes(tag).length != 0, 'blank tag set');
+		require(interactions[tag].length == 0, 'tag already set');
+		require(nextVersion != 0, 'initial project not set by deployer');
 		projects[nextVersion] = project;
 		tags[nextVersion] = tag;
 		interactions[tag] = abi.encode(
