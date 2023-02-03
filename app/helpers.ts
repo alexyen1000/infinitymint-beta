@@ -388,7 +388,7 @@ export const logDirect = (...any: any) => {
 		scriptMode ? blessedToAnsi(msg) : _blessed.cleanTags(msg),
 	);
 
-	if (!scriptMode && isAllowPiping) console.log(msg);
+	if (isAllowPiping) console.log(msg);
 };
 
 let actionProject: InfinityMintTempProject | undefined;
