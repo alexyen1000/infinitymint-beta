@@ -229,22 +229,22 @@ export const log = (msg: string | object | number, pipe?: string) => {
 
 	if (pipe !== 'default' && pipe !== 'debug' && onlyDefault) return;
 
-	if (!defaultFactory?.log || !defaultFactory.pipes[pipe]) {
-		if ((console as any)?._log)
-			(console as any)?._log(msg, scriptMode ? '[' + pipe + ']' : pipe);
-		return;
-	}
+	defaultFactory.log(msg, pipe);
+	if (
+		(isEnvTrue('PIPE_IGNORE_CONSOLE') || !isAllowPiping) &&
+		(console as any)._log
+	) {
+		if (scriptMode)
+			msg = blessedToAnsi(
+				defaultFactory.addColoursToString(defaultFactory.messageToString(msg)),
+			);
 
-	if (!isAllowPiping) {
-		msg = blessedToAnsi(
-			defaultFactory.addColoursToString(defaultFactory.messageToString(msg)),
+		(console as any)._log(
+			blessedToAnsi(
+				defaultFactory.addColoursToString(defaultFactory.messageToString(msg)),
+			),
 		);
-		if ((console as any)?._log)
-			(console as any)?._log(msg, scriptMode ? '[' + pipe + ']' : pipe);
-		return;
 	}
-
-	console.log(msg);
 };
 
 let disableDebugLog = false;
@@ -374,10 +374,12 @@ export const setScriptMode = (scriptMode: boolean) => {
  * @param msg
  */
 export const logDirect = (...any: any) => {
-	if (!isAllowPiping) {
+	if ((console as any)._log === undefined) {
 		console.log(...any);
 		return;
 	}
+
+	console.log(...any);
 
 	let msg = any[0];
 	msg =
@@ -634,28 +636,39 @@ const blockedMessages = [
 	'eth_newBlockFilter',
 	'eth_newPendingTransactionFilter',
 	'eth_uninstallFilter',
+	'net_version',
 ];
 export const consoleLogReplacement = (...any: any[]) => {
 	let msg = any[0];
 	if (msg instanceof Error) msg = msg.message;
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
 
-	if (blockedMessages.some(m => msg.indexOf(m) !== -1)) return;
+	let pipe = any[1] || defaultFactory.currentPipeKey || 'default';
+
+	//this is a very stupid way to filter out the eth messages from console log, too bad!
+	if (blockedMessages.some(m => msg.indexOf(m) !== -1)) {
+		if (scriptMode) return;
+
+		pipe = 'localhost';
+	}
 
 	if (isAllowPiping && msg.indexOf('<#DONT_LOG_ME$>') === -1)
-		defaultFactory.log(msg, defaultFactory.currentPipeKey || 'default');
+		defaultFactory.log(msg, pipe);
+
+	msg = msg.replace('<#DONT_LOG_ME$>', '');
 
 	//do normal log as well
-	(console as any)._log(
-		scriptMode
-			? blessedToAnsi(
-					defaultFactory.addColoursToString(
-						defaultFactory.messageToString(msg),
-					),
-			  )
-			: _blessed.cleanTags(msg),
-		...any.slice(1),
-	);
+	if (pipe !== 'localhost' && (!scriptMode || isEnvTrue('PIPE_IGNORE_CONSOLE')))
+		(console as any)._log(
+			scriptMode
+				? blessedToAnsi(
+						defaultFactory.addColoursToString(
+							defaultFactory.messageToString(msg),
+						),
+				  )
+				: _blessed.cleanTags(msg),
+			...any.slice(1).filter((a: any) => a !== pipe),
+		);
 };
 
 export const consoleErrorReplacement = (...any: any[]) => {
@@ -1009,13 +1022,11 @@ export const executeScript = async (
 			gems: gems,
 			args: args,
 			log: (msg: string) => {
-				if (!infinityConsole.isTelnet()) infinityConsole.log(msg);
-				else infinityConsole.log(msg, 'default');
+				infinityConsole.log(msg, 'default');
 			},
 			debugLog: (msg: string) => {
 				if (disableDebugLog) return;
-				if (!infinityConsole.isTelnet()) infinityConsole.debugLog(msg);
-				else infinityConsole.log(msg, 'debug');
+				infinityConsole.debugLog(msg);
 			},
 			infinityConsole: infinityConsole,
 			project: getCurrentProject(true),

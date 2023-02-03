@@ -55,10 +55,11 @@ export const initializeInfinityMint = async (
 	config?: InfinityMintConfig,
 	startGanache?: boolean,
 ) => {
+	allowPiping();
+
 	config = config || getConfigFile();
 	registerNetworkLogs(hre.config.networks);
-	//allow piping
-	if (process.env.__BIN !== 'true') allowPiping();
+
 	//
 	logDirect('🪐 Starting InfinityConsole');
 
@@ -89,12 +90,12 @@ export const startInfinityConsole = async (
 	telnetServer?: TelnetServer,
 	eventEmitter?: InfinityMintEventEmitter,
 ) => {
+	//set the script mode if applicable
+	setScriptMode(options.scriptMode || false);
+
 	debugLog(
 		'starting InfinityConsole with solidity root of ' + getSolidityFolder(),
 	);
-
-	//set the script mode if applicable
-	setScriptMode(options.scriptMode || false);
 
 	let infinityConsole = new InfinityConsole(
 		options,

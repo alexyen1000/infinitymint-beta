@@ -1362,11 +1362,12 @@ export class InfinityConsole {
 			throw error;
 		}
 
-		this.displayError(error as Error, () => {
-			this.errorBox.destroy();
-			this.errorBox = undefined;
-			if (cb) cb();
-		});
+		if (!this.options?.dontDraw)
+			this.displayError(error as Error, () => {
+				this.errorBox.destroy();
+				this.errorBox = undefined;
+				if (cb) cb();
+			});
 	}
 
 	public getCurrentTokenSymbol(): string {

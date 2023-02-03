@@ -5,9 +5,11 @@ import {
 	executeScript,
 	getConfigFile,
 	logDirect,
+	readSession,
 	registerNetworkLogs,
 	setDebugLogDisabled,
 	setOnlyDefault,
+	setScriptMode,
 	warning,
 } from './helpers';
 import {InfinityMintConsoleOptions} from './interfaces';
@@ -15,48 +17,67 @@ import {InfinityMintConsoleOptions} from './interfaces';
 import {defaultFactory} from './pipes';
 import {blessedToAnsi, blessedLog} from './colours';
 import {startInfinityConsole} from './web3';
+import hre from 'hardhat';
 
 let config = getConfigFile();
 let options: InfinityMintConsoleOptions;
 
-//require index.ts with __BIN set to true
 (async () => {
-	setOnlyDefault(true);
-	setDebugLogDisabled(true);
+	setScriptMode(true);
 
-	if (yargs.argv['no-debug-logs'] && yargs.argv['show-debug-logs'] !== 'false')
+	if (
+		(yargs.argv['show-all-logs'] &&
+			yargs.argv['show-all-logs'] !== 'false' &&
+			yargs.argv['show-debug-logs'] !== 'false') ||
+		(yargs.argv['show-debug-logs'] && yargs.argv['show-debug-logs'] !== 'false')
+	)
 		setDebugLogDisabled(false);
+	else setDebugLogDisabled(true);
+
+	//sets the network through a flag
+	let session = readSession();
+
+	if ((yargs.argv['network']! += undefined))
+		session.environment.defaultNetwork = yargs.argv['network'];
 
 	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')
 		setOnlyDefault(false);
+	else setOnlyDefault(true);
 
-	//register current network pipes
-	registerNetworkLogs();
-	//start ganache
-	if (config.hardhat?.networks?.ganache !== undefined) await startGanache();
+	if (
+		config.hardhat?.networks?.ganache !== undefined &&
+		session.environment.defaultNetwork === 'ganache'
+	)
+		await startGanache();
 	else
 		warning(
 			'Ganache instance has not been initialized. No connect to ganache testnet.',
 		);
+
+	//refresh the current network with the new network, this fixes ganache issues
+	hre.changeNetwork(session.environment.defaultNetwork);
+
+	//register current network pipes
+	registerNetworkLogs();
 
 	options = {
 		...(options || {}),
 		...(typeof config?.console === 'object' ? config.console : {}),
 	} as InfinityMintConsoleOptions;
 
-	let infinityConsole = await startInfinityConsole(
-		{
-			dontDraw: true,
-			scriptMode: true,
-		},
-		defaultFactory,
-	);
-
-	infinityConsole.getConsoleLogs().emitter.on('log', log => {
-		(console as any)._log(
-			blessedToAnsi(defaultFactory.addColoursToString(log)),
-		);
+	let infinityConsole = await startInfinityConsole({
+		dontDraw: true,
+		scriptMode: true,
 	});
+
+	infinityConsole.getConsoleLogs().emitter.on('log', (log, pipe) => {
+		if (pipe === 'default')
+			(console as any)._log(
+				blessedToAnsi(defaultFactory.addColoursToString(log)),
+			);
+	});
+
+	logDirect('🧱 {cyan-fg}Current network is ' + hre.network.name + '{/}');
 
 	if (yargs.argv._[0] === undefined && yargs.argv.script === undefined) {
 		//no script entry here
@@ -152,7 +173,7 @@ let options: InfinityMintConsoleOptions;
 			scriptArguments,
 			infinityConsole,
 			false,
-			scriptArguments['no-debug-logs']?.value || false,
+			scriptArguments['show-debug-logs']?.value || false,
 		);
 	}
 })()
