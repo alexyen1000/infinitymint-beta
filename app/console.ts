@@ -988,6 +988,10 @@ export class InfinityConsole {
 		this.screen.render();
 	}
 
+	public isDrawing() {
+		return this.options.dontDraw !== true;
+	}
+
 	/**
 	 * stops the loading bar from appearing
 	 * @returns

@@ -226,7 +226,7 @@ export const buildImports = async (
 	for (let i = 0; i < finalLocations.length; i++) {
 		let files = await findFiles(finalLocations[i]);
 		files.forEach(result => {
-			if (infinityConsole)
+			if (infinityConsole && infinityConsole.isDrawing())
 				infinityConsole.loadingBox.setContent('Loading => ' + result);
 			results.push(result);
 		});
@@ -258,7 +258,7 @@ export const buildImports = async (
 		log(`[${i}] found file => ${name}`, 'imports');
 		log(`\t -> calculating checksum`, 'imports');
 
-		if (infinityConsole)
+		if (infinityConsole && infinityConsole.isDrawing())
 			infinityConsole.loadingBox.setContent('Calculating Checksum => ' + name);
 
 		let checksum = createHash('md5')
@@ -361,7 +361,7 @@ export const buildImports = async (
 		imports.keys[normalImport.name.toLowerCase()] = name;
 		imports.keys[normalImport.base.toLowerCase()] = name;
 
-		if (infinityConsole)
+		if (infinityConsole && infinityConsole.isDrawing())
 			infinityConsole.loadingBox.setContent('Imported => ' + name);
 	}
 

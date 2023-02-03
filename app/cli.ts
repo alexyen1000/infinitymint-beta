@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
-import {startGanache} from './ganache';
 import {
 	executeScript,
 	getConfigFile,
+	isEnvSet,
 	logDirect,
 	readSession,
 	registerNetworkLogs,
@@ -38,7 +38,7 @@ let options: InfinityMintConsoleOptions;
 	//sets the network through a flag
 	let session = readSession();
 
-	if (yargs.argv['network'] != undefined)
+	if (yargs.argv['network'] !== undefined)
 		session.environment.defaultNetwork = yargs.argv['network'];
 
 	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')
@@ -49,10 +49,11 @@ let options: InfinityMintConsoleOptions;
 	registerNetworkLogs();
 
 	if (
-		config.hardhat?.networks?.ganache !== undefined &&
-		session.environment.defaultNetwork === 'ganache'
+		!isEnvSet('GANACHE_EXTERNAL') &&
+		(yargs.argv['--ganache'] ||
+			session.environment.defaultNetwork === 'ganache')
 	)
-		await startGanache();
+		require('./ganache').startGanache();
 	else
 		warning(
 			'Ganache instance has not been initialized. No connect to ganache testnet.',
