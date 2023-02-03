@@ -21,7 +21,7 @@ const deployContract: InfinityMintScript = {
 		script.log(
 			'\n{green-fg}successfully deployed {cyan-fg}{bold}' +
 				script.args.contractName.value +
-				'{/} to => ' +
+				'{/} => ' +
 				deployment.address,
 		);
 		script.log('cleaning up...');

@@ -169,10 +169,10 @@ export const getDeploymentProjectPath = (
  */
 export const deploy = async (
 	artifactName: string,
-	project?: InfinityMintCompiledProject | InfinityMintTempProject,
-	signer?: SignerWithAddress,
+	project: InfinityMintCompiledProject | InfinityMintTempProject,
 	args?: [],
 	libraries?: {},
+	signer?: SignerWithAddress,
 	save?: boolean,
 	logDeployment?: boolean,
 	usePreviousDeployment?: boolean,
@@ -203,7 +203,7 @@ export const deploy = async (
 		signer: signer,
 		libraries: libraries,
 	});
-	let contract = await deployContract(factory, args);
+	let contract = await deployViaFactory(factory, args);
 	await logTransaction(contract.deployTransaction);
 
 	if (!save) return contract;
@@ -269,7 +269,7 @@ interface Overrides extends KeyValue {
  * @param args
  * @returns
  */
-export const deployContract = async (
+export const deployViaFactory = async (
 	factory: ContractFactory,
 	args?: any[],
 	overrides?: Overrides,
@@ -297,7 +297,7 @@ export const deployBytecode = async (
 ) => {
 	signer = signer || (await getDefaultSigner());
 	let factory = await ethers.getContractFactory(abi, bytecode, signer);
-	return await deployContract(factory, args);
+	return await deployViaFactory(factory, args);
 };
 
 /**
@@ -309,7 +309,7 @@ export const deployBytecode = async (
  * @param usePreviousDeployment
  * @returns
  */
-export const hardhatDeploy = async (
+export const deployHardhat = async (
 	contractName: string,
 	project: InfinityMintCompiledProject | InfinityMintTempProject,
 	signer?: SignerWithAddress,
@@ -362,7 +362,7 @@ export const deployAnonContract = async (
 	libraries?: any[],
 	gasPrice?: string | BigNumber,
 ) => {
-	return await hardhatDeploy(
+	return await deployHardhat(
 		contractName,
 		{
 			name: '__',

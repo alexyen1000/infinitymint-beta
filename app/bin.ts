@@ -58,7 +58,8 @@ let options: InfinityMintConsoleOptions;
 		);
 
 	//refresh the current network with the new network, this fixes ganache issues
-	hre.changeNetwork(session.environment.defaultNetwork);
+	if (session.environment.defaultNetwork !== undefined)
+		hre.changeNetwork(session.environment.defaultNetwork);
 
 	options = {
 		...(options || {}),
@@ -91,11 +92,11 @@ let options: InfinityMintConsoleOptions;
 		scripts = scripts.filter((script, index) => {
 			return scripts.findIndex(s => s.name === script.name) === index;
 		});
-		infinityConsole.log('Available Scripts:');
-		scripts.forEach(script => {
+		infinityConsole.log('\n{cyan-fg}{bold}Welcome to Infinity Console{/}\n');
+		infinityConsole.log('{cyan-fg}Available Scripts{/}');
+		scripts.forEach((script, index) => {
 			infinityConsole.log(
-				script.name +
-					' - ' +
+				` => [${index}]\n\t{bold}{underline}${script.name}{/}\n\t` +
 					(script.description || 'No Description Available...'),
 			);
 		});

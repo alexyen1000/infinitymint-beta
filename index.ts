@@ -62,7 +62,8 @@ export const load = async (
 
 	let session = readSession();
 	//change the network to the current network, this fixes ganache issues
-	hre.changeNetwork(session.environment.defaultNetwork);
+	if (session.environment.defaultNetwork !== undefined)
+		hre.changeNetwork(session.environment.defaultNetwork);
 
 	options = {
 		...(options || {}),
