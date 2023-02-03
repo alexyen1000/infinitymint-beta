@@ -56,7 +56,7 @@ You can do every action inside of InfinityMint through the npx command module.
 
 To run commands inside of this repository all you need to do is run the following command in replacement to npx infinitymint.
 
-`node bin.js`
+`ts-node run.ts`
 
 ## 🗿 Documentation
 
