@@ -42,6 +42,10 @@ InfinityMint will automatically create a `infinitymint.config.ts` or `infinitymi
 
 Please view our official documentation and [examples](https://docs.infinitymint.app/modules/examples_examples.html) for more information.
 
+## 🗿 Usage
+
+InfinityMint can work via npx and any of the InfinityMint scripts (including gems) can be executed through the terminal. Simply run `npx infinitymint` to see a list of available commands.
+
 ## 🗿 Documentation
 
 [Official Documentation](https://docs.infinitymint.app)</br>
