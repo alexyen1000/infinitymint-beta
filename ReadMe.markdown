@@ -54,13 +54,9 @@ You can do every action inside of InfinityMint through the npx command module.
 
 ### 🗿 Usage (if you are working on this repository)
 
-In order to run npx infinitymint as well as any scripts you make you will need to run the following. This will not work unless you are working inside of this repository.
+To run commands inside of this repository all you need to do is run the following command in replacement to npx infinitymint.
 
-`npx ts-node ./app/bin.ts`
-
-You can even set an alias to this command in your shell for quick access. You may do flags as you would usually do, like so.
-
-`npx ts-node ./app/bin.ts compile --project "maskmode" --network "ganache"`
+`node bin.js`
 
 ## 🗿 Documentation
 

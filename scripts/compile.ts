@@ -648,6 +648,7 @@ const compile: InfinityMintScript = {
 	arguments: [
 		{
 			name: 'project',
+			type: 'string',
 			optional: true,
 		},
 	],

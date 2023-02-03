@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import yargs from 'yargs';
 import {startGanache} from './ganache';
 import {
@@ -127,18 +126,19 @@ let options: InfinityMintConsoleOptions;
 			if (!value || value.length === 0) value = true;
 
 			if (key[0] === '_') return;
-			if (key[0] === '$') {
+			if (key[0] === '$' && argv._.length !== 0) {
 				let index = key.split('$')[1];
 				if (index === undefined) return;
 				key = script.arguments[index].name;
-				value = argv._[parseInt(index)];
+				value = argv._[parseInt(index)] || '';
 			}
 
-			scriptArguments[key] = {
-				...(script.arguments[key] || {}),
-				name: key,
-				value,
-			};
+			if (script.arguments[key] === undefined)
+				scriptArguments[key] = {
+					...(script.arguments[key] || {}),
+					name: key,
+					value: value,
+				};
 
 			if (scriptArguments[key].type === 'boolean') {
 				if (value === 'true') scriptArguments[key].value = true;
@@ -172,6 +172,8 @@ let options: InfinityMintConsoleOptions;
 			if (!arg.optional && !scriptArguments[arg.name])
 				throw new Error('Missing required argument: ' + arg.name);
 		});
+
+		console.log(scriptArguments);
 
 		await executeScript(
 			script,
