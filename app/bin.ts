@@ -38,7 +38,7 @@ let options: InfinityMintConsoleOptions;
 	//sets the network through a flag
 	let session = readSession();
 
-	if ((yargs.argv['network']! += undefined))
+	if (yargs.argv['network'] != undefined)
 		session.environment.defaultNetwork = yargs.argv['network'];
 
 	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')

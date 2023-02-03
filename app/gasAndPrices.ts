@@ -1,5 +1,4 @@
-import {Dictionary} from 'form-data';
-import {debugLog} from './helpers';
+import {Dictionary} from './helpers';
 import {FuncSingle} from './helpers';
 
 export type TokenPriceFunction = FuncSingle<void, Promise<{usd: number}>>;

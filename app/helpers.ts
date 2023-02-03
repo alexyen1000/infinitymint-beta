@@ -1,7 +1,6 @@
 import {defaultFactory, PipeFactory} from './pipes';
 import fsExtra from 'fs-extra';
 import fs, {PathLike} from 'fs';
-import {Dictionary} from 'form-data';
 import path from 'path';
 import {
 	InfinityMintConfig,
@@ -30,6 +29,13 @@ import {
 	saveTempDeployedProject,
 } from './projects';
 import {blessedToAnsi} from './colours';
+
+/**
+ *
+ */
+export interface Dictionary<T> {
+	[key: string | number]: T;
+}
 
 /**
  * a simple interface to describe a vector

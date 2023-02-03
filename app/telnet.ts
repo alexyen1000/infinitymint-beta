@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import fs from 'fs';
 import {BlessedElement, cwd, getConfigFile} from './helpers';
 import InfinityConsole from './console';
-import {Dictionary} from 'form-data';
+import {Dictionary} from './helpers';
 import {logDirect} from './helpers';
 import {startInfinityConsole} from './web3';
 import {PipeFactory} from './pipes';

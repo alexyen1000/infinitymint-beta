@@ -1,7 +1,7 @@
 import {InfinityMintSVGSettings} from './content';
 import {PathLike} from 'fs';
 import {cwd, debugLog, findFiles, getConfigFile, log, warning} from './helpers';
-import {Dictionary} from 'form-data';
+import {Dictionary} from './helpers';
 import path from 'path';
 import fs, {promises} from 'fs';
 import {createHash} from 'node:crypto';

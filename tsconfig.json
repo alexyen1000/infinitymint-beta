@@ -12,6 +12,7 @@
 		"skipLibCheck": true,
 		"moduleResolution": "node",
 		"importHelpers": true,
+		"noImplicitUseStrict": true,
 		"paths": {
 			"@app/*": ["./app/*"],
 			"@typechain-types/*": ["./typechain-types/*"]
