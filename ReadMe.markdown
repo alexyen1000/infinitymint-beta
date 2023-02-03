@@ -46,6 +46,22 @@ Please view our official documentation and [examples](https://docs.infinitymint.
 
 InfinityMint can work via npx and any of the InfinityMint scripts (including gems) can be executed through the terminal. Simply run `npx infinitymint` to see a list of available commands.
 
+You can do every action inside of InfinityMint through the npx command module.
+
+`npx infinitymint compile --project "maskmode"`
+
+`npx infinitymint deploy --project "maskmode" --network "ganache"`
+
+### 🗿 Usage (if you are working on this repository)
+
+In order to run npx infinitymint as well as any scripts you make you will need to run the following. This will not work unless you are working inside of this repository.
+
+`npx ts-node ./app/bin.ts`
+
+You can even set an alias to this command in your shell for quick access. You may do flags as you would usually do, like so.
+
+`npx ts-node ./app/bin.ts compile --project "maskmode" --network "ganache"`
+
 ## 🗿 Documentation
 
 [Official Documentation](https://docs.infinitymint.app)</br>
