@@ -2,7 +2,7 @@
 	"name": "infinitymint",
 	"description": "InfinityMint - Powered by Hardhat and Ganache is a web3 based NFT minting toolset that allows users to mint NFTs on the Ethereum blockchain. Developed by 0x0z Agency.",
 	"homepage": "https://github.com/0x0zAgency/infinitymint-beta#readme",
-	"version": "1.1.9",
+	"version": "1.1.10",
 	"type": "commonjs",
 	"main": "dist/index.js",
 	"directories": {
@@ -29,7 +29,7 @@
 	"bugs": {
 		"url": "https://github.com/0x0zAgency/infinitymint-beta/issues"
 	},
-	"bin": "./bin.mjs",
+	"bin": "./bin.cjs",
 	"devDependencies": {
 		"chai": "^4.3.7",
 		"prettier-config-xo": "^2.0.0",
