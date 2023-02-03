@@ -1,3 +1,4 @@
+import hre from 'hardhat';
 import InfinityConsole from './app/console';
 
 //import things we need
@@ -21,7 +22,6 @@ import {
 } from './app/interfaces';
 import {TelnetServer} from './app/telnet';
 import {startGanache} from './app/ganache';
-import hre from 'hardhat';
 
 //export helpers
 export * as Helpers from './app/helpers';
@@ -55,7 +55,8 @@ export const load = async (
 	//register current network pipes
 	registerNetworkLogs();
 
-	allowPiping();
+	//only allow piping to logs if we arent telnet and we arent ignoring console
+	if (!isEnvTrue('PIPE_IGNORE_CONSOLE') && !config.telnet) allowPiping();
 
 	//start ganache
 	if (config.hardhat?.networks?.ganache !== undefined) await startGanache();

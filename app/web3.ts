@@ -6,7 +6,6 @@ import {
 	log,
 	readSession,
 	logDirect,
-	allowPiping,
 	saveSession,
 	getSolidityFolder,
 	warning,
