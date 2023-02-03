@@ -14,7 +14,7 @@ import {
 	always,
 	cwd,
 } from '../app/helpers';
-import {hardhatDeploy} from '@app/web3';
+import {hardhatDeploy} from '../app/web3';
 
 // Use the IM Local deployment. It's not been attached to anything
 // All web3 functions return local deployment shit
@@ -38,6 +38,13 @@ const deployContract: InfinityMintScript = {
 
 		script.log('deployed contract to => ' + deployment.address);
 	},
+	arguments: [
+		{
+			name: 'contractName',
+			type: 'string',
+			optional: false,
+		},
+	],
 };
 
 export default deployContract;
