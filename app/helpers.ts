@@ -243,9 +243,11 @@ export const log = (msg: string | object | number, pipe?: string) => {
 		} else
 			(console as any)._log(
 				blessedToAnsi(
-					defaultFactory.addColoursToString(
-						defaultFactory.messageToString(msg),
-					),
+					defaultFactory
+						? defaultFactory.addColoursToString(
+								defaultFactory.messageToString(msg),
+						  )
+						: msg,
 				),
 			);
 	}
