@@ -29,7 +29,7 @@
 	"bugs": {
 		"url": "https://github.com/0x0zAgency/infinitymint-beta/issues"
 	},
-	"bin": "./bin.cjs",
+	"bin": "./bin.ts",
 	"devDependencies": {
 		"chai": "^4.3.7",
 		"prettier-config-xo": "^2.0.0",
