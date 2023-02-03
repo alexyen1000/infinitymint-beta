@@ -44,6 +44,9 @@ let options: InfinityMintConsoleOptions;
 		setOnlyDefault(false);
 	else setOnlyDefault(true);
 
+	//register current network pipes
+	registerNetworkLogs();
+
 	if (
 		config.hardhat?.networks?.ganache !== undefined &&
 		session.environment.defaultNetwork === 'ganache'
@@ -56,9 +59,6 @@ let options: InfinityMintConsoleOptions;
 
 	//refresh the current network with the new network, this fixes ganache issues
 	hre.changeNetwork(session.environment.defaultNetwork);
-
-	//register current network pipes
-	registerNetworkLogs();
 
 	options = {
 		...(options || {}),
