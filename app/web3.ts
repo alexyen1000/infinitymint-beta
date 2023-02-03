@@ -55,13 +55,11 @@ export const initializeInfinityMint = async (
 	config?: InfinityMintConfig,
 	startGanache?: boolean,
 ) => {
-	allowPiping();
-
 	config = config || getConfigFile();
 	registerNetworkLogs(hre.config.networks);
 
 	//
-	console.log('🪐 Starting InfinityConsole');
+	logDirect('🪐 Starting InfinityConsole');
 
 	try {
 		//create IPFS node

@@ -10,6 +10,7 @@ import {
 	registerNetworkLogs,
 	cwd,
 	readSession,
+	allowPiping,
 } from './app/helpers';
 import {defaultFactory} from './app/pipes';
 import {initializeInfinityMint, startInfinityConsole} from './app/web3';
@@ -53,6 +54,9 @@ export const load = async (
 ): Promise<InfinityConsole> => {
 	//register current network pipes
 	registerNetworkLogs();
+
+	allowPiping();
+
 	//start ganache
 	if (config.hardhat?.networks?.ganache !== undefined) await startGanache();
 	else
