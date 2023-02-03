@@ -1437,6 +1437,7 @@ export class InfinityConsole {
 	public async refreshScripts() {
 		let config = getConfigFile();
 		this.setLoading('Refreshing Scripts', 10);
+		let oldProcess = process.exit;
 		try {
 			//call reloads
 			if (this.scripts && this.scripts.length !== 0) {
@@ -1461,6 +1462,7 @@ export class InfinityConsole {
 		this.scripts = [];
 
 		this.debugLog('{yellow-fg}{bold}Refreshing Scripts...{/}');
+
 		for (let i = 0; i < scripts.length; i++) {
 			let script = scripts[i];
 
@@ -1487,14 +1489,20 @@ export class InfinityConsole {
 						).length === 0
 					) {
 						(process as any)._exit = (code?: number) => {
-							warning('prevented process exit');
+							warning('not allowing process exit');
 						};
-						_potentialSource = await requireScript(
-							script.dir + '/' + script.base,
-							this,
-							this.isTelnet(),
-						);
-						(process as any).exit = (process as any)._exit;
+						try {
+							_potentialSource = await requireScript(
+								script.dir + '/' + script.base,
+								this,
+								this.isTelnet(),
+							);
+						} catch (error) {
+							(process as any).exit = oldProcess;
+							throw error;
+						} finally {
+							(process as any).exit = oldProcess;
+						}
 					} else this.debugLog(`\tusing old cache <${script.name}>`);
 
 					this.scripts.push({
@@ -1506,6 +1514,7 @@ export class InfinityConsole {
 							(process as any)._exit = (code?: number) => {
 								if (code === 1) warning('exited with code 0');
 							};
+
 							let result = await requireScript(
 								script.dir + '/' + script.base,
 								this,
@@ -1515,7 +1524,7 @@ export class InfinityConsole {
 								await (result as any)(infinitymint);
 							else if (result.execute) await result.execute(infinitymint);
 
-							(process as any).exit = (process as any)._exit;
+							(process as any).exit = oldProcess;
 						},
 					});
 				}
@@ -1525,13 +1534,15 @@ export class InfinityConsole {
 				);
 			} catch (error) {
 				if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
-
 				this.logs.getPipe(this.logs.currentPipeKey).error(error);
 				this.debugLog(
 					`{red-fg}Script Failure: {/red-fg} ${error.message} <${script.name}>`,
 				);
 			}
 		}
+
+		(process as any).exit = oldProcess;
+
 		this.stopLoading();
 	}
 

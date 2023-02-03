@@ -487,6 +487,13 @@ export const requireProject = (
  * @returns
  */
 export const getCurrentCompiledProject = () => {
-	if (!getCurrentProject()) throw new Error('no current project');
+	if (!getCurrentProject())
+		return {
+			name: 'unknown',
+			version: {
+				tag: 'unknown',
+				version: 'unknown',
+			},
+		} as InfinityMintProject;
 	return getCompiledProject(getCurrentProject());
 };

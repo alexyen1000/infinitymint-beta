@@ -167,8 +167,6 @@ let options: InfinityMintConsoleOptions;
 				throw new Error('Missing required argument: ' + arg.name);
 		});
 
-		console.log(scriptArguments);
-
 		await executeScript(
 			script,
 			infinityConsole.getEventEmitter(),
