@@ -18,7 +18,7 @@ import {
 	InfinityMintScriptParameters,
 } from './interfaces';
 import path from 'path';
-import {Dictionary} from 'form-data';
+import {Dictionary} from './helpers';
 import fs, {PathLike} from 'fs';
 
 /**

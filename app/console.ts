@@ -31,7 +31,7 @@ import {HardhatRuntimeEnvironment, Network} from 'hardhat/types';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {changeNetwork, getDefaultAccountIndex} from './web3';
 import {defaultFactory as globalLogs, PipeFactory} from './pipes';
-import {Dictionary} from 'form-data';
+import {Dictionary} from './helpers';
 import {BigNumber} from 'ethers';
 import {
 	getProjectDeploymentClasses,

@@ -1,5 +1,4 @@
 import {BigNumber} from 'ethers';
-import {Dictionary} from 'form-data';
 import {HardhatUserConfig} from 'hardhat/types';
 import {debugLog, FuncSingle, log} from './helpers';
 import {ServerOptions} from 'ganache';
@@ -13,6 +12,8 @@ import {GasPriceFunction, TokenPriceFunction} from './gasAndPrices';
 import {ImportType} from './imports';
 import {ParsedPath} from 'path';
 import {DeployResult} from 'hardhat-deploy/dist/types';
+import {Dictionary} from './helpers';
+
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
  */
@@ -1384,6 +1385,7 @@ export interface InfinityMintSessionEnvironment extends KeyValue {
 	 * the current selected project
 	 */
 	project?: KeyValue;
+	defaultNetwork?: string;
 }
 
 /**

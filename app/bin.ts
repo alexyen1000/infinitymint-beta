@@ -28,7 +28,8 @@ let options: InfinityMintConsoleOptions;
 	if (
 		(yargs.argv['show-all-logs'] &&
 			yargs.argv['show-all-logs'] !== 'false' &&
-			yargs.argv['show-debug-logs'] !== 'false') ||
+			(yargs.argv['show-debug-logs'] === undefined ||
+				yargs.argv['show-debug-logs'] !== 'false')) ||
 		(yargs.argv['show-debug-logs'] && yargs.argv['show-debug-logs'] !== 'false')
 	)
 		setDebugLogDisabled(false);
@@ -37,7 +38,7 @@ let options: InfinityMintConsoleOptions;
 	//sets the network through a flag
 	let session = readSession();
 
-	if ((yargs.argv['network']! += undefined))
+	if (yargs.argv['network'] != undefined)
 		session.environment.defaultNetwork = yargs.argv['network'];
 
 	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')

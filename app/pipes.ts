@@ -1,5 +1,5 @@
 import {ChildProcess} from 'child_process';
-import {Dictionary} from 'form-data';
+import {Dictionary} from './helpers';
 import {cwd, debugLog, getConfigFile, isEnvTrue, warning} from './helpers';
 import fs from 'fs';
 import {EventEmitter} from 'events';

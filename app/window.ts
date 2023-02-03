@@ -1,4 +1,4 @@
-import {Dictionary} from 'form-data';
+import {Dictionary} from './helpers';
 import {
 	Rectangle,
 	FuncTripple,
