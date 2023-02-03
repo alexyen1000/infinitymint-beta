@@ -563,6 +563,10 @@ export const stage = async (
 	}
 };
 
+export const isScriptMode = () => {
+	return scriptMode;
+};
+
 export const registerNetworkLogs = (_networks?: any) => {
 	let config = getConfigFile();
 	let networks = Object.keys(_networks || config.hardhat.networks);

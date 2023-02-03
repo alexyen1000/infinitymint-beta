@@ -19,6 +19,7 @@ import {
 	getConfigFile,
 	getInfinityMintVersion,
 	isEnvTrue,
+	isScriptMode,
 	requireScript,
 	requireWindow,
 	warning,
@@ -988,6 +989,10 @@ export class InfinityConsole {
 		this.screen.render();
 	}
 
+	public isDrawing() {
+		return this.options.dontDraw !== true;
+	}
+
 	/**
 	 * stops the loading bar from appearing
 	 * @returns
@@ -1387,6 +1392,8 @@ export class InfinityConsole {
 			this.account = this.signers[getDefaultAccountIndex()];
 			this.balance = await this.account.getBalance();
 		} catch (error) {
+			if (isScriptMode() || this.options.scriptMode) throw error;
+
 			this.stopLoading();
 			this.errorHandler(error, async () => {
 				this.errorBox.destroy();
