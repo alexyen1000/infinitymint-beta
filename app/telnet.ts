@@ -183,6 +183,26 @@ export class TelnetServer {
 				let screen: BlessedElement;
 				let infinityConsole: InfinityConsole;
 				let sessionId: string;
+
+				if (
+					Object.values(this.clients).length >=
+					((config.telnet as any).maxClients || 22)
+				) {
+					if (client.writable) {
+						client.write(
+							`⚠️  Too many clients connected. The maximum is ${
+								(config.telnet as any).maxClients || 22
+							}. Please try again later.\n`,
+						);
+					}
+					if (client.writable) client.destroy();
+					logDirect(
+						'⚠️ Client disconnected because of too many clients. Current clients: ' +
+							Object.values(this.clients).length,
+					);
+					return;
+				}
+
 				try {
 					infinityConsole = await startInfinityConsole(
 						{

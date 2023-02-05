@@ -211,8 +211,8 @@ export class InfinityConsole {
 			this.debugLog(`starting blessed on InfinityConsole<${this.sessionId}>`);
 			this.screen = blessed.screen(
 				this.options?.blessed || {
+					fastCRS: true,
 					smartCRS: true,
-					fullUnicode: true,
 					autoPadding: true,
 					dockBorders: true,
 					sendFocus: true,
@@ -1953,7 +1953,7 @@ export class InfinityConsole {
 				this.loadingBox.setFront();
 
 				if (this.errorBox && !this.errorBox.hidden) this.errorBox.setFront();
-			}, this.options?.tickRate || 66);
+			}, this.options?.tickRate || (this.isTelnet() ? 346 : 100));
 		} else
 			warning(`not starting blessed on InfinityConsole<${this.sessionId}>`);
 

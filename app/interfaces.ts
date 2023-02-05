@@ -1555,6 +1555,7 @@ export interface InfinityMintTelnetOptions {
 	 * port to run telnet on
 	 */
 	port?: number;
+	maxClients?: number;
 	/**
 	 * any methods here are defined with the event name as the key and the method as the value. The method will be called with InfinityMintEventParameters as the first argument. There are also some special events which are defined in the {@link InfinityMintEvents} interface.
 	 */
