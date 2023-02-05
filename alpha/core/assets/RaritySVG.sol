@@ -1,8 +1,9 @@
 //SPDX-License-Identifier: UNLICENSED
+//IM-SCRIPT: https://raw.githubusercontent.com/infinitymint/master/deploy/alpha/RaritySVG.ts
 //llydia cross 2021
 pragma solidity ^0.8.0;
 
-import "../../InfinityMintAsset.sol";
+import '../../InfinityMintAsset.sol';
 
 contract RaritySVG is InfinityMintAsset {
 	uint256[] internal pathRarity;
@@ -11,7 +12,7 @@ contract RaritySVG is InfinityMintAsset {
 		InfinityMintAsset(valuesContract)
 	{
 		tokenName = _tokenName;
-		typeOf = "svg"; //returns scalable vector asset
+		typeOf = 'svg'; //returns scalable vector asset
 	}
 
 	//save the last path so we may get its name later
@@ -22,7 +23,7 @@ contract RaritySVG is InfinityMintAsset {
 		returns (uint32)
 	{
 		if (pathCount == 1 && disabledPaths[safeDefaultReturnPath])
-			revert("No valid paths");
+			revert('No valid paths');
 
 		uint256[] memory randNumbers = new uint256[](pathCount);
 		uint32 pathId = uint32(safeDefaultReturnPath);
@@ -49,7 +50,7 @@ contract RaritySVG is InfinityMintAsset {
 			}
 		}
 
-		if (valuesController.isTrue("randomRarity")) {
+		if (valuesController.isTrue('randomRarity')) {
 			//pick an asset
 			uint256 result = randomNumberController.getMaxNumber(
 				selectedPaths.length
@@ -69,7 +70,7 @@ contract RaritySVG is InfinityMintAsset {
 		} else {
 			uint256 a = 0;
 			uint256 b = 0;
-			if (valuesController.isTrue("lowestRarity")) {
+			if (valuesController.isTrue('lowestRarity')) {
 				for (uint256 i = 0; i < selectedPaths.length; ) {
 					if (a == 0) {
 						a = pathRarity[selectedPaths[i]];
@@ -106,7 +107,7 @@ contract RaritySVG is InfinityMintAsset {
 
 		//attempts to stop duplicate mints of the same PathId (does not work with pathId 0)
 		if (
-			valuesController.isTrue("stopDuplicateMint") &&
+			valuesController.isTrue('stopDuplicateMint') &&
 			pathId != 0 &&
 			lastPath != 0 &&
 			pathId == lastPath

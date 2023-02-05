@@ -17,7 +17,7 @@ import {BlessedElement, Blessed} from './helpers';
 import hre, {ethers} from 'hardhat';
 import InfinityConsole from './console';
 import {KeyValue} from './interfaces';
-import {UserEntry} from './telnet';
+import {getTelnetOptions, UserEntry} from './telnet';
 
 const {v4: uuidv4} = require('uuid');
 const blessed = require('blessed') as Blessed;
@@ -597,6 +597,14 @@ export class InfinityMintWindow {
 	}
 
 	/**
+	 * returns ethers libraryß
+	 * @returns
+	 */
+	public getEthers(): typeof ethers {
+		return ethers;
+	}
+
+	/**
 	 * sets the border of the window
 	 * @param border
 	 */
@@ -1098,6 +1106,26 @@ export class InfinityMintWindow {
 	 */
 	public async updateFrameTitle() {
 		if (!this.hasInfinityConsole()) return;
+
+		if (this.getInfinityConsole().isTelnet()) {
+			let telnetConfig = getTelnetOptions();
+
+			if (telnetConfig.hideFrameTitle) {
+				this.elements['frame'].setContent('');
+				return;
+			}
+
+			if (telnetConfig.frameTitle) {
+				if (typeof telnetConfig.frameTitle === 'string')
+					this.elements['frame'].setContent(telnetConfig.frameTitle);
+				else
+					this.elements['frame'].setContent(
+						await telnetConfig.frameTitle(this),
+					);
+
+				return;
+			}
+		}
 		let account = this.getInfinityConsole().getAccount();
 		let balance = this.getInfinityConsole().getBalance();
 		let etherBalance = ethers.utils.formatEther(balance || 0);

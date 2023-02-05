@@ -1,5 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
-//llydia cross 2021
+//IM-PKG: @infinitymint
+//IM-CONTYPE: contract
+//IM-AUTHOR:
+//IM-VERSION: 1.2.3
 pragma solidity ^0.8.0;
 
 import './Authentication.sol';

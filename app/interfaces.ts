@@ -13,6 +13,7 @@ import {ImportType} from './imports';
 import {ParsedPath} from 'path';
 import {DeployResult} from 'hardhat-deploy/dist/types';
 import {Dictionary} from './helpers';
+import {InfinityMintWindow} from './window';
 
 /**
  * Shorthand for Dictionary<any>, defines your typical javascript object
@@ -414,9 +415,22 @@ export interface InfinityMintProject {
 	 */
 	links?: Array<InfinityMintProjectSettingsLink>;
 	/**
-	 * specificy other projects by name to have them deploy along side this minter and be packed together into the export location.
+	 * @defaultValue 'minter'
 	 */
-	system?: Array<string>;
+	type?:
+		| 'minter'
+		| 'project'
+		| 'asset'
+		| 'gem'
+		| 'system'
+		| 'service'
+		| 'library'
+		| 'interface';
+
+	dependencies?: {
+		'@infinitymint': string;
+	};
+
 	/**
 	 * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset, minter, royalty or random` solidity contract you are using.
 	 */
@@ -614,12 +628,22 @@ export interface InfinityMintEvents {
 		Promise<void | boolean>
 	>;
 	/**
-	 * Fired when the InfinityConsole is initialized
+	 * Fired when the InfinityConsole is connected. (telnet only).
 	 * @event
 	 */
 	connected?: FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>;
 	/**
-	 * Fired when the InfinityConsole is initialized
+	 * Fired when the client is logged in. (telnet only).
+	 * @event
+	 */
+	login?: FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>;
+	/**
+	 * Fired when a new client is registered. (telnet only).
+	 * @event
+	 */
+	register?: FuncSingle<InfinityMintEventEmit<any>, Promise<void | boolean>>;
+	/**
+	 * Fired when the InfinityConsole is disconnected. (telnet only).
 	 * @event
 	 */
 	disconnected?: FuncSingle<
@@ -1556,6 +1580,25 @@ export interface InfinityMintTelnetOptions {
 	 */
 	port?: number;
 	maxClients?: number;
+	hideFrameTitle?: boolean;
+	/**
+	 * can be a string or a function which returns a string. If a function is passed, it will be called with the current {@link InfinityMintWindow} as the first argument.
+	 *
+	 * @example
+	 * ```js
+	 * frameTitle: 'My Frame Title'
+	 * ```
+	 *
+	 * @example
+	 * ```ts
+	 * frameTitle: async (window: InfinityMintWindow) => {
+	 * 	let ethers = window.getEthers():
+	 * 	//do ethers stuff
+	 * 	return window.title;
+	 * }
+	 * ```
+	 */
+	frameTitle?: string | FuncSingle<InfinityMintWindow, Promise<string>>;
 	/**
 	 * any methods here are defined with the event name as the key and the method as the value. The method will be called with InfinityMintEventParameters as the first argument. There are also some special events which are defined in the {@link InfinityMintEvents} interface.
 	 */
