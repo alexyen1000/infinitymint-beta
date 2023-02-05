@@ -230,7 +230,7 @@ export const setOnlyDefault = (value: boolean) => {
  */
 export const log = (msg: string | object | number, pipe?: string) => {
 	if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
-	if (typeof msg === 'number') msg = msg.toString();
+	msg = msg.toString();
 	pipe = pipe || 'default';
 
 	if (pipe !== 'default' && pipe !== 'debug' && onlyDefault) return;

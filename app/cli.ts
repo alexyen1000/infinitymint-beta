@@ -41,8 +41,6 @@ let options: InfinityMintConsoleOptions;
 	if (yargs.argv['network'] !== undefined)
 		session.environment.defaultNetwork = yargs.argv['network'];
 
-	console.log(session.environment.defaultNetwork);
-
 	if (yargs.argv['show-all-logs'] && yargs.argv['show-all-logs'] !== 'false')
 		setOnlyDefault(false);
 	else setOnlyDefault(true);
