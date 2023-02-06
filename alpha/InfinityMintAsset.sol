@@ -11,9 +11,10 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 
 	//user values
 	InfinityMintValues internal valuesController;
+
 	//the token name
 	string internal tokenName = 'asset';
-	string public typeOf = 'any'; //the type of assetId is default
+	string public assetsType = 'default'; //the type of assetId is default
 
 	//path stuff
 	uint256 internal pathCount;
@@ -97,6 +98,23 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 		lastAssets = assets;
 	}
 
+	function getPathSections(uint256 pathId)
+		external
+		view
+		virtual
+		returns (uint256[] memory)
+	{
+		return pathSections[pathId];
+	}
+
+	function getSectionAssets(uint256 sectionId)
+		external
+		view
+		returns (uint256[] memory)
+	{
+		return assetsSections[sectionId];
+	}
+
 	function setPathSize(uint32 pathId, uint32 pathSize) public onlyApproved {
 		pathSizes[pathId] = pathSize;
 	}
@@ -139,8 +157,11 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 	{
 		string memory defaultName = getDefaultName();
 
-		// incremental and incremental use nextPath to get their name
-		if (!valuesController.isTrue('incrementalMode')) {
+		// matched and incremental use nextPath to get their name
+		if (
+			!valuesController.isTrue('matchedMode') &&
+			!valuesController.isTrue('incrementalMode')
+		) {
 			if (nameCount <= 0 && valuesController.isTrue('mustGenerateName'))
 				nameCount = 1;
 
@@ -193,7 +214,7 @@ abstract contract InfinityMintAsset is Asset, Authentication {
 	}
 
 	function isValidPath(uint32 pathId) public view override returns (bool) {
-		return (pathId > 0 && pathId < pathCount && !disabledPaths[pathId]);
+		return (pathId >= 0 && pathId < pathCount && !disabledPaths[pathId]);
 	}
 
 	function pickPath(
