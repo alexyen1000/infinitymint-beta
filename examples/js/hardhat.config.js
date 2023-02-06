@@ -1,12 +1,12 @@
 require('module-alias/register');
 
 const {
-	debugLog,
-	loadInfinityMint,
-	prepareConfig,
+    debugLog,
+    loadInfinityMint,
+    prepareConfig,
 } = require('infinitymint/dist/app/helpers');
 //create the default pipe
-const {createDefaultFactory} = require('infinitymint/dist/app/pipes');
+const { createDefaultFactory } = require('infinitymint/dist/app/pipes');
 
 //set as javascript session
 let session = readSession();
@@ -17,7 +17,7 @@ createDefaultFactory();
 
 //require dotenv
 require('dotenv').config({
-	override: false, //will not override already established environment variables
+    override: false, //will not override already established environment variables
 });
 
 //import our hardhat plugins

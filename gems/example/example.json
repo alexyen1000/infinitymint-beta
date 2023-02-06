@@ -1,14 +1,14 @@
 {
-	"homepage": "https://infinitymint.app/",
-	"git": "https://github.com/0x0zAgency/example",
-	"version": "0.0.1",
-	"author": [
-		{
-			"name": "Llydia Cross",
-			"twitter": "@lydsmas",
-			"email": "llydia@0x0z.me"
-		}
-	],
-	"supportedFramework": "react",
-	"solidityFolder": "alpha"
+    "homepage": "https://infinitymint.app/",
+    "git": "https://github.com/0x0zAgency/example",
+    "version": "0.0.1",
+    "author": [
+        {
+            "name": "Llydia Cross",
+            "twitter": "@lydsmas",
+            "email": "llydia@0x0z.me"
+        }
+    ],
+    "supportedFramework": "react",
+    "solidityFolder": "alpha"
 }

@@ -1,9 +1,9 @@
-import {ethers} from 'hardhat';
-import {expect} from 'chai';
+import { ethers } from 'hardhat';
+import { expect } from 'chai';
 //import Withdraw from '../../scripts/withdraw';
 import {
-	InfinityMintScript,
-	InfinityMintScriptParameters,
+    InfinityMintScript,
+    InfinityMintScriptParameters,
 } from '../../app/interfaces';
 
 /** 

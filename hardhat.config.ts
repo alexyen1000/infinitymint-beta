@@ -14,15 +14,15 @@ import '@nomiclabs/hardhat-ethers';
 import 'hardhat-deploy';
 import 'hardhat-change-network'; //allows hre.changeNetwork to occur
 
-import {createDefaultFactory} from './app/pipes';
+import { createDefaultFactory } from './app/pipes';
 //create default pipe
 createDefaultFactory();
 
-import {prepareConfig, loadInfinityMint, logDirect} from './app/helpers';
+import { prepareConfig, loadInfinityMint, logDirect } from './app/helpers';
 
 //require dotenv
 require('dotenv').config({
-	override: false, //will not override already established environment variables
+    override: false, //will not override already established environment variables
 });
 
 //load infinitymint and create default files

@@ -1,45 +1,45 @@
-import hre, {ethers, artifacts} from 'hardhat';
+import hre, { ethers, artifacts } from 'hardhat';
 import {
-	debugLog,
-	getConfigFile,
-	isEnvTrue,
-	log,
-	readSession,
-	logDirect,
-	saveSession,
-	getSolidityFolder,
-	warning,
-	registerNetworkLogs,
-	cwd,
-	setScriptMode,
+    debugLog,
+    getConfigFile,
+    isEnvTrue,
+    log,
+    readSession,
+    logDirect,
+    saveSession,
+    getSolidityFolder,
+    warning,
+    registerNetworkLogs,
+    cwd,
+    setScriptMode,
 } from './helpers';
-import {BaseContract, BigNumber} from 'ethers';
+import { BaseContract, BigNumber } from 'ethers';
 import fs from 'fs';
-import {defaultFactory, PipeFactory} from './pipes';
+import { defaultFactory, PipeFactory } from './pipes';
 import {
-	Web3Provider,
-	JsonRpcProvider,
-	TransactionReceipt,
-	Provider,
+    Web3Provider,
+    JsonRpcProvider,
+    TransactionReceipt,
+    Provider,
 } from '@ethersproject/providers';
-import {ContractFactory, ContractTransaction} from '@ethersproject/contracts';
-import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
-import {getLocalDeployment, create} from './deployments';
+import { ContractFactory, ContractTransaction } from '@ethersproject/contracts';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { getLocalDeployment, create } from './deployments';
 import {
-	InfinityMintConfigSettingsNetwork,
-	InfinityMintDeploymentLive,
-	InfinityMintConsoleOptions,
-	InfinityMintConfig,
-	InfinityMintEventEmitter,
-	InfinityMintDeploymentLocal,
-	KeyValue,
-	InfinityMintTempProject,
-	InfinityMintCompiledProject,
+    InfinityMintConfigSettingsNetwork,
+    InfinityMintDeploymentLive,
+    InfinityMintConsoleOptions,
+    InfinityMintConfig,
+    InfinityMintEventEmitter,
+    InfinityMintDeploymentLocal,
+    KeyValue,
+    InfinityMintTempProject,
+    InfinityMintCompiledProject,
 } from './interfaces';
-import {EthereumProvider} from 'ganache';
+import { EthereumProvider } from 'ganache';
 import InfinityConsole from './console';
-import {TelnetServer} from './telnet';
-import {Receipt} from 'hardhat-deploy/dist/types';
+import { TelnetServer } from './telnet';
+import { Receipt } from 'hardhat-deploy/dist/types';
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -51,26 +51,26 @@ const ProviderListeners = {} as any;
  * @returns
  */
 export const initializeInfinityMint = async (
-	config?: InfinityMintConfig,
-	startGanache?: boolean,
+    config?: InfinityMintConfig,
+    startGanache?: boolean
 ) => {
-	config = config || getConfigFile();
-	registerNetworkLogs(hre.config.networks);
+    config = config || getConfigFile();
+    registerNetworkLogs(hre.config.networks);
 
-	//
-	logDirect('🪐 Starting InfinityConsole');
+    //
+    logDirect('🪐 Starting InfinityConsole');
 
-	try {
-		//create IPFS node
-	} catch (error) {
-		warning(`could not start IPFS: ` + error?.message);
-	}
+    try {
+        //create IPFS node
+    } catch (error) {
+        warning(`could not start IPFS: ` + error?.message);
+    }
 
-	//start a network pipe if we aren't ganache as we do something different if we are
-	if (!startGanache) startNetworkPipe();
+    //start a network pipe if we aren't ganache as we do something different if we are
+    if (!startGanache) startNetworkPipe();
 
-	//initialize console
-	return config;
+    //initialize console
+    return config;
 };
 
 /**
@@ -82,36 +82,36 @@ export const initializeInfinityMint = async (
  * @returns
  */
 export const startInfinityConsole = async (
-	options?: InfinityMintConsoleOptions,
-	pipeFactory?: PipeFactory,
-	telnetServer?: TelnetServer,
-	eventEmitter?: InfinityMintEventEmitter,
+    options?: InfinityMintConsoleOptions,
+    pipeFactory?: PipeFactory,
+    telnetServer?: TelnetServer,
+    eventEmitter?: InfinityMintEventEmitter
 ) => {
-	//set the script mode if applicable
-	setScriptMode(options.scriptMode || false);
+    //set the script mode if applicable
+    setScriptMode(options.scriptMode || false);
 
-	debugLog(
-		'starting InfinityConsole with solidity root of ' + getSolidityFolder(),
-	);
+    debugLog(
+        'starting InfinityConsole with solidity root of ' + getSolidityFolder()
+    );
 
-	let infinityConsole = new InfinityConsole(
-		options,
-		pipeFactory,
-		telnetServer,
-		eventEmitter,
-	);
-	logDirect(
-		'💭 Initializing InfinityConsole{cyan-fg}<' +
-			infinityConsole.getSessionId() +
-			'>{/cyan-fg}',
-	);
-	await infinityConsole.initialize();
-	log(
-		'{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<' +
-			infinityConsole.getSessionId() +
-			'>',
-	);
-	return infinityConsole;
+    let infinityConsole = new InfinityConsole(
+        options,
+        pipeFactory,
+        telnetServer,
+        eventEmitter
+    );
+    logDirect(
+        '💭 Initializing InfinityConsole{cyan-fg}<' +
+            infinityConsole.getSessionId() +
+            '>{/cyan-fg}'
+    );
+    await infinityConsole.initialize();
+    log(
+        '{green-fg}{bold}InfinityMint Online{/green-fg}{/bold} => InfinityConsole<' +
+            infinityConsole.getSessionId() +
+            '>'
+    );
+    return infinityConsole;
 };
 
 /**
@@ -119,19 +119,19 @@ export const startInfinityConsole = async (
  * @returns
  */
 export const getDefaultSigner = async () => {
-	let defaultAccount = getDefaultAccountIndex();
-	let signers = await ethers.getSigners();
+    let defaultAccount = getDefaultAccountIndex();
+    let signers = await ethers.getSigners();
 
-	if (!signers[defaultAccount])
-		throw new Error(
-			'bad default account for network ' +
-				hre.network.name +
-				' index ' +
-				defaultAccount +
-				'does not exist',
-		);
+    if (!signers[defaultAccount])
+        throw new Error(
+            'bad default account for network ' +
+                hre.network.name +
+                ' index ' +
+                defaultAccount +
+                'does not exist'
+        );
 
-	return signers[defaultAccount];
+    return signers[defaultAccount];
 };
 
 /**
@@ -140,16 +140,16 @@ export const getDefaultSigner = async () => {
  * @returns
  */
 export const getDeploymentProjectPath = (
-	project: InfinityMintCompiledProject | InfinityMintTempProject,
+    project: InfinityMintCompiledProject | InfinityMintTempProject
 ) => {
-	return (
-		cwd() +
-		`/deployments/${hre.network.name}/` +
-		project.name +
-		'@' +
-		project.version +
-		'/'
-	);
+    return (
+        cwd() +
+        `/deployments/${hre.network.name}/` +
+        project.name +
+        '@' +
+        project.version +
+        '/'
+    );
 };
 
 /**
@@ -165,64 +165,64 @@ export const getDeploymentProjectPath = (
  * @returns
  */
 export const deploy = async (
-	artifactName: string,
-	project: InfinityMintCompiledProject | InfinityMintTempProject,
-	args?: [],
-	libraries?: {},
-	signer?: SignerWithAddress,
-	save?: boolean,
-	logDeployment?: boolean,
-	usePreviousDeployment?: boolean,
+    artifactName: string,
+    project: InfinityMintCompiledProject | InfinityMintTempProject,
+    args?: [],
+    libraries?: {},
+    signer?: SignerWithAddress,
+    save?: boolean,
+    logDeployment?: boolean,
+    usePreviousDeployment?: boolean
 ) => {
-	signer = signer || (await getDefaultSigner());
-	let artifact = await artifacts.readArtifact(artifactName);
-	let fileName =
-		getDeploymentProjectPath(project) + `${artifact.contractName}.json`;
-	let buildInfo = await artifacts.getBuildInfo(artifactName);
+    signer = signer || (await getDefaultSigner());
+    let artifact = await artifacts.readArtifact(artifactName);
+    let fileName =
+        getDeploymentProjectPath(project) + `${artifact.contractName}.json`;
+    let buildInfo = await artifacts.getBuildInfo(artifactName);
 
-	if (usePreviousDeployment && fs.existsSync(fileName)) {
-		let deployment = JSON.parse(
-			fs.readFileSync(fileName, {
-				encoding: 'utf-8',
-			}),
-		) as InfinityMintDeploymentLocal;
+    if (usePreviousDeployment && fs.existsSync(fileName)) {
+        let deployment = JSON.parse(
+            fs.readFileSync(fileName, {
+                encoding: 'utf-8',
+            })
+        ) as InfinityMintDeploymentLocal;
 
-		if (logDeployment)
-			log(
-				`🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`,
-			);
+        if (logDeployment)
+            log(
+                `🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`
+            );
 
-		writeDeployment(deployment);
-		return deployment;
-	}
+        writeDeployment(deployment);
+        return deployment;
+    }
 
-	let factory = await ethers.getContractFactory(artifact.contractName, {
-		signer: signer,
-		libraries: libraries,
-	});
-	let contract = await deployViaFactory(factory, args);
-	await logTransaction(contract.deployTransaction);
+    let factory = await ethers.getContractFactory(artifact.contractName, {
+        signer: signer,
+        libraries: libraries,
+    });
+    let contract = await deployViaFactory(factory, args);
+    await logTransaction(contract.deployTransaction);
 
-	if (!save) return contract;
+    if (!save) return contract;
 
-	writeDeployment({
-		...artifact,
-		...buildInfo,
-		project,
-		args: args,
-		key: artifact.contractName,
-		network: project.network,
-		newlyDeployed: true,
-		contractName: artifact.contractName,
-		address: contract.address,
-		transactionHash: contract.deployTransaction.hash,
-		deployer: contract.deployTransaction.from,
-		receipt: contract.deployTransaction as any,
-	});
+    writeDeployment({
+        ...artifact,
+        ...buildInfo,
+        project,
+        args: args,
+        key: artifact.contractName,
+        network: project.network,
+        newlyDeployed: true,
+        contractName: artifact.contractName,
+        address: contract.address,
+        transactionHash: contract.deployTransaction.hash,
+        deployer: contract.deployTransaction.from,
+        receipt: contract.deployTransaction as any,
+    });
 
-	log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
+    log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
 
-	return contract;
+    return contract;
 };
 
 /**
@@ -231,33 +231,33 @@ export const deploy = async (
  * @param project
  */
 export const writeDeployment = (
-	deployment: InfinityMintDeploymentLocal,
-	project?: InfinityMintCompiledProject | InfinityMintTempProject,
+    deployment: InfinityMintDeploymentLocal,
+    project?: InfinityMintCompiledProject | InfinityMintTempProject
 ) => {
-	let session = readSession();
-	project = project || deployment.project;
-	let fileName =
-		getDeploymentProjectPath(project) + `${deployment.contractName}.json`;
+    let session = readSession();
+    project = project || deployment.project;
+    let fileName =
+        getDeploymentProjectPath(project) + `${deployment.contractName}.json`;
 
-	if (!session.environment.deployments) session.environment.deployments = {};
-	if (!session.environment?.deployments[deployment.address]) {
-		session.environment.deployments[deployment.address] = deployment;
-		debugLog(`saving deployment of ${deployment.contractName} to session`);
-		saveSession(session);
-	}
+    if (!session.environment.deployments) session.environment.deployments = {};
+    if (!session.environment?.deployments[deployment.address]) {
+        session.environment.deployments[deployment.address] = deployment;
+        debugLog(`saving deployment of ${deployment.contractName} to session`);
+        saveSession(session);
+    }
 
-	if (!fs.existsSync(getDeploymentProjectPath(project)))
-		fs.mkdirSync(getDeploymentProjectPath(project));
+    if (!fs.existsSync(getDeploymentProjectPath(project)))
+        fs.mkdirSync(getDeploymentProjectPath(project));
 
-	debugLog(`saving ${fileName}`);
-	fs.writeFileSync(fileName, JSON.stringify(deployment, null, 2));
+    debugLog(`saving ${fileName}`);
+    fs.writeFileSync(fileName, JSON.stringify(deployment, null, 2));
 };
 
 /**
  * uses in the deploy function to specify gas price and other overrides for the transaction
  */
 interface Overrides extends KeyValue {
-	gasPrice?: BigNumber;
+    gasPrice?: BigNumber;
 }
 
 /**
@@ -267,15 +267,15 @@ interface Overrides extends KeyValue {
  * @returns
  */
 export const deployViaFactory = async (
-	factory: ContractFactory,
-	args?: any[],
-	overrides?: Overrides,
+    factory: ContractFactory,
+    args?: any[],
+    overrides?: Overrides
 ) => {
-	if (overrides) args.push(overrides);
-	let contract = await factory.deploy(args);
-	contract = await contract.deployed();
-	await logTransaction(contract.deployTransaction);
-	return contract;
+    if (overrides) args.push(overrides);
+    let contract = await factory.deploy(args);
+    contract = await contract.deployed();
+    await logTransaction(contract.deployTransaction);
+    return contract;
 };
 
 /**
@@ -287,14 +287,14 @@ export const deployViaFactory = async (
  * @returns
  */
 export const deployBytecode = async (
-	abi: string[],
-	bytecode: string,
-	args?: [],
-	signer?: SignerWithAddress,
+    abi: string[],
+    bytecode: string,
+    args?: [],
+    signer?: SignerWithAddress
 ) => {
-	signer = signer || (await getDefaultSigner());
-	let factory = await ethers.getContractFactory(abi, bytecode, signer);
-	return await deployViaFactory(factory, args);
+    signer = signer || (await getDefaultSigner());
+    let factory = await ethers.getContractFactory(abi, bytecode, signer);
+    return await deployViaFactory(factory, args);
 };
 
 /**
@@ -307,33 +307,33 @@ export const deployBytecode = async (
  * @returns
  */
 export const deployHardhat = async (
-	contractName: string,
-	project: InfinityMintCompiledProject | InfinityMintTempProject,
-	signer?: SignerWithAddress,
-	libraries?: KeyValue,
-	gasPrice?: string | BigNumber,
-	confirmations?: number,
-	usePreviousDeployment?: boolean,
+    contractName: string,
+    project: InfinityMintCompiledProject | InfinityMintTempProject,
+    signer?: SignerWithAddress,
+    libraries?: KeyValue,
+    gasPrice?: string | BigNumber,
+    confirmations?: number,
+    usePreviousDeployment?: boolean
 ) => {
-	signer = signer || (await getDefaultSigner());
-	let result: InfinityMintDeploymentLocal = {
-		...(await hre.deployments.deploy(contractName, {
-			from: signer.address,
-			gasPrice: gasPrice,
-			libraries: libraries,
-			log: true,
-			skipIfAlreadyDeployed: usePreviousDeployment,
-			waitConfirmations: confirmations || 1,
-		})),
-		key: contractName,
-		network: project.network,
-		contractName,
-		project,
-		deployer: signer.address,
-	};
-	await logTransaction(result.receipt);
-	writeDeployment(result, project);
-	return result;
+    signer = signer || (await getDefaultSigner());
+    let result: InfinityMintDeploymentLocal = {
+        ...(await hre.deployments.deploy(contractName, {
+            from: signer.address,
+            gasPrice: gasPrice,
+            libraries: libraries,
+            log: true,
+            skipIfAlreadyDeployed: usePreviousDeployment,
+            waitConfirmations: confirmations || 1,
+        })),
+        key: contractName,
+        network: project.network,
+        contractName,
+        project,
+        deployer: signer.address,
+    };
+    await logTransaction(result.receipt);
+    writeDeployment(result, project);
+    return result;
 };
 
 /**
@@ -341,10 +341,10 @@ export const deployHardhat = async (
  * @param network
  */
 export const changeNetwork = (network: string) => {
-	stopNetworkPipe(ethers.provider, hre.network.name);
+    stopNetworkPipe(ethers.provider, hre.network.name);
 
-	hre.changeNetwork(network);
-	if (network !== 'ganache') startNetworkPipe(ethers.provider, network);
+    hre.changeNetwork(network);
+    if (network !== 'ganache') startNetworkPipe(ethers.provider, network);
 };
 
 /**
@@ -355,26 +355,26 @@ export const changeNetwork = (network: string) => {
  * @returns
  */
 export const deployAnonContract = async (
-	contractName: string,
-	libraries?: any[],
-	gasPrice?: string | BigNumber,
+    contractName: string,
+    libraries?: any[],
+    gasPrice?: string | BigNumber
 ) => {
-	return await deployHardhat(
-		contractName,
-		{
-			name: '__',
-			version: 'any',
-			network: {
-				chainId: hre.network.config.chainId,
-				name: hre.network.name,
-			},
-		} as any,
-		await getDefaultSigner(),
-		libraries,
-		gasPrice,
-		undefined,
-		false,
-	);
+    return await deployHardhat(
+        contractName,
+        {
+            name: '__',
+            version: 'any',
+            network: {
+                chainId: hre.network.config.chainId,
+                name: hre.network.name,
+            },
+        } as any,
+        await getDefaultSigner(),
+        libraries,
+        gasPrice,
+        undefined,
+        false
+    );
 };
 
 /**
@@ -384,11 +384,11 @@ export const deployAnonContract = async (
  * @returns
  */
 export const getContract = (
-	deployment: InfinityMintDeploymentLive,
-	provider?: Provider | JsonRpcProvider,
+    deployment: InfinityMintDeploymentLive,
+    provider?: Provider | JsonRpcProvider
 ) => {
-	provider = provider || ethers.provider;
-	return new ethers.Contract(deployment.address, deployment.abi, provider);
+    provider = provider || ethers.provider;
+    return new ethers.Contract(deployment.address, deployment.abi, provider);
 };
 
 /**
@@ -398,12 +398,12 @@ export const getContract = (
  * @returns
  */
 export const getSignedContract = async (
-	deployment: InfinityMintDeploymentLive,
-	signer?: SignerWithAddress,
+    deployment: InfinityMintDeploymentLive,
+    signer?: SignerWithAddress
 ): Promise<BaseContract> => {
-	signer = signer || (await getDefaultSigner());
-	let factory = await ethers.getContractFactory(deployment.contractName);
-	return factory.connect(signer).attach(deployment.address);
+    signer = signer || (await getDefaultSigner());
+    let factory = await ethers.getContractFactory(deployment.contractName);
+    return factory.connect(signer).attach(deployment.address);
 };
 
 /**
@@ -414,54 +414,54 @@ export const getSignedContract = async (
  * @returns
  */
 export const logTransaction = async (
-	execution: Promise<ContractTransaction> | ContractTransaction | Receipt,
-	logMessage?: string,
-	printGasUsage: boolean = true,
+    execution: Promise<ContractTransaction> | ContractTransaction | Receipt,
+    logMessage?: string,
+    printGasUsage: boolean = true
 ) => {
-	if (logMessage && logMessage?.length !== 0) {
-		log(`🏳️‍🌈 ${logMessage}`);
-	}
+    if (logMessage && logMessage?.length !== 0) {
+        log(`🏳️‍🌈 ${logMessage}`);
+    }
 
-	if (typeof execution === typeof Promise)
-		execution = await (execution as Promise<ContractTransaction>);
+    if (typeof execution === typeof Promise)
+        execution = await (execution as Promise<ContractTransaction>);
 
-	let tx = execution as any;
-	let hash = tx.hash || tx.transactionHash;
+    let tx = execution as any;
+    let hash = tx.hash || tx.transactionHash;
 
-	log(`🏷️  {cyan-fg}transaction hash{/cyan-fg} => <${hash}>`);
+    log(`🏷️  {cyan-fg}transaction hash{/cyan-fg} => <${hash}>`);
 
-	let receipt: TransactionReceipt;
-	if (tx.wait) {
-		receipt = await tx.wait();
-	} else receipt = await ethers.provider.getTransactionReceipt(hash);
+    let receipt: TransactionReceipt;
+    if (tx.wait) {
+        receipt = await tx.wait();
+    } else receipt = await ethers.provider.getTransactionReceipt(hash);
 
-	let session = readSession();
+    let session = readSession();
 
-	if (!session.environment.temporaryGasReceipts)
-		session.environment.temporaryGasReceipts = [];
+    if (!session.environment.temporaryGasReceipts)
+        session.environment.temporaryGasReceipts = [];
 
-	let savedReceipt = {
-		...receipt,
-		gasUsedEther: ethers.utils.formatEther(
-			receipt.gasUsed.toNumber() * receipt.effectiveGasPrice.toNumber(),
-		),
-		gasUsedNumerical: parseInt(receipt.gasUsed.toString()),
-	};
-	session.environment.temporaryGasReceipts.push({savedReceipt});
+    let savedReceipt = {
+        ...receipt,
+        gasUsedEther: ethers.utils.formatEther(
+            receipt.gasUsed.toNumber() * receipt.effectiveGasPrice.toNumber()
+        ),
+        gasUsedNumerical: parseInt(receipt.gasUsed.toString()),
+    };
+    session.environment.temporaryGasReceipts.push({ savedReceipt });
 
-	if (printGasUsage)
-		log(
-			'{magenta-fg}⛽ gas => {/magenta-fg}' +
-				savedReceipt.gasUsedEther +
-				' eth / ' +
-				savedReceipt.gasUsedNumerical +
-				' gas / ' +
-				savedReceipt.effectiveGasPrice +
-				' wei',
-		);
+    if (printGasUsage)
+        log(
+            '{magenta-fg}⛽ gas => {/magenta-fg}' +
+                savedReceipt.gasUsedEther +
+                ' eth / ' +
+                savedReceipt.gasUsedNumerical +
+                ' gas / ' +
+                savedReceipt.effectiveGasPrice +
+                ' wei'
+        );
 
-	saveSession(session);
-	return receipt;
+    saveSession(session);
+    return receipt;
 };
 
 /**
@@ -472,11 +472,11 @@ export const logTransaction = async (
  * @returns
  */
 export const get = (contractName: string, network?: string, provider?: any) => {
-	provider = provider || ethers.provider;
-	return getContract(
-		getLocalDeployment(contractName, network) as any,
-		provider,
-	);
+    provider = provider || ethers.provider;
+    return getContract(
+        getLocalDeployment(contractName, network) as any,
+        provider
+    );
 };
 
 /**
@@ -486,9 +486,9 @@ export const get = (contractName: string, network?: string, provider?: any) => {
  * @returns
  */
 export const getDeployment = (contractName: string, network?: string) => {
-	return create(
-		getLocalDeployment(contractName, network || hre.network.name) as any,
-	);
+    return create(
+        getLocalDeployment(contractName, network || hre.network.name) as any
+    );
 };
 
 /**
@@ -497,11 +497,11 @@ export const getDeployment = (contractName: string, network?: string) => {
  * @returns
  */
 export const getNetworkSettings = (network: string) => {
-	let config = getConfigFile();
-	return (
-		config?.settings?.networks[network] ||
-		({} as InfinityMintConfigSettingsNetwork)
-	);
+    let config = getConfigFile();
+    return (
+        config?.settings?.networks[network] ||
+        ({} as InfinityMintConfigSettingsNetwork)
+    );
 };
 
 /**
@@ -509,8 +509,8 @@ export const getNetworkSettings = (network: string) => {
  * @returns
  */
 export const getDefaultAccountIndex = () => {
-	let config = getConfigFile();
-	return config?.settings?.networks?.[hre.network.name]?.defaultAccount || 0;
+    let config = getConfigFile();
+    return config?.settings?.networks?.[hre.network.name]?.defaultAccount || 0;
 };
 
 /**
@@ -519,24 +519,24 @@ export const getDefaultAccountIndex = () => {
  * @param network
  */
 export const stopNetworkPipe = (
-	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
-	network?: any,
+    provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
+    network?: any
 ) => {
-	if (!network) network = hre.network.name;
-	let settings = getNetworkSettings(network);
-	//register events
-	try {
-		Object.keys(ProviderListeners[network]).forEach(key => {
-			provider.off(key as any, ProviderListeners[network][key]);
-		});
-	} catch (error) {
-		if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
-		warning('failed to stop pipe: ' + network);
-	}
-	defaultFactory
-		.getPipe(settings.useDefaultPipe ? 'default' : network)
-		.log('{red-fg}stopped pipe{/red-fg}');
-	delete ProviderListeners[network];
+    if (!network) network = hre.network.name;
+    let settings = getNetworkSettings(network);
+    //register events
+    try {
+        Object.keys(ProviderListeners[network]).forEach((key) => {
+            provider.off(key as any, ProviderListeners[network][key]);
+        });
+    } catch (error) {
+        if (isEnvTrue('THROW_ALL_ERRORS')) throw error;
+        warning('failed to stop pipe: ' + network);
+    }
+    defaultFactory
+        .getPipe(settings.useDefaultPipe ? 'default' : network)
+        .log('{red-fg}stopped pipe{/red-fg}');
+    delete ProviderListeners[network];
 };
 
 /**
@@ -546,48 +546,50 @@ export const stopNetworkPipe = (
  * @returns
  */
 export const startNetworkPipe = (
-	provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
-	network?: any,
+    provider?: Web3Provider | JsonRpcProvider | EthereumProvider,
+    network?: any
 ) => {
-	if (defaultFactory.pipes[network] === undefined) {
-		warning('undefined network pipe: ' + network);
-		return;
-	}
-	if (!network) network = hre.network.name;
-	let settings = getNetworkSettings(network);
+    if (defaultFactory.pipes[network] === undefined) {
+        warning('undefined network pipe: ' + network);
+        return;
+    }
+    if (!network) network = hre.network.name;
+    let settings = getNetworkSettings(network);
 
-	if (!provider) provider = ethers.provider;
-	if (ProviderListeners[network]) stopNetworkPipe(provider, network);
+    if (!provider) provider = ethers.provider;
+    if (ProviderListeners[network]) stopNetworkPipe(provider, network);
 
-	ProviderListeners[network] = ProviderListeners[network] || {};
-	ProviderListeners[network].block = (blockNumber: any) => {
-		log(
-			'{green-fg}new block{/green-fg} => [' + blockNumber + ']',
-			settings.useDefaultPipe ? 'default' : network,
-		);
-	};
+    ProviderListeners[network] = ProviderListeners[network] || {};
+    ProviderListeners[network].block = (blockNumber: any) => {
+        log(
+            '{green-fg}new block{/green-fg} => [' + blockNumber + ']',
+            settings.useDefaultPipe ? 'default' : network
+        );
+    };
 
-	ProviderListeners[network].pending = (tx: any) => {
-		log(
-			'{yellow-fg}new transaction pending{/yellow-fg} => ' +
-				JSON.stringify(tx, null, 2),
-			settings.useDefaultPipe ? 'default' : network,
-		);
-	};
+    ProviderListeners[network].pending = (tx: any) => {
+        log(
+            '{yellow-fg}new transaction pending{/yellow-fg} => ' +
+                JSON.stringify(tx, null, 2),
+            settings.useDefaultPipe ? 'default' : network
+        );
+    };
 
-	ProviderListeners[network].error = (tx: any) => {
-		defaultFactory
-			.getPipe(settings.useDefaultPipe ? 'default' : network)
-			.error('{red-fg}tx error{/reg-fg} => ' + JSON.stringify(tx, null, 2));
-	};
+    ProviderListeners[network].error = (tx: any) => {
+        defaultFactory
+            .getPipe(settings.useDefaultPipe ? 'default' : network)
+            .error(
+                '{red-fg}tx error{/reg-fg} => ' + JSON.stringify(tx, null, 2)
+            );
+    };
 
-	defaultFactory
-		.getPipe(settings.useDefaultPipe ? 'default' : network)
-		.log('{cyan-fg}started pipe{/cyan-fg}');
+    defaultFactory
+        .getPipe(settings.useDefaultPipe ? 'default' : network)
+        .log('{cyan-fg}started pipe{/cyan-fg}');
 
-	Object.keys(ProviderListeners[network]).forEach(key => {
-		provider.on(key as any, ProviderListeners[network][key]);
-	});
+    Object.keys(ProviderListeners[network]).forEach((key) => {
+        provider.on(key as any, ProviderListeners[network][key]);
+    });
 
-	debugLog('registered provider event hooks for ' + network);
+    debugLog('registered provider event hooks for ' + network);
 };
