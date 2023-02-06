@@ -1,4 +1,4 @@
-import { InfinityMintWindow } from "../window";
+import {InfinityMintWindow} from '../window';
 
-const Settings = new InfinityMintWindow("Settings");
+const Settings = new InfinityMintWindow('Settings');
 export default Settings;

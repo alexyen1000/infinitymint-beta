@@ -1,43 +1,43 @@
-import { InfinityMintWindow } from "../window";
+import {InfinityMintWindow} from '../window';
 
 const Themes = new InfinityMintWindow(
-	"Themes",
+	'Themes',
 	{
-		fg: "white",
-		bg: "blue",
+		fg: 'white',
+		bg: 'blue',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
-	}
+		type: 'line',
+	},
 );
 
 Themes.initialize = async (window, frame, blessed) => {
 	let background = window.registerElement(
-		"console",
+		'console',
 		blessed.box({
-			width: "100%",
-			height: "100%-8",
+			width: '100%',
+			height: '100%-8',
 			padding: 1,
 			top: 4,
-			label: "{bold}{white-fg}Themes{/white-fg}{/bold}",
-			left: "center",
+			label: '{bold}{white-fg}Themes{/white-fg}{/bold}',
+			left: 'center',
 			keys: true,
 			tags: true,
 			scrollable: true,
 			mouse: true,
 			scrollbar: window.getScrollbar(),
-			border: "line",
+			border: 'line',
 			style: {
-				fg: "white",
-				bg: "transparent",
+				fg: 'white',
+				bg: 'transparent',
 				border: {
-					fg: "#f0f0f0",
+					fg: '#f0f0f0',
 				},
 			},
-		})
+		}),
 	);
 	background.setBack();
 };

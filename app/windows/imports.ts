@@ -1,17 +1,17 @@
-import { InfinityMintWindow } from "../window";
+import {InfinityMintWindow} from '../window';
 
 const Imports = new InfinityMintWindow(
-	"Imports",
+	'Imports',
 	{
-		fg: "white",
-		bg: "black",
+		fg: 'white',
+		bg: 'black',
 		border: {
-			fg: "#f0f0f0",
+			fg: '#f0f0f0',
 		},
 	},
 	{
-		type: "line",
-	}
+		type: 'line',
+	},
 );
 
 export default Imports;
