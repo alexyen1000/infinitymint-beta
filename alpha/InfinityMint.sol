@@ -181,10 +181,12 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
             'max supply has been reached raise it before minting'
         );
 
-        //if we are incrementmode we want to set the last path id (which is actually the next one) to be plus one of the current
+        //if we are incremental or matched mode we want to set the last path id (which is actually the next one) to be plus one of the current
         //path id in case an on chain mint occurs
-        if (valuesController.isTrue('incremental'))
-            minterController.assetController().setLastPathId(pathId + 1);
+        if (
+            valuesController.isTrue('incrementalMode') ||
+            valuesController.isTrue('matchedMode')
+        ) minterController.assetController().setLastPathId(pathId + 1);
 
         completeMint(
             createInfinityObject(
@@ -200,7 +202,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
             ),
             receiver,
             false,
-            0
+            value()
         );
     }
 
@@ -310,10 +312,7 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
         InfinityObject memory temp = storageController.get(tokenId);
         //if the sender isn't the sticker contract attached to this token
         require(
-            storageController.validDestination(
-                tokenId,
-                valuesController.tryGetValue('linkStickerIndex')
-            ),
+            storageController.validDestination(tokenId, 1),
             'sticker contract not set'
         );
         require(
@@ -321,14 +320,11 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
             'Sender must be the sticker contract attached to this token'
         );
 
-        //if the value is less than 100 and we cannot split it up efficiently then do not incre
-        if (value() == 0 || value() > 100)
-            //increment
-            royaltyController.incrementBalance(
-                value(),
-                royaltyController.SPLIT_TYPE_STICKER()
-            );
-        else revert('value given must be over 100, or zero');
+        //increment
+        royaltyController.incrementBalance(
+            value(),
+            royaltyController.SPLIT_TYPE_STICKER()
+        );
     }
 
     /// @notice Allows approved contracts to deposit royalty types
@@ -340,9 +336,8 @@ contract InfinityMint is ERC721, Authentication, InfinityMintObject {
     {
         require(msg.value >= 0, 'not allowed to deposit zero values');
         require(
-            royaltyType == royaltyController.SPLIT_TYPE_MINT() &&
-                royaltyType != royaltyController.SPLIT_TYPE_STICKER(),
-            'invalid royalty type'
+            royaltyType != royaltyController.SPLIT_TYPE_STICKER(),
+            "can't deposit sticker royalties here"
         );
 
         //increment
