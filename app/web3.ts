@@ -25,6 +25,7 @@ import {
 import { ContractFactory, ContractTransaction } from '@ethersproject/contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getLocalDeployment, create } from './deployments';
+import * as Test from 'typechain';
 import {
     InfinityMintConfigSettingsNetwork,
     InfinityMintDeploymentLive,
@@ -384,7 +385,7 @@ export const deployAnonContract = async (
  * @returns
  */
 export const getContract = (
-    deployment: InfinityMintDeploymentLive,
+    deployment: InfinityMintDeploymentLive | InfinityMintDeploymentLocal,
     provider?: Provider | JsonRpcProvider
 ) => {
     provider = provider || ethers.provider;
@@ -398,7 +399,7 @@ export const getContract = (
  * @returns
  */
 export const getSignedContract = async (
-    deployment: InfinityMintDeploymentLive,
+    deployment: InfinityMintDeploymentLive | InfinityMintDeploymentLocal,
     signer?: SignerWithAddress
 ): Promise<BaseContract> => {
     signer = signer || (await getDefaultSigner());

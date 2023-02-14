@@ -2,7 +2,7 @@ import {
     InfinityMintScript,
     InfinityMintScriptParameters,
 } from '../app/interfaces';
-import { deployAnonContract } from '../app/web3';
+import { deployAnonContract, getSignedContract } from '../app/web3';
 import fs from 'fs';
 
 const deployContract: InfinityMintScript = {
@@ -20,6 +20,7 @@ const deployContract: InfinityMintScript = {
         let deployment = await deployAnonContract(
             script.args.contractName.value
         );
+
         script.log(
             '\n{green-fg}successfully deployed {cyan-fg}{bold}' +
                 script.args.contractName.value +
