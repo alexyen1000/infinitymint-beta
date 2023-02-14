@@ -22,14 +22,14 @@ contract InfinityMintApi is InfinityMintObject {
 
     constructor(
         address erc721Destination,
-        address storageestination,
+        address storageDestination,
         address assetDestination,
         address valuesDestination,
         address royaltyDestination,
         address projectDestination
     ) {
         erc721 = InfinityMint(erc721Destination);
-        storageController = InfinityMintStorage(storageestination);
+        storageController = InfinityMintStorage(storageDestination);
         assetController = Asset(assetDestination);
         valuesController = InfinityMintValues(valuesDestination);
         royaltyController = Royalty(royaltyDestination);

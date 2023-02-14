@@ -174,7 +174,8 @@ export const deploy = async (
     libraries?: Dictionary<string>,
     signer?: SignerWithAddress,
     save?: boolean,
-    usePreviousDeployment?: boolean
+    usePreviousDeployment?: boolean,
+    logTx?: boolean
 ) => {
     signer = signer || (await getDefaultSigner());
     let artifact = await artifacts.readArtifact(artifactName);
@@ -220,7 +221,9 @@ export const deploy = async (
         deployer: contract.deployTransaction.from,
         receipt: contract.deployTransaction as any,
     };
-    log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
+
+    if (logTx)
+        log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
 
     if (!save) return { contract, localDeployment };
 

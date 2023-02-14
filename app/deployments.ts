@@ -795,42 +795,26 @@ export const getProjectDeploymentClasses = async (
             'please compile ' + compiledProject.name + ' before launching it'
         );
 
-    let moduleDeployments = loadedDeploymentClasses.filter(
-        (deployment) =>
-            Object.keys(compiledProject.modules).filter(
-                (key) =>
-                    key === deployment.getModuleKey() &&
-                    compiledProject.modules[key] ===
-                        deployment.getContractName()
-            ).length !== 0
-    );
+    let currentModules = {};
+    let deployments = loadedDeploymentClasses.filter((deployment) => {
+        if (deployment.isLibrary()) return true;
+        if (
+            compiledProject.modules[deployment.getModuleKey()] === undefined &&
+            currentModules[deployment.getModuleKey()] === undefined
+        ) {
+            currentModules[deployment.getModuleKey()] = true;
+            return true;
+        }
 
-    let otherDeployments = loadedDeploymentClasses
-        .filter(
-            (deployment) =>
-                moduleDeployments.filter(
-                    (thatDeployment) =>
-                        deployment.getContractName() ===
-                            thatDeployment.getContractName() &&
-                        deployment.getModuleKey() ===
-                            thatDeployment.getModuleKey()
-                ).length === 0 &&
-                [
-                    ...(setings?.disabledContracts || []),
-                    ...(compiledProject.settings?.disabledContracts ||
-                        ([] as any)),
-                ].filter(
-                    (value) =>
-                        value === deployment.getContractName() ||
-                        value === deployment.getKey()
-                ).length === 0
-        )
-        .filter(
-            (deployment) =>
-                compiledProject.modules[deployment.getModuleKey()] === undefined
-        );
-
-    let deployments = [...moduleDeployments, ...otherDeployments];
+        if (
+            compiledProject.modules[deployment.getModuleKey()] !== undefined &&
+            deployment.getContractName() ===
+                compiledProject.modules[deployment.getModuleKey()]
+        ) {
+            currentModules[deployment.getModuleKey()] = true;
+            return true;
+        }
+    });
 
     //sort the deployments based on getIndex
     deployments.sort((a, b) => {

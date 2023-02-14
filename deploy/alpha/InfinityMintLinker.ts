@@ -1,11 +1,11 @@
 import { InfinityMintDeploymentScript } from '../../app/interfaces';
 
-const InfinityMintProject: InfinityMintDeploymentScript = {
+const InfinityMintLinker: InfinityMintDeploymentScript = {
     //going to give
-    module: 'project',
+    module: 'linker',
     index: 10, //should be after values
     deployArgs: ['storage', 'erc721'],
     solidityFolder: 'alpha',
     permissions: ['approved'],
 };
-export default InfinityMintProject;
+export default InfinityMintLinker;
