@@ -1474,9 +1474,7 @@ export class InfinityConsole {
 
         let scripts = await findScripts();
         this.debugLog('found ' + scripts.length + ' deployment scripts');
-
         this.scripts = [];
-
         this.debugLog('{yellow-fg}{bold}Refreshing Scripts...{/}');
 
         for (let i = 0; i < scripts.length; i++) {
@@ -1489,7 +1487,11 @@ export class InfinityConsole {
                     }`
                 );
 
-                if (script.ext === '.ts') {
+                if (
+                    config?.settings?.scripts?.classicScripts.filter(
+                        (value: string) => script.dir.indexOf(value) !== -1
+                    ).length === 0
+                ) {
                     let scriptSource = await requireScript(
                         script.dir + '/' + script.base,
                         this,
@@ -1500,7 +1502,7 @@ export class InfinityConsole {
                 } else {
                     let _potentialSource: any = {};
                     if (
-                        config?.settings?.scripts?.disableJavascriptRequire.filter(
+                        config?.settings?.scripts?.disableMainExecution.filter(
                             (value: string) => script.dir.indexOf(value) !== -1
                         ).length === 0
                     ) {

@@ -1532,8 +1532,12 @@ export interface InfinityMintConfigSettings extends KeyValue {
      * @see {@link InfinityMintConfigSettingsCompile}
      */
     compile?: InfinityMintConfigSettingsCompile;
+    /**
+     * Configure InfinityMints script handling here. You can specify if an entire directory has main executable scripts or to treat them like classic scripts which do not export an object with a main function.
+     */
     scripts?: {
-        disableJavascriptRequire: PathLike[];
+        disableMainExecution?: PathLike[];
+        classicScripts?: PathLike[];
     };
 }
 
