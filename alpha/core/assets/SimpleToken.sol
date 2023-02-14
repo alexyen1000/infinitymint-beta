@@ -16,7 +16,7 @@ contract SimpleToken is InfinityMintAsset {
         InfinityMintAsset(valuesContract)
     {
         tokenName = _tokenName;
-        typeOf = 'object';
+        assetsType = 'object';
     }
 
     function getNextPathId(RandomNumber randomNumberController)

@@ -1,7 +1,7 @@
 import { InfinityMintScript } from '../app/interfaces';
 
-const upload: InfinityMintScript = {
-    name: 'Upload',
+const uploadProject: InfinityMintScript = {
+    name: 'Upload Project',
     description:
         'Builds and then uploads to IPFS directory an InfinityMint build ready to be set as a the content record of an ENS',
     execute: async () => {},
@@ -12,4 +12,4 @@ const upload: InfinityMintScript = {
         },
     ],
 };
-export default upload;
+export default uploadProject;

@@ -15,7 +15,7 @@ contract Pregenerative is SimpleImage {
     constructor(string memory _tokenName, address valuesContract)
         SimpleImage(_tokenName, valuesContract)
     {
-        typeOf = 'any';
+        assetsType = 'any';
     }
 
     /**

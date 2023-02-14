@@ -9,7 +9,7 @@ contract SimpleSVG is InfinityMintAsset {
         InfinityMintAsset(valuesContract)
     {
         tokenName = _tokenName;
-        typeOf = 'svg'; //returns scalable vector asset
+        assetsType = 'svg'; //returns scalable vector asset
     }
 
     function getNextPathId(RandomNumber randomNumberController)

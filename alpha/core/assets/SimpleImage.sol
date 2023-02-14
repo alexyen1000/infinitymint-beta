@@ -12,7 +12,7 @@ contract SimpleImage is InfinityMintAsset {
         InfinityMintAsset(valuesContract)
     {
         tokenName = _tokenName;
-        typeOf = 'image';
+        assetsType = 'image';
     }
 
     function getNextPathId(RandomNumber randomNumberController)

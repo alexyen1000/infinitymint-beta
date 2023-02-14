@@ -6,9 +6,9 @@ import { deployAnonContract, getSignedContract } from '../app/web3';
 import fs from 'fs';
 
 const deployContract: InfinityMintScript = {
-    name: 'DeployContract',
+    name: 'Deploy Contract',
     description:
-        'unassociated with InfinityMint only used to deploy patches and fixes',
+        'Deploy a contract to the current network, the deployment will be saved in the __@any folder in the deployments folder (relative to your network)',
     execute: async (script: InfinityMintScriptParameters) => {
         if (!script.args?.contractName?.value) throw new Error('bad');
 

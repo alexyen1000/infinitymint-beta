@@ -1,9 +1,9 @@
 import { InfinityMintScript } from '../app/interfaces';
 
-const serve: InfinityMintScript = {
-    name: 'Serve',
+const setENS: InfinityMintScript = {
+    name: 'Set ENS',
     description:
-        'Serve your project to a remote IPFS destination or repository to make your InfinityMint accessible in a web2 or web3 browser.',
+        'Set your ENS content records to point to your uploaded InfinityMint projects on IPFS',
     execute: async () => {},
     arguments: [
         {
@@ -13,4 +13,4 @@ const serve: InfinityMintScript = {
         },
     ],
 };
-export default serve;
+export default setENS;

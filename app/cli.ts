@@ -99,6 +99,8 @@ let options: InfinityMintConsoleOptions;
         });
     } else {
         let scriptName = yargs.argv._[0];
+        scriptName = scriptName.replace(/_/g, ' ');
+
         let argv = yargs.argv;
         argv._ = argv._.slice(1);
 

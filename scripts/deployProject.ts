@@ -17,8 +17,8 @@ import {
     stage,
 } from '../app/helpers';
 
-const deploy: InfinityMintScript = {
-    name: 'Deploy',
+const deployProject: InfinityMintScript = {
+    name: 'Deploy Project',
     description:
         'Deploys InfinityMint or a specific InfinityMint contract related to the current project',
     /**
@@ -443,4 +443,4 @@ const deploy: InfinityMintScript = {
         },
     ],
 };
-export default deploy;
+export default deployProject;
