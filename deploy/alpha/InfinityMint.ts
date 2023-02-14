@@ -6,7 +6,7 @@ const InfinityMint: InfinityMintDeploymentScript = {
     index: 7, //should be after values
     deployArgs: [
         '%token_name%',
-        '%token_symbol',
+        '%token_symbol%',
         'storage',
         'values',
         'minter',

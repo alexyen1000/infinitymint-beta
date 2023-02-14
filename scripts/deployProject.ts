@@ -130,7 +130,7 @@ const deployProject: InfinityMintScript = {
         let libraires = { ...project.libraries };
         //deploy stage
         let deploy = await always('deploy', async (isFirstTime) => {
-            script.log(`{cyan-fg}{bold}Deploying Smart Contracts{/}`);
+            script.log(`\n{cyan-fg}{bold}Deploying Smart Contracts{/}\n`);
             for (let i = 0; i < deployments.length; i++) {
                 let deployment = deployments[i];
 
@@ -358,7 +358,7 @@ const deployProject: InfinityMintScript = {
                 }
 
                 script.log(
-                    `{green-fg}successfully deployed{/green-fg} ${deployment.getTemporaryFilePath()}(` +
+                    `{green-fg}successfully deployed{/green-fg} ${deployment.getContractName()}(` +
                         project.name +
                         ')'
                 );
@@ -368,20 +368,12 @@ const deployProject: InfinityMintScript = {
 
         if (deploy !== true) throw deploy;
 
-        script.log(
-            '{green-fg}setting up project{/green-fg} (' + project.name + ')'
-        );
-
         let setupContracts = deployments.filter(
             (deployment) => !deployment.hasSetup()
         );
 
-        script.log(
-            '{green-fg}setting up project{/green-fg} (' + project.name + ')'
-        );
-
         let setup = await always('setup', async () => {
-            script.log(`{cyan-fg}{bold}Configuring Smart Contracts{/}`);
+            script.log(`\n{cyan-fg}{bold}Configuring Smart Contracts{/}\n`);
             for (let i = 0; i < setupContracts.length; i++) {
                 let deployment = setupContracts[i];
 
@@ -391,7 +383,14 @@ const deployProject: InfinityMintScript = {
                     async () => {
                         if (!deployment.getDeploymentScript().setup) {
                             script.log(
-                                `[${i}] => {yellow-fg} Skipping ${deployment.getTemporaryFilePath()} setup since already done`
+                                `[${i}] => {gray-fg} Skipping ${deployment.getContractName()}`
+                            );
+                            return;
+                        }
+
+                        if (deployment.hasSetup()) {
+                            script.log(
+                                `[${i}] => {yellow-fg} ${deployment.getContractName()} has already been set up`
                             );
                             return;
                         }
@@ -436,17 +435,17 @@ const deployProject: InfinityMintScript = {
                 if (result !== true) throw result;
 
                 script.log(
-                    `{green-fg}successfully setup ${deployment.getTemporaryFilePath()}{/green-fg} (` +
+                    `{green-fg}successfully setup ${deployment.getContractName()}{/green-fg} (` +
                         project.name +
                         ')'
                 );
             }
-            script.log(
-                `{green-fg}{bold}Successfully Configured Smart Contracts{/}`
-            );
+            script.log(`{green-fg}{bold}Setup Successful{/}`);
         });
 
         if (setup !== true) throw setup;
+
+        script.log(`\n{cyan-fg}{bold}SHE HAS ASCENDED{/}\n`);
     },
     arguments: [
         {

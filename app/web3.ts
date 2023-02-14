@@ -446,7 +446,10 @@ export const logTransaction = async (
     let savedReceipt = {
         ...receipt,
         gasUsedEther: ethers.utils.formatEther(
-            receipt.gasUsed.toNumber() * receipt.effectiveGasPrice.toNumber()
+            (
+                receipt.gasUsed.toNumber() *
+                receipt.effectiveGasPrice.toNumber()
+            ).toString()
         ),
         gasUsedNumerical: parseInt(receipt.gasUsed.toString()),
     };

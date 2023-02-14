@@ -668,6 +668,8 @@ export class InfinityMintDeployment {
                         throw new Error("couldn't find all deployment args");
                     }
 
+                    debugLog('args => [' + _args.join(',') + ']');
+
                     let libs = {};
                     Object.keys(this.deploymentScript.libraries || {}).forEach(
                         (key) => {
