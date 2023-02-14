@@ -15,7 +15,7 @@ abstract contract RandomNumber {
 
     constructor(address valuesContract) {
         valuesController = InfinityMintValues(valuesContract);
-        randomnessFactor = valuesController.getValue('randomessFactor');
+        randomnessFactor = valuesController.tryGetValue('randomessFactor');
     }
 
     function getNumber() external returns (uint256) {
@@ -23,7 +23,8 @@ abstract contract RandomNumber {
             ++salt;
         }
 
-        return unsafeNumber(valuesController.getValue('maxRandomNumber'), salt);
+        return
+            unsafeNumber(valuesController.tryGetValue('maxRandomNumber'), salt);
     }
 
     function getMaxNumber(uint256 maxNumber) external returns (uint256) {

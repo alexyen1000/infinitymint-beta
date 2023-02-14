@@ -76,7 +76,10 @@ export class InfinityMintDeployment {
     /**
      * the project this deployment is for. See {@link app/interfaces.InfinityMintProject}
      */
-    protected project: InfinityMintCompiledProject | InfinityMintTempProject;
+    protected project:
+        | InfinityMintCompiledProject
+        | InfinityMintDeployedProject
+        | InfinityMintTempProject;
     /**
      * the network name this deployment is for
      */
@@ -557,7 +560,8 @@ export class InfinityMintDeployment {
     ) {
         let deployment = localDeployment as InfinityMintDeploymentLive;
         deployment.key = this.deploymentScript.key;
-        deployment.javascript = this.project.source.ext === '.js';
+        deployment.javascript =
+            (this.project as InfinityMintTempProject).source.ext === '.js';
         deployment.project = getProjectName(this.project);
         deployment.network = {
             name: hre.network.name,
@@ -613,16 +617,17 @@ export class InfinityMintDeployment {
     async execute(
         method: 'setup' | 'deploy' | 'update' | 'switch' | 'cleanup',
         args: KeyValue,
+        infinityConsole?: InfinityConsole,
         eventEmitter?: InfinityMintEventEmitter
     ) {
         let params = {
             ...args,
             debugLog: debugLog,
+            deployment: this,
             log: log,
             project: this.project,
-            infinityConsole: null,
+            infinityConsole: infinityConsole,
             eventEmitter: eventEmitter || this.emitter,
-            deploy: this,
         } as InfinityMintDeploymentParameters;
 
         debugLog('executing method ' + method + ' on ' + this.key);
@@ -632,7 +637,37 @@ export class InfinityMintDeployment {
                 if (this.deploymentScript.deploy)
                     return await this.deploymentScript.deploy(params);
                 else if (this.getContractName()) {
-                    let _args = [];
+                    let replacables = {
+                        '%token_name%': this.project.information.tokenSingular,
+                        '%token_name_multiple%':
+                            this.project.information.tokenMultiple,
+                        '%token_symbol%': this.project.information.tokenSymbol,
+                    };
+                    let _args = (this.deploymentScript.deployArgs || []).map(
+                        (arg) => {
+                            if (!isNaN(arg)) return parseFloat(arg);
+
+                            let deployments = (
+                                this.project as InfinityMintTempProject
+                            ).deployments;
+
+                            if (deployments[arg])
+                                return deployments[arg].address;
+
+                            Object.keys(replacables).forEach((key) => {
+                                arg = arg.replace(key, replacables[key]);
+                            });
+                            return arg;
+                        }
+                    );
+
+                    if (
+                        this.deploymentScript.deployArgs &&
+                        _args.length !== this.deploymentScript.deployArgs.length
+                    ) {
+                        throw new Error("couldn't find all deployment args");
+                    }
+
                     let libs = {};
                     Object.keys(this.deploymentScript.libraries || {}).forEach(
                         (key) => {

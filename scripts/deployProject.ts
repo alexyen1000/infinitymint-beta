@@ -180,6 +180,13 @@ const deployProject: InfinityMintScript = {
                                         ? (contract.key as string)
                                         : contract.key + ':' + index
                                 ] = contract;
+                                contracts[
+                                    index === 0
+                                        ? deployment.getModuleKey()
+                                        : deployment.getModuleKey() +
+                                          ':' +
+                                          index
+                                ] = contract;
                             });
 
                             //call post deploy with previous contracts
@@ -245,6 +252,11 @@ const deployProject: InfinityMintScript = {
                                 index === 0
                                     ? (contract.key as string)
                                     : contract.key + ':' + index
+                            ] = contract;
+                            contracts[
+                                index === 0
+                                    ? deployment.getModuleKey()
+                                    : deployment.getModuleKey() + ':' + index
                             ] = contract;
                         });
 
@@ -315,6 +327,8 @@ const deployProject: InfinityMintScript = {
                                 ...script,
                             } as InfinityMintEventEmit<InfinityMintDeployment>);
                         }
+
+                        project.deployments = contracts;
                     }
                 );
 

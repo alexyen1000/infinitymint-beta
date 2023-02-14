@@ -7,6 +7,7 @@ import {
     InfinityMintProject,
     InfinityMintProjectAsset,
     InfinityMintProjectContent,
+    InfinityMintProjectJavascript,
     InfinityMintProjectPath,
     InfinityMintScript,
     InfinityMintScriptParameters,
@@ -706,8 +707,32 @@ const compile: InfinityMintScript = {
 
             if (buildImports !== true) throw buildImports;
         });
-
         if (result !== true) throw result;
+
+        if ((project as any).javascript) {
+            let upgrade = await action('upgrade', async () => {
+                project.information = {
+                    ...((project as any)?.description || {}),
+                    ...(project.information || {}),
+                };
+
+                let javaScriptProject =
+                    project as any as InfinityMintProjectJavascript;
+                project.information.tokenSingular =
+                    javaScriptProject.description.token;
+                project.information.tokenMultiple =
+                    javaScriptProject.description.tokenPlural;
+
+                project.price =
+                    project.price ||
+                    javaScriptProject.deployment.startingPrice + 'eth' ||
+                    0;
+
+                if ((project as any).description)
+                    delete (project as any).description;
+            });
+            if (upgrade !== true) throw upgrade;
+        }
 
         script.log('{cyan-fg}Copying Project...{/}');
 

@@ -6,14 +6,14 @@ import { InfinityMintValues } from '../../typechain-types';
 const DefaultValues = {
     maxSupply: 10,
     linkWalletIndex: 0,
+    //add random stuf
     linkStickersIndex: 1,
 };
 
 const Values: InfinityMintDeploymentScript = {
     setup: async ({ project, debugLog, deployment }) => {
         if (project.settings === undefined) {
-            warning('no project settings detected');
-            return;
+            project.settings = {};
         }
 
         let variables = {
@@ -74,7 +74,7 @@ const Values: InfinityMintDeploymentScript = {
             (await deployment.getSignedContract()) as InfinityMintValues;
 
         await logTransaction(
-            contract.setupValues(
+            await contract.setupValues(
                 Object.values(numbers),
                 Object.values(numbers).map((key) => cleanedVariables[key]),
                 Object.values(booleans),

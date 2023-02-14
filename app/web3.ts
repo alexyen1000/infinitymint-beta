@@ -275,7 +275,7 @@ export const deployViaFactory = async (
     overrides?: Overrides
 ) => {
     if (overrides) args.push(overrides);
-    let contract = await factory.deploy(args);
+    let contract = await factory.deploy(...args);
     contract = await contract.deployed();
     await logTransaction(contract.deployTransaction);
     return contract;

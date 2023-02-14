@@ -32,8 +32,8 @@ contract InfinityMintLinker is Authentication, InfinityMintObject {
         bool active;
     }
 
-    constructor(address _storageDestination, address erc721Destination) {
-        storageController = InfinityMintStorage(_storageDestination);
+    constructor(address storageDestination, address erc721Destination) {
+        storageController = InfinityMintStorage(storageDestination);
         erc721Location = erc721Destination;
     }
 
