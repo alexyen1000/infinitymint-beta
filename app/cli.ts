@@ -143,7 +143,8 @@ let options: InfinityMintConsoleOptions;
                 };
 
             if (scriptArguments[key].type === 'boolean') {
-                if (value === 'true') scriptArguments[key].value = true;
+                if (value === 'true' || value === '')
+                    scriptArguments[key].value = true;
                 else if (value === 'false') scriptArguments[key].value = false;
                 else
                     throw new Error(

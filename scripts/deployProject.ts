@@ -204,7 +204,6 @@ const deployProject: InfinityMintScript = {
                                 'cleanup',
                                 {
                                     isFirstTime,
-                                    error: result as Error,
                                 }
                             )) as string[];
 
@@ -233,6 +232,8 @@ const deployProject: InfinityMintScript = {
                             deployed: deployment.hasDeployed(),
                             deploymentScript: deployment.getDeploymentScript(),
                             ...script,
+                            usePreviousDeployment:
+                                script.args?.redeploy.value !== true,
                         } as InfinityMintDeploymentParameters);
 
                         deployedContracts.forEach((contract, index) => {

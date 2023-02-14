@@ -254,6 +254,7 @@ export class InfinityMintDeployment {
             return {
                 liveDeployments: {},
             };
+
         let result = JSON.parse(
             fs.readFileSync(this.getTemporaryFilePath(), {
                 encoding: 'utf-8',
@@ -631,11 +632,7 @@ export class InfinityMintDeployment {
                 if (this.deploymentScript.deploy)
                     return await this.deploymentScript.deploy(params);
                 else if (this.getContractName()) {
-                    let args = [];
-                    let libraries = (
-                        this.project as InfinityMintDeployedProject
-                    ).libraries;
-
+                    let _args = [];
                     let libs = {};
                     Object.keys(this.deploymentScript.libraries || {}).forEach(
                         (key) => {
@@ -659,10 +656,11 @@ export class InfinityMintDeployment {
                     return await deploy(
                         this.getContractName(),
                         this.project,
-                        args,
+                        _args,
                         libs,
                         undefined,
-                        true
+                        args?.save || true,
+                        args?.usePreviousDeployment || false
                     );
                 } else
                     throw new Error(
@@ -681,6 +679,12 @@ export class InfinityMintDeployment {
             case 'cleanup':
                 if (this.deploymentScript.cleanup)
                     return await this.deploymentScript.cleanup(params);
+                else {
+                    this.liveDeployments = [];
+                    this.hasDeployedAll = false;
+                    this.hasSetupDeployments = false;
+                    this.saveTemporaryDeployments();
+                }
                 return;
             case 'switch':
                 if (this.deploymentScript.switch)

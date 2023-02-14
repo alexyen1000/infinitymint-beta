@@ -647,6 +647,8 @@ const blockedMessages = [
     'eth_newPendingTransactionFilter',
     'eth_uninstallFilter',
     'net_version',
+    'Transaction: ',
+    'Contract Created: ',
 ];
 export const consoleLogReplacement = (...any: any[]) => {
     let msg = any[0] || '';

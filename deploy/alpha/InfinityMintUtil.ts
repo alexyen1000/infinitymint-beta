@@ -1,12 +1,11 @@
-import {InfinityMintDeploymentScript} from '../../app/interfaces';
+import { InfinityMintDeploymentScript } from '../../app/interfaces';
 
-const Utils: InfinityMintDeploymentScript = {
-	//going to give
-	library: true,
-	unique: true,
-	module: 'utils',
-	important: true,
-	index: 1, //should be after values
-	solidityFolder: 'alpha',
+const InfinityMintUtil: InfinityMintDeploymentScript = {
+    //going to give
+    module: 'utils',
+    index: 1, //should be after values
+    solidityFolder: 'alpha',
+    library: true,
+    permissions: ['approved', 'erc721', 'api'],
 };
-export default Utils;
+export default InfinityMintUtil;

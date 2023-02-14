@@ -184,7 +184,7 @@ export const deploy = async (
         artifact.sourceName.replace('.sol', '') + ':' + artifact.contractName
     );
 
-    if (!usePreviousDeployment && fs.existsSync(fileName)) {
+    if (usePreviousDeployment && fs.existsSync(fileName)) {
         let deployment = JSON.parse(
             fs.readFileSync(fileName, {
                 encoding: 'utf-8',
