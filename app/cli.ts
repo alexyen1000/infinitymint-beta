@@ -116,6 +116,8 @@ let options: InfinityMintConsoleOptions;
             throw new Error('script ' + scriptName + ' does not exist.');
 
         let script = infinityConsole.getScript(scriptName);
+        if (script.arguments === undefined) script.arguments = [];
+
         let scriptArguments: any = {};
 
         Object.keys(argv).map((key, index) => {
