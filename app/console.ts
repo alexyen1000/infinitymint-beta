@@ -1430,6 +1430,10 @@ export class InfinityConsole {
         return ethers.provider;
     }
 
+    /**
+     * returns all of the InfinityMint script objects
+     * @returns
+     */
     public getScripts(): InfinityMintScript[] {
         return this.scripts || [];
     }
