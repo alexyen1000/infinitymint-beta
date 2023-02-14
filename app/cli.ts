@@ -25,6 +25,9 @@ let options: InfinityMintConsoleOptions;
 (async () => {
     setScriptMode(true);
 
+    if (yargs.argv['start-ganache'] && yargs.argv['start-ganache'] !== 'false')
+        await startGanache();
+
     if (
         (yargs.argv['show-all-logs'] &&
             yargs.argv['show-all-logs'] !== 'false' &&

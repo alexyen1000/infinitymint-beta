@@ -277,7 +277,7 @@ export const debugLog = (msg: string | object | number) => {
  * @param pipe
  */
 export const warning = (msg: string | object | number, direct?: true) => {
-    msg = `{yellow-fg}{underline}⚠️{/underline} ${msg}{/yellow-fg}`;
+    msg = `{yellow-fg}{underline}⚠️{/underline}  ${msg}{/yellow-fg}`;
     if (direct) logDirect(msg);
     else log(msg, isEnvTrue('PIPE_SEPERATE_WARNINGS') ? 'warning' : 'debug');
 };

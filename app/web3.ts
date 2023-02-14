@@ -15,7 +15,7 @@ import {
 } from './helpers';
 import { BaseContract, BigNumber } from 'ethers';
 import fs from 'fs';
-import { defaultFactory, PipeFactory } from './pipes';
+import { defaultFactory, Pipe, PipeFactory } from './pipes';
 import {
     Web3Provider,
     JsonRpcProvider,
@@ -550,8 +550,8 @@ export const startNetworkPipe = (
     network?: any
 ) => {
     if (defaultFactory.pipes[network] === undefined) {
-        warning('undefined network pipe: ' + network);
-        return;
+        warning('undefined network pipe: ' + network + ' creating one...');
+        defaultFactory.pipes[network] = new Pipe(network);
     }
     if (!network) network = hre.network.name;
     let settings = getNetworkSettings(network);
@@ -591,5 +591,5 @@ export const startNetworkPipe = (
         provider.on(key as any, ProviderListeners[network][key]);
     });
 
-    debugLog('registered provider event hooks for ' + network);
+    debugLog('💭 registered provider event hooks for ' + network);
 };
