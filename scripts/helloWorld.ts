@@ -7,7 +7,9 @@ const exportInfinityMint: InfinityMintScript = {
     name: 'HelloWorld',
     description: 'Hello World',
     execute: async (script: InfinityMintScriptParameters) => {
-        script.log('Hello World!');
+        script.log({
+            message: 'Hello World',
+        });
     },
 };
 export default exportInfinityMint;

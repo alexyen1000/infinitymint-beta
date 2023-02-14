@@ -236,7 +236,6 @@ export const log = (msg: string | object | number, pipe?: string) => {
     if (pipe !== 'default' && pipe !== 'debug' && onlyDefault) return;
 
     if (isAllowPiping) defaultFactory.log(msg, pipe);
-
     if (!isAllowPiping || isEnvTrue('PIPE_IGNORE_CONSOLE')) {
         if (!(console as any)._log) {
             console.log(msg);

@@ -135,10 +135,8 @@ export class PipeFactory {
 
     public messageToString(msg: any) {
         if (typeof msg === 'string') return msg;
-        else if (msg instanceof Error) return msg.message;
-        else if (msg instanceof ChildProcess) return msg.pid;
         else if (!isNaN(msg)) return msg.toString();
-        else return JSON.stringify(msg);
+        else return JSON.stringify(msg, null, 2);
     }
 
     public addColoursToString(msg: string) {
