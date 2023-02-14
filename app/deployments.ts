@@ -32,11 +32,13 @@ import {
     getTempCompiledProject,
     hasTempDeployedProject,
     getTempDeployedProject,
+    getProjectName,
 } from './projects';
 import { glob } from 'glob';
 import fs from 'fs';
 import path from 'path';
 import {
+    deploy,
     getContract,
     getDefaultSigner,
     getNetworkSettings,
@@ -216,8 +218,9 @@ export class InfinityMintDeployment {
      * @returns
      */
     getContractName(index?: 0) {
-        return this.liveDeployments.length !== 0
-            ? this.liveDeployments[index].name
+        return this.liveDeployments.length !== 0 && this.liveDeployments[index]
+            ? this.liveDeployments[index]?.name ||
+                  this.liveDeployments[index]?.contractName
             : this.deploymentScript.contract || this.key;
     }
 
@@ -258,7 +261,7 @@ export class InfinityMintDeployment {
         );
 
         if (
-            (result.project && result.project !== this.project) ||
+            (result.project && result.project !== this.project.name) ||
             (result.network && result.network !== this.network)
         )
             throw new Error(
@@ -374,6 +377,7 @@ export class InfinityMintDeployment {
         deployments.liveDeployments = this.liveDeployments;
         deployments.updated = Date.now();
         deployments.network = this.network;
+        deployments.name = this.getContractName();
         deployments.project = this.project.name;
         deployments.setup = this.hasSetupDeployments;
 
@@ -436,7 +440,7 @@ export class InfinityMintDeployment {
         let mismatchNetworkAndProject = liveDeployments.filter(
             (deployment: InfinityMintDeploymentLive) =>
                 deployment.network.name !== this.network ||
-                deployment.project.name !== this.project.name
+                deployment.project !== this.project.name
         ) as InfinityMintDeploymentLive[];
 
         //throw error if we found any
@@ -519,30 +523,24 @@ export class InfinityMintDeployment {
      */
     async deploy(...args: any) {
         this.reloadScript();
-        let result = await this.execute('deploy', args);
+        let result = (await this.execute('deploy', args)) as {
+            contract: Contract;
+            localDeployment: InfinityMintDeploymentLocal;
+        };
 
         if (!result)
             throw new Error('deploy function did not return a contract');
 
-        let contracts: Contract[];
-        if (!(result instanceof Array)) contracts = [result] as Contract[];
-        else contracts = result as Contract[];
-
-        let session = readSession();
-
-        contracts.forEach((contract) => {
-            if (!session.environment?.deployments[contract.address])
-                throw new Error(
-                    'contract ' +
-                        contract.address +
-                        ' is not in the .session file'
+        if (result instanceof Array) {
+            result.forEach((result) => {
+                this.liveDeployments.push(
+                    this.populateLiveDeployment(result.localDeployment)
                 );
-
-            let deployment = session.environment?.deployments[
-                contract.address
-            ] as InfinityMintDeploymentLocal;
-            this.liveDeployments.push(this.populateLiveDeployment(deployment));
-        });
+            });
+        } else
+            this.liveDeployments.push(
+                this.populateLiveDeployment(result.localDeployment)
+            );
 
         this.saveTemporaryDeployments();
         return this.liveDeployments;
@@ -558,8 +556,8 @@ export class InfinityMintDeployment {
     ) {
         let deployment = localDeployment as InfinityMintDeploymentLive;
         deployment.key = this.deploymentScript.key;
-        deployment.javascript = deployment.source.ext === '.js';
-        deployment.project = this.project;
+        deployment.javascript = this.project.source.ext === '.js';
+        deployment.project = getProjectName(this.project);
         deployment.network = {
             name: hre.network.name,
             chainId: hre.network.config.chainId,
@@ -620,6 +618,7 @@ export class InfinityMintDeployment {
             ...args,
             debugLog: debugLog,
             log: log,
+            project: this.project,
             infinityConsole: null,
             eventEmitter: eventEmitter || this.emitter,
             deploy: this,
@@ -631,6 +630,46 @@ export class InfinityMintDeployment {
             case 'deploy':
                 if (this.deploymentScript.deploy)
                     return await this.deploymentScript.deploy(params);
+                else if (this.getContractName()) {
+                    let args = [];
+                    let libraries = (
+                        this.project as InfinityMintDeployedProject
+                    ).libraries;
+
+                    let libs = {};
+                    Object.keys(this.deploymentScript.libraries || {}).forEach(
+                        (key) => {
+                            let lib = this.deploymentScript.libraries[key];
+                            if (lib === true)
+                                libs[key] =
+                                    typeof this.project.libraries[key] ===
+                                    'string'
+                                        ? this.project.libraries[key]
+                                        : (
+                                              this.project.libraries[
+                                                  key
+                                              ] as InfinityMintDeploymentLive
+                                          ).address;
+                            else
+                                libs[key] =
+                                    this.deploymentScript.libraries[key];
+                        }
+                    );
+
+                    return await deploy(
+                        this.getContractName(),
+                        this.project,
+                        args,
+                        libs,
+                        undefined,
+                        true
+                    );
+                } else
+                    throw new Error(
+                        'no deploy method found on ' +
+                            this.key +
+                            ' and no contractName specified so cannot automatically deploy'
+                    );
             case 'setup':
                 if (this.deploymentScript.setup)
                     await this.deploymentScript.setup(params);
@@ -849,13 +888,14 @@ export const getLiveDeployments = (
  */
 export const create = (
     liveDeployment: InfinityMintDeploymentLive,
-    deploymentScript?: string
+    deploymentScript?: string,
+    project?: InfinityMintCompiledProject | InfinityMintTempProject
 ) => {
     return new InfinityMintDeployment(
         deploymentScript || liveDeployment.deploymentScript,
         liveDeployment.key,
         liveDeployment.network.name,
-        liveDeployment.project
+        project || getCompiledProject(liveDeployment.project)
     );
 };
 

@@ -140,6 +140,12 @@ export interface InfinityMintCompiledProject {
      */
     name: string;
     /**
+     *
+     */
+    libraries?: Dictionary<
+        string | InfinityMintDeploymentLocal | InfinityMintDeploymentLive
+    >;
+    /**
      * custom infinityLinks which can be linked to the token
      */
     links: Array<InfinityMintProjectSettingsLink>;
@@ -355,6 +361,12 @@ export interface InfinityMintDeployedProject {
      * if this is a deployed project or not
      */
     deployed?: boolean;
+    /**
+     *
+     */
+    libraries?: Dictionary<
+        string | InfinityMintDeploymentLocal | InfinityMintDeploymentLive
+    >;
     /**
      * The version information for this project
      */
@@ -1760,7 +1772,7 @@ export interface InfinityMintDeploymentLocal extends DeployResult {
     /**
      * the project this contract was deployed from
      */
-    project: InfinityMintCompiledProject;
+    project: string;
     /**
      * the address that deployed this contract
      */
@@ -1871,7 +1883,7 @@ export interface InfinityMintDeploymentLive extends KeyValue {
      *
      * @see {@link InfinityMintProject}
      */
-    project: InfinityMintCompiledProject;
+    project: string;
     /**
      * The network name and chainId this deployment was deploymend too.
      */
@@ -1941,6 +1953,7 @@ export interface InfinityMintDeploymentScript {
      * Called when a project has been deployed or has failed to deploy and is retrying. Defines how to clean up an active smart contract with the goal of running setup again to update changes.
      */
     cleanup?: FuncSingle<InfinityMintDeploymentParameters, Promise<string[]>>;
+    libraries?: Dictionary<string | boolean>;
     /**
      * @async
      * Only called when the project has been deployed. Define custom update logic depending on the situation. By default if an update method is not defined in the deployment script InfinityMint will execute clean up and then set up in the deployment script.

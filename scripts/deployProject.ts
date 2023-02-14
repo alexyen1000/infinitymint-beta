@@ -127,6 +127,7 @@ const deployProject: InfinityMintScript = {
         });
 
         let contracts = { ...project.deployments };
+        let libraires = { ...project.libraries };
         //deploy stage
         let deploy = await always('deploy', async (isFirstTime) => {
             script.log(`{cyan-fg}{bold}Deploying Smart Contracts{/}`);
@@ -236,7 +237,7 @@ const deployProject: InfinityMintScript = {
 
                         deployedContracts.forEach((contract, index) => {
                             script.log(
-                                `[${i}] => (${index}_ deployed ${contract.name} => <${contract.address}>`
+                                `[${i}] => (${index}) deployed ${contract.name} => <${contract.address}>`
                             );
                             contracts[contract.name as string] = contract;
                             contracts[
@@ -245,6 +246,15 @@ const deployProject: InfinityMintScript = {
                                     : contract.key + ':' + index
                             ] = contract;
                         });
+
+                        if (deployment.isLibrary()) {
+                            deployment.getDeployments().forEach((contract) => {
+                                libraires[contract.contractName] =
+                                    contract.address;
+                            });
+                        }
+
+                        project.libraries = libraires;
 
                         script.infinityConsole.emit('postDeploy', {
                             project: project,
@@ -255,7 +265,16 @@ const deployProject: InfinityMintScript = {
                         } as InfinityMintEventEmit<InfinityMintDeploymentLive[]>);
 
                         //if we are to instantly set up
-                        if (deployment.getDeploymentScript().instantlySetup) {
+                        if (
+                            deployment.getDeploymentScript().instantlySetup &&
+                            !deployment.hasSetup()
+                        ) {
+                            script.log(
+                                `[${i}] instantly setting up <` +
+                                    deployment.getKey() +
+                                    '>'
+                            );
+
                             script.infinityConsole.emit('preSetup', {
                                 project: project,
                                 deployments: deployments,
@@ -332,11 +351,11 @@ const deployProject: InfinityMintScript = {
             script.log(`{green-fg}{bold}Deployment Successful{/}`);
         });
 
-        script.log(
-            '{green-fg}deploying project{/green-fg} (' + project.name + ')'
-        );
-
         if (deploy !== true) throw deploy;
+
+        script.log(
+            '{green-fg}setting up project{/green-fg} (' + project.name + ')'
+        );
 
         let setupContracts = deployments.filter(
             (deployment) => !deployment.hasSetup()

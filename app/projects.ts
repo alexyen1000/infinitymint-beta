@@ -61,17 +61,29 @@ export const hasCompiledProject = (
     let filename = `/projects/compiled/${projectName}@${version}.json`;
     return fs.existsSync(cwd() + filename);
 };
+
 /**
  * Returns a compiled InfinityMintProject ready to be deployed, see {@link app/interfaces.InfinityMintProject}.
  * @param projectName
  * @throws
  */
 export const getCompiledProject = (
-    project: InfinityMintProject | InfinityMintTempProject,
+    project: InfinityMintProject | InfinityMintTempProject | string,
     version?: string
 ) => {
-    version = version || '1.0.0';
-    let projectName = getProjectName(project);
+    version =
+        version ||
+        (typeof project === 'string' && project.indexOf('@') !== -1
+            ? (project as string).split('@')[1] || undefined
+            : undefined) ||
+        '1.0.0';
+    let projectName = getProjectName(
+        typeof project === 'string'
+            ? ({
+                  name: project,
+              } as any)
+            : project
+    );
     let filename = `/projects/compiled/${projectName}@${version}.json`;
     let res = readJson(cwd() + filename);
 
@@ -135,11 +147,22 @@ export const saveTempCompiledProject = (project: InfinityMintTempProject) => {
  * @throws
  */
 export const getTempDeployedProject = (
-    project: InfinityMintProject,
+    project: InfinityMintProject | string,
     version?: string
 ) => {
-    version = version || '1.0.0';
-    let projectName = getProjectName(project);
+    version =
+        version ||
+        (typeof project === 'string' && project.indexOf('@') !== -1
+            ? (project as string).split('@')[1] || undefined
+            : undefined) ||
+        '1.0.0';
+    let projectName = getProjectName(
+        typeof project === 'string'
+            ? ({
+                  name: project,
+              } as any)
+            : project
+    );
     let filename = `/temp/projects/${projectName}@${version}.deployed.temp.json`;
     try {
         let res = readJson(cwd() + filename);

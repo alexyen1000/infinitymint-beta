@@ -12,6 +12,7 @@ import {
     registerNetworkLogs,
     cwd,
     setScriptMode,
+    Dictionary,
 } from './helpers';
 import { BaseContract, BigNumber } from 'ethers';
 import fs from 'fs';
@@ -41,6 +42,7 @@ import { EthereumProvider } from 'ganache';
 import InfinityConsole from './console';
 import { TelnetServer } from './telnet';
 import { Receipt } from 'hardhat-deploy/dist/types';
+import { getProject, getProjectName, getTempDeployedProject } from './projects';
 
 //stores listeners for the providers
 const ProviderListeners = {} as any;
@@ -148,7 +150,7 @@ export const getDeploymentProjectPath = (
         `/deployments/${hre.network.name}/` +
         project.name +
         '@' +
-        project.version +
+        project.version.version +
         '/'
     );
 };
@@ -168,48 +170,46 @@ export const getDeploymentProjectPath = (
 export const deploy = async (
     artifactName: string,
     project: InfinityMintCompiledProject | InfinityMintTempProject,
-    args?: [],
-    libraries?: {},
+    args?: any[],
+    libraries?: Dictionary<string>,
     signer?: SignerWithAddress,
     save?: boolean,
-    logDeployment?: boolean,
     usePreviousDeployment?: boolean
 ) => {
     signer = signer || (await getDefaultSigner());
     let artifact = await artifacts.readArtifact(artifactName);
     let fileName =
         getDeploymentProjectPath(project) + `${artifact.contractName}.json`;
-    let buildInfo = await artifacts.getBuildInfo(artifactName);
+    let buildInfo = await artifacts.getBuildInfo(
+        artifact.sourceName.replace('.sol', '') + ':' + artifact.contractName
+    );
 
-    if (usePreviousDeployment && fs.existsSync(fileName)) {
+    if (!usePreviousDeployment && fs.existsSync(fileName)) {
         let deployment = JSON.parse(
             fs.readFileSync(fileName, {
                 encoding: 'utf-8',
             })
         ) as InfinityMintDeploymentLocal;
 
-        if (logDeployment)
-            log(
-                `🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`
-            );
+        log(
+            `🔖 using previous deployment at (${deployment.address}) for ${artifact.contractName}`
+        );
 
-        writeDeployment(deployment);
-        return deployment;
+        if (save) writeDeployment(deployment);
+
+        return { localDeployment: deployment };
     }
 
     let factory = await ethers.getContractFactory(artifact.contractName, {
         signer: signer,
         libraries: libraries,
     });
+
     let contract = await deployViaFactory(factory, args);
-    await logTransaction(contract.deployTransaction);
-
-    if (!save) return contract;
-
-    writeDeployment({
+    let localDeployment = {
         ...artifact,
         ...buildInfo,
-        project,
+        project: getProjectName(project),
         args: args,
         key: artifact.contractName,
         network: project.network,
@@ -219,11 +219,13 @@ export const deploy = async (
         transactionHash: contract.deployTransaction.hash,
         deployer: contract.deployTransaction.from,
         receipt: contract.deployTransaction as any,
-    });
-
+    };
     log(`⭐ deployed ${artifact.contractName} => [${contract.address}]`);
 
-    return contract;
+    if (!save) return { contract, localDeployment };
+
+    writeDeployment(localDeployment);
+    return { contract, localDeployment };
 };
 
 /**
@@ -236,7 +238,7 @@ export const writeDeployment = (
     project?: InfinityMintCompiledProject | InfinityMintTempProject
 ) => {
     let session = readSession();
-    project = project || deployment.project;
+    project = project || getTempDeployedProject(deployment.project);
     let fileName =
         getDeploymentProjectPath(project) + `${deployment.contractName}.json`;
 
@@ -329,7 +331,7 @@ export const deployHardhat = async (
         key: contractName,
         network: project.network,
         contractName,
-        project,
+        project: getProjectName(project),
         deployer: signer.address,
     };
     await logTransaction(result.receipt);
