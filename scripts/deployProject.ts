@@ -8,14 +8,7 @@ import {
 } from '../app/interfaces';
 import { InfinityMintDeployment } from '../app/deployments';
 import { getScriptTemporaryProject } from '../app/projects';
-import {
-    action,
-    always,
-    getConfigFile,
-    logDirect,
-    prepare,
-    stage,
-} from '../app/helpers';
+import { always, getConfigFile, prepare, stage } from '../app/helpers';
 
 const deployProject: InfinityMintScript = {
     name: 'Deploy Project',
