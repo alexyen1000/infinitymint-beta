@@ -9,6 +9,7 @@
             "email": "llydia@0x0z.me"
         }
     ],
+    "infinitymint": "^1.3.0",
     "supportedFramework": "react",
     "solidityFolder": "alpha"
 }

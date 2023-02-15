@@ -1268,6 +1268,10 @@ export interface InfinityMintProjectAsset extends InfinityMintProjectPath {
  */
 export interface InfinityMintConfig {
     /**
+     * Gems to load, must put the gems name here is loaded through node module. Gems are plugins that can be used to extend the functionality of InfinityMint. See {@link InfinityMintProjectGem}.
+     */
+    gems?: string[];
+    /**
      * The name of the project.
      */
     project?: string;
