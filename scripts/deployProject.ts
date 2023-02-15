@@ -48,7 +48,15 @@ const deployProject: InfinityMintScript = {
                 name: script.infinityConsole.getCurrentNetwork().name,
                 url: config.settings?.networks?.[
                     script.infinityConsole.getCurrentNetwork().name
-                ]?.rpc,
+                ].exposeRpc
+                    ? (
+                          config.hardhat.networks[
+                              script.infinityConsole.getCurrentNetwork().name
+                          ] as any
+                      ).url
+                    : config.settings?.networks?.[
+                          script.infinityConsole.getCurrentNetwork().name
+                      ]?.rpc,
                 tokenSymbol: script.infinityConsole.getCurrentTokenSymbol(),
             };
 
