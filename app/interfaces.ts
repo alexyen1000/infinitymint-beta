@@ -98,9 +98,8 @@ export interface InfinityMintProjectJavascript
     mods: Dictionary<boolean>;
     contracts: KeyValue;
     description: KeyValue;
-    static: KeyValue;
     deployment: KeyValue;
-    royalty?: KeyValue;
+    royalties: KeyValue;
     approved: Dictionary<string>;
     assetConfig: KeyValue;
     names: Array<string>;
@@ -465,9 +464,16 @@ export interface InfinityMintProject {
         | 'library'
         | 'interface';
 
-    dependencies?: {
-        '@infinitymint': string;
+    //holds the static imports for a project
+    static?: {
+        background: string;
+        headerBackground: string;
+        backgroundColour: string;
+        stylesheets: string[];
+        images: Dictionary<any>;
     };
+    // if this project requires any other projects to be deployed before it can be deployed
+    dependencies?: Dictionary<string>;
 
     /**
      * which infinity mint modules to use in the creation of your minter, here you can specify things such as the the `asset, minter, royalty or random` solidity contract you are using.

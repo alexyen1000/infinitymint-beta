@@ -1,4 +1,3 @@
-import { warning } from '../../app/helpers';
 import { InfinityMintDeploymentScript } from '../../app/interfaces';
 import { logTransaction } from '../../app/web3';
 import { InfinityMintValues } from '../../typechain-types';
@@ -11,56 +10,37 @@ const DefaultValues = {
 };
 
 const Values: InfinityMintDeploymentScript = {
-    setup: async ({ project, debugLog, deployment }) => {
+    setup: async ({ project, debugLog, deployment, log }) => {
         if (project.settings === undefined) {
             project.settings = {};
         }
 
         let variables = {
             ...DefaultValues,
-            ...(project.settings?.assets || {}),
-            ...(project.settings?.minter || {}),
-            ...(project.settings?.erc721 || {}),
             ...(project.settings?.values || {}),
         };
 
-        let cleanedVariables = {} as any;
-        let values = Object.values(variables);
-        let keys = Object.keys(variables);
-        let singleLevelObjects = keys.filter(
-            (key) => typeof values[key] === 'object'
-        );
-        //only select numbers or booleans to be added
-        keys.filter(
-            (key) =>
-                typeof values[key] === 'number' ||
-                typeof values[key] === 'boolean'
-        ).forEach((key) => (cleanedVariables[key] = values[key]));
-
-        //add values from objects into the variables list
-        singleLevelObjects
-            .map((object) => {
-                return { keys: Object.keys(values[object]), value: object };
-            })
-            .forEach((object) => {
-                object.keys
-                    .filter(
-                        (key) =>
-                            typeof values[object.value][key] === 'number' ||
-                            typeof values[object.value][key] === 'boolean'
-                    )
-                    .forEach((key) => {
-                        cleanedVariables[key] = values[object.value][key];
-                    });
-            });
+        let cleanedVariables = {};
+        Object.keys(variables).forEach((key, index) => {
+            let value = variables[key];
+            if (
+                (typeof value === 'boolean' || typeof value === 'number') &&
+                cleanedVariables[key] === undefined &&
+                key !== 'baseTokenValue'
+            ) {
+                cleanedVariables[key] = value;
+            }
+        });
 
         debugLog(
             'found ' +
                 Object.values(cleanedVariables).length +
                 ' values to set on chain'
         );
-        Object.values(cleanedVariables).forEach((value, index) =>
-            debugLog(`[${index}] => {${value}}`)
+
+        log('{cyan-fg}{bold}Onchain Variables{/}');
+        Object.keys(cleanedVariables).forEach((key) =>
+            log(`\t[${key}] => ${cleanedVariables[key]}`)
         );
 
         let booleans = Object.keys(cleanedVariables).filter(

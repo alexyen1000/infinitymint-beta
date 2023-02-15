@@ -45,12 +45,12 @@ const compile: InfinityMintScript = {
             (project as any).javascript &&
             (project as any).newStandard !== true
         ) {
-            script.log(
-                `{cyan-fg}{bold}Upgrading ${project.name}@${
-                    project.version.version
-                } with InfinityMint@${getInfinityMintVersion()}{/}`
-            );
             let upgrade = await action('upgrade', async () => {
+                script.log(
+                    `{cyan-fg}{bold}Upgrading ${project.name}@${
+                        project.version.version
+                    } with InfinityMint@${getInfinityMintVersion()}{/}`
+                );
                 project.information = {
                     ...((project as any)?.description || {}),
                     ...(project.information || {}),
@@ -65,7 +65,7 @@ const compile: InfinityMintScript = {
 
                 project.price =
                     project.price ||
-                    javaScriptProject.deployment.startingPrice + 'eth' ||
+                    javaScriptProject.deployment.startingPrice.toString() ||
                     0;
 
                 if ((project as any).description)
@@ -75,18 +75,40 @@ const compile: InfinityMintScript = {
                     ...javaScriptProject.modules,
                     assets: javaScriptProject.modules.controller,
                 };
+
+                if (project.settings === undefined) project.settings = {};
+
+                //move deployment variables to the settings
+                if (javaScriptProject.deployment) {
+                    project.settings.values = javaScriptProject.deployment;
+
+                    if ((project as any).deployment)
+                        delete (project as any).deployment;
+                }
+
+                if (javaScriptProject.royalties) {
+                    project.settings.royalty =
+                        javaScriptProject.royalties as any;
+
+                    if ((project as any).royalties)
+                        delete (project as any).royalties;
+                }
+
+                if (javaScriptProject.mods) {
+                    (project as any).gems = javaScriptProject.mods;
+                    if ((project as any).mods) delete (project as any).mods;
+                }
             });
             if (upgrade !== true) throw upgrade;
         }
 
-        script.log(
-            `{cyan-fg}{bold}Compiling Project ${project.name}@${
-                project.version.version
-            } with InfinityMint@${getInfinityMintVersion()}{/}`
-        );
-
         let importCache = await getImports();
         let result = await action('compile', async () => {
+            script.log(
+                `{cyan-fg}{bold}Compiling Project ${project.name}@${
+                    project.version.version
+                } with InfinityMint@${getInfinityMintVersion()}{/}`
+            );
             //sets where this project is stored locally
             project.source = getProjectSource(project);
 
@@ -747,10 +769,10 @@ const compile: InfinityMintScript = {
         });
         if (result !== true) throw result;
 
-        script.log('{cyan-fg}Copying Project...{/}');
-
         //copy the project from the temp projects folder to the projects folder, will always run regardless of it calling action and not always
         let copy = await action('copyProject', async () => {
+            script.log('{cyan-fg}Copying Project...{/}');
+
             let projectLocation = `${cwd()}/projects/compiled/${getProjectFullName(
                 project
             )}.json`;
