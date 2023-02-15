@@ -1,15 +1,10 @@
-import {
-    getConfigFile,
-    cwd,
-    isInfinityMint,
-    log,
-    logDirect,
-    Dictionary,
-} from './helpers';
+import { getConfigFile, cwd, isInfinityMint, log, Dictionary } from './helpers';
+import { Gem } from './interfaces';
 import glob from 'glob';
 import path from 'path';
 import fs from 'fs';
-export const requiredGems = {};
+
+export let requiredGems = {};
 
 //requires gems in the config file, used when a gem is a node module
 export const requireGems = async () => {
@@ -21,28 +16,6 @@ export const requireGems = async () => {
             })
         );
 };
-
-export interface Gem {
-    name: string;
-    sources: string[];
-    metadata: any;
-    pages: string[];
-    components: string[];
-    modals: string[];
-    modules?: {
-        main: string;
-        client: string;
-        setup: string;
-        deploy: string;
-    };
-    scripts: string[];
-    contracts: string[];
-    hasMainScript?: boolean;
-    hasClientScript?: boolean;
-    isOldGem?: boolean;
-    hasSetupScript?: boolean;
-    hasDeployScript?: boolean;
-}
 
 /**
  *
@@ -126,6 +99,7 @@ export const includeGems = async () => {
             };
         })
     );
+    requiredGems = { ...requiredGems, ...includedGems };
     return includedGems;
 };
 

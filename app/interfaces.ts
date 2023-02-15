@@ -132,6 +132,31 @@ export interface InfinityMintProjectJavascriptAssets
     extends Dictionary<InfinityMintProjectAsset> {}
 
 /**
+ * the gem as it is, this is not the compiled version of the gem. This is the raw version of the gem as it is in the gem folder. This is what is used to compile the gem.
+ */
+export interface Gem {
+    name: string;
+    sources: string[];
+    metadata: any;
+    pages: string[];
+    components: string[];
+    modals: string[];
+    modules?: {
+        main: string;
+        client: string;
+        setup: string;
+        deploy: string;
+    };
+    scripts: string[];
+    contracts: string[];
+    hasMainScript?: boolean;
+    hasClientScript?: boolean;
+    isOldGem?: boolean;
+    hasSetupScript?: boolean;
+    hasDeployScript?: boolean;
+}
+
+/**
  * A compiled version of the InfinityMintProject, unlike the InfinityMintProject this does not contain any events which might have been defined in the project. You must include the project javascript or typescript file as well as the compiled project to also be able to do events.
  */
 export interface InfinityMintCompiledProject {
