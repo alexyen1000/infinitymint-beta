@@ -4,8 +4,11 @@ import { InfinityMintValues } from '../../typechain-types';
 
 const DefaultValues = {
     maxSupply: 10,
+    randomessFactor: 100,
+    maxRandomNumber: 0xffffff,
+    previewCount: 0,
+    nameCount: 1,
     linkWalletIndex: 0,
-    //add random stuf
     linkStickersIndex: 1,
 };
 
