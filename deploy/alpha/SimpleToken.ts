@@ -1,12 +1,13 @@
-import {InfinityMintDeploymentScript} from '../../app/interfaces';
+import { InfinityMintDeploymentScript } from '../../app/interfaces';
 
 const SimpleToken: InfinityMintDeploymentScript = {
-	//going to give
-	unique: true,
-	module: 'assets',
-	index: 6,
-	solidityFolder: 'alpha',
-	permissions: ['approved', 'erc721', 'assets'],
+    //going to give
+    unique: true,
+    module: 'assets',
+    index: 4,
+    deployArgs: ['%token_name%', 'values'],
+    solidityFolder: 'alpha',
+    permissions: ['approved', 'erc721', 'assets'],
 };
 
 export default SimpleToken;

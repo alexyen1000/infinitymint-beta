@@ -1,16 +1,16 @@
-import React from "react";
-import HelloWorld from "../components/HelloWorld";
+import React from 'react';
+import HelloWorld from '../components/HelloWorld';
 
 function Example() {
-	return (
-		<div>
-			<HelloWorld />
-		</div>
-	);
+    return (
+        <div>
+            <HelloWorld />
+        </div>
+    );
 }
 
 Example.page = {
-	url: "/example",
+    url: '/example',
 };
 
 export default Example;
