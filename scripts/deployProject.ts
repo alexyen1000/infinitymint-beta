@@ -200,7 +200,7 @@ const deployProject: InfinityMintScript = {
                             return;
                         } else if (deployment.hasDeployed()) {
                             script.log(
-                                `[${i}] already deployed but not redeploying so calling cleanup <` +
+                                `[${i}] already deployed, but we are redeploying so calling cleanup <` +
                                     deployment.getKey() +
                                     '>(' +
                                     deployment.getContractName() +
