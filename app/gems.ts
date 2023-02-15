@@ -24,18 +24,18 @@ export const requireGems = async () => {
 
 export interface Gem {
     name: string;
-    enabled: boolean;
     sources: string[];
     metadata: any;
     pages: string[];
     components: string[];
     modals: string[];
-    scripts?: {
+    modules?: {
         main: string;
         client: string;
         setup: string;
         deploy: string;
     };
+    scripts: string[];
     contracts: string[];
     hasMainScript?: boolean;
     hasClientScript?: boolean;
@@ -44,9 +44,13 @@ export interface Gem {
     hasDeployScript?: boolean;
 }
 
+/**
+ *
+ * @returns
+ */
 export const includeGems = async () => {
     let gems = [...(await findGems()), ...Object.values(requiredGems)];
-    let includedGems: Dictionary<Gem>;
+    let includedGems: Dictionary<Gem> = {};
     await Promise.all(
         gems.map(async (gem) => {
             let parsed = path.parse(gem);
@@ -66,6 +70,10 @@ export const includeGems = async () => {
                     source.includes('/components/') ||
                     source.includes('/components/')
             );
+            let scripts = sources.filter(
+                (source) =>
+                    source.includes('/scripts/') || source.includes('/Scripts/')
+            );
             let modals = sources.filter(
                 (source) =>
                     source.includes('/modals/') || source.includes('/modals/')
@@ -77,7 +85,7 @@ export const includeGems = async () => {
             );
             let metadata = JSON.parse(fs.readFileSync(gem, 'utf8'));
 
-            let scripts = {
+            let modules = {
                 main: fs.existsSync(parsed.dir + '/main.ts')
                     ? parsed.dir + 'main.ts'
                     : null,
@@ -94,9 +102,9 @@ export const includeGems = async () => {
 
             includedGems[parsed.name] = {
                 name: parsed.name,
-                enabled: false,
                 metadata,
                 pages,
+                modules,
                 scripts,
                 components,
                 contracts,
@@ -118,6 +126,7 @@ export const includeGems = async () => {
             };
         })
     );
+    return includedGems;
 };
 
 export const findGems = async () => {
