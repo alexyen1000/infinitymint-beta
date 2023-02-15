@@ -4,9 +4,12 @@ import glob from 'glob';
 import path from 'path';
 import fs from 'fs';
 
-export let requiredGems = {};
+let requiredGems: string[];
+let loadedGems: Dictionary<Gem> = {};
 
-//requires gems in the config file, used when a gem is a node module
+/**
+ * Loads all gems from the config file which are NPM packages
+ */
 export const requireGems = async () => {
     let config = getConfigFile();
     if (config.gems)
@@ -18,14 +21,59 @@ export const requireGems = async () => {
 };
 
 /**
+ * Completely reloads a gem, deleting the cache and reloading it
+ * @param name
+ * @returns
+ */
+export const reloadGem = async (name: string) => {
+    if (!hasGem(name)) return;
+
+    if (loadedGems[name].modules) {
+        Object.values(loadedGems[name].modules).forEach((module) => {
+            if (require.cache[module]) delete require.cache[module];
+        });
+    }
+
+    delete loadedGems[name];
+    if (requiredGems[name]) {
+        if (require.cache[requiredGems[name]])
+            delete require.cache[requiredGems[name]];
+        delete requiredGems[name];
+        await requireGems();
+    }
+    await includeGems(name);
+    return loadedGems[name];
+};
+
+/**
+ *
+ * @param name
+ * @returns
+ */
+export const hasGem = (name: string) => {
+    return loadedGems[name] !== undefined;
+};
+
+/**
+ *
+ * @param name
+ * @returns
+ */
+export const getGem = (name: string) => {
+    return loadedGems[name];
+};
+
+/**
  *
  * @returns
  */
-export const includeGems = async () => {
+export const includeGems = async (reload?: string) => {
     let gems = [...(await findGems()), ...Object.values(requiredGems)];
-    let includedGems: Dictionary<Gem> = {};
+    let includedGems: Dictionary<Gem> = { ...loadedGems };
     await Promise.all(
         gems.map(async (gem) => {
+            if (reload && reload !== gem) return;
+
             let parsed = path.parse(gem);
             let sources: string[] = await new Promise((resolve, reject) => {
                 glob(parsed.dir + '/**/*', (err, files) => {
@@ -51,6 +99,10 @@ export const includeGems = async () => {
                 (source) =>
                     source.includes('/modals/') || source.includes('/modals/')
             );
+            let deployScripts = sources.filter(
+                (source) =>
+                    source.includes('/deploy/') || source.includes('/deploy/')
+            );
             let contracts = sources.filter(
                 (source) =>
                     source.includes('/contracts/') ||
@@ -59,18 +111,42 @@ export const includeGems = async () => {
             let metadata = JSON.parse(fs.readFileSync(gem, 'utf8'));
 
             let modules = {
-                main: fs.existsSync(parsed.dir + '/main.ts')
-                    ? parsed.dir + 'main.ts'
-                    : null,
-                client: fs.existsSync(parsed.dir + '/client.ts')
-                    ? parsed.dir + 'client.ts'
-                    : null,
-                setup: fs.existsSync(parsed.dir + '/setup.ts')
-                    ? parsed.dir + 'setup.ts'
-                    : null,
-                deploy: fs.existsSync(parsed.dir + '/deploy.ts')
-                    ? parsed.dir + 'deploy.ts'
-                    : null,
+                main:
+                    fs.existsSync(parsed.dir + '/main.ts') ||
+                    fs.existsSync(parsed.dir + '/main.js')
+                        ? parsed.dir +
+                          'main' +
+                          (fs.existsSync(parsed.dir + '/main.ts')
+                              ? '.ts'
+                              : '.js')
+                        : null,
+                setup:
+                    fs.existsSync(parsed.dir + '/setup.ts') ||
+                    fs.existsSync(parsed.dir + '/setup.js')
+                        ? parsed.dir +
+                          'setup' +
+                          (fs.existsSync(parsed.dir + '/setup.ts')
+                              ? '.ts'
+                              : '.js')
+                        : null,
+                deploy:
+                    fs.existsSync(parsed.dir + '/deploy.ts') ||
+                    fs.existsSync(parsed.dir + '/deploy.js')
+                        ? parsed.dir +
+                          'deploy' +
+                          (fs.existsSync(parsed.dir + '/deploy.ts')
+                              ? '.ts'
+                              : '.js')
+                        : null,
+                client:
+                    fs.existsSync(parsed.dir + '/client.ts') ||
+                    fs.existsSync(parsed.dir + '/client.js')
+                        ? parsed.dir +
+                          'client' +
+                          (fs.existsSync(parsed.dir + '/client.ts')
+                              ? '.ts'
+                              : '.js')
+                        : null,
             };
 
             includedGems[parsed.name] = {
@@ -80,6 +156,7 @@ export const includeGems = async () => {
                 modules,
                 scripts,
                 components,
+                deployScripts,
                 contracts,
                 isOldGem: metadata.infinitymint === undefined,
                 hasDeployScript:
@@ -99,10 +176,14 @@ export const includeGems = async () => {
             };
         })
     );
-    requiredGems = { ...requiredGems, ...includedGems };
+    loadedGems = includedGems;
     return includedGems;
 };
 
+/**
+ *
+ * @returns
+ */
 export const findGems = async () => {
     let locations = [cwd() + '/gems/**/*.json'];
     let config = getConfigFile();

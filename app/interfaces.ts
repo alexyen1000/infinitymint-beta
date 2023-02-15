@@ -140,6 +140,7 @@ export interface Gem {
     metadata: any;
     pages: string[];
     components: string[];
+    deployScripts: string[];
     modals: string[];
     modules?: {
         main: string;
