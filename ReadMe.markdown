@@ -1,5 +1,7 @@
 # InfinityMint by 0x0zAgency
 
+forked to learn about nix
+
 ## 🗿 Requirements
 
 - Mac OSX (any version), Windows (XP, Vista, 7, 8, 10, 11), Debian (5+), Ubuntu (14+)
